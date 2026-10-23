@@ -17,13 +17,15 @@ from PyQt6.QtWidgets import (
     QApplication,
     QPlainTextEdit,
     QRadioButton,
+    QStyle,
+    QStyleOptionTab,
     QTabBar,
     QWidget,
 )
 
 from cephvr.gui.log_colors import log_block_is_error
 from cephvr.gui.theme import (
-    PHOSPHOR_TAB_GUTTER,
+    PHOSPHOR_TAB_DIM,
     SIZES,
     Palette,
     minimal_frames,
@@ -246,8 +248,7 @@ class PromptGutter(QWidget):
 
 
 class TabMarkers(QWidget):
-    """Amber phosphor tab marks over an existing tab bar: a small coral `>` before the
-    current tab's content and a dim one before a hovered tab. Tabs keep native
+    """Amber tabs have a leading `>` and a coral trailing `<` when selected. Tabs keep native
     behaviour and text; `hover_changed` lets the owner recolour icons."""
 
     hover_changed = pyqtSignal()
@@ -280,16 +281,23 @@ class TabMarkers(QWidget):
                 self.set_hover(-1)
         return False
 
-    def marker_rect(self, index: int) -> QRectF:
-        """Gutter just left of the tab's centred icon and text."""
-        rect = self.bar.tabRect(index)
+    def marker_rect(self, index: int, *, trailing: bool = False) -> QRectF:
+        """Equal gaps around Qt's rendered tab title, including its icon."""
+        option = QStyleOptionTab()
+        self.bar.initStyleOption(option, index)
+        style = self.bar.style()
+        assert style is not None
+        rect = style.subElementRect(
+            QStyle.SubElement.SE_TabBarTabText, option, self.bar
+        )
         metrics = self.bar.fontMetrics()
-        content = metrics.horizontalAdvance(self.bar.tabText(index))
-        if not self.bar.tabIcon(index).isNull():
-            content += self.bar.iconSize().width() + 6
-        # The tab sheet pads PHOSPHOR_TAB_GUTTER on the left and 5px on the right.
-        centre = (rect.left() + PHOSPHOR_TAB_GUTTER + rect.right() - 5) / 2
-        left = max(rect.left() + 2, centre - content / 2 - 14)
+        text = metrics.elidedText(option.text, self.bar.elideMode(), rect.width())
+        width = metrics.horizontalAdvance(text)
+        left = rect.center().x() - width / 2
+        right = rect.center().x() + width / 2
+        if not option.icon.isNull():
+            left -= option.iconSize.width() + 4
+        left = right + 6 if trailing else left - 6 - 12
         return QRectF(left, rect.top(), 12, rect.height())
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
@@ -301,13 +309,26 @@ class TabMarkers(QWidget):
         font.setPixelSize(SIZES.label_font + 3)
         painter.setFont(font)
         current = self.bar.currentIndex()
-        for index, ink in ((self.hover, colors.label), (current, colors.coral)):
-            if index < 0 or (index == current and ink == colors.label):
-                continue
+        for index in range(self.bar.count()):
+            ink = (
+                colors.coral
+                if index == current
+                else colors.text
+                if index == self.hover
+                else PHOSPHOR_TAB_DIM
+            )
             painter.setPen(QColor(ink))
             painter.drawText(
-                self.marker_rect(index), Qt.AlignmentFlag.AlignVCenter, ">"
+                self.marker_rect(index),
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                ">",
             )
+            if index == current:
+                painter.drawText(
+                    self.marker_rect(index, trailing=True),
+                    Qt.AlignmentFlag.AlignVCenter,
+                    "<",
+                )
 
 
 class ColumnHeader(QWidget):

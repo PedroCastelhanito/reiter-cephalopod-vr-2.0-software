@@ -3,6 +3,21 @@
 from cephvr.control.v1 import services_pb2 as rpc
 
 
+def valid_stimulus_tiles(hint: rpc.PreviewWindowPlacement) -> bool:
+    tiles = hint.stimulus_tiles
+    return (
+        len(tiles) <= 4
+        and len({tile.surface for tile in tiles}) == len(tiles)
+        and all(
+            tile.surface in ("Left", "Front", "Right", "Bottom")
+            and 128 <= tile.side <= 2048
+            and abs(tile.x) <= 1_000_000
+            and abs(tile.y) <= 1_000_000
+            for tile in tiles
+        )
+    )
+
+
 def valid_preview_placement(
     request: rpc.CameraCommandRequest | rpc.AcquisitionCameraCommand,
 ) -> bool:
@@ -11,6 +26,7 @@ def valid_preview_placement(
     hint = request.preview_placement
     return (
         request.kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        and not hint.stimulus_tiles
         and 128 <= hint.side <= 2048
         and abs(hint.x) <= 1_000_000
         and abs(hint.y) <= 1_000_000

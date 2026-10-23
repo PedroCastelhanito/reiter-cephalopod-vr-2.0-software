@@ -88,6 +88,7 @@ __pycache__/
 /.local-spikeglx-rpc-*/
 
 # Disposable rig-test fixtures and SDK/build investigations.
+/.local-dummy-*/
 /.tmp/
 /reports/tmp-*/
 /.local-calibration-pytest/

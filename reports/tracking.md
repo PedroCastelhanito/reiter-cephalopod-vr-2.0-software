@@ -289,6 +289,14 @@ settings are not overwritten. [Frontend evidence](runtime.md#dashboard-frontend-
 
 ## Implementation and local validation
 
+Oct23 `hierarchical-code-review`: Luna inspected source/frame leases, movement,
+pose history/worker, lifecycle gate/session, NVIDIA adapter, estimator, feedback,
+writer and coordinator paths against A03/A04/A06/A09/T08/T09/T19. No new actionable
+finding was established. Bounded queues, stale/future pose rejection, discontinuity
+reset, record-before-feedback cutoff checks and retained cleanup ownership have
+source/test coverage; tests were inspected, not rerun. This does not validate
+native/scientific behavior. [Cross-owner checks](runtime.md#maintainability-review).
+
 The runtime now lives under `src/cephvr/tracking`, with `cephvr-tracking` as the
 managed entry point. It uses the canonical settings/evidence models and existing
 control/authentication, command retention, deadlines, resource accounting, camera

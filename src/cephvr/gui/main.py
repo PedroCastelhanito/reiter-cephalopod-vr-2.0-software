@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import secrets
 import sys
 import tomllib
@@ -152,6 +153,9 @@ class ManagedGui(QObject):
             lambda: self.control_ready and window.dashboard.view.has_control,
         )
         window.preview_slot.snap_requested.connect(
+            lambda key: self.stimulus_preview.request(key, True, snap=True)
+        )
+        window.dashboard.preview_workspace.stimulus_area.snap_requested.connect(
             lambda key: self.stimulus_preview.request(key, True, snap=True)
         )
         bridge.command_finished.connect(self.stimulus_preview_finished)
@@ -881,7 +885,12 @@ class ManagedGui(QObject):
 
     def shutdown(self) -> None:
         self.bridge.stop()
-        self.bridge.wait(3000)
+        if not self.bridge.wait(3000):
+            logging.getLogger("cephvr.gui").error(
+                "Controller bridge is still stopping after 3s; waiting for cleanup."
+            )
+            # A live QThread cannot be destroyed safely.
+            self.bridge.wait()
 
 
 def main(argv: list[str] | None = None, *, splash: StartupSplash | None = None) -> int:

@@ -11,17 +11,6 @@ Blocked and Deferred entries name their reason.
 ## In progress
 
 
-
-
-
-
-
-
-
-
-
-
-
 - [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and separate Preview controls card natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Actual native stream viewer reflow/follow and projector toggle behavior remain unverified. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
 
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
@@ -32,7 +21,16 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 ## Next
 
-- [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Confirm implemented saved-style splash and no transient/white windows on the next safe native launch/reopen. Status: G02rev123 implementation,28 GUI/25 launch checks and static checks pass; active runtime unchanged, native acceptance pending. — [Runtime](reports/runtime.md#startup-splash-preview), [Rig checklist](reports/rig-verification.md)
+
+- [ ] `dummy-session-no-output` [controller] [acquisition] [visual_stimulus] Verify all-saving-Off Setup/normal/Abort/fresh-session execution creates no output and enabling one recording restores saved files after restart. Status: Oct23 native Setup failed INVALID_CATALOGUE; empty-revision source fix passes102 coordinator/supervisor tests. Failed-session recovery and corrected native retry pending; prior2051 backend/168 supervisor evidence retained. - [Rig check](reports/rig-verification.md#dummy-session-no-output)
+
+- [ ] `protocol-category-preview-rig` [gui] [visual_stimulus] Verify the implemented category layouts and native preview modes under the single rig checklist. Done when native/DPI behavior, calibrated content and full-load preview cost pass. Status: local implementation/checks complete Oct23; running app not restarted. — [Rig check](reports/rig-verification.md#protocol-category-previews), [Evidence](reports/runtime.md#protocol-category-and-preview-design--2026-10-23)
+
+- [ ] `gui-relaunch-event-unavailable` [gui] [launcher] [supervisor] Verify integrated launcher diagnostics on a later owner-planned native launch/exit and capture the historical failure cause if it recurs. Status: E08rev181 sparse private lifecycle/exception/fault logging implemented;63 launcher tests and isolated native smoke pass; all11 current runtime identities unchanged, no restart/signals. Current process predates the change; forced kills may leave only an unfinished log and the historical exact cause remains unknown. — [Evidence](reports/runtime.md#startup-splash-preview)
+
+
+- [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Complete alternate monitor/DPI, CRT-off and controller-unavailable startup variants. Status: Oct23 first-paint repair passes8 offscreen/3 native tests and three-style foreground capture; later full native startup and GUI-only save/close/reopen preserve all non-GUI identities/generation and remain connected. Saved projectors are undetected; no Setup/trial/device acceptance claimed. — [Runtime](reports/runtime.md#startup-splash-preview), [Rig checklist](reports/rig-verification.md)
+
 
 - [ ] `mcu-setup-ping-latency` [controller] [acquisition] Diagnose intermittent pre-Start MCU PING admission latency under unchanged200ms policy. Oct22 first final-validation Setup fails at200.495ms with native timeout/query/read calls delayed and near-zero thread CPU; normal Cancel/cleanup/exact restoration pass, one fresh retry completes full protocol. Preserve serial-call evidence and avoid blind retries or deadline relaxation. — [Evidence](reports/runtime.md#rig-checks-oct22)
 
@@ -48,7 +46,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `preview-workspace-polish` [gui] Confirm the G01rev280 Previews layout (HUD first, full-width timeline, equal-height settings container, optional resizable plots, adaptive stream columns, close frame headings and live source/preview FPS footers) with native viewers before Setup and in a recorded trial. Status: implementation and focused offscreen tests pass (see LOG 2026-10-21 preview-side-by-side-layout); G01rev281 Retro bracketed controls, heading glow and projector card frames added (LOG 2026-10-21 preview-crt-styling); not seen with native viewers. Done when the rig checklist item passes. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
-- [ ] `preview-advanced-motion-dials` [gui] [tracking] [visual_stimulus] Check the G01rev265/G02rev95 preview workspace in the restarted GUI: aligned HUD, idle lamp hidden, full-width timeline below HUD, epoch progress, Advanced settings persistence, dials, arena map and looming lane in both themes. Status: source implemented; 136 preview-selected tests and static checks pass; offscreen renders only. Live Tracking drive values and renderer arena pose do not reach the GUI, so live-only dials always show Waiting for tracking (follow-up feed not designed). Done when: native appearance and behavior are confirmed. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01) Also verify newly edited physical-screen rig directions (−90 back/0 right/90 front/180 left), rotating textures and linked followers after restart;260 focused source checks pass (LOG stimulus-rig-direction-authoring).
+- [ ] `preview-advanced-motion-dials` [gui] [tracking] [visual_stimulus] Check the G01rev265/G02rev95 preview workspace in the restarted GUI: aligned HUD, idle lamp hidden, full-width timeline below HUD, epoch progress, Advanced settings persistence, dials, arena map and looming lane in both themes. Status: source implemented; 136 preview-selected tests and static checks pass; offscreen renders only. Live Tracking drive values and renderer arena pose do not reach the GUI, so live-only dials always show Waiting for tracking (follow-up feed not designed). Done when: native appearance and behavior are confirmed. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01) Also verify newly edited physical-screen rig directions (−90 back/0 right/90 front/180 left), rotating textures and linked followers after restart;260 focused source checks pass (LOG stimulus-rig-direction-authoring). Oct23 G01rev307 individual arena-motion dials pass85 preview tests and1 Dashboard integration test; confirm Bottom-left rotation shows Right/front, Left/back and Front/left after restart.
 
 - [ ] `runtime-log-terminal-format` [gui] [controller] Check timestamped log rows, in-place progress/results, alignment after longer categories and HUD Output in the running GUI during Setup/Start/Stop. Status: G02rev102 category-completeness fix complete locally:85 checks pass, one existing native-mouse delivery failure; G02rev98 category alignment passes24 focused offscreen checks plus3 rendered-position checks in both themes; GUI mypy187 and changed-file lint/format pass. Earlier startup/progress/log/HUD evidence retained in LOG. Native verification remains pending after restart. — [Runtime](reports/runtime.md)
 

@@ -162,8 +162,9 @@ class ReviewCapture:
         program["source_tex"].value = 0
         for tile in layout.tiles:
             program["mirror_axes"].value = (
-                layout.layout_kind == "preview" and tile.label in {"Left", "Right"},
-                layout.layout_kind == "preview" and tile.label == "Bottom",
+                layout.layout_kind == "preview"
+                and tile.label in {"Left", "Front", "Right"},
+                False,
             )
             program["rotate_clockwise"].value = tile.rotation_clockwise_degrees
             rendered = by_id[tile.output_id]

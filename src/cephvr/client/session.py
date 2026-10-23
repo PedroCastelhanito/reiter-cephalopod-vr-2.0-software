@@ -207,6 +207,7 @@ class HeadlessClient:
             metadata=self.principal.metadata(),
         )
         self._reader = asyncio.create_task(self._read())
+        cancelled = False
         try:
             try:
                 await asyncio.wait_for(self._wait(lambda _: True), self.rpc_timeout_s)
@@ -215,9 +216,16 @@ class HeadlessClient:
                     "Controller state did not synchronize before the RPC timeout."
                 ) from None
             yield
+        except asyncio.CancelledError:
+            cancelled = True
+            raise
         finally:
             try:
-                if self._failure is None and self.views.current is not None:
+                if (
+                    not cancelled
+                    and self._failure is None
+                    and self.views.current is not None
+                ):
                     if (
                         self.snapshot.control.holder_client_id
                         == self.principal.generation

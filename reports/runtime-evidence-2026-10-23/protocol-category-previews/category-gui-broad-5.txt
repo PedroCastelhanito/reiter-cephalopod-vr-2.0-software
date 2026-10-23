@@ -1,0 +1,38 @@
+.....................................................F.................. [ 36%]
+.....................................................F.................. [ 72%]
+.F......................................................                 [100%]
+================================== FAILURES ===================================
+______________ test_protocol_program_validation_and_atomic_save _______________
+tests\gui\test_dashboard.py:9640: in test_protocol_program_validation_and_atomic_save
+    panel.save_program(str(path))
+E   AssertionError: assert {'format_vers...ces': [], ...} == {'format_vers...els': [], ...}
+E     
+E     Omitting 7 identical items, use -vv to show
+E     Left contains 1 more item:
+E     {'category': None}
+E     Use -v to get more diff
+_ test_review_protocol_style_keeps_drafts_history_and_dynamic_screen_rows[720] _
+tests\gui\test_dashboard.py:19656: in test_review_protocol_style_keeps_drafts_history_and_dynamic_screen_rows
+    viewport = reviewed.protocol.config_scroll.viewport()
+E   AssertionError: assert 79 >= 86
+E    +  where 79 = <built-in method width of QLabel object at 0x000001F28B7D57E0>()
+E    +    where <built-in method width of QLabel object at 0x000001F28B7D57E0> = <PyQt6.QtWidgets.QLabel object at 0x000001F28B7D57E0>.width
+E    +  and   86 = <built-in method horizontalAdvance of QFontMetrics object at 0x000001F28534D7E0>('Repetitions')
+E    +    where <built-in method horizontalAdvance of QFontMetrics object at 0x000001F28534D7E0> = <PyQt6.QtGui.QFontMetrics object at 0x000001F28534D7E0>.horizontalAdvance
+E    +      where <PyQt6.QtGui.QFontMetrics object at 0x000001F28534D7E0> = <built-in method fontMetrics of QLabel object at 0x000001F28B7D57E0>()
+E    +        where <built-in method fontMetrics of QLabel object at 0x000001F28B7D57E0> = <PyQt6.QtWidgets.QLabel object at 0x000001F28B7D57E0>.fontMetrics
+E    +    and   'Repetitions' = <built-in method text of QLabel object at 0x000001F28B7D57E0>()
+E    +      where <built-in method text of QLabel object at 0x000001F28B7D57E0> = <PyQt6.QtWidgets.QLabel object at 0x000001F28B7D57E0>.text
+__________ test_preview_timeline_visibility_and_advanced_preference ___________
+tests\gui\test_dashboard.py:21058: in test_preview_timeline_visibility_and_advanced_preference
+    None, QSettings(settings.fileName(), QSettings.Format.IniFormat)
+E   assert 0.6447876447876448 == 0.3333333333333333 � 0.06
+E     
+E     comparison failed
+E     Obtained: 0.6447876447876448
+E     Expected: 0.3333333333333333 � 0.06
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_protocol_program_validation_and_atomic_save
+FAILED tests/gui/test_dashboard.py::test_review_protocol_style_keeps_drafts_history_and_dynamic_screen_rows[720]
+FAILED tests/gui/test_dashboard.py::test_preview_timeline_visibility_and_advanced_preference
+3 failed, 197 passed, 651 deselected in 194.34s (0:03:14)

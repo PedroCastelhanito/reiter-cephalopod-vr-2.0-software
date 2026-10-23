@@ -46,10 +46,12 @@ class ControllerBridge(QThread):
         self.max_message_bytes = max_message_bytes
         self.retry_delays_s = retry_delays_s
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._run_task: asyncio.Task[None] | None = None
         self._queue: (
             asyncio.PriorityQueue[tuple[int, int, int, str, str, dict[str, Any]]] | None
         ) = None
         self._stopping = False
+        self._stop_lock = threading.Lock()
         self._connected = False
         self._pending_lock = threading.Lock()
         self._pending_count = 0
@@ -151,71 +153,87 @@ class ControllerBridge(QThread):
             self._pending_count = max(0, self._pending_count - 1)
 
     def stop(self) -> None:
-        self._stopping = True
-        self.request("quit")
+        with self._stop_lock:
+            if self._stopping:
+                return
+            self._stopping = True
+            loop, task = self._loop, self._run_task
+        if loop is not None and task is not None:
+            try:
+                loop.call_soon_threadsafe(task.cancel)
+            except RuntimeError:
+                pass
 
     def run(self) -> None:
         asyncio.run(self._run())
 
     async def _run(self) -> None:
         self._loop = asyncio.get_running_loop()
+        self._run_task = asyncio.current_task()
         self._queue = asyncio.PriorityQueue(maxsize=self._MAX_PENDING + 1)
         attempt = 0
-        while not self._stopping:
-            await asyncio.sleep(
-                self.retry_delays_s[min(attempt, len(self.retry_delays_s) - 1)]
-            )
-            if self._stopping:
-                break
-            try:
-                async with loopback_channel(
-                    self.port, self.max_message_bytes
-                ) as channel:
+        try:
+            while not self._stopping:
+                await asyncio.sleep(
+                    self.retry_delays_s[min(attempt, len(self.retry_delays_s) - 1)]
+                )
+                if self._stopping:
+                    break
+                try:
+                    async with loopback_channel(
+                        self.port, self.max_message_bytes
+                    ) as channel:
+                        with self._pending_lock:
+                            self._connection_epoch += 1
+                            epoch = self._connection_epoch
+                            self._controller_generation = ""
+
+                        def receive_snapshot(
+                            state: pb.Snapshot, connection_epoch: int = epoch
+                        ) -> None:
+                            self._snapshot_received(connection_epoch, state)
+
+                        client = HeadlessClient(
+                            channel,
+                            self.principal,
+                            on_snapshot=receive_snapshot,
+                        )
+                        async with client.observe():
+                            with self._pending_lock:
+                                self._controller_generation = (
+                                    client.snapshot.controller_generation
+                                )
+                                self._connected = True
+                                generation = self._controller_generation
+                            self.connection_changed.emit(True, "", epoch, generation)
+                            attempt = 0
+                            await self._commands(client)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    self._connected = False
                     with self._pending_lock:
                         self._connection_epoch += 1
                         epoch = self._connection_epoch
                         self._controller_generation = ""
-
-                    def receive_snapshot(
-                        state: pb.Snapshot, connection_epoch: int = epoch
-                    ) -> None:
-                        self._snapshot_received(connection_epoch, state)
-
-                    client = HeadlessClient(
-                        channel,
-                        self.principal,
-                        on_snapshot=receive_snapshot,
-                    )
-                    async with client.observe():
-                        with self._pending_lock:
-                            self._controller_generation = (
-                                client.snapshot.controller_generation
+                    while self._queue is not None and not self._queue.empty():
+                        _, _, _, _, action, _ = self._queue.get_nowait()
+                        if action != "quit":
+                            self._release_pending()
+                            self.command_finished.emit(
+                                action,
+                                False,
+                                "Controller connection lost; command discarded.",
                             )
-                            self._connected = True
-                            generation = self._controller_generation
-                        self.connection_changed.emit(True, "", epoch, generation)
-                        attempt = 0
-                        await self._commands(client)
-            except Exception as exc:
-                self._connected = False
-                with self._pending_lock:
-                    self._connection_epoch += 1
-                    epoch = self._connection_epoch
-                    self._controller_generation = ""
-                while self._queue is not None and not self._queue.empty():
-                    _, _, _, _, action, _ = self._queue.get_nowait()
-                    if action != "quit":
-                        self._release_pending()
-                        self.command_finished.emit(
-                            action,
-                            False,
-                            "Controller connection lost; command discarded.",
-                        )
-                self.connection_changed.emit(False, str(exc), epoch, "")
-                attempt += 1
-        self._connected = False
-        self._loop = None
-        self._queue = None
+                    self.connection_changed.emit(False, str(exc), epoch, "")
+                    attempt += 1
+        except asyncio.CancelledError:
+            pass
+        finally:
+            self._connected = False
+            self._loop = None
+            self._run_task = None
+            self._queue = None
 
     def _snapshot_received(self, epoch: int, state: pb.Snapshot) -> None:
         with self._pending_lock:
@@ -229,6 +247,9 @@ class ControllerBridge(QThread):
     async def _commands(self, client: HeadlessClient) -> None:
         assert self._queue is not None
         self._configuration_lock = asyncio.Lock()
+        queued: asyncio.Task[tuple[int, int, int, str, str, dict[str, Any]]] | None = (
+            None
+        )
         try:
             while not self._stopping:
                 queued = asyncio.create_task(self._queue.get())
@@ -238,8 +259,11 @@ class ControllerBridge(QThread):
                 )
                 if client._reader in done:
                     queued.cancel()
+                    await asyncio.gather(queued, return_exceptions=True)
+                    queued = None
                     raise ClientError("Controller state stream closed.")
                 _, _, epoch, generation, action, options = queued.result()
+                queued = None
                 if action == "quit":
                     return
                 task = asyncio.create_task(
@@ -248,6 +272,9 @@ class ControllerBridge(QThread):
                 self._dispatch_tasks.add(task)
                 task.add_done_callback(self._dispatch_tasks.discard)
         finally:
+            if queued is not None and not queued.done():
+                queued.cancel()
+                await asyncio.gather(queued, return_exceptions=True)
             tasks = tuple(self._dispatch_tasks)
             for task in tasks:
                 task.cancel()

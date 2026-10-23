@@ -1,0 +1,113 @@
+[
+  {
+    "style": "standard",
+    "paints": [
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      }
+    ]
+  },
+  {
+    "style": "retro_console",
+    "paints": [
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      }
+    ]
+  },
+  {
+    "style": "amber_phosphor",
+    "paints": [
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 0.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      },
+      {
+        "opacity": 1.0,
+        "maximized": true
+      }
+    ]
+  }
+]

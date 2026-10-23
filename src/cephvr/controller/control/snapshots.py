@@ -171,11 +171,15 @@ class SnapshotPublisher:
                 self.lifecycle.attempt.reservation.session_directory
             )
             view.reservation.lock_held = self.lifecycle.attempt.reservation.held
-            view.reservation.ready_for_outputs = self.lifecycle.session.phase in (
-                pb.SESSION_PHASE_READY,
-                pb.SESSION_PHASE_STARTING,
-                pb.SESSION_PHASE_RUNNING,
-                pb.SESSION_PHASE_FINALIZING,
+            view.reservation.ready_for_outputs = (
+                self.lifecycle.attempt.reservation.persistent
+                and self.lifecycle.session.phase
+                in (
+                    pb.SESSION_PHASE_READY,
+                    pb.SESSION_PHASE_STARTING,
+                    pb.SESSION_PHASE_RUNNING,
+                    pb.SESSION_PHASE_FINALIZING,
+                )
             )
             for name, backend in self.lifecycle.attempt.required.items():
                 participant = view.participants.add()

@@ -1,11 +1,51 @@
 # Rig verification — outstanding checks
 
+<a id="dummy-session-no-output"></a>
+- [ ] `dummy-session-no-output` [controller] [acquisition] [visual_stimulus] After
+  a safe normal restart, disable every active saving selection and check Setup,
+  Start, normal completion, Abort and a fresh session: no experiment/session folder,
+  lock/marker, metadata, frame logs or videos appear. Verify normal projection,
+  Tracking/camera activity where required, truthful cleanup and dummy status.
+  Enable one recording and confirm normal outputs return. Runtime safety diagnostics
+  remain independent. [Local evidence](runtime.md#no-recording-dummy-session--2026-10-23).
+  Oct23 native Setup failed with INVALID_CATALOGUE on an empty revision1 update;
+  the focused local fix passes102 coordinator/supervisor tests. Preserve the retained
+  failed-session evidence; verify normal cleanup/recovery and corrected Setup after
+  loading the fix. No native recovery or successful retry is claimed.
+
+<a id="protocol-category-previews"></a>
+- [ ] `protocol-category-previews` [gui] [visual_stimulus] On the rig, verify media
+  overlays/layer selection/fades, texture drift/fades and shared-observer arena previews
+  with cameras visible. Check Combined's single GPU screen-plane rig view, left-drag
+  rotation, elevation limits, double-click home and repeated Per-projector switches,
+  enlarged Combined allocation when cameras are hidden, shared colored vectors and
+  projector-row parameter table, camera-column restoration, and all four image/plot
+  pairs including static Bottom at short/tall window sizes and scaled DPI,
+  correct calibrated content/orientation/aspect, physical direction versus planned
+  instruments, mixed layers and unavailable tracking. Compare signed rotation on all
+  four physical screens, protocol rig preview and Monitor after the Oct23 preview-only
+  reflection corrections; the owner confirms existing physical rotation is coherent.
+  Check native owner-follow,
+  DPI/monitor changes, manual drag/Snap, X-close without polling reopen, clean session
+  release and failure recovery. Compare cropped content and folded Bottom orientation
+  with the protocol rig view. Measure Combined versus four Per-projector viewers'
+  preview cadence and GPU cost under full recording/projection load; local checks do
+  not prove native resource behavior, optical timing or throughput.
+  [Implementation/evidence](runtime.md#protocol-category-and-preview-design--2026-10-23).
+
 - [ ] `gui-startup-splash` [gui] [launcher] At the next safe normal launch and GUI
   reopen, verify the saved Standard/Retro/Amber splash appears without transient Qt
   windows or a white main window, then hands off to the populated maximized GUI.
-  Check CRT disabled and controller-unavailable diagnostics remain usable. Offscreen
-  presentation checks are not native Windows acceptance; no active runtime restart
-  was performed for this change. [Implementation](runtime.md#startup-splash-preview).
+  Oct23: transparent native first-paint tests pass for all three themes; the
+  foreground native Dashboard probe has zero white frames in1627 captured frames
+  and clean Qt teardown. Managed same-generation GUI reopens connect successfully.
+  Oct23 later full-role native startup and GUI-only save/close/reopen pass: all
+  non-GUI native process identities and controller generation stay unchanged;
+  launcher event remains reachable and GUI reconnects in Configuration. Saved
+  projectors are undetected, so display readiness is not established. Still check
+  alternate monitor/DPI, CRT disabled and controller-unavailable diagnostics.
+  No Setup/trial/device actions were performed.
+  [Implementation/evidence](runtime.md#startup-splash-preview).
 
 Oct22 current result: the image-read ctypes lifetime defect and helper retirement
 proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording

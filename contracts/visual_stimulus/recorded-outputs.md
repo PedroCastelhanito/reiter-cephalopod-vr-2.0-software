@@ -1,5 +1,8 @@
 # Visual Stimulus recorded output images
 
+E04 all-recording-Off dummy test sessions produce no files or recording workers;
+the output requirements below apply to sessions with recording enabled.
+
 Governing rules: [E13](../../docs/architecture/visual_stimulus.md#e13) and
 [V12](../../docs/architecture/visual_stimulus.md#v12). Recording namespace and administrative
 metadata ownership follow E04; trial intervals follow E11. This declares capture,
@@ -59,9 +62,15 @@ when absent use intended-coverage bounds within its viewport. For multiple mappi
 on one output, use their union bounds. Never infer cropping from pixel brightness.
 For four independently mapped screens, place Left–Front–Right across the top, align
 their image bottoms, and center Bottom underneath Front. Preserve each cropped
-aspect ratio and presented orientation, without labels or reserved header space. Other supported
-output topologies use the ordered equal-cell grid. The native viewer fits the whole
-composite within its window. With video Off, preview still uses the configured
+aspect ratio, without labels or reserved header space. Operator presentation mirrors
+Left/Front/Right horizontally and leaves Bottom unmirrored, independently of recording.
+Other supported output topologies use the ordered equal-cell grid. Monitor's Combined
+view samples these tiles onto the prepared screen planes in one GPU rig window,
+undoing operator tile mirrors and applying the protocol rig's Bottom portrait/folded
+mirror placement. Dragging rotates only the inspection camera. Per-projector retains
+separate flat image/instrument pairs with the existing tile sampling. Neither mode
+changes projector geometry, stimulus observer or recording composition.
+With video Off, preview still uses the configured
 review factor and allocates no capture slots, readback or encoder.
 
 Sampling is bilinear with clamping at crop edges. Composite depth is the largest

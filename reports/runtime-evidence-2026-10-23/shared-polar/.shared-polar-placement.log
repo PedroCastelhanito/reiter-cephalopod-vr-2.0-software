@@ -1,0 +1,53 @@
+F
+================================== FAILURES ===================================
+___________________ test_preview_slot_tracks_relevant_tabs ____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001815ED452D0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001815C721240>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001815EDC4B90>
+
+    def test_preview_slot_tracks_relevant_tabs(
+        window: DashboardWindow, app: QApplication, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from cephvr.gui.preview_placement import preview_window_placement
+    
+        camera_key = window.devices.cameras.drafts[0].key
+        window.devices.cameras.drafts[0].enabled = True
+        window.showMaximized()
+        for _ in range(4):
+            app.processEvents()
+        assert window.isMaximized()
+        window.showNormal()
+        monkeypatch.setattr(
+            window.screen(), "availableGeometry", lambda: QRect(0, 0, 1920, 1080)
+        )
+        window.resize(1440, 940)
+        for _ in range(4):
+            app.processEvents()
+        assert not window.preview_slot.isVisible()  # Dashboard hosts it only after Start.
+        show_previews(window)
+        app.processEvents()
+        expanded_log_height = window.dashboard.log_console.height()
+        window.apply_view(
+            replace(window.dashboard.view, previews=(PreviewView(camera_key, "Camera"),))
+        )
+        app.processEvents()
+        opening = preview_window_placement(window, camera_key)
+        assert window.preview_slot.isHidden()
+        assert window.dashboard.log_console.height() == expanded_log_height
+        window.apply_view(
+            replace(
+                window.dashboard.view,
+                previews=(PreviewView(camera_key, "Camera", visible=True),),
+            )
+        )
+        app.processEvents()
+>       assert preview_window_placement(window) == opening
+E       assert x: 292\ny: 562\nside: 262\n == x: 292\ny: 560\nside: 266\n
+E        +  where x: 292\ny: 562\nside: 262\n = <function preview_window_placement at 0x000001815E230D60>(<cephvr.gui.window.DashboardWindow object at 0x000001815ED452D0>)
+
+tests\gui\test_dashboard.py:658: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_preview_slot_tracks_relevant_tabs - ...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 858 deselected in 1.78s

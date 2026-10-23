@@ -18,8 +18,8 @@ in vec2 in_position; in vec2 in_uv; out vec2 uv;
 void main() { uv = in_uv; gl_Position = vec4(in_position, 0, 1); }
 """
 _FRAGMENT = """#version 430
-in vec2 uv; out vec4 color; uniform sampler2D image;
-void main() { color = vec4(texture(image, uv).rgb, 1); }
+in vec2 uv; out vec4 color; uniform sampler2D image; uniform vec4 crop;
+void main() { color = vec4(texture(image, crop.xy + uv * crop.zw).rgb, 1); }
 """
 
 
@@ -40,6 +40,7 @@ class StimulusPreview:
         self.rates = PreviewRateMeter()
         self.pacer = PreviewPacer()
         self.source_count = 0
+        self.crop = (0.0, 0.0, 1.0, 1.0)
 
     def prepare(self, shared_window: Any) -> None:
         glfw = self.glfw
@@ -53,8 +54,14 @@ class StimulusPreview:
             raise RuntimeError("Visual Stimulus preview window creation failed")
         glfw.set_window_size_limits(self.window, 128, 128, 2048, 2048)
         glfw.make_context_current(self.window)
-        self.context = context = attach_window_context(self.moderngl)
+        self.context = attach_window_context(self.moderngl)
         glfw.swap_interval(0)
+        self.prepare_scene()
+        self.clear()
+        self.changed(True, False, "")
+
+    def prepare_scene(self) -> None:
+        context = self.context
         program = context.program(vertex_shader=_VERTEX, fragment_shader=_FRAGMENT)
         self.resources.append(program)
         buffer = context.buffer(struct_quad())
@@ -62,8 +69,6 @@ class StimulusPreview:
         self.resources.append(
             context.vertex_array(program, [(buffer, "2f 2f", "in_position", "in_uv")])
         )
-        self.clear()
-        self.changed(True, False, "")
 
     def set_visible(self, visible: bool, placement: rpc.PreviewWindowPlacement) -> None:
         if not self.window or self.context is None:
@@ -177,6 +182,7 @@ class StimulusPreview:
         context.viewport = ((w - dw) // 2, (h - dh) // 2, dw, dh)
         texture.use(0)
         self.resources[0]["image"].value = 0
+        self.resources[0]["crop"].value = self.crop
         self.resources[2].render(mode=self.moderngl.TRIANGLE_STRIP)
         self.glfw.swap_buffers(self.window)
         self.rates.presented += 1

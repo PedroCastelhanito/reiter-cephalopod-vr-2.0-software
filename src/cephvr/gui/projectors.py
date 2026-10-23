@@ -546,18 +546,14 @@ class ProjectorsPanel(DevicePanel):
             )
             native_bindings: tuple[MonitorBinding, ...] = ()
             issue = (
-                "Stable native display identities are unavailable; assignments "
-                "cannot be submitted until refreshed. CephVR numbers are independent "
-                "of Windows Settings."
+                "CephVR could not identify the connected displays. Click Refresh "
+                "before applying projector assignments. CephVR display numbers "
+                "may differ from Windows display numbers."
             )
             try:
                 native_bindings = active_monitor_bindings()
             except (AttributeError, ImportError, OSError, RuntimeError, ValueError):
-                issue = (
-                    "Stable native display identities are unavailable; "
-                    "assignments cannot be submitted until refreshed. CephVR numbers "
-                    "are independent of Windows Settings."
-                )
+                pass
             display_rows = tuple(
                 DisplayInfo(
                     _stable_display_identity(screen, native_bindings),
@@ -571,8 +567,8 @@ class ProjectorsPanel(DevicePanel):
             displays = display_rows
             if native_bindings:
                 issue = (
-                    "Display IDs use native stable display identities. Compare "
-                    "the layout with Windows Settings; numbers are independent."
+                    "Displays identified. Compare the layout with Windows display "
+                    "settings; CephVR display numbers may differ."
                 )
         else:
             displays = self.review_displays
@@ -669,7 +665,9 @@ class ProjectorsPanel(DevicePanel):
         ]
         if missing:
             self.console.appendPlainText(
-                "Assigned displays unavailable: " + ", ".join(missing)
+                "Assigned projectors not detected: "
+                + ", ".join(missing)
+                + ". Check power and display cables, then click Refresh."
             )
         for control in self.enable_controls.values():
             control.setEnabled(self.can_review)

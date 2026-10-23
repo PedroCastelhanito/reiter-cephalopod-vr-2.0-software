@@ -135,3 +135,48 @@ def test_installed_visual_writer_covers_every_actual_reserved_output(
         "json",
         2,
     )
+
+
+@pytest.mark.parametrize(
+    "selected", ["none", "stimulus", "camera", "tracking", "spikeglx"]
+)
+def test_dummy_session_requires_every_active_recording_selection_off(selected):
+    from cephvr.shared.recording import recording_enabled
+
+    prepared, ready = _prepared_and_ready(save_visual_stimulus_data=False)
+    visual = prepared.configuration.backends[0]
+    visual.CopyFrom(ready["visual_stimulus"].resolved_settings)
+    acquisition = prepared.configuration.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    acquisition.acquisition.behavioral.enabled = True
+    acquisition.acquisition.behavioral.save_video = False
+    acquisition.acquisition.tracking.enabled = False
+    tracking = prepared.configuration.backends.add(
+        backend_name="tracking", enabled=True
+    )
+    tracking.tracking.save_tracking_data = False
+    if selected == "stimulus":
+        visual.visual_stimulus.save_visual_stimulus_data = True
+    elif selected == "camera":
+        acquisition.acquisition.behavioral.save_video = True
+    elif selected == "tracking":
+        tracking.tracking.save_tracking_data = True
+    elif selected == "spikeglx":
+        prepared.configuration.backends.add(
+            backend_name="synchronization", enabled=True
+        )
+    # Disabled sources with stale checked save switches do not make recordings.
+    acquisition.acquisition.eye_tracking.enabled = False
+    acquisition.acquisition.eye_tracking.save_video = True
+    assert recording_enabled(prepared.configuration.backends) == (selected != "none")
+    for name, settings in (("acquisition", acquisition), ("tracking", tracking)):
+        report = pb.ReadyReport.FromString(ready["visual_stimulus"].SerializeToString())
+        report.context.backend.backend_name = name
+        report.resolved_settings.CopyFrom(settings)
+        ready[name] = report
+    ready["visual_stimulus"].resolved_settings.CopyFrom(visual)
+    outputs = plan_outputs(prepared, ready)
+    assert bool(outputs) == (selected != "none")
+    identities = {name: item.context.backend for name, item in ready.items()}
+    assert requested_output_identities(prepared, identities) == outputs

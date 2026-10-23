@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-23",
+  "method": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe benchmark.py",
+  "fixture": "validated1998epoch16panel4layer4surface protocol from prior review",
+  "historical_before_seconds": 2.0643,
+  "after_hidden_seconds": [
+    0.37307450000662357,
+    0.3864839000161737,
+    0.3957026000134647
+  ],
+  "first_open_seconds": [
+    1.9269826000090688,
+    2.030754000064917,
+    1.982812900096178
+  ],
+  "reopen_seconds": [
+    0.15311980003025383,
+    0.15696070005651563,
+    0.14635319996159524
+  ],
+  "hidden_instrument_widgets": [
+    0,
+    0,
+    0
+  ],
+  "projectors": [
+    "Left",
+    "Front",
+    "Right",
+    "Bottom"
+  ],
+  "limits": "Same synthetic fixture, historical single before measurement vs three fresh after measurements; no controlled performance distribution or rig claim."
+}

@@ -329,11 +329,11 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 66
+**Status:** Accepted · **Revision:** 67
 
 **Files**
 
-- Every active experiment camera always saves trial-scoped acquisition metadata to
+- Outside [E04](supervisor.md#e04) dummy test sessions, every active experiment camera saves trial-scoped acquisition metadata to
   `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`,
   `eye_tracking_cam`), independently of video saving. A01 determines camera participation. For an active
   camera, `save_video` controls only

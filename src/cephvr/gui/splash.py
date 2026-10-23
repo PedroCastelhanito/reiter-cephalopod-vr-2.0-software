@@ -165,15 +165,20 @@ class StartupSplash(QSplashScreen):
         QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
     def reveal(self, window: QWidget) -> None:
-        """Polish/layout/paint while hidden, then hand off to the real window."""
-        from cephvr.gui.layouts import show_maximized
-
-        screen = window.screen()
-        if screen is not None:
-            window.resize(screen.availableGeometry().size())
+        """Paint the native maximized surface before making it opaque."""
         window.ensurePolished()
-        window.grab()
-        show_maximized(window)
+        opacity = window.windowOpacity()
+        window.setWindowOpacity(0)
+        try:
+            window.showMaximized()
+            # Constructors are complete: deliver native expose/layout events, then
+            # flush the real backing store rather than rendering a discarded pixmap.
+            QApplication.processEvents(
+                QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents
+            )
+            window.repaint()
+        finally:
+            window.setWindowOpacity(opacity)
         self.finish(window)
         self.timer.stop()
         self.close()

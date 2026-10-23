@@ -36,6 +36,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.shared.recording import recording_enabled
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
@@ -392,6 +393,7 @@ class SetupAdmission:
                 context.session_id,
                 self.generation,
                 anchor,
+                persistent=recording_enabled(effective.backends),
             )
             prepared.session_directory = str(reservation.session_directory)
             attempt = Attempt(context, prepared, reservation, required, {})

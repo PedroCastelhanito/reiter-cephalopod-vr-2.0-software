@@ -650,3 +650,43 @@ async def test_required_tracking_identity_is_checked_before_any_ring_allocation(
             port=None,
             declare_resource=None,
         )
+
+
+def test_dummy_setup_keeps_capture_without_output_or_recording_scope():
+    from cephvr.acquisition.coordinator.prepared_functions import (
+        role_prepared_functions,
+    )
+    from cephvr.acquisition.state import LaunchRecord, WorkerRecord
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+
+    request, configuration, identity = _setup_request()
+    request.settings.acquisition.behavioral.save_video = False
+    request.plan.configuration.backends.add().CopyFrom(request.settings)
+    request.plan.trials.add(
+        context=control.TrialContext(
+            session=request.plan.context, trial_id="trial-1", trial_number=1
+        )
+    )
+    session = validate_setup_request(
+        request, 100, identity=identity, configuration=configuration, clock=lambda: 1
+    )
+    session.confirmed_settings = request.settings.acquisition
+    assert not session.recording_enabled and not session.reserved_outputs
+    worker = WorkerRecord(
+        context=acq.WorkerContext(camera=camera.CAMERA_ROLE_BEHAVIORAL),
+        port=None,
+        launch=LaunchRecord(
+            command_id="launch",
+            work=session.work,
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+            parent_operation=session.operation,
+            planned_ns=1,
+            worker=control.ProcessIdentity(
+                role="camera_behavioral", generation="worker"
+            ),
+            owner=identity.process,
+        ),
+    )
+    scopes = role_prepared_functions(session, "behavioral", worker, identity.process)
+    assert [scope.resource_id for scope in scopes] == ["behavioral.capture"]
+    assert list(scopes[0].affected_closure_resource_ids) == ["behavioral.capture"]

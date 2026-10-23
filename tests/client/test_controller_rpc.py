@@ -255,6 +255,79 @@ async def test_gui_observes_before_explicit_control_claim(
     store.remove_client(principal)
 
 
+async def test_cancelled_gui_observation_closes_watch_and_releases_lease(
+    controller: tuple[int, CredentialStore, ControllerRuntime],
+) -> None:
+    port, store, _runtime = controller
+    principal = store.provision_client("gui")
+    async with loopback_channel(port, 16_777_216) as channel:
+        client = HeadlessClient(channel, principal)
+        observing = asyncio.Event()
+
+        async def observe_until_cancelled() -> None:
+            async with client.observe():
+                await client.claim_control()
+                observing.set()
+                await asyncio.Future()
+
+        release_calls: list[str] = []
+        original_admit = client._admit
+
+        async def record_release(method: str, request: object):
+            if method == "ReleaseControl":
+                release_calls.append(method)
+            return await original_admit(method, request)
+
+        client._admit = record_release  # type: ignore[method-assign]
+        task = asyncio.create_task(observe_until_cancelled())
+        await asyncio.wait_for(observing.wait(), timeout=1)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert not release_calls
+        for _ in range(100):
+            if not (await client.get_snapshot()).control.HasField("holder_client_id"):
+                break
+            await asyncio.sleep(0.01)
+        assert not (await client.get_snapshot()).control.HasField("holder_client_id")
+        assert client._reader is not None and client._reader.done()
+    store.remove_client(principal)
+
+
+async def test_cancel_during_explicit_release_still_closes_watch(
+    controller: tuple[int, CredentialStore, ControllerRuntime],
+) -> None:
+    port, store, _runtime = controller
+    principal = store.provision_client("gui")
+    async with loopback_channel(port, 16_777_216) as channel:
+        client = HeadlessClient(channel, principal)
+        context = client.observe()
+        await context.__aenter__()
+        await client.claim_control()
+        release_started = asyncio.Event()
+        original_admit = client._admit
+
+        async def blocked_release(method: str, request: object):
+            if method == "ReleaseControl":
+                release_started.set()
+                await asyncio.Future()
+            return await original_admit(method, request)
+
+        client._admit = blocked_release  # type: ignore[method-assign]
+        close_task = asyncio.create_task(context.__aexit__(None, None, None))
+        await asyncio.wait_for(release_started.wait(), timeout=1)
+        close_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await close_task
+        assert client._reader is not None and client._reader.done()
+        for _ in range(100):
+            if not (await client.get_snapshot()).control.HasField("holder_client_id"):
+                break
+            await asyncio.sleep(0.01)
+        assert not (await client.get_snapshot()).control.HasField("holder_client_id")
+    store.remove_client(principal)
+
+
 async def test_gui_can_save_current_configuration_history_on_close(
     controller: tuple[int, CredentialStore, ControllerRuntime], tmp_path: Path
 ) -> None:

@@ -12,6 +12,8 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from cephvr.visual_stimulus.config.categories import Category, validate_category
+
 from .authoring import SubgroupDraft
 from .parameter_catalogue import ConditionUnit, InputUnit, validate_settings_units
 from .repetition import RepetitionRule
@@ -515,6 +517,7 @@ def refs(value: object) -> Iterator[Ref]:
 
 class Program(Model):
     format_version: Version2
+    category: Category | None = None
     assets: tuple[Asset, ...]
     instances: tuple[Instance, ...]
     scenes: Annotated[tuple[Scene, ...], Field(min_length=1)]
@@ -524,6 +527,7 @@ class Program(Model):
 
     @model_validator(mode="after")
     def references(self) -> Self:
+        validate_category(self)
         for xs in (
             [x.asset_id for x in self.assets],
             [x.instance_id for x in self.instances],
@@ -591,7 +595,8 @@ class Program(Model):
                 from cephvr.visual_stimulus.config.texture_links import validate_links
 
                 for settings in settings_sets:
-                    validate_links(settings)
+                    if self.category != "media_presentation":
+                        validate_links(settings)
                     ids = [x.instance_id for x in settings]
                     unique(ids)
                     if set(ids) != active:

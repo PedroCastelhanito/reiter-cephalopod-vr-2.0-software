@@ -115,3 +115,23 @@ The [canonical model/generated schema and family vocabulary](stimulus-schema.md)
 bind source types, coordinates and compatibility; [compiler interfaces](preparation_types.pyi)
 consume them. Runtime expansion/semantic preparation remains implementation work.
 Runtime/GPU/rig verification is separate from declaration validation.
+
+## Protocol category
+
+The optional `category` is `media_presentation`, `texture_drift` or `navigation_3d`.
+All trial sources in one protocol must agree. Omitted/null preserves unclassified
+legacy sources; classification is explicit and never rewrites executable settings.
+V02 governs capability checks in the canonical model, including repetition settings
+and rules. Presentation keeps fixed placement, video playback, overlays and opacity
+fades but rejects time-varying layer motion/size/texture spacing and motion feedback.
+Saved `linked_to` values are retained as inactive source metadata in Presentation;
+link validation is skipped and compiled settings clear the link before preparation
+and rendering. Navigation retains one arena with 2D overlays and arena-free epochs.
+
+GUI protocol snapshots may include `category_templates`, keyed by the three category
+identifiers. Each holds `trials` and `selected_trial` with the same validation as the
+active schedule; all template trials must match their key. Templates are local editing
+content and are not submitted as additional controller trials. Older snapshots without
+templates remain valid. Switching restores the last template; a first visit inherits
+compatible content or starts blank, preserving the previous content in its compatible
+template. Control mode and asset root remain shared.

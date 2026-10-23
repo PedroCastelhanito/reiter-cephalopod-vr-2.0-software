@@ -933,6 +933,53 @@ def test_old_launcher_without_endpoint_requires_manual_shutdown(tmp_path) -> Non
         _existing_endpoint(root)
 
 
+@pytest.mark.parametrize(
+    "failure", [None, "OpenEventW failed: 2", "OpenEventW failed: 5"]
+)
+def test_gui_reopen_uses_exact_event_and_reports_unreachable_launcher(
+    monkeypatch, tmp_path, failure, capsys
+):
+    from cephvr.launcher import main as launcher
+    from cephvr.launcher import replacement
+    from cephvr.platform.windows.events import NativeEventError, event_name
+
+    record = replacement.LauncherEndpoint(
+        str(uuid4()), str(uuid4()), str(uuid4()), S, str(uuid4())
+    )
+    monkeypatch.setattr(replacement, "_existing_endpoint", lambda root: record)
+    opened = []
+    event = ReplacementEvent()
+
+    def open_event(name, allocation):
+        opened.append((name, allocation))
+        if failure:
+            raise NativeEventError(failure)
+        return event
+
+    monkeypatch.setattr(replacement.AutoResetEvent, "open", open_event)
+    monkeypatch.setattr(launcher.sys, "platform", "win32")
+    monkeypatch.setattr(launcher.sys, "argv", ["launcher", "--reopen-gui"])
+    monkeypatch.setattr(
+        launcher,
+        "run_launcher",
+        lambda **_: pytest.fail("reopen started a new runtime"),
+    )
+    if failure:
+        with pytest.raises(SystemExit) as outcome:
+            launcher.main()
+        assert outcome.value.code == 2
+        message = capsys.readouterr().err
+        assert failure in message and "without --reopen-gui" in message
+        assert "Traceback" not in message and not event.signaled
+    else:
+        launcher.main()
+        assert event.signaled
+    assert len(opened) == 1
+    name, allocation = opened[0]
+    assert str(allocation) == record.gui_relaunch_event_id
+    assert name == event_name(allocation)
+
+
 def test_project_launcher_no_tracking_is_explicit_and_cannot_reopen_existing_runtime(
     tmp_path,
 ):
@@ -963,3 +1010,82 @@ def test_runtime_gui_script_rejects_changing_roles_on_reopen(tmp_path):
     )
     assert result.returncode == 2
     assert "fresh application launch" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "failure", [None, RuntimeError("launch probe"), KeyboardInterrupt()]
+)
+def test_launcher_diagnostics_flushes_identity_triggers_and_exit(
+    tmp_path, monkeypatch, failure
+):
+    import json
+    import os
+
+    from cephvr.launcher import diagnostics
+
+    fault_calls = []
+    monkeypatch.setattr(diagnostics.faulthandler, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        diagnostics.faulthandler, "enable", lambda **_: fault_calls.append("enabled")
+    )
+    monkeypatch.setattr(
+        diagnostics.faulthandler, "disable", lambda: fault_calls.append("disabled")
+    )
+    controller, supervisor = str(uuid4()), str(uuid4())
+    log = diagnostics.LauncherDiagnostics(tmp_path, controller, supervisor)
+
+    def run():
+        with log:
+            first = json.loads(log.path.read_text().splitlines()[0])
+            assert first["pid"] == os.getpid() and first["parent_pid"] == os.getppid()
+            assert first["controller_generation"] == controller
+            assert first["supervisor_generation"] == supervisor
+            log.record("shutdown_requested", channel="controller", deadline_ns=123)
+            rows = [json.loads(line) for line in log.path.read_text().splitlines()]
+            assert rows[-1]["deadline_ns"] == 123
+            if failure is not None:
+                raise failure
+
+    if failure is None:
+        run()
+    else:
+        with pytest.raises(type(failure)) as raised:
+            run()
+        assert raised.value is failure
+    text = log.path.read_text()
+    rows = [json.loads(line) for line in text.splitlines() if line.startswith("{")]
+    assert rows[-1]["event"] == "launcher_exit"
+    assert rows[-1]["outcome"] == ("exception" if failure is not None else "returned")
+    assert all(row["monotonic_ns"] > 0 and row["utc"] for row in rows)
+    if failure is not None:
+        assert type(failure).__name__ in text
+    assert fault_calls == ["enabled", "disabled"]
+
+
+def test_launcher_diagnostics_preserves_existing_fault_handler_and_io_failures(
+    tmp_path, monkeypatch, capsys
+):
+    from cephvr.launcher import diagnostics
+
+    monkeypatch.setattr(diagnostics.faulthandler, "is_enabled", lambda: True)
+    monkeypatch.setattr(
+        diagnostics.faulthandler, "enable", lambda **_: pytest.fail("handler replaced")
+    )
+    monkeypatch.setattr(
+        diagnostics.faulthandler, "disable", lambda: pytest.fail("handler disabled")
+    )
+    with diagnostics.LauncherDiagnostics(tmp_path, str(uuid4()), str(uuid4())) as log:
+        assert log.stream is not None
+        log.stream.close()
+        log.record("unwritable")
+
+    def unavailable(*_):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(diagnostics, "_ensure_directory", unavailable)
+    failure = RuntimeError("original cleanup failure")
+    with pytest.raises(RuntimeError) as raised:
+        with diagnostics.LauncherDiagnostics(tmp_path, str(uuid4()), str(uuid4())):
+            raise failure
+    assert raised.value is failure
+    assert "disk unavailable" in capsys.readouterr().err

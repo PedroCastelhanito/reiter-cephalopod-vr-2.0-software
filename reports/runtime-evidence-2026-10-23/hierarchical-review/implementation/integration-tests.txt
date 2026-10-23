@@ -1,0 +1,5 @@
+2026-10-23, dirty source; QT_QPA_PLATFORM=offscreen
+.venv/Scripts/python.exe -u -m pytest tests/gui/test_preview_timeline.py tests/gui/test_dashboard.py tests/client -q -m 'not windows and not rig' -k 'bridge or preview or client' --timeout=30 --timeout-method=thread
+266 passed, 723 deselected in 84.55s (0:01:24)
+
+Final owning preview module after explicit Advanced/nonempty assertions: 91 passed in1.40s (Luna run).

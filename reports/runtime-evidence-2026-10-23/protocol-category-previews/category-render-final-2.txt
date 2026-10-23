@@ -1,0 +1,13 @@
+................................................F.................... [ 55%]
+.......................................................                  [100%]
+================================== FAILURES ===================================
+_________ test_native_trial_skips_source_only_recipe_image_dependency _________
+tests\visual_stimulus\test_rendering.py:1138: in test_native_trial_skips_source_only_recipe_image_dependency
+    port.prepare_trial(artifact, resources)
+src\cephvr\visual_stimulus\rendering\native.py:403: in prepare_trial
+    self.preview.update_layout(self._review_layout)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'update_layout'
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_rendering.py::test_native_trial_skips_source_only_recipe_image_dependency
+1 failed, 123 passed, 1 deselected, 3 subtests passed in 1.32s

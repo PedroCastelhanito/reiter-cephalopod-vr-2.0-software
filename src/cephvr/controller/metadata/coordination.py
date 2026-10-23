@@ -284,6 +284,8 @@ class MetadataCoordinator:
         outcome: str | None = None,
         details: dict[str, object] | None = None,
     ) -> None:
+        if not attempt.reservation.persistent:
+            return
         await self.persist(
             attempt,
             "SESSION_LOG.jsonl",

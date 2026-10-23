@@ -218,7 +218,13 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 180
+**Status:** Accepted · **Revision:** 182
+
+- Stimulus preview placement may carry up to four unique logical projector targets
+  with bounded desktop geometry; absent targets selects Combined. Reuse the existing
+  authenticated lease/session/configuration/process scopes, 256-byte placement bound,
+  owner identity and visibility reports. Camera placement rejects stimulus targets.
+  V01 owns window/resource behavior; no frame pixels cross the control transport.
 
 - Optional PreviewRates travel through existing exact-run camera visibility and exact-
   session stimulus preview state, approximately once per second. Source FPS measures
@@ -266,6 +272,13 @@ design; runtime monitoring remains unimplemented.
   its handle; launcher failure also triggers kill-on-close. The
   [Windows launch contract](../../contracts/windows-launch.md) binds creation-time
   containment, job mechanics, partial-child identification and typed registration.
+- The launcher keeps a best-effort owner-private `diagnostics/launcher-<controller-generation>.log`
+  under the runtime root, recording start/parent identity, sparse shutdown causes,
+  deadlines, cleanup/exit and Python exceptions; install native fault output there
+  only if no handler already exists. Do not dump credentials or bootstrap payloads.
+  Diagnostic failures do not replace exceptions or alter containment. A missing
+  final record can indicate an abrupt exit, not its killer or verified cleanup;
+  E04's exact exit receipt remains authoritative. No automatic log cleanup.
 - Controller-owned one-shot native Configuration helpers cover A11's sequential
   Arduino CLI compilation/upload and G01's explicit projector brightness adjustment.
   Each is planned with its exact parent operation, original deadline and no

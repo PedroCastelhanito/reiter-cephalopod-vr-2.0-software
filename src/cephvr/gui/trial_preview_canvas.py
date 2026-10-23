@@ -82,6 +82,7 @@ class PreviewCanvas(QWidget):
         self, face: str, media: PreviewMedia, geometry: PreviewGeometry
     ) -> None:
         super().__init__()
+        self.setObjectName("TrialPreviewPixels")
         self.face, self.media, self.rig_geometry = face, media, geometry
         self.layers: tuple[PreviewLayer, ...] = ()
         self.background = QColor("black")

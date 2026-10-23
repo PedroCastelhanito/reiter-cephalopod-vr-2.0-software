@@ -100,6 +100,28 @@ class VideoTransitionTests(unittest.TestCase):
             ["initialize", "pause", "resume", "restart_incompatible", "deactivate"],
         )
 
+    def test_media_links_are_preserved_in_source_but_not_executed(self):
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        hold = {"kind": "hold"}
+        setting.update(
+            linked_to="unused_reference",
+            motion={axis: hold for axis in ("x", "y", "rotation")},
+            phase_x=hold,
+            phase_y=hold,
+            width={"kind": "constant", "value": 10},
+            height={"kind": "constant", "value": 10},
+            feedback=[],
+        )
+        encoded = json.dumps(source)
+        program = make_program(encoded)
+        self.assertEqual(program.sequence[0].settings[0].linked_to, "unused_reference")
+        plan = make_prepared_trial(encoded)
+        self.assertTrue(
+            all(s.linked_to is None for epoch in plan.epochs for s in epoch.settings)
+        )
+
 
 class DurationResolutionTests(unittest.TestCase):
     def test_large_stafford_workspace_is_reserved_before_allocation(self) -> None:

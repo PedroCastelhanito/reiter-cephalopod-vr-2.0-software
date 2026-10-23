@@ -1,5 +1,7 @@
 """Canonical protocol selection, transactions and history for the unified editor."""
 
+from dataclasses import replace
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
 
@@ -17,7 +19,7 @@ from cephvr.gui.protocol_batches import (
 from cephvr.gui.protocol_controls import PlannerControls
 from cephvr.gui.protocol_document import TrialDraft, blank_program, review_program
 from cephvr.gui.protocol_groups import make_group
-from cephvr.gui.protocol_history import EditHistory, Selection
+from cephvr.gui.protocol_history import EditHistory, Selection, restored_programs
 from cephvr.gui.protocol_nodes import edit_epoch
 from cephvr.gui.protocol_timeline import ProgramTimeline
 from cephvr.gui.subgroup_structure import edit_subgroup
@@ -311,9 +313,31 @@ class ProtocolEditor(PlannerControls):
         if self.group_editor.dirty:
             self.render_selection()
             return
-        state = self.histories[self.index].travel(self.snapshot(), redo)
+        history = self.histories[self.index]
+        entries = history.future if redo else history.past
+        if not entries:
+            return
+        target = entries[-1]
+        current = self.snapshot()
+        categories = target.protocol_categories
+        try:
+            programs = restored_programs(
+                tuple(draft.program for draft in self.drafts), self.index, target
+            )
+        except ValueError as error:
+            self.error(error)
+            return
+        if categories:
+            current = replace(
+                current,
+                protocol_categories=tuple(
+                    draft.program.category for draft in self.drafts
+                ),
+            )
+        state = history.travel(current, redo)
         if state:
-            self.drafts[self.index].program = state.program
+            for draft, program in zip(self.drafts, programs, strict=True):
+                draft.program = program
             self.drafts[self.index].arena_boundaries_json = state.arena_boundaries_json
             self.scope, self.node_index, self.selected_paths = (
                 state.scope,
@@ -463,7 +487,12 @@ class ProtocolEditor(PlannerControls):
                 self.index -= 1
             if not self.drafts:
                 self.drafts.append(
-                    TrialDraft("Trial 1", grouped_program(blank_program()))
+                    TrialDraft(
+                        "Trial 1",
+                        grouped_program(blank_program()).model_copy(
+                            update={"category": draft.program.category}
+                        ),
+                    )
                 )
                 self.histories.append(EditHistory())
             self.index = min(self.index, len(self.drafts) - 1)
@@ -510,7 +539,10 @@ class ProtocolEditor(PlannerControls):
         while f"Trial {number}" in {draft.name for draft in self.drafts}:
             number += 1
         name = f"Trial {number}"
-        self.drafts.append(TrialDraft(name, grouped_program(blank_program())))
+        program = grouped_program(blank_program()).model_copy(
+            update={"category": self.program.category}
+        )
+        self.drafts.append(TrialDraft(name, program))
         self.histories.append(EditHistory())
         self.trials.addItem(name)
         self.trials.setCurrentRow(len(self.drafts) - 1)

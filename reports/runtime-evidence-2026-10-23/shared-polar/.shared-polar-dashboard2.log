@@ -1,0 +1,60 @@
+..........F
+================================== FAILURES ===================================
+___ test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[830] ___
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000028C13B90040>, height = 830
+
+    @pytest.mark.parametrize("height", [830, 1000])
+    def test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom(app, height):
+        from cephvr.gui.preview_placement import slot_preview_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.visual_stimulus.config.models.program_model import Hold
+    
+        workspace = PreviewWorkspace(None)
+        workspace.resize(1600, height)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Front", "Left", "Right", "Bottom"))
+        program = blank_program()
+        for face in ("Front", "Left", "Right", "Bottom"):
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        epoch = program.sequence[0]
+        settings = list(epoch.settings)
+        hold = Hold(kind="hold")
+        bottom = settings[-1]
+        settings[-1] = bottom.model_copy(
+            update={
+                "phase_x": hold,
+                "phase_y": hold,
+                "motion": bottom.motion.model_copy(
+                    update={"x": hold, "y": hold, "rotation": hold}
+                ),
+            }
+        )
+        program = program.model_copy(
+            update={
+                "category": "texture_drift",
+                "sequence": (epoch.model_copy(update={"settings": tuple(settings)}),),
+            }
+        )
+        timeline.set_program(program, "", "Static Bottom")
+        workspace.set_advanced_visible(True, persist=False)
+        timeline.set_playback(0.5, running=False)
+        stimulus = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((stimulus,), allowed=True)
+        workspace.show()
+        app.processEvents()
+        assert workspace.preview_host.isHidden()
+        assert workspace.details.width() >= workspace.splitter.width() - 2
+        combined_side = area.frames[""].target.width()
+>       assert combined_side >= (350 if height == 1000 else 250)
+E       assert 196 >= 250
+
+tests\gui\test_dashboard.py:23362: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[830]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 10 passed, 846 deselected in 9.55s

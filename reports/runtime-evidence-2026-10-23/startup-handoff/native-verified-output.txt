@@ -1,0 +1,15 @@
+Windows fatal exception: code 0x8001010d
+
+Current thread 0x00004798 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-23\startup-handoff\native_probe.py", line 90 in <module>
+launch standard
+splash standard
+revealed standard 3
+launch retro_console
+splash retro_console
+revealed retro_console 3
+launch amber_phosphor
+splash amber_phosphor
+revealed amber_phosphor 3
+launch None
+event loop exited 0

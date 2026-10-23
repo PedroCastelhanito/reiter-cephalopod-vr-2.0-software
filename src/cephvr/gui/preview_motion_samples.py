@@ -48,7 +48,9 @@ class SourcePanel:
 class InstrumentPlan(PlannedStates):
     """Per-source instrument choices and samples over one trial's planned state."""
 
-    def panel(self, source: MotionSource, color: str) -> SourcePanel:
+    def panel(
+        self, source: MotionSource, color: str, *, prepare: bool = True
+    ) -> SourcePanel:
         settings = [s for s in source.settings if s is not None and not follower(s)]
         arena = any(s.kind == "arena" for s in settings)
         panel = SourcePanel(
@@ -59,6 +61,14 @@ class InstrumentPlan(PlannedStates):
             not arena and any(s.feedback for s in settings),
             (False, False) if arena else size_functions_vary(source.settings),
         )
+        if prepare:
+            self.prepare_panel(panel)
+        return panel
+
+    def prepare_panel(self, panel: SourcePanel) -> None:
+        """Prepare full-trial scales and arena paths for visible instruments."""
+        source = panel.source
+        arena = panel.arena
         speeds, turns = [0.0], [0.0]
         for index, epoch in enumerate(self.epochs):
             for step in range(SCALE_SAMPLES + 1):
@@ -71,7 +81,6 @@ class InstrumentPlan(PlannedStates):
         panel.scale, panel.rotation_scale = max(speeds), max(turns)
         if arena:
             panel.path, panel.extent = self.arena_path(source)
-        return panel
 
     def arena_path(
         self, source: MotionSource

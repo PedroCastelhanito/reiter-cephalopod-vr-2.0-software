@@ -123,9 +123,14 @@ def test_session_camera_demand_preserves_operator_choices_and_output_plan(
             for name in ("acquisition", "visual_stimulus")
         },
     )
-    assert {p.output_tag for p in plans if p.backend.backend_name == "acquisition"} == {
-        f"{r}_cam_frames" for r in expected
-    } | {f"{r}_cam" for r in saved}
+    expected_files = (
+        {f"{r}_cam_frames" for r in expected} | {f"{r}_cam" for r in saved}
+        if saved
+        else set()
+    )
+    assert {
+        p.output_tag for p in plans if p.backend.backend_name == "acquisition"
+    } == expected_files
     record = SessionRecord(
         work=pb.WorkContext(session=session),
         operation=pb.OperationContext(command_id=_id()),

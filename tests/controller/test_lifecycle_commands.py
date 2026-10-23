@@ -975,3 +975,74 @@ async def test_completed_session_keeps_explicit_new_session(tmp_path, monkeypatc
     assert final.session.context == attempt.context
     assert final.session.cleanup_confirmed
     assert final.session.outcome == pb.SESSION_OUTCOME_COMPLETED
+
+
+@pytest.mark.parametrize("interrupted", [False, True])
+async def test_dummy_start_and_finalization_write_no_session_files(
+    tmp_path, monkeypatch, interrupted
+):
+    from types import SimpleNamespace
+
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    attempt.reservation.persistent = False
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session = pb.SessionState(
+        phase=pb.SESSION_PHASE_STARTING, context=attempt.context
+    )
+    command_id = _operation(runtime, attempt, "StartSession")
+    registrations = []
+
+    async def register(request):
+        registrations.append(request)
+        return svc.RegistrationReceipt(
+            admission=pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED),
+            registered=request.context,
+        )
+
+    async def trials(current):
+        assert current.activated
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError(
+            "dummy run must not initialize disk writers or query disk space"
+        )
+
+    monkeypatch.setattr(
+        runtime.start,
+        "supervisor",
+        SimpleNamespace(register_context=register),
+    )
+    monkeypatch.setattr(runtime.start, "schema_factory", forbidden)
+    monkeypatch.setattr(runtime.trials, "run_trials", trials)
+    monkeypatch.setattr(runtime.metadata, "persist", forbidden)
+    assert (
+        await runtime.setup_execution._reserve_output(attempt, command_id, 10000)
+        == 10000
+    )
+    await runtime.start.run_start(attempt, command_id)
+    await drain_runtime_tasks(runtime)
+    assert (
+        attempt.activated
+        and runtime.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
+    )
+    assert len(registrations) == 1 and not registrations[0].context.outputs
+    assert attempt.writer is None and not attempt.closure.metadata_written
+    plan = attempt.prepared.trials.add()
+    await runtime.trial_logs.start_trial_log(attempt, plan)
+    if interrupted:
+        assert await runtime.trial_logs.finish_interrupted_trial(attempt)
+    else:
+        await runtime.trial_logs.finish_normal_trial_log(attempt, plan)
+    assert await runtime.metadata.finish_session(
+        attempt,
+        outcome="interrupted" if interrupted else "completed",
+        deadline_ns=10000,
+    )
+    attempt.reservation.complete()
+    attempt.reservation.cancel()
+    assert not attempt.reservation.held
+    assert not list(tmp_path.iterdir())

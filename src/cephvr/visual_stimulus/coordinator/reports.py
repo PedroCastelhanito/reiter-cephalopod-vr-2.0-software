@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.recording import recording_enabled
 from cephvr.shared.software import software_version
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
@@ -390,7 +391,10 @@ class Reports:
             payload.cleanup_resources.extend(self.state.resources)
             payload.software_version = software_version()
             self.state.sealed = True
-        if kind == "finished":
+        if kind == "finished" and (
+            self.state.setup is None
+            or recording_enabled(self.state.setup.plan.configuration.backends)
+        ):
             recipe = self.state.recipe_results.get(work.trial.trial_id)
             if recipe is None:
                 raise ValueError("stimulus log closure not yet established")

@@ -100,7 +100,7 @@ class DashboardWindow(QMainWindow):
             sample=sample, settings=settings, review=device_review
         )
         for index, section in ((0, self.dashboard), (2, self.devices)):
-            section.rail.setFixedWidth(SIZES.sidebar_width - 40)
+            section.rail.setFixedWidth(SIZES.sidebar_width - 56)
             section.rail.setIconSize(QSize(16, 16))
             section.rail.setFixedHeight(40 * len(section.rail.devices))
             sidebar_layout.insertWidget(
@@ -108,7 +108,9 @@ class DashboardWindow(QMainWindow):
                 section.rail,
                 alignment=Qt.AlignmentFlag.AlignRight,
             )
-        self.stack.currentChanged.connect(self.refresh_side_navigation)
+            section.rail.chosen.connect(
+                lambda _device, _section, page=index: self.page_buttons[page].click()
+            )
         self.recordings = RecordingsCard(
             self.devices.cameras, self.devices.spikeglx.pairing
         )
@@ -202,9 +204,8 @@ class DashboardWindow(QMainWindow):
 
     def refresh_side_navigation(self) -> None:
         for index, section in ((0, self.dashboard), (2, self.devices)):
-            section.rail.setVisible(
-                section.side_rail and self.stack.currentIndex() == index
-            )
+            section.rail.setVisible(section.side_rail)
+            section.rail.set_navigation_active(self.stack.currentIndex() == index)
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         self.tracking.annotation.close()
@@ -219,6 +220,7 @@ class DashboardWindow(QMainWindow):
     def select_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
         self.page_title.setText(PAGES[index].upper())
+        self.refresh_side_navigation()
         self.update_preview_slot()
 
     def update_backend_indicators(self) -> None:
@@ -255,6 +257,8 @@ class DashboardWindow(QMainWindow):
             assert isinstance(column, QVBoxLayout)
             column.addWidget(self.preview_slot, 1)
         sources = self.dashboard.view.previews
+        if embedded:
+            sources = tuple(source for source in sources if source.key != "stimulus")
         if embedded:
             sources = tuple(
                 source
@@ -322,6 +326,9 @@ class DashboardWindow(QMainWindow):
             geometry = None
         timeline.set_program(
             draft.exported_program, draft.stimulus_seed_decimal, draft.name, geometry
+        )
+        self.dashboard.preview_workspace.stimulus_area.set_projectors(
+            editor.timeline.screens
         )
         timeline.set_playback(
             view.elapsed_s if view.connected or view.sample else None,

@@ -17,6 +17,7 @@ from uuid import uuid4
 from cephvr.control.v1 import types_pb2 as control_types
 from cephvr.controller.configuration import load_controller_configuration
 from cephvr.launcher.decisions import LOST_KEY, LauncherDecisions
+from cephvr.launcher.diagnostics import LauncherDiagnostics
 from cephvr.launcher.gui_relaunch import (
     GuiLaunchRegistration,
     GuiRelaunchCoordinator,
@@ -127,6 +128,9 @@ def run_launcher(
         acquire_application_guard(
             default_runtime_root(), endpoint_wait_ns=startup.silence_timeout_ns
         ),
+        LauncherDiagnostics(
+            default_runtime_root(), controller_generation, supervisor_generation
+        ) as diagnostics,
         ExitStack() as resources,
     ):
         application_job = native.create_application_job()
@@ -170,6 +174,11 @@ def run_launcher(
                 native.terminate_exact(child.pid, child.creation_time_100ns)
                 raise WindowsLaunchError("supervisor not contained at creation")
             native.resume(child)
+            diagnostics.record(
+                "supervisor_launched",
+                pid=child.pid,
+                creation_time_100ns=child.creation_time_100ns,
+            )
             close_handle(bootstrap_read)
             close_handle(control_write)
             close_handle(controller_control_write)
@@ -301,6 +310,7 @@ def run_launcher(
                 if decisions.shutdown_deadline_ns is not None:
                     gui_relaunch_dispatcher.shutdown()
                 if replacement.requested():
+                    diagnostics.record("operator_replacement")
                     sys.stderr.write(
                         "Operator confirmed runtime replacement; terminating application job.\n"
                     )
@@ -311,10 +321,19 @@ def run_launcher(
                     bootstrap_seen = True
                     decisions.bootstrap_finished(now, ok=not bootstrap_error)
                     if bootstrap_error:
+                        diagnostics.record(
+                            "bootstrap_failed", error=str(bootstrap_error[0])
+                        )
                         sys.stderr.write(
                             f"CephVR launcher bootstrap write failed: {bootstrap_error[0]!r}\n"
                         )
+                prior_deadline = decisions.shutdown_deadline_ns
                 decisions.tick(now)
+                if decisions.shutdown_deadline_ns != prior_deadline:
+                    diagnostics.record(
+                        "registration_timeout",
+                        deadline_ns=decisions.shutdown_deadline_ns,
+                    )
                 for _ in range(64):
                     try:
                         note = notifications.get_nowait()
@@ -353,12 +372,22 @@ def run_launcher(
                         channel = str(note.get("_channel"))
                         reason = str(note.get(LOST_KEY))
                         decisions.on_channel_lost(now, channel, reason)
+                        diagnostics.record(
+                            "channel_lost", channel=channel, reason=reason
+                        )
                         # The controller reason also goes into the exit receipt.
                         sys.stderr.write(
                             f"CephVR launcher {channel} channel lost: {reason}\n"
                         )
                     elif kind == "shutdown":
+                        prior_deadline = decisions.shutdown_deadline_ns
                         decisions.on_shutdown(now, note)
+                        if decisions.shutdown_deadline_ns != prior_deadline:
+                            diagnostics.record(
+                                "shutdown_requested",
+                                channel=note.get("_channel"),
+                                deadline_ns=decisions.shutdown_deadline_ns,
+                            )
                 if relaunch_requested:
                     if decisions.shutdown_deadline_ns is not None:
                         sys.stderr.write(
@@ -385,10 +414,14 @@ def run_launcher(
                         else:
                             pass
                 if not native.process_running(child.pid, child.creation_time_100ns):
+                    if decisions.shutdown_deadline_ns is None:
+                        diagnostics.record("supervisor_exited")
                     decisions.arm(now)
                 if decisions.controller is not None and not native.process_running(
                     *decisions.controller
                 ):
+                    if decisions.shutdown_deadline_ns is None:
+                        diagnostics.record("controller_exited")
                     decisions.arm(now)
                 if decisions.shutdown_deadline_ns is not None:
                     try:
@@ -396,8 +429,13 @@ def run_launcher(
                     except WindowsLaunchError:
                         shutdown_members = None
                     if shutdown_members == []:
+                        diagnostics.record("application_job_empty")
                         return
                     if now >= decisions.shutdown_deadline_ns:
+                        diagnostics.record(
+                            "shutdown_backstop",
+                            deadline_ns=decisions.shutdown_deadline_ns,
+                        )
                         native.terminate_job(application_job)
                         _retain_until_empty(
                             native,
@@ -408,6 +446,13 @@ def run_launcher(
                         return
                 time.sleep(0.1)
         finally:
+            error = sys.exception()
+            diagnostics.record(
+                "cleanup_started",
+                exception_type=type(error).__name__ if error is not None else None,
+                error=str(error) if error is not None else None,
+                deadline_ns=decisions.shutdown_deadline_ns if decisions else None,
+            )
             _retain_until_empty(
                 native,
                 application_job,
@@ -431,6 +476,7 @@ def run_launcher(
                         ),
                     )
                 )
+                diagnostics.record("exit_receipt_written")
             finally:
                 native.close_launch_job(application_job)
 

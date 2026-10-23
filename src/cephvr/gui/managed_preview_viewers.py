@@ -70,7 +70,8 @@ class ManagedPreviewViewers:
             return
         if not self.queue_camera(role, kind, **options):
             self.cameras.console.appendPlainText(
-                "Preview was not sent: camera command pending or controller unavailable."
+                "Preview request was not sent. Wait for the current camera action "
+                "to finish and the controller to connect, then try again."
             )
 
     def snap(self, key: str) -> None:
@@ -96,7 +97,8 @@ class ManagedPreviewViewers:
                 placement=hint.SerializeToString(),
             ):
                 self.cameras.console.appendPlainText(
-                    "Preview snap was not sent: camera command pending or controller unavailable."
+                    "Preview position was not changed. Wait for the current camera "
+                    "action to finish and the controller to connect, then try again."
                 )
         except Exception as exc:
             self.cameras.console.appendPlainText(f"Preview snap failed: {exc}")

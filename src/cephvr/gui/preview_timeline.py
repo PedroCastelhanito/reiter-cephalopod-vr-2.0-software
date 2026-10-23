@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.preview_grouping import combined_panels, shared_panel_groups
 from cephvr.gui.preview_motion_data import (
     DialSample,
     MotionEpoch,
@@ -27,6 +28,7 @@ from cephvr.gui.preview_motion_data import (
 from cephvr.gui.preview_motion_dial import (
     MapSample,
     MotionDial,
+    SharedMotionDial,
     WorldMap,
     rotation_text,
     vector_text,
@@ -85,12 +87,14 @@ def size_at(setting: Settings, axis: int) -> Callable[[int], float]:
 
 class StimulusTimeline(QWidget):
     cards_changed = pyqtSignal()
+    instruments_changed = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
         # Operator-hidden projector sections; names survive card rebuilds.
         self.hidden_projectors: set[str] = set()
         self.projector_cards: dict[str, QWidget] = {}
+        self.active_sources: set[str] = set()
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.body.setSpacing(10)
@@ -157,6 +161,12 @@ class StimulusTimeline(QWidget):
         self.headings: list[ProjectorHeading] = []
         self.sources: tuple[MotionSource, ...] = ()
         self.panels: list[SourcePanel] = []
+        self.all_panels: list[SourcePanel] = []
+        self.instruments_prepared = False
+        self.combined = True
+        self.merge_directions = False
+        self.shared_dials: dict[tuple[str, str], SharedMotionDial] = {}
+        self.shared_faces: set[str] = set()
         self.plan = InstrumentPlan(())
         self.dials: list[MotionDial] = []
         self.maps: list[WorldMap] = []
@@ -199,7 +209,10 @@ class StimulusTimeline(QWidget):
 
     def set_advanced(self, advanced: bool) -> None:
         """Show or hide every dial, map and size lane without changing the plan."""
+        newly_visible = advanced and not self.advanced
         self.advanced = advanced
+        if newly_visible:
+            self.rebuild_instruments()
         self.motion_section.setVisible(advanced)
         self.dial_area.setVisible(advanced)
         self.refresh()
@@ -231,6 +244,8 @@ class StimulusTimeline(QWidget):
         self.program = None
         self.sources = ()
         self.panels = []
+        self.all_panels = []
+        self.instruments_prepared = False
         self.plan = InstrumentPlan(())
         self.epoch_timeline.epochs = self.size_lane.epochs = ()
         self.epoch_timeline.message = message
@@ -260,11 +275,26 @@ class StimulusTimeline(QWidget):
             self.epoch_timeline.message = str(error)
         for index, source in enumerate(self.sources):
             color = COLORS[index % len(COLORS)]
-            self.panels.append(self.plan.panel(source, color))
+            if program.category != "media_presentation":
+                self.all_panels.append(self.plan.panel(source, color, prepare=False))
         self.rebuild_instruments()
         self.refresh()
 
     def rebuild_instruments(self) -> None:
+        if self.advanced and not self.instruments_prepared:
+            for panel in self.all_panels:
+                self.plan.prepare_panel(panel)
+            self.instruments_prepared = bool(self.all_panels)
+        for shared_dial in self.shared_dials.values():
+            shared_dial.hide()
+            shared_dial.deleteLater()
+        self.shared_dials = {}
+        self.shared_faces = set()
+        self.panels = (
+            combined_panels(self.all_panels)
+            if self.combined and not self.merge_directions
+            else self.all_panels
+        )
         while self.cards.count():
             item = self.cards.takeAt(0)
             widget = item.widget() if item is not None else None
@@ -278,7 +308,7 @@ class StimulusTimeline(QWidget):
         self.dials, self.maps = [], []
         self.headings = []
         groups: dict[str, tuple[ProjectorHeading, list[QWidget]]] = {}
-        for panel in self.panels:
+        for panel in self.panels if self.advanced else ():
             instruments: list[QWidget] = []
             if panel.arena:
                 world = WorldMap()
@@ -295,32 +325,60 @@ class StimulusTimeline(QWidget):
                 groups[name] = (heading, [])
             # One card owns every layer's instruments; duplicate face keys lose none.
             groups[name][1].extend(instruments)
-        order = {"Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
+        order = {"Arena": -1, "Left": 0, "Front": 1, "Right": 2, "Bottom": 3}
         self.projector_cards = {
             name: ProjectorCard(heading, instruments)
             for name, (heading, instruments) in sorted(
                 groups.items(), key=lambda item: order.get(item[0], 4)
             )
         }
+        if self.advanced and self.combined and self.merge_directions:
+            shared_groups = shared_panel_groups(self.panels)
+            self.shared_faces = {
+                face for faces in shared_groups.values() for face in faces
+            }
+            self.shared_dials = {key: SharedMotionDial() for key in shared_groups}
         self.place_projectors()
         self.restyle()
         self.cards_changed.emit()
 
     def place_projectors(self) -> None:
         """Grid only the shown projector sections so hidden ones free their space."""
+        if not self.combined:
+            self.instrument_host.instruments = []
+            self.instrument_host.relayout()
+            self.instruments_changed.emit()
+            return
         shown = [
             card
             for name, card in self.projector_cards.items()
-            if name not in self.hidden_projectors
+            if name not in self.hidden_projectors and name not in self.shared_faces
         ]
         for name, card in self.projector_cards.items():
-            card.setVisible(name not in self.hidden_projectors)
-        self.instrument_host.instruments = shown or [self.notice]
+            card.setVisible(
+                name not in self.hidden_projectors and name not in self.shared_faces
+            )
+        self.instrument_host.instruments = [*self.shared_dials.values(), *shown] or [
+            self.notice
+        ]
+        self.instrument_host.cell_size = QSize(
+            MotionDial.SIZE + 16,
+            max(
+                (dial.sizeHint().height() for dial in self.shared_dials.values()),
+                default=MotionDial.HEIGHT + 34,
+            ),
+        )
         self.instrument_host.columns = 0
         self.instrument_host.relayout()
 
     def projector_names(self) -> tuple[str, ...]:
-        return tuple(self.projector_cards)
+        order = {"Arena": 0, "Left": 1, "Front": 2, "Right": 3, "Bottom": 4}
+        return tuple(
+            sorted(
+                {source.key[0] for source in self.sources},
+                key=lambda name: (order.get(name, 5), name),
+            )
+        )
 
     def projector_visible(self, name: str) -> bool:
         return name not in self.hidden_projectors
@@ -331,6 +389,7 @@ class StimulusTimeline(QWidget):
         else:
             self.hidden_projectors.add(name)
         self.place_projectors()
+        self.refresh()
 
     def restyle(self, glow: bool | None = None) -> None:
         """Re-apply Retro heading case and glow after a style or card rebuild."""
@@ -410,7 +469,11 @@ class StimulusTimeline(QWidget):
 
     def refresh_instruments(self, index: int | None, time: float) -> None:
         self.dial_samples, self.map_samples = [], []
+        if not self.advanced:
+            return
+        active_sources: set[str] = set()
         dials, maps = iter(self.dials), iter(self.maps)
+        shared: dict[tuple[str, str], list[DialSample]] = {}
         for panel in self.panels:
             widgets: list[QWidget] = []
             if panel.arena:
@@ -425,8 +488,32 @@ class StimulusTimeline(QWidget):
                 dial.set_sample(dial_sample)
                 widgets.append(dial)
                 self.dial_samples.append(dial_sample)
+                if (
+                    panel.source.key[0] in self.shared_faces
+                    and panel.source.key[0] not in self.hidden_projectors
+                    and index is not None
+                    and panel.source.settings[index] is not None
+                ):
+                    shared.setdefault((panel.form, panel.source.unit), []).append(
+                        dial_sample
+                    )
+            active = index is not None and panel.source.settings[index] is not None
+            if active:
+                active_sources.add(panel.source.key[0])
             for widget in widgets:
-                widget.setVisible(True)
+                widget.setVisible(active)
+        for key, dial in self.shared_dials.items():
+            dial.set_samples(tuple(shared.get(key, ())))
+            dial.setVisible(bool(dial.samples))
+        if self.shared_dials:
+            self.instrument_host.cell_size = QSize(
+                MotionDial.SIZE + 16,
+                max(dial.sizeHint().height() for dial in self.shared_dials.values()),
+            )
+            self.instrument_host.relayout()
+        if active_sources != self.active_sources:
+            self.active_sources = active_sources
+            self.instruments_changed.emit()
         if self.epoch_timeline.message:
             notice = ""
         elif not self.panels:

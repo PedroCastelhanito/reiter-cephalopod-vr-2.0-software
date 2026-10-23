@@ -20,6 +20,7 @@ from cephvr.gui.components import Card, FittedConsole, label
 from cephvr.gui.preview_log import PreviewLog
 from cephvr.gui.preview_timeline import StimulusTimeline
 from cephvr.gui.retro_overlay import set_glow
+from cephvr.gui.stimulus_preview_area import StimulusPreviewArea
 from cephvr.gui.theme import SIZES, minimal_frames, retro_console
 from cephvr.gui.view import PreviewView
 
@@ -94,11 +95,14 @@ class PreviewWorkspace(QWidget):
         self.advanced_choices.addStretch(1)
         self.projector_controls: dict[str, QCheckBox] = {}
         self.controls: dict[str, QCheckBox] = {}
+        self.waiting: set[str] = set()
         # Keep status above the resizable stream/plot sections.
         self.timeline = StimulusTimeline()
         self.timeline.cards_changed.connect(self.rebuild_projector_controls)
         self.timeline.plots.removeWidget(self.timeline.motion_section)
-        self.details_layout.addWidget(self.timeline.motion_section, 1)
+        self.stimulus_area = StimulusPreviewArea(self.timeline)
+        self.details_layout.addWidget(self.stimulus_area, 1)
+        self.details.caption.setText("Stimulus")
         self.preview_host = QWidget(self)
         self.preview_layout = QVBoxLayout(self.preview_host)
         self.preview_layout.setContentsMargins(0, 0, 0, 0)
@@ -175,7 +179,8 @@ class PreviewWorkspace(QWidget):
 
     def set_advanced_visible(self, visible: bool, *, persist: bool = True) -> None:
         self.timeline.set_advanced(visible)
-        self.details.setVisible(visible)
+        self.details.setVisible(True)
+        self.stimulus_area.rebuild()
         self.advanced_row.setVisible(visible and bool(self.projector_controls))
         if visible:
             self.split_sections()
@@ -189,18 +194,25 @@ class PreviewWorkspace(QWidget):
         if visible:
             self.split_sections()
         elif close_viewers:
+            self.waiting.clear()
             for key, view in tuple(self.views.items()):
                 if view.visible:
                     self.request(key, False)
+            self.refresh()
         if self.settings is not None:
             self.settings.setValue("windows/preview-video-visible", visible)
 
     def split_sections(self) -> None:
-        """Give video two thirds beside the dials when both sections show."""
+        """Reserve a camera column beside the category-aware stimulus area."""
         if self.preview_host.isHidden() or self.details.isHidden():
             return
         width = max(1, self.splitter.width() - self.splitter.handleWidth())
-        self.splitter.setSizes([width * 2 // 3, width // 3])
+        camera_width = (
+            max(420 if len(self.views) > 3 else 220, width // 4)
+            if hasattr(self, "views")
+            else width // 4
+        )
+        self.splitter.setSizes([camera_width, max(1, width - camera_width)])
 
     def apply_views(self, views: tuple[PreviewView, ...], *, allowed: bool) -> None:
         self.allowed = allowed
@@ -246,8 +258,16 @@ class PreviewWorkspace(QWidget):
                 set_glow(name, self.glow)
 
         self.views = {view.key: view for view in views}
+        self.stimulus_area.apply_view(self.views.get("stimulus"), allowed)
+        self.waiting.intersection_update(self.views)
         self.video_row.setVisible(self.video_toggle.isChecked() and bool(self.controls))
         self.refresh()
+        for key in tuple(self.waiting):
+            view = self.views[key]
+            if view.visible:
+                self.waiting.discard(key)
+            elif view.available and not view.pending:
+                self.request(key, True)
 
     def attach_controls(self, hosts: dict[str, QWidget]) -> None:
         """Keep controls alive when source frames disappear or move to Devices."""
@@ -268,11 +288,14 @@ class PreviewWorkspace(QWidget):
             control.setMinimumWidth(control.sizeHint().width())
             self.names[key].setText(stream_caption(self, view.name, wrap=True))
             control.setAccessibleName(view.name)
-            control.setChecked(view.visible)
+            if not (
+                self.allowed and view.active and self.recording_enabled.get(key, True)
+            ):
+                self.waiting.discard(key)
+            control.setChecked(view.visible or key in self.waiting)
             control.setEnabled(
                 self.allowed
                 and view.active
-                and view.available
                 and not view.pending
                 and (self.recording_enabled.get(key, True) or view.visible)
             )
@@ -313,6 +336,14 @@ class PreviewWorkspace(QWidget):
                 else "Operator control required"
             )
             self.names[key].setToolTip(control.toolTip())
+        had_camera_area = not self.preview_host.isHidden()
+        has_camera_area = self.video_toggle.isChecked() and any(
+            key != "stimulus" and (view.visible or view.pending or key in self.waiting)
+            for key, view in self.views.items()
+        )
+        self.preview_host.setVisible(has_camera_area)
+        if has_camera_area and not had_camera_area:
+            self.split_sections()
 
     def request(self, key: str, visible: bool) -> None:
         view = self.views.get(key)
@@ -320,12 +351,19 @@ class PreviewWorkspace(QWidget):
             view is None
             or not self.allowed
             or not view.active
-            or not view.available
             or view.pending
             or (visible and not self.recording_enabled.get(key, True))
         ):
             self.refresh()
             return
+        if not view.available:
+            if visible:
+                self.waiting.add(key)
+            else:
+                self.waiting.discard(key)
+            self.refresh()
+            return
+        self.waiting.discard(key)
         self.views[key] = replace(view, pending=True)
         self.refresh()
         self.visibility_requested.emit(key, visible)

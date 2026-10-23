@@ -125,6 +125,8 @@ class SetupExecution:
         self, attempt: Attempt, command_id: str, deadline: int
     ) -> int | None:
         """Check space, resolve listed collisions, and register the live reservation."""
+        if not attempt.reservation.persistent:
+            return deadline
         try:
             free = await asyncio.wait_for(
                 asyncio.to_thread(

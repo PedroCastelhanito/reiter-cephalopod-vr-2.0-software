@@ -17,6 +17,72 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 
 class VisualStimulusConfigurationTests(unittest.TestCase):
+    def test_presentation_category_rejects_executable_motion(self) -> None:
+        from copy import deepcopy
+
+        from tests.visual_stimulus.support import fixture_source
+
+        from cephvr.visual_stimulus.config.models.program_model import Program
+
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        setting["motion"] = {axis: {"kind": "hold"} for axis in ("x", "y", "rotation")}
+        setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
+        setting["width"] = setting["height"] = {"kind": "constant", "value": 10}
+        setting["feedback"] = []
+        Program.model_validate_json(json.dumps(source))
+        for key, value in (
+            ("phase_x", {"kind": "rate", "function": {"kind": "constant", "value": 1}}),
+            ("width", {"kind": "ramp", "initial": 10, "slope_per_s": 1}),
+            (
+                "motion",
+                {
+                    "x": {"kind": "rate", "function": {"kind": "constant", "value": 1}},
+                    "y": {"kind": "hold"},
+                    "rotation": {"kind": "hold"},
+                },
+            ),
+        ):
+            candidate = deepcopy(source)
+            candidate["sequence"][0]["settings"][0][key] = value
+            with (
+                self.subTest(key=key),
+                self.assertRaisesRegex(ValueError, "presentation"),
+            ):
+                Program.model_validate_json(json.dumps(candidate))
+        legacy = deepcopy(source)
+        del legacy["category"]
+        self.assertIsNone(Program.model_validate_json(json.dumps(legacy)).category)
+
+    def test_protocol_category_must_match_across_trials(self) -> None:
+        from tests.visual_stimulus.support import fixture_source
+
+        from cephvr.control.v1 import types_pb2 as pb
+
+        candidate = pb.ExperimentConfiguration(mode=pb.SESSION_MODE_OPEN_LOOP)
+        candidate.backends.add(
+            backend_name="visual_stimulus",
+            enabled=True,
+            visual_stimulus=pb.VisualStimulusSettings(save_visual_stimulus_data=False),
+        )
+        for number, category in enumerate(("texture_drift", "navigation_3d"), 1):
+            source = json.loads(fixture_source())
+            source["category"] = category
+            trial = candidate.trials.add(trial_number=number)
+            trial.stimulus.program.program_json = json.dumps(source)
+            trial.stimulus.arena_boundaries.boundaries_json = (
+                '{"format_version":1,"bindings":[]}'
+            )
+        result = validate_configuration(candidate)
+        self.assertFalse(result.valid)
+        self.assertTrue(
+            any(
+                "same protocol category" in issue.failure.message
+                for issue in result.issues
+            )
+        )
+
     def test_predictable_clipping_warns_without_rejecting_or_rewriting(self) -> None:
         from tests.visual_stimulus.support import fixture_source
 

@@ -47,6 +47,7 @@ class GroupEditor(QWidget):
         ):
             control.setMinimumWidth(0)
             widget = field(caption, control)
+            widget.setMinimumWidth(widget.fontMetrics().horizontalAdvance(caption) + 8)
             widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
             row.addWidget(widget, stretch)
         self.repetitions.setMinimumWidth(40)

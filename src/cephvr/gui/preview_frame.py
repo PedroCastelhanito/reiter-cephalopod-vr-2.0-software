@@ -7,7 +7,6 @@ from PyQt6.QtGui import QColor, QPainter, QPaintEvent, QPen, QResizeEvent
 from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 
 from cephvr.gui.components import button, label
-from cephvr.gui.retro_instruments import blink
 from cephvr.gui.theme import colors_for, retro_console
 from cephvr.gui.view import PreviewView
 from cephvr.platform.windows.window_coordinates import preview_frame_extra
@@ -23,6 +22,19 @@ def bracket(painter: QPainter, rect: QRect, color: str, arm: int) -> None:
         painter.drawLine(x, rect.bottom(), x + direction * arm, rect.bottom())
 
 
+def preview_metrics(source: PreviewView) -> str:
+    fresh = (
+        source.visible
+        and source.rates_observed_ns > 0
+        and 0 <= host_time_ns() - source.rates_observed_ns < 3_000_000_000
+    )
+
+    def rate(value: float | None) -> str:
+        return f"{value:.1f}" if fresh and value is not None else "—"
+
+    return f"Source: {rate(source.source_fps)} fps\nPreview: {rate(source.preview_fps)} fps"
+
+
 class NoSignal(QWidget):
     """Retro placeholder in the log's `-- NO ENTRIES --` idiom, above the Snap button.
 
@@ -34,11 +46,6 @@ class NoSignal(QWidget):
         self.snap = snap
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        blink().toggled.connect(self.refresh)
-
-    def refresh(self) -> None:
-        if self.isVisible():
-            self.update()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         if not retro_console(self):
@@ -47,19 +54,10 @@ class NoSignal(QWidget):
         painter = QPainter(self)
         metrics = painter.fontMetrics()
         text = "-- NO SIGNAL --"
-        block = metrics.horizontalAdvance(" ")
-        left = (self.width() - metrics.horizontalAdvance(text) - block) // 2
+        left = (self.width() - metrics.horizontalAdvance(text)) // 2
         base = self.height() // 2 - self.snap.height()
         painter.setPen(QColor(colors.muted))
         painter.drawText(left, base, text)
-        if blink().on:
-            painter.fillRect(
-                left + metrics.horizontalAdvance(text),
-                base - metrics.ascent(),
-                block,
-                metrics.height(),
-                QColor(colors.accent),
-            )
 
 
 class Reticle(QWidget):
@@ -171,18 +169,7 @@ class PreviewFrame(QWidget):
     def set_metrics(self, source: PreviewView | None) -> None:
         self.metrics.setVisible(source is not None)
         if source is not None:
-            fresh = (
-                source.visible
-                and source.rates_observed_ns > 0
-                and 0 <= host_time_ns() - source.rates_observed_ns < 3_000_000_000
-            )
-
-            def rate(value: float | None) -> str:
-                return f"{value:.1f}" if fresh and value is not None else "—"
-
-            self.metrics.setText(
-                f"Source: {rate(source.source_fps)} fps\nPreview: {rate(source.preview_fps)} fps"
-            )
+            self.metrics.setText(preview_metrics(source))
         self.fit_target()
 
     def fit_target(self) -> None:

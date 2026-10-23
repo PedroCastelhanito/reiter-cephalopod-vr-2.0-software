@@ -28,9 +28,18 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 93
+**Status:** Accepted · **Revision:** 94
 
 **Identity and files**
+
+- When every active recording selection is explicitly Off (camera videos, stimulus
+  video, Tracking data and SpikeGLX saving), the controller runs a dummy test
+  session for troubleshooting. Allocate normal session/trial identities and retain
+  timing, device validation, supervision and cleanup, but create no output folders,
+  reservation lock/marker, session/trial metadata or backend output files. Skip
+  disk-space/collision checks and recording workers. No extra mode toggle is used;
+  any enabled recording restores the normal output rules below. Runtime safety,
+  emergency/recovery and application diagnostics retain their independent owners.
 
 - Allocate canonical lowercase, hyphenated UUIDv4 session and planned trial IDs when
   Setup is accepted, before fan-out. Reuse them within that attempt/session;

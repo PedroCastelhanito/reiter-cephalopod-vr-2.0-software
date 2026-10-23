@@ -1,0 +1,4 @@
+usage: main.py [-h] [--software-root SOFTWARE_ROOT]
+               [--supervisor-config SUPERVISOR_CONFIG] [--python PYTHON]
+               [--reopen-gui] [--no-tracking]
+main.py: error: Could not contact the launcher to reopen the GUI: OpenEventW failed: 2. If CephVR has stopped, start it normally without --reopen-gui; otherwise check its owning launcher/controller.

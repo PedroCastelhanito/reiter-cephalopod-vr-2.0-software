@@ -143,6 +143,10 @@ class ModernGLPort:
             ).casefold()
             == device_identity.casefold()
         ]
+        if not matches:
+            raise DisplayUnavailableError(
+                "A configured projector is not detected by Windows"
+            )
         if len(matches) != 1:
             raise DisplayUnavailableError(
                 f"display interface {device_identity!r} matched {len(matches)} active monitors"
@@ -373,15 +377,19 @@ class ModernGLPort:
             raise NativeRenderingError("scene pipeline lacks prepare_trial")
         prepare(artifact, resources, self._outputs, self._resources)
         from cephvr.visual_stimulus.config.review_layout import review_layout
-        from cephvr.visual_stimulus.rendering.preview import StimulusPreview
+        from cephvr.visual_stimulus.rendering.preview_group import StimulusPreviewGroup
 
         self._review_layout = artifact.preview_layout or review_layout(
             artifact.display, 1, resources.prepared_content
         )
         if self.preview is None:
             self.announce("visual_stimulus:preview", None)
-            self.preview = StimulusPreview(
-                self._glfw, self._moderngl, self.preview_changed
+            self.preview = StimulusPreviewGroup(
+                self._glfw,
+                self._moderngl,
+                self.preview_changed,
+                self._review_layout,
+                artifact.display.geometry,
             )
             self.preview.on_rates = self.preview_rates
             first = next(iter(self._outputs.values()))
@@ -395,6 +403,8 @@ class ModernGLPort:
                 self.preview.disable(exc)
             finally:
                 first.activate()
+        else:
+            self.preview.update_layout(self._review_layout, artifact.display.geometry)
 
     def install_image_residency(self, residency: Any, deadline_ns: int) -> None:
         """Install prepared source scheduling on this existing GL owner."""

@@ -257,7 +257,13 @@ class BatchCreate(QWidget):
                 for face in self.composer.screens
             }
         )
-        row = BatchVariationRow(targets, projectors, node.settings, table_mode=True)
+        row = BatchVariationRow(
+            targets,
+            projectors,
+            node.settings,
+            table_mode=True,
+            presentation=reference.category == "media_presentation",
+        )
         self.rule_ids[row] = [s.instance_id for s in node.settings]
         row.remove.clicked.connect(lambda: self.remove_variation(row))
         row.changed.connect(self.queue_preview)

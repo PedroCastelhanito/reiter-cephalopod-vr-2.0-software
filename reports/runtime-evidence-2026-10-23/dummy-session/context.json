@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-23",
+  "source_revision": "59a973ac3ffc6fb331bbee1d93c6b283d6b90474",
+  "source_state": "dirty; concurrent unrelated work preserved",
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller tests/acquisition tests/visual_stimulus -q -m \"not windows and not rig\" --timeout=40 --maxfail=5",
+      "outcome": "2051 passed,4 skipped,18 deselected,3 subtests passed in19.15s; permitted loopback, normal external temp"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/supervisor -q -m \"not windows and not rig\" --timeout=40",
+      "outcome": "168 passed in2.01s; permitted loopback"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 <affected owners/files>",
+      "outcome": "126 sources pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check <affected owners/files>; ruff format --check <affected owners/files>",
+      "outcome": "lint pass;132 files formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "757 modules,0 violations; existing cohesion advisories reviewed"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "limits": [
+    "Local implementation/communication only; no running-app restart or hardware experiment",
+    "Sandbox attempts blocked in temp creation/asyncio socketpair and stopped; workspace-temp demo assets rejected; final normal-temp suite passes"
+  ]
+}

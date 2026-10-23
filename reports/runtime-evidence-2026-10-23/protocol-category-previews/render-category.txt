@@ -1,0 +1,1 @@
+Rendered offscreen source UI; no native renderer or camera windows opened.

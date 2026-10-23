@@ -83,7 +83,7 @@ class Metrics:
     label_font: int = 12
     title_font: int = 17
     console_font: int = 12
-    sidebar_width: int = 214
+    sidebar_width: int = 262
     controls_min_width: int = 300
     controls_max_width: int = 620
     status_min_width: int = 220
@@ -563,14 +563,15 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.text};
         border: 1px solid {c.accent}; }}
     QFrame#Sidebar QTreeWidget[role='rail']::item {{ color: {PHOSPHOR_TAB_DIM};
-        padding: 6px 6px 6px 20px; }}
+        padding: 6px 20px 6px 20px; }}
     QFrame#Sidebar QTreeWidget[role='rail']::item:hover {{ color: {c.text}; }}
     QFrame#Sidebar QTreeWidget[role='rail']::item:selected,
     QFrame#Sidebar QTreeWidget[role='rail']::item:selected:hover {{ color: {c.coral};
         border-left-color: transparent; }}
     QTabBar::tab, QTabBar::tab:selected, QTabBar::tab:hover {{ background: transparent;
         border: 1px solid transparent; }}
-    QTabBar::tab {{ color: {PHOSPHOR_TAB_DIM}; padding-left: {PHOSPHOR_TAB_GUTTER}px; }}
+    QTabBar::tab {{ color: {PHOSPHOR_TAB_DIM}; padding-left: {PHOSPHOR_TAB_GUTTER}px;
+        padding-right: {PHOSPHOR_TAB_GUTTER}px; }}
     QTabBar::tab:hover {{ color: {c.text}; }}
     QTabBar::tab:selected, QTabBar::tab:selected:hover {{ color: {c.coral}; }}
     QHeaderView::section {{ background: transparent; color: {c.muted}; border: none;

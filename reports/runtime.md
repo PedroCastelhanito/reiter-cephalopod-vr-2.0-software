@@ -1,5 +1,409 @@
 # Controller and supervisor status
 
+<a id="no-recording-dummy-session--2026-10-23"></a>
+## No-recording dummy session - 2026-10-23
+
+`no-recording-dummy-session` implements the owner's explicit all-recording-Off
+request under [E04](../docs/architecture/supervisor.md#e04), with
+[A07](../docs/architecture/acquisition.md#a07),
+[V12](../docs/architecture/visual_stimulus.md#v12) and
+[V13](../docs/architecture/visual_stimulus.md#v13) scoped accordingly.
+The shared selection predicate ignores inactive sources and keeps unresolved flags
+on normal validation paths. No new dependencies, mode fields or process topology.
+Controller reservation/metadata admission and native recorder guards suppress file
+creation while lifecycle registration, timing and device/cleanup evidence remain.
+Camera Started still requires the actual callback; only the absent recording
+activity gate is omitted. Enabling any recording retains normal metadata outputs.
+The controller reports dummy activation and never advertises output readiness.
+
+Validation on the dirty 59a973ac3ffc6fb331bbee1d93c6b283d6b90474 tree:
+2051 controller/acquisition/Visual Stimulus tests passed,4 skipped,18 deselected,
+3 subtests passed;168 supervisor tests passed. Ruff passes and format-check passes
+132 files; Win32 mypy passes126 sources; backend boundaries757/zero violations.
+New owning-module cases cover independent save choices, all-Off planning, dummy
+Start/normal/Abort metadata paths, capture-only scopes/activity and the native
+recorder without writers/resources/files. `git diff --check` passes.
+Initial fixture omissions and the old mandatory camera-metadata expectation were
+corrected. Sandbox attempts failed temp-directory creation or blocked in Windows
+asyncio socketpair setup; those exact test sessions were stopped. Tests then ran
+with permitted loopback access. A workspace-temp full run had three demo-asset
+fixture errors (samples require an external directory); the final normal-temp run
+passes. No communication assertions were weakened.
+
+ARCH-002 review: reuse existing reservation/writer and capture-only mechanisms;
+no parallel dummy backend or null-writer abstraction. The existing large reservation,
+native recording and renderer lifecycle owners receive only their own admission
+and terminal guards; resource/deadline logic remains with those cohesive owners.
+Size advisories remain review prompts, not proof of defects or rig acceptance.
+The running application was not restarted and no hardware trial was run.
+[Native acceptance](rig-verification.md#dummy-session-no-output) remains pending.
+[Dated method/context](runtime-evidence-2026-10-23/dummy-session/context.json).
+
+Oct23 `dummy-setup-empty-catalogue`: the owner's subsequent all-saving-Off Setup
+fails with COMMAND_UNCONFIRMED / ReportHeartbeat INVALID_CATALOGUE. The retained
+emergency report confirms that error for session3430d7e6-1e31-4d41-a71d-669cda078211.
+Recipe preparation acknowledged revision0 empty, then unconditionally sent revision1
+with the same empty list when dummy selection removed all recipe obligations.
+The real E08 registry correctly rejects revisions without growth; this occurs
+before the coordinator dispatches renderer Setup, independently of the GPU rig view.
+
+The focused fix returns after the acknowledged empty catalogue when there are no
+recipe obligations. Saving-enabled preparation, later worker resources, deadlines
+and supervisor validation remain unchanged. ARCH-002 reuses the existing owner and
+registry with a two-line guard and extends the owning coordinator tests; no dependency,
+policy or architecture change. A new parameterized case using the real registry
+reproduced the exact error before the fix (all-Off failed, recording-enabled passed).
+After the fix,102 coordinator/supervisor tests pass, including later worker growth
+and unchanged-heartbeat revisions; Ruff/format2 files, Win32 mypy1 source,
+boundaries758/zero (existing unrelated cohesion advisories) pass. The sandbox asyncio
+attempt stalled and was stopped; tests completed with loopback permission and30s
+timeouts, with no assertion changes.
+[Evidence and methods](runtime-evidence-2026-10-23/dummy-setup-catalogue/README.md).
+The running app and failed session were not reset, restarted or cleared. Actual
+cleanup/recovery and corrected native Setup remain unverified under the existing
+[rig item](rig-verification.md#dummy-session-no-output).
+
+## Preview rotation and Combined windows — 2026-10-23
+
+`preview-rotation-and-projector-windows`: owner confirms coherent physical rig
+rotation, but reports reversed Bottom protocol preview and Front/Bottom Monitor
+rotation. [G01](../docs/architecture/gui.md#g01) revision305 and
+[E13](../docs/architecture/visual_stimulus.md#e13) revision31 correct presentation
+only: protocol Bottom compensates the folded optical reflection; Monitor adds the
+Front horizontal mirror and removes the Bottom vertical mirror. Physical output,
+calibration and recording orientation are unchanged.
+
+`gpu-combined-rig-preview` implements the owner's subsequent revision under
+[G01](../docs/architecture/gui.md#g01) revision308,
+[V01](../docs/architecture/visual_stimulus.md#v01) revision34 and E13 revision32:
+Combined is one renderer-owned GPU window, mapping the existing composite's live
+calibrated crops onto prepared screen planes. Its orthographic camera uses the
+protocol rig's25°/25° home,0.5°/logical-pixel drag sensitivity and±80° elevation
+limits; double-click resets, release/focus loss end dragging. It undoes flat Monitor
+mirrors before protocol-style raster placement, including Bottom's folded path.
+Per-projector retains its flat image/instrument pairs. Geometry updates per trial;
+rotation never changes the stimulus observer or source pixels. No tank dimensions
+are invented: the runtime recipe supplies calibrated screen planes, not tank walls.
+
+ARCH-002 isolates camera/projection/GPU drawing in `rendering/preview_rig.py`.
+Existing native assembly only passes prepared geometry; window ownership,
+Show/Hide/X behavior, group reader fences,20Hz pacing, compositor and rate reporting
+retain their owners. The shared viewer selects its drawing resources during prepare,
+avoiding unused flat-quad resources in the rig window. No dependency, pixel readback,
+process, recording or experiment-state change. One group FPS footer remains.
+
+Checks:39 focused GUI/protocol/timeline cases and111 rendering cases pass, including
+the native standalone-GL crop/orientation/recording-pixel check. Ruff check/format
+six files, Win32 mypy four sources, backend boundaries757/zero (existing cohesion
+advisories) pass. Inspected an offscreen Combined layout with real widgets and
+placeholder pixels. [Methods, corrections and evidence](runtime-evidence-2026-10-23/preview-rotation/README.md).
+Running app not restarted; native/DPI placement, physical direction confirmation
+and full-load cost remain on the [rig checklist](rig-verification.md#protocol-category-previews).
+
+Current GPU-rig validation:117 rendering tests and26 selected offscreen GUI cases
+pass. Four standalone-GL pixel cases verify crop/orientation and unchanged source/
+composite bytes after drawing/rotation. A hidden native GLFW shared-context case
+verifies callback installation, exactly three owned drawing resources and clean
+release. Unit coverage checks camera-only state, clamp/reset/focus loss; group tests
+cover single versus individual draws, geometry refresh and hidden-reader ordering.
+Ruff check/format7 files, Win32 mypy5 sources, boundaries758/zero (existing size
+advisories) pass. Real shader/FBO fixture images at home and100° yaw were inspected;
+these are synthetic QA patterns, not experiment/rig evidence. GPU cost remains
+unmeasured. [Current methods/evidence](runtime-evidence-2026-10-23/gpu-rig-preview/README.md).
+
+## Combined space and shared polar table — 2026-10-23
+
+`preview-space-and-shared-polar` implements [G01rev309](../docs/architecture/gui.md#g01).
+Combined retains the rotatable GPU rig and gives its image the expanding area;
+unused camera space collapses and returns when a camera is selected. Group FPS moves
+into the header. Compatible planned projector vectors share polar axes, common speed/
+angular scales and stable colors, with projector rows and Speed, Direction and Angular
+columns including units. Incompatible units and arena/feedback instruments remain
+separate. The individual rate adapter still resolves each projector's own motion.
+Static Bottom stays active with zero motion. Per-projector ordering is Left, Front,
+Right, Bottom; compact windows stack images above plots rather than clipping Bottom.
+
+ARCH-002 review reuses existing axes/markers, projector cards, placement and renderer
+ownership; pure grouping stays in preview_grouping. Removed the uncalled has_motion
+predicate after checking consumers. The timeline remains a cohesive524-line owner
+of timeline/instrument lifecycle and notifications; drawing, sampling, grouping and
+placement remain focused helpers. Concurrent lazy-instrument changes are preserved.
+No dependency, frame transfer, camera backend, GPU renderer or physical output changes.
+Prospective camera placement explicitly reserves the splitter handle before measuring;
+the exact initial-versus-visible placement regression remains intact.
+
+91 timeline tests and125 Dashboard preview-selected tests pass (offscreen), including
+linked renderer-rate agreement, common scales/colors, parameter-table rows, incompatible
+units, static Bottom, toggles, short/tall layouts, camera collapse/restore and exact
+placement. Changed-source Ruff and Win32 mypy6 sources pass; boundary check758 modules/
+zero violations with existing cohesion advisories. Rendered real-widget QA layouts were
+inspected at combined, roomy individual and compact individual sizes. Fixtures contain
+placeholder native-viewer frames, not actual live rig pixels. Earlier layout expectations
+and a4px prospective splitter mismatch were corrected; an initial failing-fixture run
+also ended in a Windows Qt access violation. Sandbox asyncio attempts stalled and were
+stopped; Dashboard tests completed with permitted loopback access. No assertions were
+weakened. [Commands, raw attempts, captures and limits](runtime-evidence-2026-10-23/shared-polar/README.md).
+The running application was not restarted. Native window/DPI/full-load acceptance stays
+on the [rig checklist](rig-verification.md#protocol-category-previews). Camera OpenCV
+viewers remain: their input is CPU frames; a GLFW upload path has no measured advantage.
+
+## Linked arena motion dials — 2026-10-23
+
+`linked-arena-motion-dials` implements the owner's corrected requirement in
+[G01rev307](../docs/architecture/gui.md#g01): each projector displays its own
+resolved motion in arena coordinates. Bottom leftward rotation shows Bottom
+rotation, Right toward Front (90°), Left toward Back (−90°), and Front toward
+Left (180°); reversal reverses those translations. Each follower retains its own
+speed, angular speed, orientation and scale. The prior shared-reference display
+was incorrect and has been undone; its superseded checks established only that
+previous implementation, not the intended behavior.
+
+ARCH-002 review restored the focused local-rate adapter over existing renderer
+state and binding checks, with no new state/dependencies or rendering changes.
+Each vector uses its own calibrated unfolded surface and retained orientation;
+missing geometry/references remain isolated unavailable states under
+[V02](../docs/architecture/visual_stimulus.md#v02) and V07. Existing owning tests
+retain renderer-rate/speed agreement, stop/reset/relink continuity and geometry
+checks; independent arena-direction assertions cover the owner's example and
+its reverse, and stopped dials retain their individual orientations.
+
+Evidence: working tree based on `59a973ac3ffc6fb331bbee1d93c6b283d6b90474`,
+concurrent edits preserved. With `QT_QPA_PLATFORM=offscreen`, repository Python:
+`python -m pytest tests/gui/test_preview_timeline.py -q -m "not windows and not rig"
+--basetemp=.pytest-individual-arena-final` passes85 tests. Dashboard integration
+`python -m pytest tests/gui/test_dashboard.py -q
+-k drift_pairs_keep_face_directions_and_widget_ownership -m "not windows and not rig"
+--basetemp=.pytest-individual-arena-dashboard` passes1 test (856 deselected),
+covering unchanged samples across Combined/Per-projector switches. Changed-owner Ruff
+check/format (four files) and Win32 mypy (three sources) pass after correcting
+one test import-order failure. Backend boundaries checks757 modules with zero
+violations and existing unrelated cohesion advisories.
+`git diff --check` and governing link/anchor checks pass. Native appearance/DPI and
+physical motion acceptance remain pending under the existing [preview task](../TODO.md)
+and [rig checklist](rig-verification.md). Running GUI was not restarted.
+
+## Sidebar selection and preview film — 2026-10-23
+
+`navigation-preview-cleanup` implements [G02rev140](../docs/architecture/gui.md#g02).
+Only the active main page's sidebar children show selection. Rails keep their
+current rows and hidden-page state updates, restoring highlights on return; selecting
+a child still opens its owner. The main sidebar is262px wide: an actual selected-row
+paint probe found Microcontroller required105px but had104px after marker reservation
+at254px. The extra8px preserves the full label and balanced marker gaps.
+
+CRT painting excludes trial rig/surface canvases and native preview footprints using
+visible widget rectangles in their host's coordinates. Scanlines, vignette and the
+optional band remain on surrounding controls. This changes GUI decoration only;
+renderer output, texture pixels, recordings and timing remain unchanged. ARCH-002
+reuses rail/current-row ownership and the existing cached film. No dependency, new
+runtime state or separable responsibility added to the large theme owner.
+
+33 selected GUI tests pass, including inactive selection/restoration, full selected
+Microcontroller text at the delegate's actual draw call, white preview pixels through
+film toggles/move/resize, and unchanged trial-view pixels with CRT on versus off.
+Ruff check/format, Win32 mypy6 sources, boundaries757/zero (existing cohesive size
+advisories), whitespace pass. Methods, initial corrections and inspected offscreen
+captures are in the [dated evidence](runtime-evidence-2026-10-23/navigation-preview-cleanup/README.md).
+Native/DPI and real native-viewer acceptance remain unverified; the running application
+was not restarted and saved experiment settings were untouched.
+
+## Protocol category and preview design — 2026-10-23
+
+`projector-motion-source` (Oct23): [G01rev304](../docs/architecture/gui.md#g01)
+places Self/Linked in a Motion source column for link-capable textures. Linked hides
+the motion parameter cells and shows Linked to; a missing target blocks commit.
+Existing canonical links infer the choice when restoring layers. Fade in/out remain
+in Advanced settings for each selected layer, including Media presentation.
+ARCH-002 review extracts only the coupled selector behavior into `motion_source.py`,
+reusing existing link validation, parameter ownership and opacity envelopes. The large
+parameter-form assembly retains focused binding/validation hooks; no runtime/schema
+change or dependency. Narrow rows wrap the selector and motion fields without crowding.
+Verification:69 reference/fade/category/motion checks pass; after final narrow reflow,
+6 focused layout/lifetime checks pass. Ruff check/format (6 files), Win32 mypy
+(5 sources), boundaries757/zero (existing cohesion advisories) and whitespace pass.
+Initial detached-label and dependent variation failures were fixed by parenting cells
+before showing them; formatting failures were corrected. Amber source-widget captures
+were inspected offscreen; [methods/images](runtime-evidence-2026-10-23/motion-source/README.md)
+retain scope and provenance. Running GUI not restarted; native/DPI and rig acceptance
+remain unverified.
+
+`protocol-category-templates` (Oct23) applies the owner's revised
+[G01rev303](../docs/architecture/gui.md#g01)/[V02rev17](../docs/architecture/visual_stimulus.md#v02):
+Media presentation retains source links but ignores them in validation and clears
+them from compiled executable settings. Hidden link controls preserve source metadata
+when editing fades. Switching category restores the previous complete trial template,
+including selected trial, seed/gap/boundary metadata and protocol save/load. First use
+inherits compatible content or starts blank, retaining departed legacy content in a
+compatible template. Control and asset root remain shared. Template restores start
+fresh local undo stacks; first compatible classification retains existing undo behavior.
+Only the active schedule is submitted to the controller.
+
+ARCH-002: extracted category switching from ProtocolPage into a focused template
+helper and reused the existing validated snapshot format, with optional bounded-by-file
+template inventory (three category keys), no dependency or new runtime state owner.
+Existing large model/form owners add only their category gate; compiler normalization
+keeps renderer/link geometry ownership unchanged. Validation and limits are recorded
+in the [dated evidence](runtime-evidence-2026-10-23/category-templates/README.md).
+Checks:37 backend tests/3 subtests,28 broader protocol GUI tests and final5 focused
+GUI tests pass; changed-owner Ruff/format, Win32 mypy7 sources, boundaries756/zero
+and whitespace pass. Native appearance/playback unverified; app not restarted.
+
+`protocol-category-options` (Oct23): the dropdown lists only Media presentation,
+Texture drift and 3D navigation. Qt's nonselectable placeholder retains the prompt
+for unclassified drafts under [G01](../docs/architecture/gui.md#g01). Zero-based
+selection preserves whole-schedule validation and undo/restoration. ARCH-002 review
+reuses the existing widget and category owner without dependencies or extraction.
+Focused offscreen category selection/atomic rejection/persistence test passes
+(1 passed,853 deselected); changed-file Ruff check/format, Win32 mypy and boundary
+checks pass (zero violations, existing source-size advisories). Whitespace passes.
+The running GUI was not restarted; native appearance remains unverified.
+
+`protocol-category-preview-design`: the owner approved the reviewed layout and
+implementation. Current source preserves projector rows/parameter columns, row-local
+layer selection and ordering, inline advanced controls, and selected-layer fades.
+Media presentation hides motion authoring/instruments; Texture drift retains motion
+and fades; 3D navigation retains the shared observer/map plus 2D overlay rows.
+Combined is the default stimulus area; Per-projector pairs each renderer output with
+its instruments. Camera-video space remains separate in every category. The old
+standalone stimulus tile is replaced; review recording is unchanged.
+
+Governing decisions: [G01](../docs/architecture/gui.md#g01),
+[V01](../docs/architecture/visual_stimulus.md#v01),
+[V02](../docs/architecture/visual_stimulus.md#v02),
+[V03](../docs/architecture/visual_stimulus.md#v03),
+[E08](../docs/architecture/system-contracts.md#e08).
+Canonical category is optional for legacy content, retained by save/load and history,
+and validated across all trial sources. Category templates retain departing schedules
+and validate restored content before applying. Presentation rejects
+motion/size/phase functions and motion feedback while ignoring saved motion links and allowing fixed
+placement, media playback and fades. Category is independent of open/closed-loop Control.
+
+ARCH-002: reuse existing form values, fade validation, layer operations, renderer
+compositor, native-window ownership and GPU fencing. New focused category, stimulus-area
+and native-preview-group modules isolate responsibilities; no dependencies or pixel RPCs.
+Existing large editor/parameter/native assembly modules retain focused wiring; undo
+category restoration is extracted to the history owner. Combined never merges different
+face coordinate transforms or instance histories; independently moving sources remain
+labelled. Moving instrument cards between modes detaches them from the old grid to
+prevent resize callbacks from reclaiming them.
+
+Optional renderer windows sample the existing calibrated preview texture: one Combined
+window or up to four lazily prepared surface windows. Placement hints carry bounded
+rectangles and the existing GUI-owner identity, with duplicate/invalid tiles rejected
+at controller and worker boundaries. Camera commands reject stimulus-only hints.
+All visible pacers advance together; a hidden last-frame consumer remains fenced before
+texture reuse. Polling does not reopen an X-closed group; manual positioning and Snap
+retain existing ownership rules. Preview rate stays capped at20Hz, independently of
+projection/capture/recording. Actual additional GPU cost remains unmeasured.
+
+Validation:124 configuration/rendering tests,54 authenticated command/transport tests,
+202 selected Dashboard nodes and the final98-check timeline/category selection pass.
+Ruff, Win32 mypy205 sources,755-module boundaries (zero violations) and11-schema drift
+checks pass. Initial fixture/layout failures and corrected reruns are retained in the dated
+[evidence directory](runtime-evidence-2026-10-23/protocol-category-previews/README.md).
+Offscreen Protocol/Combined/Per-projector renders use sample sources and unavailable
+native-frame placeholders, not simulated renderer/camera pixels. The running application
+and saved experiment settings have not been changed by this task.
+[Native and rig acceptance](rig-verification.md#protocol-category-previews) remains open.
+
+## Persistent navigation markers — 2026-10-23
+
+`sidebar-icon-title-spacing` (G02rev139) corrects the previous text-only gap
+measurement: markers now frame the icon/title as one group. The leading boundary
+uses the visible icon edge (alpha mask, accounting for device-pixel ratio); the
+trailing boundary uses the title ink edge and native text inset. Icon width and
+icon-to-text spacing no longer inflate the trailing gap. Existing navigation pixel
+coverage now compares these outer gaps for main/device rows within2px and retains
+height/hover checks:1 passed,856 deselected. The first test incorrectly searched
+only coral icon pixels; Qt-selected icon tint required a visible-ink threshold.
+[Corrected group-spacing crop](runtime-evidence-2026-10-23/navigation-markers/icon-title-group-spacing.png)
+inspected offscreen. Ruff check/format3 files, Win32 mypy2 sources,757-module
+boundaries/zero and whitespace pass. ARCH-002 reuses paint owners, no new state or
+dependency. Native/DPI appearance unverified; running GUI not restarted.
+
+`navigation-persistent-markers` implements [G02rev136](../docs/architecture/gui.md#g02):
+every Amber main page, sidebar child and in-page tab has a leading `>`; selected
+entries add `<` and keep both markers/icon/label coral. Idle markers remain dim;
+hover brightens them. Existing button, rail delegate and tab overlay own painting;
+shared styles reserve both gutters. ARCH-002 adds no state/dependencies; the large
+theme owner changes only focused selectors, so no separable responsibility is added.
+`navigation-close-trailing-markers` corrects the original row-edge suffix placement:
+the rail style lays out its elided label, while tab overlays use Qt's actual text
+bounds. Main-page suffixes already follow text. `navigation-matching-marker-size`
+now paints both rail markers in the same marker font, reserving measured space
+after the label, and restores the large main-page marker font before painting `<`.
+In-page markers already share one font. Existing rendering coverage checks equal
+leading/trailing ink heights for main pages and short/elided rail labels, retaining
+the gap check. Final2 focused GUI tests pass; Ruff check/format3 files, Win32 mypy2
+sources, boundaries751/zero (existing size warnings) and whitespace pass. No state
+or dependencies added (ARCH-002). A first patch attempt encountered a concurrent
+G02 revision change and made no changes; the subsequent amendment preserves it.
+[Offscreen Amber sample render](runtime-evidence-2026-10-23/navigation-markers/README.md)
+inspected at1920x1032 before the marker-size correction, showing corrected suffix
+spacing. Latest size checks use offscreen rendered-pixel assertions. Long labels
+still elide. Native/DPI appearance unverified;
+running GUI not restarted. Other styles retain their existing appearance.
+Oct23 `tab-marker-equal-spacing` (G02rev137) now positions both in-page chevrons
+from the native rendered text bounds, with equal6px gaps around the icon/title
+and explicit leading right alignment. This removes the separate approximate
+leading-centre calculation. Existing focused navigation rendering test passes;
+Ruff check/format, Win32 mypy(one source),755-module boundaries/zero and whitespace
+pass. The [tab crop](runtime-evidence-2026-10-23/navigation-markers/equal-spacing-tabs.png)
+was inspected offscreen; native/DPI appearance remains unverified. No dependencies
+or state added; the shared tab painter remains the owner under ARCH-002.
+
+## Device warning clarity — 2026-10-23
+
+`device-warning-clarity`: simplified projector discovery/empty-state warnings,
+missing assigned-projector guidance, GPU selection instructions, rejected GUI
+pairing/pulse/calibration/preview requests and Tracking diagnostic status text.
+Messages state the affected action and next step without queue/context/identity
+jargon. Unsent close requests still explicitly say they were not sent; wrong-GPU
+guidance still requires cephvr-renderer.exe on RTX5060Ti and a full application
+restart. Existing raw exception details and failure/cleanup gates are retained under
+[G01](../docs/architecture/gui.md#g01),
+[E03](../docs/architecture/gui.md#e03) and
+[V19](../docs/architecture/visual_stimulus.md#v19).
+
+ARCH-002 review reuses existing presentation owners and removes the repeated
+discovery-error assignment. ProjectorsPanel's size advisory remains: these string
+edits add no responsibility/state/dependency warranting a split. Existing owning
+tests cover missing inventory, unsent pairing and diagnostic/display transport.
+Repository Python3.11:14 selected offscreen GUI checks pass(835 deselected),
+117 rendering/controller-communication checks pass(1 deselected). Earlier GUI runs
+exposed two old-wording assertions, corrected before the passing rerun. Changed-file
+Ruff check/format, Win32 mypy(seven distinct sources across runs), backend boundaries
+(751 modules,zero violations) pass. Tests used workspace basetemp outside sandbox
+for temporary-file/loopback access. No native device execution or application restart;
+native message appearance remains unverified. Concurrent GUI changes preserved.
+
+## Select video previews before ready — 2026-10-23
+
+`preview-select-before-ready` implements [G01rev301](../docs/architecture/gui.md#g01):
+an unavailable participating stream can be selected under existing authority and
+recording gates. PreviewWorkspace owns a local waiting-selection set; no premature
+backend request is sent. Readiness consumes the selection and sends one ordinary
+Show. Uncheck, Video previews off, loss of authority, inactive/removed source or
+recording off cancels it. Failed Show and externally closed viewers are not retried.
+ARCH-002 reuses existing refresh, snapshot and request paths with no dependency
+or backend-policy change; local intent is distinct from reported viewer visibility.
+Ten focused Python3.11/offscreen tests pass, covering waiting persistence, readiness,
+six cancellations, failed-Show behavior, recording/observer gates and master toggle.
+Ruff check/format, Win32 mypy previews.py, boundaries751/zero and whitespace pass;
+existing source size warnings do not involve this focused owner. Native readiness
+transition and viewer opening remain unverified; GUI not restarted.
+
+## Static empty preview — 2026-10-23
+
+`preview-remove-caret` implements [G01rev300](../docs/architecture/gui.md#g01):
+the empty preview centers static `-- NO SIGNAL --` text with no blinking block.
+ARCH-002 removes the unused blink connection/refresh method from NoSignal;
+no state or dependencies added. Existing preview-frame rendering test now compares
+both blink phases:1 passed (Python3.11 offscreen). Ruff check/format on the changed
+source/test, Win32 mypy preview_frame.py, boundaries751/zero and whitespace pass.
+Existing boundary size warnings concern unchanged source. Native GUI not restarted
+or visually verified.
+
 ## Runtime GUI history inventory repair — 2026-10-22
 
 `runtime-gui-camera-inventory-repair`: saved `config/runtime_gui.json` retained Eye
@@ -73,7 +477,27 @@ Inline repository Python3.11 checks passed actual camera/MCU validators against 
 
 ## Sidebar navigation hierarchy — 2026-10-22
 
-G02rev126 retains smaller,16px-indented Dashboard/Devices child links with12px
+G02rev132 keeps both child groups expanded while Side navigation is enabled,
+including on Protocol/Tracking. Child choices also activate the owning main page
+through its existing navigation button. ARCH-002 reuses rail signals and shell
+ownership without added state/dependencies. The existing navigation test now
+covers persistent groups, cross-page child choices and disabling Side navigation:
+1 passed cleanly (repository Python3.11, workspace --basetemp). Ruff check/format
+on both changed Python files, Win32 mypy on window.py, boundaries751/zero and
+whitespace checks pass. Native appearance and narrow-window fit remain unverified.
+
+G02rev131 increases Dashboard/Devices child-link indentation from16px to32px;
+the existing shared shell placement remains the only owner (ARCH-002), with no
+new state, abstraction or dependency. Oct23 Ruff check/format and Win32 mypy for
+`src/cephvr/gui/window.py` pass; boundaries check751 modules with zero violations
+(existing size warnings do not involve the changed shell). Focused
+`test_devices_side_rail_mirrors_tabs_in_main_sidebar` displays PASS using repository
+Python3.11 and a workspace `--basetemp`, but the process exits1 without a summary
+or diagnostic, so this is not a clean test-run pass. The first attempt could not
+create pytest's default sandbox temporary directory. Native appearance/restart
+remains unverified; no rig acceptance claimed.
+
+G02rev126 introduced smaller Dashboard/Devices child links with12px
 text and16px icons, adding6px vertical margin between child rows and16px between
 sidebar entries; the rail reserves40px per child. Amber main navigation is left-aligned to make the
 parent-child relationship explicit. Existing rail state/selection is unchanged;
@@ -92,6 +516,75 @@ retain native acceptance.
 <a id="startup-splash-preview"></a>
 ## GUI startup splash — 2026-10-22
 
+Oct23 white-frame repair under [G02rev135](../docs/architecture/gui.md#g02):
+`StartupSplash.reveal` now maximizes with zero opacity, delivers native
+expose/layout events after construction, repaints the real backing store and
+restores the original opacity in a finally block before finishing the splash.
+This replaces a discarded hidden grab followed by geometry changes and a queued
+second maximize. ARCH-002 retains the focused splash owner; no dependency,
+additional timer/state, device action or deadline change is required.
+
+Eight focused offscreen startup tests pass; the extended owning test checks the
+first paint is transparent and maximized. Three Windows-platform cases pass too.
+The [native evidence](runtime-evidence-2026-10-23/startup-handoff/README.md) includes
+a clean-exit foreground probe using the real Dashboard/shared reveal path with
+isolated preferences and temporary topmost test windows: all three themes first
+paint at opacity0, and1627 desktop frames contain zero white-client frames.
+Actual average capture rate is54.23fps, so this does not establish sub-frame
+scanout behavior. Same-generation managed GUI reopens reach populated Configuration
+and Controller connected; no Setup, trial or device operation was performed.
+Ruff check/format, Win32 mypy splash.py and boundaries751/zero pass. Earlier
+recordings were truncated/occluded and are not presentation acceptance. An earlier
+probe teardown access violation is resolved by explicit Qt deferred deletion;
+handled0x8001010d diagnostics still appear in the native test/probe output.
+Full native startup and same-generation GUI restoration now pass as described
+below. Alternate monitor/DPI, CRT-off and controller-unavailable variants remain
+in the [rig checklist](rig-verification.md).
+
+Launcher restoration follow-up under [E08](../docs/architecture/system-contracts.md#e08)
+and [E03](../docs/architecture/gui.md#e03): native inspection found no live runtime,
+but a stale descriptor and no exit receipt. Its missing named event explains the
+failed GUI-only signal. VS Code records a separate normal start at11:28:27 matching
+that descriptor; retained crash/exit evidence does not establish why its launcher
+terminated. Do not attribute it to the splash or call the old shutdown confirmed.
+`request_gui_relaunch` now wraps NativeEventError in the existing WindowsLaunchError
+path, preserving native details and actionable normal-start guidance without a
+traceback, recreated event, deleted state or automatic replacement. ARCH-002 reuses
+the focused replacement owner with no added state/dependency or decision change.
+
+[Native launch/restoration evidence](runtime-evidence-2026-10-23/launcher-restoration/README.md):
+normal full-role startup at14:16:58–59 reaches Controller connected/Configuration.
+After the owner resumed a physical-Escape interruption, normal GUI close removes
+only GUI PID51444; authenticated controller state and the launcher event remain
+accessible. Explicit reopen exits0, creates GUI PID53692 and reconnects at14:20:23.
+All10 other PID/creation-time identities, including launcher, supervisor, controller,
+acquisition, Visual Stimulus, Tracking and renderer, remain unchanged, as does
+controller generation6e2a7425-30fd-4bdc-97d5-f90b1c05e4de. The GUI is left open in
+Configuration, with the same identities/event still present105s later and the saved
+configuration file byte-for-byte unchanged. Windows does not detect saved projectors; the truthful startup
+display warning is acknowledged, with no Setup/trial/device/settings operation.
+This proves process preservation, not backend/device readiness. All59 launcher tests,
+changed-file Ruff check/format, Win32 mypy8 sources, boundaries751/zero and whitespace
+pass. Current full launch/GUI restoration is verified; the historical exact launcher
+termination cause remains unknown.
+
+Owner-requested future exit diagnostics under
+[E08rev181](../docs/architecture/system-contracts.md#e08) now create a best-effort
+private runtime `diagnostics/launcher-<controller-generation>.log`: flushed identity,
+shutdown-trigger/deadline, cleanup/receipt and return/exception records, with Python
+tracebacks and stdlib native fault output when no handler already exists. Existing
+fault handlers are preserved. No bootstrap credentials/payloads, periodic logger,
+new product process or automatic cleanup; logs do not replace E04 exit proof.
+An untraced kill can leave an unfinished log without identifying its killer.
+ARCH-002 puts I/O/fault-handler ownership in a focused diagnostic helper and retains
+main's existing lifecycle ownership. No dependency, control or deadline change.
+[Evidence](runtime-evidence-2026-10-23/launcher-exit-diagnostics/README.md):63 launcher
+tests, isolated native diagnostic/stack/exception smoke check, Ruff check/format11
+files, Win32 mypy9 sources and boundaries751/zero pass. All11 live baseline process
+identities stay unchanged. Current runtime was neither signaled nor restarted;
+integrated diagnostics apply only on a later planned launch. Keep that verification
+and the historical untraced-exit follow-up under `gui-relaunch-event-unavailable`.
+
 `gui-startup-splash` is implemented under [G02rev123](../docs/architecture/gui.md#g02).
 The approved text-only CephVR2.0 / Initializing design replaces the earlier animal
 proposal. Native Qt drawing uses the bundled IBM Plex Mono font and existing palette
@@ -107,8 +600,8 @@ parenting. Parenting those controls at creation removes these observed windows;
 regression coverage checks that only the splash is shown before the ready dashboard.
 The managed launch definition now selects a lightweight bootstrap that paints the
 splash before importing the frontend, preserving protected bootstrap arguments and
-runtime ownership. The main window is polished, laid out and rendered while hidden,
-then maximized and revealed. Clicks cannot dismiss the splash; bootstrap failures
+runtime ownership. The main window is constructed while hidden, then painted
+transparently at native maximized geometry before reveal. Clicks cannot dismiss the splash; bootstrap failures
 close it. Local Review also uses the splash. Controller connection/diagnostic handling
 is unchanged; this visual readiness gate does not wait for all devices or extend
 startup deadlines. G02rev125 makes the indeterminate segment bounce side to side
@@ -122,16 +615,17 @@ files, Win32 mypy1 source and boundary751/zero violations pass. An initial offsc
 attempt using QSplashScreen.setPixmap during construction caused an access violation:
 that API pumps events implicitly. The final implementation sets the base pixmap only
 before construction, then draws updated frames through its own paintEvent using
-QWidget.repaint; the corrected full focused run passes. No native restart performed.
+QWidget.repaint; the corrected full focused run passes. These Oct22 results preceded
+the Oct23 native handoff repair and verification above.
 
 ARCH-002 review: presentation and bootstrap have separate focused modules, with no
 runtime back-reference. The shared font loader moved from appearance to theme; all
 callers updated. The existing large main coordinator only gains startup wiring;
 theme remains the cohesive token/font owner. The boundary checker classifies the new
 bootstrap as assembly and an entry module, preserving feature import restrictions.
-No native GUI restart or hardware operation was performed. Native white-frame/flicker,
-monitor placement and fresh-launch/reopen acceptance remain in the single
-[rig checklist](rig-verification.md).
+Oct22 initial implementation performed no native restart. Oct23 native handoff
+results and remaining acceptance limits are recorded above; outstanding variants
+remain in the single [rig checklist](rig-verification.md).
 
 Validation: repository Python3.11, offscreen GUI tests select `startup_splash or
 startup_bootstrap or retro_family_switch or appearance or phosphor or subgroup`:
@@ -5096,6 +5590,64 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 
 <a id="maintainability-review"></a>
 
+
+Oct23 `hierarchical-code-review` and authorized follow-up implementation use
+GPT-6 Luna for focused work, GPT-6.1 Sol for integration/test review, and GPT-6 Astra
+for final adjudication on the dirty tree based on
+`59a973ac3ffc6fb331bbee1d93c6b283d6b90474`. Both reviewers accepted the scoped fixes;
+existing unrelated edits are preserved. Governing behavior remains
+[ARCH-002](../architecture.md#arch-002), [G01](../docs/architecture/gui.md#g01) and
+[E03](../docs/architecture/gui.md#e03); no architecture/policy change or dependency.
+
+- **GUI bridge shutdown fixed locally:** stop cancels its existing asyncio task
+  once, interrupting reconnect backoff and initial synchronization. Queue waiters
+  and dispatch tasks drain through existing cleanup. Cancelled observation skips
+  optional explicit ReleaseControl and closes the exact WatchState/reader, which
+  releases its lease; normal exit retains explicit release. Repeated stop cannot
+  recancel cleanup. Shutdown checks the thread wait result instead of destroying
+  a live QThread. After three seconds it logs a diagnostic and joins to retain
+  ownership: this exceptional fallback may wait indefinitely if cleanup itself
+  hangs. Three seconds is not a hard shutdown guarantee. No forced thread kill or
+  GUI-process exit policy was added; native app failure acceptance is unchanged.
+- **Hidden Advanced work deferred:** lightweight panel metadata, source/projector
+  controls and hover readouts remain available. Full-trial scale/path sampling
+  and regular/shared instrument widgets are prepared on first Advanced opening;
+  sampled data is reused until program/seed/geometry changes. Existing eager
+  InstrumentPlan callers retain their default behavior. In the same validated
+  synthetic 1,998-epoch/16-panel fixture, initial hidden preparation now takes
+  0.373/0.386/0.396 seconds with zero instrument widgets, versus the review's
+  historical 2.0643 seconds. First opening costs1.927–2.031 seconds; reopening
+  costs0.146–0.157 seconds with sampled-data reuse. This defers expensive work;
+  it does not eliminate first-open work or establish rig throughput.
+- **Unused helper resolved:** `preview_grouping.has_motion` and its exclusive
+  imports were already absent in the concurrently updated tree when the fix agent
+  inspected it. Repository caller/definition search and static checks confirm
+  removal; no deletion of another agent's grouping implementation was needed.
+
+ARCH-002 review keeps sampling with InstrumentPlan and lifecycle cancellation with
+ControllerBridge/HeadlessClient. The existing oversized timeline/main files receive
+only their owning preparation/lifetime guards; no separable new responsibility or
+whole-runtime reference was added. Size advisories remain cohesion prompts.
+The initial grid-rebuild claim was rejected because relayout already short-circuits;
+recorder queue sorting remains an unmeasured optional optimization. Existing
+[Preview controls overlap](#amber-phosphor-style-review-2026-10-23),
+`idle-shutdown-ordering` and `mcu-setup-ping-latency` are outside these fixes.
+
+Validation: seven focused bridge/client cases pass, including an actual isolated
+QThread stop, stop-before-start/backoff/synchronization/dispatch, repeated stop during
+cleanup, checked wait completion, authenticated loopback lease loss on cancelled
+observation, pending ReleaseControl cancellation and unchanged normal release.
+The broader offscreen preview/bridge/client selection passes266 cases/723 deselected
+in84.55s. A final91-case timeline run passes after explicitly enabling Advanced
+and asserting nonempty samples in concurrent motion scenarios, avoiding vacuous
+loops. GUI/client Ruff passes, format-check passes9 changed files, Windows-target
+mypy passes203 source files, and boundaries pass758 modules/zero violations.
+The initial full GUI/client attempt was interrupted after several minutes without
+output; its cause was not established and no full-suite pass is claimed. Native
+application/device/rig tests were not run. [Implementation evidence](runtime-evidence-2026-10-23/hierarchical-review/implementation/context.json)
+retains final source hashes, commands, benchmark/probe results and limits;
+[original review evidence](runtime-evidence-2026-10-23/hierarchical-review/context.json)
+retains the pre-fix assessment.
 
 Oct21 `repo-unused-code-oct21` follows [ARCH-002](../architecture.md#arch-002):
 removed the unintegrated GUI calibration-asset pruning CLI and its dedicated test,

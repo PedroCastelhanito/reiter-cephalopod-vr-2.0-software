@@ -1,0 +1,110 @@
+2026-10-23 Sol GUI integration/optimization probes
+Source: dirty workspace during hierarchical-code-review; parent captures revision/hashes.
+Environment: repository .venv/Scripts/python.exe; Windows PowerShell.
+Scope: deterministic coroutine inspection and isolated QT_QPA_PLATFORM=offscreen widgets.
+No sockets, device calls, native application, hardware, or rig acceptance.
+
+1. Reconnect stop responsiveness (deterministic coroutine driver)
+Run Python code below with .venv/Scripts/python.exe -u -:
+
+from unittest.mock import patch
+from cephvr.gui.controller_bridge import ControllerBridge
+from cephvr.shared.auth import Principal
+class Suspend:
+    def __await__(self):
+        yield 'sleeping'
+async def fake_sleep(delay):
+    print('delay', delay, flush=True)
+    await Suspend()
+bridge = ControllerBridge(Principal('gui', 'gui-1', 'token'), 50051, 1024, (5,))
+class Loop:
+    def call_soon_threadsafe(self, callback, *args):
+        callback(*args)
+with patch('asyncio.get_running_loop', return_value=Loop()), patch('asyncio.sleep', fake_sleep):
+    run = bridge._run()
+    print('suspend point:', run.send(None), flush=True)
+    bridge.stop()
+    print('after stop: coroutine still suspended; quit queue size:', bridge._queue.qsize(), flush=True)
+    run.close()
+
+Observed output:
+delay 5
+suspend point: sleeping
+after stop: coroutine still suspended; quit queue size: 1
+
+Assessment: stop queues quit but cannot interrupt the currently awaited retry sleep.
+The default retry sequence ends at 5 s; ManagedGui.shutdown waits only 3000 ms and
+ignores wait's result. Closing during the early part of a 5 s backoff can therefore
+return from shutdown while the bridge QThread remains alive. Potential Qt teardown
+abort is a consequence inferred from lifetime ownership, not reproduced natively.
+Small remedy: cancel/wake the bridge's main coroutine on stop and unwind it fully;
+cover stop during backoff and during initial observe/connection establishment.
+A first direct asyncio.run/wait_for probe stalled silently in the restricted
+environment and was interrupted; that failed attempt does not establish runtime timing.
+
+2. Hidden Advanced instrument construction
+Set $env:QT_QPA_PLATFORM='offscreen'; run Python code with repository interpreter:
+
+from time import perf_counter
+from PyQt6.QtWidgets import QApplication
+from cephvr.gui.preview_timeline import StimulusTimeline
+from cephvr.gui.protocol_document import review_program
+from cephvr.visual_stimulus.config.models.program_model import Group, Program
+app = QApplication([])
+base = review_program()
+for repetitions in (1, 100, 666):
+    group = Group(kind='group', group_id='bench', repetitions=repetitions, order='as_listed', order_unit='child_blocks', conditions=None, body=base.sequence)
+    program = Program.model_validate(base.model_copy(update={'sequence': (group,)}).model_dump())
+    widget = StimulusTimeline(); widget.timer.stop()
+    start = perf_counter(); widget.set_program(program, '', 'Benchmark'); duration = perf_counter()-start
+    start = perf_counter()
+    for _ in range(20): widget.set_elapsed(12.0)
+    refresh = (perf_counter()-start)/20
+    print(f'epochs={len(widget.epochs)} advanced={widget.advanced} panels={len(widget.all_panels)} set_program_s={duration:.4f} refresh_ms={refresh*1000:.3f}', flush=True)
+    widget.close(); widget.deleteLater(); app.processEvents()
+
+Observed output:
+epochs=3 advanced=False panels=2 set_program_s=0.0015 refresh_ms=0.017
+epochs=300 advanced=False panels=2 set_program_s=0.0466 refresh_ms=0.016
+epochs=1998 advanced=False panels=2 set_program_s=0.3083 refresh_ms=0.017
+
+Expanded four-layer/four-surface probe (fresh offscreen Python process):
+
+from time import perf_counter
+from PyQt6.QtWidgets import QApplication
+from cephvr.gui.preview_timeline import StimulusTimeline
+from cephvr.gui.protocol_document import review_program
+from cephvr.visual_stimulus.config.models.program_model import Group, Program, Instance
+app = QApplication([])
+base = review_program(); flow = base.sequence[1]
+settings = tuple(flow.settings[0].model_copy(update={'instance_id': f'layer{i}', 'space': flow.settings[0].space.model_copy(update={'surfaces': ('left','front','right','bottom')})}) for i in range(4))
+flow = flow.model_copy(update={'settings': settings})
+scene = base.scenes[1].model_copy(update={'layer_instance_ids': tuple(s.instance_id for s in settings)})
+group = Group(kind='group', group_id='bench', repetitions=666, order='as_listed', order_unit='child_blocks', conditions=None, body=(base.sequence[0],flow,base.sequence[2]))
+program = Program.model_validate(base.model_copy(update={'instances':tuple(Instance(instance_id=s.instance_id,family='texture') for s in settings),'scenes':(base.scenes[0],scene),'sequence':(group,)}).model_dump())
+w = StimulusTimeline(); w.timer.stop()
+t0=perf_counter(); w.set_program(program, '', '4 layers x 4 surfaces'); dt=perf_counter()-t0
+print(f'epochs={len(w.epochs)} advanced={w.advanced} panels={len(w.all_panels)} set_program_s={dt:.4f}', flush=True)
+w.close()
+
+Observed output:
+epochs=1998 advanced=False panels=16 set_program_s=2.0643
+
+Assessment: panel scale sampling and instrument construction occur synchronously
+even with Advanced hidden. Consider lazy initialization of advanced-only samples
+and widgets, preserving independent timeline/source-name needs. Microbenchmark
+only; no percentile/distribution, native UI stall, full-load, or rig claim.
+Initial benchmark attempted strict model_validate on JSON-mode model_dump data and
+failed tuple validation; corrected probes above use Python-mode model_dump and pass
+Program.model_validate before benchmarking.
+
+3. Luna GUI finding triage (source inspection)
+- preview_timeline.py refresh_instruments calls instrument_host.relayout only when
+  shared_dials exists. InstrumentGrid.relayout returns before removing/readding
+  widgets when chosen column count and instrument count are unchanged. Reject an
+  unconditional full layout-rebuild-at-5-Hz claim; remaining tiny scale/margin work
+  needs profiling before prioritization.
+- Preview controls/frame overlap is already explicitly retained in reports/runtime.md
+  around line405. Known unresolved presentation finding; no new runtime reproduction.
+- preview_grouping.has_motion has no repository callers. Safe optional dead-code
+  deletion; no behavioral defect and no measured performance significance.

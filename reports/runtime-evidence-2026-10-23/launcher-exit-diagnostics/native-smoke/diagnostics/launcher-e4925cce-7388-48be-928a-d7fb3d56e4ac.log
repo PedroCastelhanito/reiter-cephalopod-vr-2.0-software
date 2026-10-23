@@ -1,0 +1,8 @@
+{"utc": "2026-10-23T05:39:00.018443+00:00", "monotonic_ns": 756380338598800, "event": "launcher_started", "pid": 22572, "parent_pid": 53164, "controller_generation": "e4925cce-7388-48be-928a-d7fb3d56e4ac", "supervisor_generation": "e471362f-6940-4b36-a4d8-294da80c192a", "native_faults_to_log": true}
+{"utc": "2026-10-23T05:39:00.018443+00:00", "monotonic_ns": 756380338738400, "event": "shutdown_requested", "channel": "controller", "deadline_ns": 123}
+Current thread 0x00006fcc (most recent call first):
+  File "<string>", line 5 in <module>
+{"utc": "2026-10-23T05:39:00.018443+00:00", "monotonic_ns": 756380338938300, "event": "launcher_exit", "outcome": "exception"}
+Traceback (most recent call last):
+  File "<string>", line 6, in <module>
+RuntimeError: isolated diagnostic smoke test

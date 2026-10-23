@@ -1211,15 +1211,22 @@ async def test_stimulus_preview_scope_completion_and_out_of_order_status(
     request = svc.SetStimulusPreviewRequest(
         expected_configuration_revision=env.configuration.revision, visible=False
     )
+    request.placement.stimulus_tiles.add(surface="Front", x=20, y=30, side=256)
     request.command.operator.command_id = _id()
     assert (await preview.execute(request)).result == pb.COMMAND_RESULT_ACCEPTED
     assert preview.pending
     await env.spawned.pop()
+    assert backend.request.placement == request.placement
     operation = env.control.operations[request.command.operator.command_id]
     assert operation.complete and operation.succeeded == (not wrong_completion)
     assert (
         not preview.pending and env.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
     )
+    request.placement.stimulus_tiles.add(surface="Front", side=256)
+    request.command.operator.command_id = _id()
+    assert (await preview.execute(request)).result == pb.COMMAND_RESULT_REJECTED
+    assert not preview.pending
+    request.placement.ClearField("stimulus_tiles")
     request.command.operator.command_id = _id()
     request.expected_configuration_revision += 1
     assert (await preview.execute(request)).result == pb.COMMAND_RESULT_REJECTED

@@ -1,0 +1,95 @@
+{
+  "combined": {
+    "area": [
+      1500,
+      500
+    ],
+    "targets": {
+      "": [
+        392,
+        422
+      ]
+    },
+    "visible_instruments": [],
+    "shared_samples": [
+      [
+        "Left \u00b7 texture",
+        "#66c7f4"
+      ],
+      [
+        "Front \u00b7 texture",
+        "#ffbc5c"
+      ],
+      [
+        "Right \u00b7 texture",
+        "#d39aff"
+      ],
+      [
+        "Bottom \u00b7 texture",
+        "#69d59a"
+      ]
+    ]
+  },
+  "per-projector": {
+    "area": [
+      1500,
+      560
+    ],
+    "targets": {
+      "Left": [
+        191,
+        221
+      ],
+      "Front": [
+        191,
+        221
+      ],
+      "Right": [
+        190,
+        220
+      ],
+      "Bottom": [
+        190,
+        220
+      ]
+    },
+    "visible_instruments": [
+      "Left",
+      "Front",
+      "Right",
+      "Bottom"
+    ],
+    "shared_samples": []
+  },
+  "per-projector-compact": {
+    "area": [
+      1500,
+      438
+    ],
+    "targets": {
+      "Left": [
+        168,
+        198
+      ],
+      "Front": [
+        168,
+        198
+      ],
+      "Right": [
+        168,
+        198
+      ],
+      "Bottom": [
+        168,
+        198
+      ]
+    },
+    "visible_instruments": [
+      "Left",
+      "Front",
+      "Right",
+      "Bottom"
+    ],
+    "shared_samples": []
+  }
+}

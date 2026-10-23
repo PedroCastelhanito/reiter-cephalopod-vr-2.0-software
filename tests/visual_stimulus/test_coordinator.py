@@ -501,6 +501,65 @@ async def test_recipe_setup_initializes_exact_empty_catalogue_before_obligations
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("recording", [False, True])
+async def test_recipe_setup_and_worker_growth_pass_real_catalogue_validation(
+    tmp_path, recording
+):
+    recipe, state, clock, _, _, supervisor, ledger = await recipe_fixture(tmp_path)
+    identity, setup = recipe.identity, state.setup
+    state.resources.clear()
+    state.catalogue_revision = 12
+    supervisor.reports.clear()
+    setup.plan.configuration.backends.add(
+        backend_name="visual_stimulus",
+        enabled=True,
+        visual_stimulus=pb.VisualStimulusSettings(save_visual_stimulus_data=recording),
+    )
+    registry = ResourceObligationRegistry(
+        identity.process,
+        setup.command.work,
+        allowed_owners=frozenset(
+            (owner.role, owner.generation)
+            for owner in (identity.process, identity.worker)
+        ),
+        max_resources=10,
+        max_bytes=10_000,
+    )
+    receipt = supervisor.receipt
+
+    async def validate_catalogue(method, request, *, deadline_ns):
+        assert method == "ReportHeartbeat"
+        registry.accept_heartbeat(request)
+        return await receipt(method, request, deadline_ns=deadline_ns)
+
+    supervisor.receipt = validate_catalogue
+    await recipe.prepare(setup, clock() + 10**9)
+    assert state.catalogue_revision == int(recording)
+    assert len(supervisor.reports) == 1 + int(recording)
+    assert bool(recipe.plans) is recording
+    reports = Reports(identity, state, ledger, Peer(), supervisor, clock)
+    heartbeat = pb.HeartbeatReport(
+        source=identity.worker,
+        work=setup.command.work,
+        sent_monotonic_ns=clock(),
+        session_phase=pb.SESSION_PHASE_SETTING_UP,
+        cleanup_resources_revision=1,
+        cleanup_resources=[
+            pb.ResourceObligation(
+                owner=identity.worker, resource="visual_stimulus:renderer"
+            )
+        ],
+    )
+    await reports.heartbeat(heartbeat, clock())
+    assert registry.revision == 1 + int(recording)
+    assert registry.obligations == tuple(state.resources)
+    # Identical worker heartbeats must not manufacture another catalogue revision.
+    await reports.heartbeat(heartbeat, clock())
+    assert registry.revision == 1 + int(recording)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.asyncio
 async def test_save_off_recipe_uses_exact_retained_bytes_and_private_confirmation(
     tmp_path,
 ):

@@ -1,5 +1,9 @@
 # Acquisition status
 
+Oct23 `no-recording-dummy-session`: implements the owner-requested
+[E04](../docs/architecture/supervisor.md#e04) all-recording-Off exception.
+[Current validation and limits](runtime.md#no-recording-dummy-session--2026-10-23).
+
 
 Oct22 current result: the image-read ctypes lifetime defect and helper retirement
 proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording
@@ -1954,6 +1958,12 @@ transitions was not independently observed. GUI pin requests now reach the A11
 serial owner; output channels D9/D10/D11 still have no physical test evidence.
 
 ## Ownership and review
+
+Oct23 `hierarchical-code-review`: Luna reviewed current dummy-session admission,
+output reservations/function scopes and recording lifecycle under A02/A07/E04;
+no additional actionable defect was established. Existing failed-Setup/reuse
+acceptance remains open. Tests were inspected, not rerun; source review is not
+rig evidence. [Cross-owner validation and limits](runtime.md#maintainability-review).
 
 Oct19 `code-sweep-oct19` applies [ARCH-002](../architecture.md#arch-002) under
 the owner's behavior-preservation constraint. Removed six unused stored values:

@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from cephvr.platform.windows.events import AutoResetEvent, event_name
+from cephvr.platform.windows.events import AutoResetEvent, NativeEventError, event_name
 from cephvr.platform.windows.guard import InstanceAlreadyRunning, SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsLaunchError
 from cephvr.shared.clock import host_time_ns, require_int64_ns
@@ -136,8 +136,15 @@ def request_gui_relaunch(root: Path) -> None:
     if not record.gui_relaunch_event_id:
         raise WindowsLaunchError("running launcher does not support GUI relaunch")
     allocation = UUID(record.gui_relaunch_event_id)
-    with AutoResetEvent.open(event_name(allocation), allocation) as event:
-        event.set()
+    try:
+        with AutoResetEvent.open(event_name(allocation), allocation) as event:
+            event.set()
+    except NativeEventError as exc:
+        raise WindowsLaunchError(
+            f"Could not contact the launcher to reopen the GUI: {exc}. "
+            "If CephVR has stopped, start it normally without --reopen-gui; "
+            "otherwise check its owning launcher/controller."
+        ) from exc
 
 
 def _await_endpoint(root: Path, wait_ns: int) -> LauncherEndpoint:

@@ -360,7 +360,11 @@ def test_multiple_review_previews_have_independent_source_frames(
         assert set(viewers.windows) == set(keys)
         assert len(visible) == len(keys)
         for key, frame in positions.items():
-            slot = target.preview_slot.target_for(key)
+            slot = (
+                target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                if key == "stimulus" and page == 0
+                else target.preview_slot.target_for(key)
+            )
             assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
         frames = list(positions.values())
         assert all(
@@ -379,7 +383,9 @@ def test_multiple_review_previews_have_independent_source_frames(
         assert set(viewers.windows) == set(keys[1:])
         viewers.poll_windows()
         # Hiding a stream frees its frame on every page (G01 Monitor view).
-        assert set(target.preview_slot.frames) == set(keys[1:])
+        assert set(target.preview_slot.frames) == {
+            key for key in keys[1:] if page != 0 or key != "stimulus"
+        }
         # An external X closes just its own source, preserving the other stream.
         visible.remove(viewers.windows[keys[1]][0])
         viewers.poll_windows()
@@ -457,7 +463,9 @@ def test_camera_preview_slots_only_include_enabled_cameras(
     window.select_page(0)
     show_previews(window)
     app.processEvents()
-    assert set(window.preview_slot.frames) == {source.key for source in sources}
+    assert set(window.preview_slot.frames) == {
+        source.key for source in sources if source.key != "stimulus"
+    }
     assert window.preview_slot.isVisible()
 
 
@@ -592,6 +600,8 @@ def test_preview_cards_name_their_source_and_draw_retro_frame(
     assert frame.empty and slot.caption.text() == "[ PREVIEW ]"
     blink().on = True
     placeholder = frame.grab().toImage()
+    blink().on = False
+    assert frame.grab().toImage() == placeholder
     frame.empty = False
     quiet = frame.grab().toImage()
     # NO SIGNAL appears only inside the empty footprint.
@@ -2687,6 +2697,193 @@ def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -
         assert bridge.request("Cancel Setup")
     assert bridge._pending_count == bridge._MAX_PENDING
     assert not bridge.request("respond_prompt", prompt=b"", choice="cancel")
+
+
+@pytest.mark.asyncio
+async def test_managed_bridge_stop_interrupts_backoff_and_is_idempotent() -> None:
+    import asyncio
+
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    before_start = ControllerBridge(
+        Principal("gui", "gui-before-start", "token"), 50051, 1024, (60,)
+    )
+    before_start.stop()
+    before_start.stop()
+    await before_start._run()
+    assert before_start._loop is None
+
+    bridge = ControllerBridge(Principal("gui", "gui-1", "token"), 50051, 1024, (60,))
+    task = asyncio.create_task(bridge._run())
+    await asyncio.sleep(0)
+    bridge.stop()
+    bridge.stop()
+    await asyncio.wait_for(task, timeout=0.2)
+    assert bridge._loop is None
+    assert bridge._run_task is None
+    assert bridge._queue is None
+
+    running = ControllerBridge(
+        Principal("gui", "gui-thread", "token"), 50051, 1024, (60,)
+    )
+    running.start()
+    for _ in range(100):
+        if running._run_task is not None:
+            break
+        await asyncio.sleep(0.001)
+    assert running._run_task is not None
+    running.stop()
+    assert running.wait(1000)
+
+
+@pytest.mark.asyncio
+async def test_managed_bridge_stop_cancels_initial_sync_and_runs_client_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    from cephvr.gui import controller_bridge as bridge_module
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    entered, cleanup_started, cleanup_release, cleaned = (
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+    )
+
+    @asynccontextmanager
+    async def channel(*_args: object):
+        yield object()
+
+    class Client:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        @asynccontextmanager
+        async def observe(self):
+            entered.set()
+            try:
+                await asyncio.Future()
+                yield
+            finally:
+                cleanup_started.set()
+                await cleanup_release.wait()
+                cleaned.set()
+
+    monkeypatch.setattr(bridge_module, "loopback_channel", channel)
+    monkeypatch.setattr(bridge_module, "HeadlessClient", Client)
+    bridge = ControllerBridge(Principal("gui", "gui-1", "token"), 50051, 1024, (0,))
+    task = asyncio.create_task(bridge._run())
+    await asyncio.wait_for(entered.wait(), timeout=0.2)
+    bridge.stop()
+    await asyncio.wait_for(cleanup_started.wait(), timeout=0.2)
+    bridge.stop()
+    cleanup_release.set()
+    await asyncio.wait_for(task, timeout=0.2)
+    assert cleaned.is_set()
+    assert bridge._loop is None
+
+
+@pytest.mark.asyncio
+async def test_managed_bridge_stop_cancels_connected_dispatch_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import controller_bridge as bridge_module
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    (
+        connected,
+        dispatching,
+        dispatch_cleanup_started,
+        dispatch_cleanup_release,
+        dispatch_cleaned,
+        observed_closed,
+    ) = (
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+        asyncio.Event(),
+    )
+
+    @asynccontextmanager
+    async def channel(*_args: object):
+        yield object()
+
+    class Client:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            self.snapshot = pb.Snapshot(controller_generation="controller-1")
+
+            async def read_forever() -> None:
+                await asyncio.Future()
+
+            self._reader = asyncio.create_task(read_forever())
+
+        @asynccontextmanager
+        async def observe(self):
+            try:
+                yield
+            finally:
+                self._reader.cancel()
+                await asyncio.gather(self._reader, return_exceptions=True)
+                observed_closed.set()
+
+    async def blocked_dispatch(*_args: object) -> None:
+        dispatching.set()
+        try:
+            await asyncio.Future()
+        finally:
+            dispatch_cleanup_started.set()
+            await dispatch_cleanup_release.wait()
+            dispatch_cleaned.set()
+
+    monkeypatch.setattr(bridge_module, "loopback_channel", channel)
+    monkeypatch.setattr(bridge_module, "HeadlessClient", Client)
+    bridge = ControllerBridge(Principal("gui", "gui-1", "token"), 50051, 1024, (0,))
+    monkeypatch.setattr(bridge, "_dispatch_guarded", blocked_dispatch)
+    bridge.connection_changed.connect(
+        lambda status, *_args: connected.set() if status else None
+    )
+    task = asyncio.create_task(bridge._run())
+    await asyncio.wait_for(connected.wait(), timeout=0.2)
+    assert bridge.request("Start")
+    await asyncio.wait_for(dispatching.wait(), timeout=0.2)
+    bridge.stop()
+    await asyncio.wait_for(dispatch_cleanup_started.wait(), timeout=0.2)
+    bridge.stop()
+    dispatch_cleanup_release.set()
+    await asyncio.wait_for(task, timeout=0.2)
+    assert dispatch_cleaned.is_set()
+    assert observed_closed.is_set()
+
+
+def test_managed_gui_shutdown_checks_qthread_completion() -> None:
+    from cephvr.gui.main import ManagedGui
+
+    class Bridge:
+        def __init__(self) -> None:
+            self.waits: list[tuple[object, ...]] = []
+
+        def stop(self) -> None:
+            pass
+
+        def wait(self, *args: object) -> bool:
+            self.waits.append(args)
+            return len(self.waits) > 1
+
+    bridge = Bridge()
+    ManagedGui.shutdown(type("Manager", (), {"bridge": bridge})())
+    assert bridge.waits == [(3000,), ()]
 
 
 @pytest.mark.asyncio
@@ -4845,7 +5042,7 @@ def test_projector_assignments_survive_restart_and_changed_inventory(
     second.discover_displays()
     assert second.assignments == expected
     if not unassigned:
-        assert "Assigned displays unavailable: Front" in second.console.toPlainText()
+        assert "Assigned projectors not detected: Front" in second.console.toPlainText()
     second.review_displays = displays
     second.discover_displays()
     assert second.projectors["edid:one"].currentText() == expected["edid:one"]
@@ -6345,6 +6542,9 @@ def test_managed_spikeglx_pairing_waits_for_confirmation(
     assert sent == [("set_spikeglx_enabled", {"enabled": True, "expected_revision": 7})]
     assert not panel.pairing.isChecked()
     assert panel.pairing_pending == queued
+    if not queued:
+        assert "Pairing was not changed" in panel.console.toPlainText()
+        assert "try again" in panel.console.toPlainText()
     assert panel.pairing.isEnabled() != queued
     panel.apply_view(view)
     assert panel.pairing.isEnabled() != queued
@@ -8370,8 +8570,8 @@ def test_setup_without_projectors_logs_and_submits_nothing(
     assert panel.keys == []
     message = window.dashboard.log_console.toPlainText()
     assert "Setup not submitted" in message
-    assert "No available projectors have been identified" in message
-    assert "turn on" in message
+    assert "No projectors detected" in message
+    assert "Turn on" in message
 
 
 def test_runtime_gui_save_failure_keeps_window_open_and_previous_file(
@@ -9626,6 +9826,7 @@ def test_protocol_program_validation_and_atomic_save(
     path = tmp_path / "program.json"
     panel.save_program(str(path))
     source["sequence"][0]["batch_label"] = ""
+    source["category"] = None
     source["sequence"][0]["batch_id"] = None
     source["sequence"][0]["subgroup_draft"] = None
     source["sequence"][0]["repetition_settings"] = []
@@ -12649,8 +12850,9 @@ def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app
         assert appearance is not None
         assert params.fades is not None
         for control in (params.fades.fade_in, params.fades.fade_out):
-            bottom = control.mapTo(appearance, QPoint(0, control.height())).y()
-            assert bottom <= appearance.height()
+            assert control not in [widget for _, widget in row.columns]
+            assert params.advanced_card.isAncestorOf(control)
+            assert control.isVisibleTo(row)
         assert (
             params.advanced_card.mapTo(row, QPoint()).x()
             == row.layer.mapTo(row, QPoint()).x()
@@ -13267,6 +13469,9 @@ def test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up(
     from cephvr.gui.protocol_document import blank_program
     from cephvr.gui.stimulus_presets import add_file_stimulus
 
+    window.appearance.select("amber_phosphor", persist=False)
+    window.appearance.crt_action.setChecked(True)
+
     image = QImage(16, 16, QImage.Format.Format_RGB32)
     image.fill(0xFFFFFFFF)
     path = tmp_path / "tile.png"
@@ -13286,6 +13491,12 @@ def test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up(
     assert tuple(preview.canvases) == ("Left", "Right")
     assert preview.rig_view.enabled_faces == ("Left", "Right")
     assert preview.rig_view.snapshot.rig is None
+    assert preview.rig_view.objectName() == "TrialPreviewPixels"
+    projected = preview.grab().toImage().copy(preview.rig_view.geometry())
+    window.appearance.crt_action.setChecked(False)
+    app.processEvents()
+    assert projected == preview.grab().toImage().copy(preview.rig_view.geometry())
+    window.appearance.crt_action.setChecked(True)
     preview.grab()
     assert len(preview.media.images) == 1
     preview.slider.setValue(5000)
@@ -17358,6 +17569,62 @@ def test_texture_reference_link_keeps_appearance_and_disables_reparented_motion(
     assert panel.program.sequence[0].settings[1].linked_to is None
 
 
+@pytest.mark.parametrize("width", [1400, 720])
+def test_reference_motion_source_switches_controls_and_requires_target(app, width):
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    composer = EpochComposer()
+    composer.set_screens(("Bottom", "Left"))
+    program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+    program = add_stimulus(program, 0, "Texture", ("Left",))
+    composer.program = program
+    composer.refresh_rows()
+    composer.resize(width, 900)
+    composer.show()
+    app.processEvents()
+    row = composer.rows["Left"]
+    panel = row.parameters
+    source = panel.motion_source
+    assert source is not None
+    assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+    controls = dict(row.columns)
+    assert source.currentText() == "Self"
+    assert controls["Linked to"].isHidden()
+    assert controls["Speed (mm/s)"].isVisibleTo(row)
+    assert panel.fades.fade_in.isHidden() is False
+    assert not panel.fades.fade_in.isVisibleTo(row)
+    source.setCurrentText("Linked")
+    assert controls["Linked to"].isVisibleTo(row)
+    for title in ("Speed (mm/s)", "Direction (°)", "Rotation (°/s)"):
+        assert controls[title].isHidden()
+        assert title not in row.signature
+    assert not panel.apply()
+    assert "Choose a motion source" in panel.message.text()
+    assert composer.program == program
+    identity = program.sequence[0].settings[0].instance_id
+    panel.linked_to.setCurrentIndex(panel.linked_to.findData(identity))
+    assert panel.apply(), panel.message.text()
+    assert composer.program.sequence[0].settings[1].linked_to == identity
+    row.actions_button.setChecked(True)
+    assert panel.fades.fade_in.isVisibleTo(row)
+    panel.fades.fade_in.setText("1")
+    panel.fades.mark_changed()
+    assert panel.apply(), panel.message.text()
+    assert composer.program.sequence[0].settings[1].linked_to == identity
+    assert composer.program.sequence[0].settings[1].opacity.kind == "keyframes"
+    composer.refresh_rows()
+    panel = row.parameters
+    assert panel.motion_source.currentText() == "Linked"
+    panel.motion_source.setCurrentText("Self")
+    assert panel.linked_to.isHidden()
+    assert dict(row.columns)["Speed (mm/s)"].isVisibleTo(row)
+    assert panel.apply(), panel.message.text()
+    assert composer.program.sequence[0].settings[1].linked_to is None
+    composer.close()
+
+
 def test_epoch_automatic_updates_preserve_focus_validation_and_history(window, app):
     from PyQt6.QtWidgets import QLineEdit
 
@@ -17830,7 +18097,8 @@ def test_phosphor_log_wraps_for_display_only(app: QApplication) -> None:
 def test_phosphor_popups_and_owned_windows_get_scanline_film(
     app: QApplication, tmp_path: Path
 ) -> None:
-    from PyQt6.QtWidgets import QDialog
+    from PyQt6.QtGui import QColor
+    from PyQt6.QtWidgets import QDialog, QWidget
 
     from cephvr.gui.managed_window import ManagedDashboardWindow
     from cephvr.gui.retro_overlay import PHOSPHOR_SCANLINE_ALPHA, CrtOverlay
@@ -17841,13 +18109,35 @@ def test_phosphor_popups_and_owned_windows_get_scanline_film(
     try:
         window.appearance.select("amber_phosphor")
         window.appearance.crt_action.setChecked(True)
+        dialog.resize(360, 260)
+        pixels = []
+        for index, name in enumerate(("ExternalPreviewSlot", "TrialPreviewPixels")):
+            target = QWidget(dialog)
+            target.setObjectName(name)
+            target.setStyleSheet("background: white;")
+            target.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+            target.setGeometry(20 + index * 160, 40, 140, 160)
+            pixels.append(target)
         dialog.show()
         app.processEvents()
         film = dialog.findChild(CrtOverlay)
         assert film is not None and film.isVisible()
         assert film.scanline_alpha == PHOSPHOR_SCANLINE_ALPHA
+        for _ in range(2):
+            rendered = dialog.grab().toImage()
+            for target in pixels:
+                for y in range(target.y() + 10, target.y() + 30):
+                    assert rendered.pixelColor(target.x() + 20, y) == QColor("white"), (
+                        rendered.pixelColor(target.x() + 20, y).name()
+                    )
+            pixels[0].move(30, 45)
+            dialog.resize(380, 280)
+            app.processEvents()
         window.appearance.crt_action.setChecked(False)
         assert film.isHidden()
+        window.appearance.crt_action.setChecked(True)
+        assert film.isVisible()
+        assert dialog.grab().toImage().pixelColor(50, 60) == QColor("white")
     finally:
         dialog.close()
         window.tracking.annotation.close()
@@ -18012,9 +18302,47 @@ def test_phosphor_navigation_uses_chevron_markers_with_hover(
         gutter = QRect(8, 0, 24, window.page_buttons[0].height())
         selected = window.page_buttons[2].grab().toImage()
         idle = window.page_buttons[1].grab().toImage()
-        # Big coral `>` and coral label for the current page; none on idle pages.
+        # Every page has a leading marker; only the selected page is coral.
         assert _coral_pixels(selected, gutter) > 8
         assert _coral_pixels(idle) == 0
+        assert any(
+            idle.pixelColor(x, y).lightness() > 70
+            for x in range(gutter.left(), gutter.right())
+            for y in range(gutter.top(), gutter.bottom())
+        )
+        control = window.page_buttons[2]
+        title_x = 32 + control.iconSize().width() + 6
+        columns = [
+            x
+            for x in range(title_x, control.width())
+            if _coral_pixels(selected, QRect(x, 0, 2, control.height()))
+        ]
+        split = max(range(len(columns) - 1), key=lambda i: columns[i + 1] - columns[i])
+        tail = columns[split + 1]
+        leading_end = max(
+            x
+            for x in range(8, 32)
+            if _coral_pixels(selected, QRect(x, 0, 2, control.height()))
+        )
+        icon_start = min(
+            x
+            for x in range(32, title_x)
+            if _coral_pixels(selected, QRect(x, 0, 2, control.height()))
+        )
+        assert abs((icon_start - leading_end) - (tail - columns[split])) <= 2
+        assert _coral_pixels(selected, QRect(tail, 0, 14, control.height())) > 3
+
+        def coral_height(image, rect):
+            rows = [
+                y
+                for y in range(rect.top(), rect.bottom())
+                if _coral_pixels(image, QRect(rect.left(), y, rect.width(), 2))
+            ]
+            return max(rows) - min(rows) + 1
+
+        assert coral_height(selected, gutter) == coral_height(
+            selected, QRect(tail, 0, 20, control.height())
+        )
         # Hover previews the page with a dim marker and a brighter label.
         # Offscreen hover is unreliable, so set the state the painter reads.
         window.page_buttons[1].setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
@@ -18027,6 +18355,44 @@ def test_phosphor_navigation_uses_chevron_markers_with_hover(
         rail.show_position(2, -1)
         rail_image = rail.viewport().grab().toImage()
         row = rail.visualItemRect(rail.devices[2])
+        # The suffix follows short and elided text, rather than the row boundary.
+        for index in (0, 1, 2):
+            rail.show_position(index, -1)
+            app.processEvents()
+            rendered = rail.viewport().grab().toImage()
+            bounds = rail.visualItemRect(rail.devices[index])
+            columns = [
+                x
+                for x in range(bounds.left() + 40, bounds.right())
+                if _coral_pixels(rendered, QRect(x, bounds.top(), 2, bounds.height()))
+            ]
+            assert columns
+            assert coral_height(
+                rendered, QRect(bounds.left(), bounds.top(), 18, bounds.height())
+            ) == coral_height(
+                rendered, QRect(columns[-1] - 10, bounds.top(), 12, bounds.height())
+            )
+            gaps = [b - a for a, b in zip(columns, columns[1:], strict=False)]
+            leading_end = max(
+                x
+                for x in range(bounds.left(), bounds.left() + 18)
+                if _coral_pixels(rendered, QRect(x, bounds.top(), 2, bounds.height()))
+            )
+            icon_start = min(
+                x
+                for x in range(bounds.left() + 18, bounds.left() + 40)
+                if any(
+                    rendered.pixelColor(x, y).lightness() > 70
+                    for y in range(bounds.top(), bounds.bottom())
+                )
+            )
+            assert abs((icon_start - leading_end) - max(gaps)) <= 2, (
+                index,
+                icon_start,
+                leading_end,
+                max(gaps),
+            )
+        rail.show_position(2, -1)
         assert (
             _coral_pixels(rail_image, QRect(row.left(), row.top(), 18, row.height()))
             > 3
@@ -18052,6 +18418,28 @@ def test_phosphor_navigation_uses_chevron_markers_with_hover(
         grabbed = bar.grab().toImage()
         marker = markers.marker_rect(0).toRect()
         assert _coral_pixels(grabbed, marker) > 3
+        from PyQt6.QtWidgets import QStyle, QStyleOptionTab
+
+        option = QStyleOptionTab()
+        bar.initStyleOption(option, 0)
+        text_rect = bar.style().subElementRect(
+            QStyle.SubElement.SE_TabBarTabText, option, bar
+        )
+        tail = int(
+            text_rect.center().x()
+            + bar.fontMetrics().horizontalAdvance(option.text) / 2
+            + 4
+        )
+        assert (
+            _coral_pixels(grabbed, QRect(tail, text_rect.top(), 12, text_rect.height()))
+            > 3
+        )
+        idle_marker = markers.marker_rect(1).toRect()
+        assert any(
+            grabbed.pixelColor(x, y).lightness() > 70
+            for x in range(idle_marker.left(), idle_marker.right())
+            for y in range(idle_marker.top(), idle_marker.bottom())
+        )
     finally:
         window.close()
         window.deleteLater()
@@ -20342,8 +20730,11 @@ def test_preview_log_four_lines_and_collapse_follows_latest(
 
 
 def test_devices_side_rail_mirrors_tabs_in_main_sidebar(
-    app: QApplication, tmp_path: Path
+    app: QApplication, tmp_path: Path, monkeypatch
 ) -> None:
+    from PyQt6.QtGui import QPainter, QPixmap
+    from PyQt6.QtWidgets import QStyle, QStyleOptionViewItem
+
     settings = QSettings(str(tmp_path / "rail.ini"), QSettings.Format.IniFormat)
     window = DashboardWindow(sample=True, settings=settings)
     devices = window.devices
@@ -20358,7 +20749,42 @@ def test_devices_side_rail_mirrors_tabs_in_main_sidebar(
         assert devices.rail.height() == 160
         for style in ("standard", "retro_console", "amber_phosphor"):
             window.appearance.select(style, persist=False)
+            devices.rail.show_position(1, -1)
             app.processEvents()
+            rail = devices.rail
+            index = rail.indexFromItem(rail.devices[1])
+            option = QStyleOptionViewItem()
+            option.initFrom(rail)
+            option.rect = rail.visualRect(index)
+            rail.itemDelegate().initStyleOption(option, index)
+            text_rect = rail.style().subElementRect(
+                QStyle.SubElement.SE_ItemViewItemText, option, rail
+            )
+            assert text_rect.width() >= (
+                option.fontMetrics.horizontalAdvance("Microcontroller")
+                + 2 * option.fontMetrics.horizontalAdvance("<")
+                + 12
+            )
+            if style == "amber_phosphor":
+                drawn = []
+                rail_style = rail.style()
+                original = rail_style.drawControl
+
+                def capture(
+                    control, item, painter, widget=None, drawn=drawn, original=original
+                ):
+                    if control == QStyle.ControlElement.CE_ItemViewItem:
+                        drawn.append(item.text)
+                    original(control, item, painter, widget)
+
+                option.state |= QStyle.StateFlag.State_Selected
+                canvas = QPixmap(rail.size())
+                painter = QPainter(canvas)
+                with monkeypatch.context() as patch:
+                    patch.setattr(rail_style, "drawControl", capture)
+                    rail.itemDelegate().paint(painter, option, index)
+                painter.end()
+                assert drawn == ["Microcontroller"]
             assert devices.rail.x() > window.page_buttons[2].x()
             assert (
                 devices.rail.font().pixelSize()
@@ -20384,7 +20810,9 @@ def test_devices_side_rail_mirrors_tabs_in_main_sidebar(
         window.page_buttons[0].click()
         app.processEvents()
         assert dashboard.rail.isVisible() and dashboard.view_tabs.isHidden()
-        assert devices.rail.isHidden()
+        assert devices.rail.isVisible()
+        assert not devices.rail.selectedItems()
+        assert dashboard.rail.selectedItems() == [dashboard.rail.currentItem()]
         assert dashboard.rail.parentWidget() is window.page_buttons[0].parentWidget()
         assert dashboard.rail.height() < 110
         assert dashboard.form.x() == 0
@@ -20401,7 +20829,23 @@ def test_devices_side_rail_mirrors_tabs_in_main_sidebar(
         window.apply_view(review_view(Phase.CONFIGURATION))
         assert dashboard.rail.currentItem() is dashboard.rail.rows[(0, -1)]
         window.page_buttons[2].click()
-        assert dashboard.rail.isHidden()
+        assert dashboard.rail.isVisible()
+        assert not dashboard.rail.selectedItems()
+        assert devices.rail.selectedItems() == [devices.rail.currentItem()]
+        window.page_buttons[1].click()
+        assert dashboard.rail.isVisible() and devices.rail.isVisible()
+        assert not dashboard.rail.selectedItems() and not devices.rail.selectedItems()
+        devices.tab_bar.setCurrentIndex(1)
+        assert devices.rail.currentItem() is devices.rail.devices[1]
+        assert not devices.rail.selectedItems()
+        dashboard.rail.item_chosen(dashboard.rail.rows[(0, -1)])
+        assert window.stack.currentIndex() == 0
+        assert window.page_buttons[0].isChecked()
+        assert dashboard.view_tabs.currentIndex() == 0
+        rail.item_chosen(rail.rows[(2, -1)])
+        assert window.stack.currentIndex() == 2
+        assert window.page_buttons[2].isChecked()
+        assert devices.tab_bar.currentIndex() == 2
         # Tab changes elsewhere are mirrored without echoing a choice back.
         chosen: list[tuple[int, int]] = []
         rail.chosen.connect(lambda device, section: chosen.append((device, section)))
@@ -20847,8 +21291,8 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     app.processEvents()
     # Only shown streams take frames; the active but unavailable "4" has none.
     assert tuple(window.preview_slot.frames) == ("0", "1", "2", "3")
-    assert dialog.details.isHidden()
-    assert dialog.preview_host.width() == dialog.splitter.width()
+    assert dialog.details.isVisible()
+    assert dialog.stimulus_area.mode.currentText() == "Combined"
     assert dialog.hud.geometry().bottom() < dialog.timeline_card.y()
     assert dialog.timeline_card.geometry().bottom() < dialog.controls_card.y()
     assert dialog.controls_card.geometry().bottom() < dialog.splitter.y()
@@ -20880,9 +21324,9 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     app.processEvents()
     assert dialog.details.isVisible()
     assert dialog.preview_host.geometry().right() < dialog.details.x()
-    # Card padding keeps the Projectors card a little above a third.
+    # Cameras retain a column beside the larger stimulus area.
     assert dialog.details.width() / sum(dialog.splitter.sizes()) == pytest.approx(
-        1 / 3, abs=0.06
+        3 / 4, abs=0.10
     )
     assert dialog.details.isAncestorOf(dialog.timeline.motion_section)
     before = dialog.preview_host.width()
@@ -20895,8 +21339,8 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     } == targets
     dialog.advanced_toggle.click()
     app.processEvents()
-    assert dialog.details.isHidden()
-    assert dialog.preview_host.width() == dialog.splitter.width()
+    assert dialog.details.isVisible()
+    assert dialog.timeline.motion_section.isHidden()
     assert not requests
     left, right = ("<", ">") if style == "amber_phosphor" else ("[", "]")
     for name in dialog.names.values():
@@ -20968,10 +21412,8 @@ def test_preview_timeline_visibility_and_advanced_preference(app, tmp_path):
     assert again.advanced_toggle.isChecked() and again.timeline.advanced
     again.show()
     app.processEvents()
-    # Card padding keeps the Projectors card a little above a third.
-    assert again.details.width() / sum(again.splitter.sizes()) == pytest.approx(
-        1 / 3, abs=0.06
-    )
+    # Stimulus output and instruments occupy the larger section by default.
+    assert again.details.width() > again.preview_host.width()
     host.close()
     host.deleteLater()
 
@@ -21015,6 +21457,50 @@ def test_video_previews_toggle_hides_section_and_closes_open_viewers(app, tmp_pa
     again = PreviewWorkspace(None, QSettings(path, QSettings.Format.IniFormat))
     assert not again.video_toggle.isChecked() and again.preview_host.isHidden()
     workspace.close()
+
+
+@pytest.mark.parametrize(
+    "cancel", [None, "uncheck", "hide", "control", "inactive", "recording", "removed"]
+)
+def test_preview_selection_waits_for_source_readiness(app, cancel):
+    from cephvr.gui.previews import PreviewWorkspace
+
+    workspace = PreviewWorkspace(None)
+    source = PreviewView("camera", "Behavior cam", active=True, available=False)
+    requests = []
+    workspace.visibility_requested.connect(lambda *args: requests.append(args))
+    workspace.apply_views((source,), allowed=True)
+    control = workspace.controls[source.key]
+    assert control.isEnabled()
+    control.click()
+    workspace.apply_views((source,), allowed=True)
+    assert control.isChecked() and control.isEnabled() and not requests
+    if cancel == "uncheck":
+        control.click()
+    elif cancel == "hide":
+        workspace.video_toggle.click()
+    elif cancel == "control":
+        workspace.apply_views((source,), allowed=False)
+    elif cancel == "inactive":
+        workspace.apply_views((replace(source, active=False),), allowed=True)
+    elif cancel == "recording":
+        workspace.recording_enabled[source.key] = False
+        workspace.refresh()
+        workspace.recording_enabled[source.key] = True
+    elif cancel == "removed":
+        workspace.apply_views((), allowed=True)
+    ready = replace(source, available=True)
+    workspace.apply_views((ready,), allowed=True)
+    assert requests == ([(source.key, True)] if cancel is None else [])
+    if cancel is None:
+        assert not workspace.controls[source.key].isEnabled()
+        # An unsuccessful Show does not turn into an automatic retry.
+        workspace.apply_views((ready,), allowed=True)
+        assert requests == [(source.key, True)]
+        assert not workspace.controls[source.key].isChecked()
+    workspace.close()
+    workspace.deleteLater()
+    app.processEvents()
 
 
 def test_preview_top_row_holds_system_controls_hud_console_and_view_toggles(
@@ -21683,8 +22169,9 @@ def test_trial_preview_maps_usable_pixels_to_screen_without_margins(
     for position in (15, 50, 105):
         first = (20, position) if axis == "x" else (position, 20)
         second = (100, position) if axis == "x" else (position, 100)
-        assert target.pixelColor(*first) == QColor("red" if flip else "blue")
-        assert target.pixelColor(*second) == QColor("blue" if flip else "red")
+        mirrored = flip ^ (face == "Bottom" and axis == "x")
+        assert target.pixelColor(*first) == QColor("red" if mirrored else "blue")
+        assert target.pixelColor(*second) == QColor("blue" if mirrored else "red")
     # Unused output pixels must not spill outside the physical screen.
     assert target.pixelColor(5, 60) == QColor("green")
     assert target.pixelColor(115, 60) == QColor("green")
@@ -22658,9 +23145,13 @@ def test_startup_splash_hides_construction_and_reveals_ready_window(
     settings = QSettings(str(tmp_path / "startup.ini"), QSettings.Format.IniFormat)
     settings.setValue("appearance/style", name)
     shows = []
+    paints = []
+    target = None
 
     class VisibleWindows(QObject):
         def eventFilter(self, watched, event):
+            if watched is target and event.type() == QEvent.Type.Paint:
+                paints.append((target.windowOpacity(), target.isMaximized()))
             if (
                 event.type() == QEvent.Type.Show
                 and isinstance(watched, QWidget)
@@ -22672,7 +23163,6 @@ def test_startup_splash_hides_construction_and_reveals_ready_window(
     observer = VisibleWindows()
     app.installEventFilter(observer)
     splash = StartupSplash(settings)
-    target = None
     try:
         splash.begin()
         assert splash.isVisible() and splash.timer.isActive()
@@ -22688,6 +23178,8 @@ def test_startup_splash_hides_construction_and_reveals_ready_window(
             splash.pixmap().toImage().pixelColor(10, 10).name() == splash.colors.window
         )
         splash.reveal(target)
+        assert paints and paints[0] == (0, True)
+        assert target.windowOpacity() == 1
         app.processEvents()
         assert target.isVisible() and target.isMaximized()
         assert not splash.isVisible() and not splash.timer.isActive()
@@ -22816,3 +23308,316 @@ def test_navigation_repaints_selection_before_page_work(window, app):
     assert checked_before_clicked == [True]
     assert target.retro_label() == "Devices"
     target.removeEventFilter(watch)
+
+
+def test_protocol_category_changes_are_atomic_and_persisted(window, app):
+    from cephvr.gui.protocol_document import TrialDraft, blank_program, review_program
+    from cephvr.gui.protocol_snapshot import (
+        capture_protocol,
+        restore_protocol,
+        validate_protocol,
+    )
+
+    page = window.protocol
+    editor = page.editor
+    editor.set_program(blank_program())
+    assert [page.category.itemText(i) for i in range(page.category.count())] == [
+        "Media presentation",
+        "Texture drift",
+        "3D navigation",
+    ]
+    assert page.category.currentIndex() == -1
+    page.category.setCurrentText("Media presentation")
+    assert editor.program.category == "media_presentation"
+    editor.undo()
+    assert editor.program.category is None
+    assert page.category.currentIndex() == -1
+    editor.undo(redo=True)
+    assert editor.program.category == "media_presentation"
+    saved = validate_protocol(capture_protocol(page))
+    restore_protocol(page, saved)
+    assert page.category.currentText() == "Media presentation"
+    page.category.setCurrentText("Texture drift")
+    editor.drafts.append(
+        TrialDraft(
+            "Moving", review_program().model_copy(update={"category": "texture_drift"})
+        )
+    )
+    assert all(draft.program.category == "texture_drift" for draft in editor.drafts)
+    editor.drafts[0].stimulus_seed_decimal = "123"
+    editor.drafts[0].gap_after_seconds = "0.5"
+    drifting = [draft.exported_program for draft in editor.drafts]
+    page.category.setCurrentText("Media presentation")
+    assert page.category.currentText() == "Media presentation"
+    assert len(editor.drafts) == 1
+    assert not page.message.isVisible()
+    page.category.setCurrentText("Texture drift")
+    assert [draft.exported_program for draft in editor.drafts] == drifting
+    assert editor.drafts[0].stimulus_seed_decimal == "123"
+    assert editor.drafts[0].gap_after_seconds == "0.5"
+    saved = validate_protocol(capture_protocol(page))
+    restore_protocol(page, saved)
+    page.category.setCurrentText("Media presentation")
+    assert len(editor.drafts) == 1
+    page.category.setCurrentText("Texture drift")
+    assert [draft.exported_program for draft in editor.drafts] == drifting
+    with pytest.raises(ValueError, match="different protocol category"):
+        page.import_program(
+            blank_program().model_copy(update={"category": "media_presentation"})
+        )
+    assert [draft.exported_program for draft in editor.drafts] == drifting
+    for draft in editor.drafts:
+        draft.program = draft.program.model_copy(update={"category": None})
+    with pytest.raises(ValueError, match="whole protocol"):
+        page.import_program(
+            blank_program().model_copy(update={"category": "texture_drift"})
+        )
+
+
+def test_category_first_visit_preserves_moving_legacy_template(window, app):
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_snapshot import capture_protocol, validate_protocol
+
+    page = window.protocol
+    page.editor.set_program(review_program())
+    moving = page.editor.program
+    page.category.setCurrentText("Media presentation")
+    assert page.editor.program.category == "media_presentation"
+    assert not page.editor.program.instances
+    assert not page.message.isVisible()
+    page.category.setCurrentText("Texture drift")
+    assert page.editor.drafts[0].exported_program == moving.model_copy(
+        update={"category": "texture_drift"}
+    )
+    saved = capture_protocol(page)
+    saved["category_templates"]["media_presentation"]["trials"][0]["program"][
+        "category"
+    ] = "texture_drift"
+    with pytest.raises(ValueError, match="owning category"):
+        validate_protocol(saved)
+
+
+@pytest.mark.parametrize("preset", ["Sine grating", "Image", "Video"])
+def test_presentation_rows_keep_layers_and_fades_without_motion(app, preset):
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.epoch_motion import EpochMotion
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    composer = EpochComposer()
+    composer.program = blank_program().model_copy(
+        update={"category": "media_presentation"}
+    )
+    composer.set_screens(("Front", "Bottom"))
+    composer.refresh_rows()
+    composer.program = add_stimulus(composer.program, 0, preset, ("Front",))
+    if preset == "Sine grating":
+        epoch = composer.program.sequence[0]
+        composer.program = composer.program.model_copy(
+            update={
+                "sequence": (
+                    epoch.model_copy(
+                        update={
+                            "settings": (
+                                epoch.settings[0].model_copy(
+                                    update={"linked_to": "unused_reference"}
+                                ),
+                            )
+                        }
+                    ),
+                )
+            }
+        )
+    composer.refresh_rows()
+    row = composer.rows["Front"]
+    captions = [title for title, _ in row.columns]
+    assert "Layer" in captions
+    assert "Fade in (s)" not in captions and "Fade out (s)" not in captions
+    assert row.parameters.advanced_card.isAncestorOf(row.parameters.fades.fade_in)
+    assert not any(isinstance(form, EpochMotion) for form in row.parameters.forms)
+    assert not any("Speed" in caption or "Direction" in caption for caption in captions)
+    assert not composer.mode.isEnabled()
+    row.parameters.fades.fade_in.setText("0.5")
+    row.parameters.fades.mark_changed()
+    assert row.parameters.apply(), row.parameters.message.text()
+    assert composer.program.sequence[0].settings[0].opacity.kind == "keyframes"
+    if preset == "Sine grating":
+        assert composer.program.sequence[0].settings[0].linked_to == "unused_reference"
+    composer.add_empty_layer("Front")
+    assert row.layer.count() == 2
+    composer.close()
+
+
+def test_category_preview_modes_keep_camera_space(window, app):
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    workspace = PreviewWorkspace(None)
+    workspace.resize(1400, 800)
+    workspace.show()
+    area = workspace.stimulus_area
+    area.set_projectors(("Left", "Front", "Right", "Bottom"))
+    workspace.timeline.set_program(
+        blank_program().model_copy(update={"category": "media_presentation"}),
+        "",
+        "Media",
+    )
+    workspace.set_advanced_visible(True, persist=False)
+    assert area.mode.currentText() == "Combined"
+    assert tuple(area.frames) == ("",)
+    assert area.frames[""].caption.text() == "Rig preview"
+    assert "Drag to rotate" in area.frames[""].target.toolTip()
+    area.apply_view(PreviewView("stimulus", "Stimulus", visible=True), True)
+    assert not area.metrics.isHidden()
+    assert all(frame.metrics.isHidden() for frame in area.frames.values())
+    assert workspace.timeline.motion_section.isHidden()
+    assert workspace.preview_host.isVisible()
+    area.mode.setCurrentText("Per-projector")
+    assert tuple(area.frames) == ("Left", "Front", "Right", "Bottom")
+    assert not workspace.timeline.dials
+    arena = blank_program().model_copy(update={"category": "navigation_3d"})
+    arena = add_stimulus(arena, 0, "3D arena", (), subject_height_mm=80)
+    arena = add_stimulus(arena, 0, "Sine grating", ("Front",))
+    workspace.timeline.set_program(arena, "", "Arena")
+    workspace.timeline.set_elapsed(1)
+    assert area.mode.isHidden()
+    assert tuple(area.frames) == ("",)
+    assert workspace.preview_host.isVisible()
+    assert len(workspace.timeline.maps) == 1
+    composer = EpochComposer()
+    composer.program, composer.active_mode = arena, 1
+    composer.set_screens(("Front",))
+    composer.refresh_rows()
+    assert not composer.rows[""].isHidden()
+    assert not composer.rows["Front"].isHidden()
+    assert {setting.kind for setting in composer.value().sequence[0].settings} == {
+        "arena",
+        "texture",
+    }
+    composer.close()
+    workspace.close()
+
+
+@pytest.mark.parametrize("height", [830, 1000])
+def test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom(app, height):
+    from cephvr.gui.preview_placement import slot_preview_placement
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.models.program_model import Hold
+
+    workspace = PreviewWorkspace(None)
+    workspace.resize(1600, height)
+    area, timeline = workspace.stimulus_area, workspace.timeline
+    area.set_projectors(("Front", "Left", "Right", "Bottom"))
+    program = blank_program()
+    for face in ("Front", "Left", "Right", "Bottom"):
+        program = add_stimulus(program, 0, "Sine grating", (face,))
+    epoch = program.sequence[0]
+    settings = list(epoch.settings)
+    hold = Hold(kind="hold")
+    bottom = settings[-1]
+    settings[-1] = bottom.model_copy(
+        update={
+            "phase_x": hold,
+            "phase_y": hold,
+            "motion": bottom.motion.model_copy(
+                update={"x": hold, "y": hold, "rotation": hold}
+            ),
+        }
+    )
+    program = program.model_copy(
+        update={
+            "category": "texture_drift",
+            "sequence": (epoch.model_copy(update={"settings": tuple(settings)}),),
+        }
+    )
+    timeline.set_program(program, "", "Static Bottom")
+    workspace.set_advanced_visible(True, persist=False)
+    timeline.set_playback(0.5, running=False)
+    stimulus = PreviewView(
+        "stimulus", "Visual stimulus", active=True, available=True, visible=True
+    )
+    workspace.apply_views((stimulus,), allowed=True)
+    workspace.show()
+    app.processEvents()
+    assert workspace.preview_host.isHidden()
+    assert workspace.details.width() >= workspace.splitter.width() - 2
+    combined_side = area.frames[""].target.width()
+    assert combined_side >= (350 if height == 1000 else 128)
+    assert len(timeline.shared_dials) == 1
+    assert len(next(iter(timeline.shared_dials.values())).samples) == 4
+    area.mode.setCurrentText("Per-projector")
+    app.processEvents()
+    assert tuple(area.frames) == ("Left", "Front", "Right", "Bottom")
+    assert not timeline.projector_cards["Bottom"].isHidden()
+    for frame in area.frames.values():
+        cell = frame.parentWidget()
+        assert cell.rect().contains(frame.geometry())
+        slot = QRect(frame.target.mapTo(area, QPoint()), frame.target.size())
+        placement = slot_preview_placement(slot, area.rect())
+        assert placement.side >= 128
+        assert combined_side > frame.target.width() * (1.5 if height == 1000 else 1)
+    cells = [
+        frame.parentWidget().mapTo(area, QPoint()) for frame in area.frames.values()
+    ]
+    if len({point.y() for point in cells}) == 1:
+        assert [point.x() for point in cells] == sorted(point.x() for point in cells)
+    else:
+        assert cells[-1].y() > cells[1].y()
+    camera = PreviewView(
+        "camera", "Behavior cam", active=True, available=True, visible=True
+    )
+    workspace.apply_views((stimulus, camera), allowed=True)
+    app.processEvents()
+    assert workspace.preview_host.isVisible()
+    workspace.apply_views((stimulus,), allowed=True)
+    app.processEvents()
+    assert workspace.preview_host.isHidden()
+    workspace.close()
+
+
+def test_drift_pairs_keep_face_directions_and_widget_ownership(app):
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.protocol_document import review_program
+
+    workspace = PreviewWorkspace(None)
+    workspace.resize(1400, 800)
+    workspace.show()
+    area, timeline = workspace.stimulus_area, workspace.timeline
+    area.set_projectors(("Left", "Front", "Right", "Bottom"))
+    timeline.set_program(review_program(), "", "Drift")
+    workspace.set_advanced_visible(True, persist=False)
+    timeline.set_elapsed(12)
+    combined = {
+        panel.source.key: timeline.plan.dial_sample(panel, 1, 12)
+        for panel in timeline.panels
+    }
+    assert combined
+    for _ in range(3):
+        area.mode.setCurrentText("Per-projector")
+        app.processEvents()
+        assert not timeline.instrument_host.instruments
+        for name, card in timeline.projector_cards.items():
+            assert card.parentWidget().isAncestorOf(area.frames[name])
+        assert {
+            panel.source.key: timeline.plan.dial_sample(panel, 1, 12)
+            for panel in timeline.panels
+        } == combined
+        name = next(iter(timeline.projector_cards))
+        timeline.set_projector_visible(name, False)
+        timeline.instrument_host.resize(333, 222)
+        app.processEvents()
+        assert timeline.projector_cards[name].isHidden()
+        assert (
+            timeline.projector_cards[name]
+            .parentWidget()
+            .isAncestorOf(area.frames[name])
+        )
+        timeline.set_projector_visible(name, True)
+        area.mode.setCurrentText("Combined")
+        app.processEvents()
+        assert timeline.instrument_host.instruments
+    workspace.close()

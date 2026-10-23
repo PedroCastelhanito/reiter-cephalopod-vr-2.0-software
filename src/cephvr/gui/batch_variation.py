@@ -34,9 +34,11 @@ class BatchVariationRow(QWidget):
         settings: tuple[Settings, ...] = (),
         *,
         table_mode: bool = False,
+        presentation: bool = False,
     ) -> None:
         super().__init__()
         self.table_mode = table_mode
+        self.presentation = presentation
         self.targets = targets
         self.settings = settings
         self.projectors = projectors or {"Rig-wide": list(range(len(targets)))}
@@ -244,6 +246,8 @@ class BatchVariationRow(QWidget):
         self.parameter.blockSignals(True)
         self.parameter.clear()
         for caption, key in common:
+            if self.presentation and key not in ("Playback start", "At end"):
+                continue
             if key != "Fit":
                 self.parameter.addItem(caption, key)
         self.parameter.setCurrentIndex(max(0, self.parameter.findData(previous)))

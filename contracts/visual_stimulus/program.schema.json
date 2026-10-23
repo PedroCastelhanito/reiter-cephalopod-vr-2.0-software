@@ -3130,6 +3130,23 @@
       "title": "Format Version",
       "type": "integer"
     },
+    "category": {
+      "anyOf": [
+        {
+          "enum": [
+            "media_presentation",
+            "texture_drift",
+            "navigation_3d"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Category"
+    },
     "assets": {
       "items": {
         "$ref": "#/$defs/Asset"

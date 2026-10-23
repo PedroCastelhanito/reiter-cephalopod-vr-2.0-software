@@ -16,7 +16,36 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 299
+**Status:** Accepted · **Revision:** 309
+
+- Protocol category is separate from session Control: Media presentation, Texture
+  drift or 3D navigation. Preserve projector rows, row-local Layer management,
+  parameter columns and a Motion source choice (Self/Linked) for link-capable textures.
+  Self shows motion parameters; Linked replaces them with a Linked to selector and
+  requires an eligible source. Fade-in/Fade-out controls sit in Advanced settings
+  below their row. Switching category remembers and restores its last trial
+  schedule/selection, including protocol save/load; Control and asset root stay shared.
+  First use inherits compatible content, otherwise starts blank while retaining the
+  departing content in its compatible category template. Templates validate atomically;
+  legacy source stays intact until explicitly classified. V02 owns executable validation.
+- Monitor defaults to Combined: one renderer-owned GPU rig view maps the live
+  calibrated output crops onto the prepared screen planes, beside shared instruments.
+  Left-drag rotates the inspection camera with the protocol preview's sensitivity
+  and elevation limits; double-click resets its home view. This camera changes no
+  stimulus observer, state, output geometry or recording. No pixel readback is added.
+  Combined gives the rig view the expanding image area, collapsing unused camera
+  space. Drift shares compatible projector vectors on one polar plot with stable
+  projector colors and common speed/angular scales; incompatible units remain separate.
+  Its parameter table has projector rows and Speed, Direction and Angular speed
+  columns with units; unavailable values stay explicit. Per-projector retains
+  individual image/plot pairs in Left, Front, Right, Bottom order, adapting rows and
+  image/plot stacking to available space. Static projectors retain their plots.
+  Presentation omits motion controls/instruments. Navigation uses
+  the single observer's arena map and motion instruments with projected output views.
+  Restore camera video space when a camera preview is selected in any category;
+  replace the old standalone stimulus
+  composite tile with this stimulus area. Existing preview visibility, authority and
+  renderer ownership apply; missing tracking never becomes simulated live motion.
 
 - Camera and Visual Stimulus previews display the newest available frame at up to
   20 Hz, using the source rate when slower, without duplicate frames or catch-up
@@ -343,7 +372,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   The row's ellipsis button directly toggles Advanced settings. Disable unavailable
   moves at the local layer boundaries. Add layer creates an empty local slot
   without opening a stimulus picker; choose its family and prepared file afterward.
-  Reserve the advanced linking/fade row’s minimum height after narrow reflow.
+  Reserve the advanced fade row’s minimum height after narrow reflow.
   Keep canonical settings per instance/projector when switching layers. Empty slots
   are editor drafts, excluded from generated programs and runtime delivery.
   Image rows expose Fit (Contain/Cover/Stretch), Move speed and Direction; zero
@@ -360,7 +389,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Tracking channel conflicts reject the edit.
   Advanced settings occupy one shared-style card beneath the selected projector
   row, with its left edge aligned to Layer. Retain state is first when relevant;
-  Linked to and fade-in/out durations follow, then control entries. Video hides
+  Fade-in/out durations follow, then control entries. Link-capable texture rows keep
+  Motion source and Linked to in the parameter columns above. Video hides
   Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
   Texture omits initial position/orientation controls and preserves imported pose values.
   Expose initial position/orientation for arena, Video and Looming in Advanced settings,
@@ -391,8 +421,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   requires a fixed duration and a recognizable constant/envelope. Reject negative,
   nonfinite, sub-nanosecond or overlapping fade durations atomically. Explicit GUI
   duration changes retain standard fade-in/out lengths and move fade-out to the new
-  epoch end; durations too short reject the edit. Linked to remains disabled until
-  V02's source/target feedback ownership and complete runtime contract are settled.
+  epoch end; durations too short reject the edit. Linked sources follow V02's
+  source/target and feedback ownership constraints.
   + Control sits below the settings/entries inside Advanced settings, available only for Texture
   and Looming with Closed-loop selected. Hide its action while a Control draft is
   being configured; show an entry only after Add control commits, and restore the
@@ -603,7 +633,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   never embedded or reparented. Preview uses bracketed native-window footprints instead of
   ordinary cards, each captioned with its source (`[ BEHAVIOR CAM ]`); the native window
   carries no title text and `[ PREVIEW ]` names only the empty footprint. Retro doubles
-  each bracket and shows `-- NO SIGNAL --` with the block cursor in an empty footprint. Dashboard
+  each bracket and shows static, centered `-- NO SIGNAL --` text without a caret
+  in an empty footprint. Dashboard
   reserves named footprints for active experiment streams, including waiting or
   unavailable viewers. Camera footprints additionally require video recording selected;
   an already-open viewer retains its frame and Hide control until closed. Recording
@@ -909,8 +940,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   verified calibration; preview placement must not require an additional Y inversion.
   Raw pixel widths/heights, offsets, reference bars and masks
   stay output-local; Bottom surface extents/pitches and render-target axes swap.
-  The rig preview undoes the Bottom portrait quarter-turn when placing its raster
-  onto the physical plane, preserving authored output flips without adding a reflection. Imported warps retain
+  The rig preview undoes the Bottom portrait quarter-turn and folded optical mirror
+  when placing its raster onto the physical plane; output-local calibration remains
+  unchanged. Imported warps retain
   their declared mapping; regenerated GUI profiles adopt this correction at fresh Setup.
   Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
   older Scale bounds to crop sizes using retained native measurements; reject a
@@ -1061,7 +1093,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the form afterwards; it is never duplicated. A Timeline card holds the epoch timeline
   only. A separate full-width Preview controls card below it holds the Video/Advanced
   previews toggles in its header, then a Video row with one
-  checkbox per stream (named by the stream; checking opens its viewer) and an
+  checkbox per stream (named by the stream; checking opens its viewer when ready) and an
   Advanced row with one checkbox per projector; each row shows only while its master
   toggle is on. Only shown or opening streams take frames, so unchecked streams free
   their space; reasons for an unshown stream appear in its checkbox tooltip. Hidden
@@ -1100,7 +1132,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   translation has no arrow but reports current planned orientation (layer rotation
   or arena yaw, normalized to 0–360°), including continuity/reset semantics; it does
   not retain the last movement direction. Unavailable/feedback-driven samples keep
-  their explicit messages. Texture dials show each projector source's texture motion in subject coordinates
+  their explicit messages. Texture dials show each projector's own planned motion in arena coordinates
   (Right 0°, Front 90°, Left 180°, Back −90°). Physical sources use V02's
   calibrated unfolded plane and retained layer rotation; angular sources use the
   standard face display rotations. Tracking-form dials show a longitudinal/lateral mm/s vector: live Tracking
@@ -1126,9 +1158,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   inspects a planned instant until the next refresh. Group the same projector/layer
   across epochs, with separate plots for each surface of a shared source. Linked
   follower dials use V02's calibrated renderer link binding at each epoch boundary,
-  preserving V07 retained phase/orientation, stop and reset behavior. Use the current
-  loaded or edited projector geometry and rebuild the plan when it changes. Plot each
-  follower's resolved local vector and angular speed with its own scale; missing or
+  preserving V07 retained phase/orientation, stop and reset behavior. Convert each
+  follower's resolved local vector through its own calibrated surface into arena
+  directions, retaining its own angular speed, orientation and trial-wide scale.
+  Leftward Bottom rotation shows Bottom rotation, Right toward Front, Left toward
+  Back and Front toward Left; reversing rotation reverses these directions.
+  Use the current loaded or edited projector geometry and rebuild the plan when it
+  changes. Missing or
   invalid geometry, references or motion remain explicit per-source unavailable states.
   Unsupported sources explain their limits without hiding valid sources. Reuse canonical
   bounded expansion/function evaluation; planned values are not measured output or
@@ -1141,7 +1177,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   footer buttons or redundant Open/Hidden labels. Pending/error/unavailable status
   remains visible; the local review label lives in the window title.
   Checkboxes reflect reported visibility, including external-window closure; pending
-  requests and unavailable viewers disable their controls with explanatory status.
+  requests disable their controls with explanatory status. Unavailable sources
+  remain selectable under existing authority, participation and recording gates;
+  retain that local selection until ready, then issue one normal Show request.
+  Unchecking, hiding Video previews, losing control, removing/deactivating the
+  source or turning its recording off cancels the waiting selection. Once sent,
+  reported visibility remains authoritative; do not retry a failed Show automatically.
   Preview rows are ordered Behavior cam, Tracking cam, any further configured camera
   roles, Tracking, Visual stimulus. Omit inactive closed sources from the workspace:
   a camera must be enabled for the experiment and selected for video recording;
@@ -1202,7 +1243,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 130
+**Status:** Accepted · **Revision:** 140
 
 - GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash,
   using the saved Style (legacy fallback and unknown-to-Standard behavior retained),
@@ -1210,9 +1251,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   widget construction, repaint only the splash without dispatching queued callbacks;
   animation uses elapsed time and stops on close. Standard uses white/blue,
   Retro coral/cyan and Amber amber/gold; Retro-family scanlines/glow respect CRT effects.
-  Construct, style and prepaint the main window while hidden, then reveal it and close
-  the splash. Child controls must be parented before visibility changes. The managed
-  GUI bootstrap shows the splash before frontend imports; it does not own devices,
+  Construct and style the main window while hidden, then maximize it transparently.
+  After construction, deliver native expose/layout events and repaint its backing
+  store before restoring opacity and closing the splash; do not queue a second
+  maximize after reveal. Child controls must be parented before visibility changes.
+  The managed GUI bootstrap shows the splash before frontend imports; it does not own devices,
   extend startup deadlines or wait indefinitely for controller connectivity. Startup
   failures retain their existing propagation and close the splash.
 - Amber phosphor themes every popup and dialog surface: combo drop-downs open below
@@ -1221,10 +1264,21 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   tab bars (Projector setup, Tracking) elide text rather than show Qt's unthemed
   scroll buttons. Microcontroller Inputs/Outputs use the standard card padding, and the
   review window shares one View menu.
-- Amber navigation marks selection with a chevron, never brackets: a large coral `>`
-  before the current main page and a small one before the current sidebar row or in-page
-  tab, with icon and label in the same coral. Hover previews with a dim `>` and a
-  cream icon/label. Dim inks, borders, disabled text and hover fills keep at least
+- Amber navigation gives every main page, sidebar child and in-page tab a leading
+  `>`; selected entries add a trailing `<`, with both markers, icon and label coral.
+  Sidebar children show selection only while their owning main page is active;
+  retain the current child for return and automatic state changes on hidden pages.
+  Main-page leading markers are larger than child/tab markers. Idle entries are
+  dim; hover brightens their markers, icon and label to cream. Reserve marker
+  gutters so labels cannot overlap the trailing marker. Balance sidebar markers
+  around the icon/title group: the gap from `>` to the visible icon edge equals
+  the gap from the title to `<`. Exclude the icon width and icon-to-text gap from
+  this outer spacing; account for transparent icon padding and native text inset.
+  Reserve the trailing gap before eliding long labels.
+  Each trailing `<` uses the same marker font and size as its leading `>`.
+  In-page tabs use equal gaps around the rendered icon/title (including elision),
+  with both markers positioned from the same native text bounds.
+  Dim inks, borders, disabled text and hover fills keep at least
   4.5:1 (tabs), 4.0:1 (disabled), 3:1 (field underlines), 2.4:1 (card frames) and 4.5:1
   (dark text on hover fills) against the Amber surfaces. Disabled fields stay unfilled,
   placeholders use the dim tab ink, and table headers use the field-caption style
@@ -1338,7 +1392,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   column for display only (copied text is the stored row). Focus is bright amber,
   ready lamps are cream, waiting is orange and faults red; Amber phosphor has no cyan. Its CRT scanlines
   remain stronger than Retro but softened for readability, so bright fills read as striped. With CRT effects on, Retro-family
-  popups, menus and owned windows carry the same scanline film. Decorations are display-only: stored
+  popups, menus and owned windows carry the same scanline film. Exclude projected
+  preview image areas (trial rig/surface canvases and native preview footprints)
+  from scanlines, vignette and refresh band; surrounding controls retain the style.
+  Decorations are display-only: stored
   titles and headings are unchanged. The palette follows the owning window.
   The Style menu retains a shared frontend preference with legacy Review fallback.
   Retro console
@@ -1467,15 +1524,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the main sidebar reserves room for icons and complete bracketed labels.
 - View > Side navigation defaults on, retaining an explicit saved local preference.
   Dashboard shows compact Configure and Monitor links below its main sidebar button
-  only while Dashboard is selected, at every window width. Devices likewise shows
+  at every window width. Devices likewise shows
   Cameras, Microcontroller, Projectors and SpikeGLX beneath its main sidebar button
-  only while Devices is selected; neither page reserves a second navigation column. Projectors' Rig geometry,
+  at every window width. Both groups remain expanded across main-page changes;
+  choosing a child opens its owning page and selects that child. Neither page
+  reserves a second navigation column. Projectors' Rig geometry,
   Projection calibration and Projection synchronization tabs remain below Displays
   in the content column, independent of the rail. Rails mirror/drive existing view
   tabs and preserve automatic session transitions and manual selection. Disabling
   Side navigation restores top tabs on both pages; control and authority gates are
-  unchanged. The214px main sidebar fits complete device labels beside their icons. Main page
-  links are left-aligned; their child links are indented16px with12px text,16px
+  unchanged. The262px main sidebar fits complete selected device labels and markers beside their icons. Main page
+  links are left-aligned; their child links are indented32px with12px text,16px
   icons and compact rows separated by6px of vertical margin. Reserve40px per child
   row and16px between sidebar entries, keeping child groups together beneath their
   parent while main sections have more breathing room. Selected sidebar child links

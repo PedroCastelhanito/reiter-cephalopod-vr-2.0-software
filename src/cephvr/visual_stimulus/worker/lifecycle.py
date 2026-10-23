@@ -12,6 +12,7 @@ from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.recording import recording_enabled
 from cephvr.visual_stimulus.config.models.program_model import Program
 from cephvr.visual_stimulus.config.projection import policy_projection
 from cephvr.visual_stimulus.configuration import resolve_pacing_profile
@@ -376,6 +377,7 @@ class LifecycleDriver:
                 self.backend,
                 list(request.session.trials),
                 request.settings.save_visual_stimulus_data,
+                recording=recording_enabled(request.session.configuration.backends),
             )
             if output.output_tag != "stimulus_LOG"
         }
@@ -499,6 +501,7 @@ class LifecycleDriver:
             self.backend,
             list(request.session.trials),
             request.settings.save_visual_stimulus_data,
+            recording=recording_enabled(request.session.configuration.backends),
         )
         ready.prepared_functions.extend(
             function_scopes(self.owner, self.worker, planned)

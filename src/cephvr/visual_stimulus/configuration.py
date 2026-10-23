@@ -359,6 +359,7 @@ def validate_configuration(
             "saving requires the complete accepted FFmpeg argument list",
         )
 
+    categories: set[str | None] = set()
     for index, trial in enumerate(candidate.trials):
         prefix = f"trials[{index}].stimulus"
         if not trial.HasField("stimulus") or not trial.stimulus.HasField("program"):
@@ -372,6 +373,9 @@ def validate_configuration(
         source = trial.stimulus.program.program_json
         try:
             program = parse_program_json(source, max_bytes=max_document_bytes)
+            categories.add(program.category)
+            if len(categories) > 1:
+                raise ValueError("All trials must use the same protocol category")
             seed = (
                 trial.stimulus.stimulus_seed_decimal
                 if trial.stimulus.HasField("stimulus_seed_decimal")

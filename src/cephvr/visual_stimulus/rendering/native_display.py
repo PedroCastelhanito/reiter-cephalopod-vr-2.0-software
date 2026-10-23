@@ -29,17 +29,21 @@ class DisplayUnavailableError(ValueError):
     """Required output placement is unavailable; no fallback is permitted."""
 
     code = "DISPLAY_OUTPUT_UNAVAILABLE"
-    remedy = "Reconnect the projector or correct its assignment, then run Setup."
+    remedy = (
+        "Turn on the projectors, check their display cables and enable them in "
+        "Windows display settings. Refresh Devices > Projectors, check the "
+        "assignments, then run Setup."
+    )
 
 
 class DisplayGpuUnavailableError(DisplayUnavailableError):
     """A healthy context has the wrong adapter, rather than a GPU operation fault."""
 
     remedy = (
-        "The managed cephvr-renderer.exe requests the high-performance GPU, "
-        "but its actual context is not on the RTX 5060 Ti. Restart the full runtime "
-        "after correcting the renderer's Windows/driver GPU assignment; reopening "
-        "only the GUI does not restart the renderer."
+        "Visual Stimulus is using the wrong graphics card. Set cephvr-renderer.exe "
+        "to use the RTX 5060 Ti in Windows graphics settings or the graphics driver, "
+        "then shut down and restart all of CephVR. Reopening the dashboard alone "
+        "will not apply the change."
     )
 
 

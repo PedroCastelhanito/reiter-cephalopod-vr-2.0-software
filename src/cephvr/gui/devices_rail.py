@@ -5,7 +5,7 @@ source of truth; the rail mirrors and drives them.
 """
 
 from PyQt6.QtCore import QEvent, QModelIndex, QRectF, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPixmap, QRegion
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QStyle,
@@ -29,8 +29,7 @@ DEVICE_ICONS = ("camera", "board", "projector", "signal")
 
 
 class RailMarkerDelegate(QStyledItemDelegate):
-    """Amber rows keep the stylesheet's text/icon and add a small `>` in the left gutter:
-    coral on the current row, dim on a hovered one."""
+    """Amber rows have a leading `>` and a coral trailing `<` when selected."""
 
     def paint(
         self,
@@ -38,29 +37,84 @@ class RailMarkerDelegate(QStyledItemDelegate):
         option: QStyleOptionViewItem,
         index: QModelIndex,
     ) -> None:
-        super().paint(painter, option, index)
         if painter is None:
             return
         view = self.parent()
         if not isinstance(view, QTreeWidget) or not (
             minimal_frames(view) and retro_console(view)
         ):
+            super().paint(painter, option, index)
             return
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
-        if not (selected or hovered):
-            return
-        colors = colors_for(view)
-        painter.save()
+        item = QStyleOptionViewItem(option)
+        self.initStyleOption(item, index)
+        style = view.style()
+        assert style is not None
         font = QFont(view.font())
         font.setPixelSize(SIZES.label_font + 3)
+        trailing: QRectF | None = None
+        if selected:
+            text_rect = style.subElementRect(
+                QStyle.SubElement.SE_ItemViewItemText, item, view
+            )
+            marker_metrics = QFontMetrics(font)
+            marker_width = marker_metrics.horizontalAdvance("<")
+            inset = (
+                style.pixelMetric(QStyle.PixelMetric.PM_FocusFrameHMargin, item, view)
+                + 1
+            )
+            text_left = text_rect.left() + inset
+            content_left = (
+                style.subElementRect(
+                    QStyle.SubElement.SE_ItemViewItemDecoration, item, view
+                ).left()
+                if not item.icon.isNull()
+                else text_left
+            )
+            if not item.icon.isNull():
+                pixmap = item.icon.pixmap(item.decorationSize)
+                content_left += round(
+                    QRegion(pixmap.mask()).boundingRect().left()
+                    / pixmap.devicePixelRatio()
+                )
+            gap = content_left - (
+                option.rect.left() + 4 + marker_metrics.boundingRect(">").right()
+            )
+            item.text = item.fontMetrics.elidedText(
+                item.text,
+                item.textElideMode,
+                max(0, text_rect.width() - marker_width - gap - 2 * inset),
+            )
+            trailing = QRectF(
+                text_left
+                + item.fontMetrics.boundingRect(item.text).right()
+                + gap
+                - marker_metrics.boundingRect("<").left(),
+                option.rect.top(),
+                14,
+                option.rect.height(),
+            )
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, item, painter, view)
+        colors = colors_for(view)
+        painter.save()
         painter.setFont(font)
-        painter.setPen(QColor(colors.coral if selected else colors.label))
+        painter.setPen(
+            QColor(
+                colors.coral
+                if selected
+                else colors.text
+                if hovered
+                else PHOSPHOR_TAB_DIM
+            )
+        )
         painter.drawText(
             QRectF(option.rect.left() + 4, option.rect.top(), 14, option.rect.height()),
             Qt.AlignmentFlag.AlignVCenter,
             ">",
         )
+        if trailing is not None:
+            painter.drawText(trailing, Qt.AlignmentFlag.AlignVCenter, "<")
         painter.restore()
 
 
@@ -81,6 +135,7 @@ class DeviceRail(QTreeWidget):
         self.setProperty("role", "rail")
         self.setAccessibleName("Devices navigation")
         self.hover: QTreeWidgetItem | None = None
+        self.navigation_active = True
         self.setMouseTracking(True)
         self.setItemDelegate(RailMarkerDelegate(self))
         self.itemEntered.connect(self.set_hover)
@@ -137,8 +192,17 @@ class DeviceRail(QTreeWidget):
         self.blockSignals(True)
         try:
             self.setCurrentItem(row)
+            row.setSelected(self.navigation_active)
         finally:
             self.blockSignals(False)
+        self.refresh_icons()
+
+    def set_navigation_active(self, active: bool) -> None:
+        """Hide selection outside the owning main page, retaining its current row."""
+        self.navigation_active = active
+        current = self.currentItem()
+        if current is not None:
+            current.setSelected(active)
         self.refresh_icons()
 
     def set_hover(self, item: QTreeWidgetItem | None, column: int = 0) -> None:
@@ -155,7 +219,7 @@ class DeviceRail(QTreeWidget):
         colors = colors_for(self)
         current = self.currentItem()
         for index, item in enumerate(self.devices):
-            selected = current is item
+            selected = current is item and item.isSelected()
             if minimal_frames(self) and retro_console(self):
                 ink = (
                     colors.coral

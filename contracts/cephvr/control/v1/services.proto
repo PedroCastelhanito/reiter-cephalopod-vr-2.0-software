@@ -291,6 +291,12 @@ message AcquisitionMicrocontrollerCommand {
   string firmware_path = 7;
   string firmware_sha256 = 8;
 }
+message StimulusPreviewTile {
+  string surface = 1; // Prepared projector label, e.g. Front; never an asset path.
+  sint32 x = 2;
+  sint32 y = 3;
+  uint32 side = 4; // 128..2048 physical pixels.
+}
 message PreviewWindowPlacement {
   sint32 x = 1; // Physical desktop pixels; display-only visible-frame position.
   sint32 y = 2;
@@ -300,6 +306,7 @@ message PreviewWindowPlacement {
   uint64 gui_process_creation_time_100ns = 6; // Reject stale/recycled owner processes.
   bool update_existing_only = 7; // Display layout refresh must never reopen an X-closed viewer.
   bool snap_to_grid = 8; // Explicit operator reset of manual position/size.
+  repeated StimulusPreviewTile stimulus_tiles = 9; // Stimulus only: 1..4 individual views; absent means Combined.
 }
 message CameraCommandRequest {
   OperatorCommand command = 1;

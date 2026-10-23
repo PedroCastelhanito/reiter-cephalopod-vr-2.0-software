@@ -125,7 +125,13 @@ class EpochComposer(QWidget):
         for face, row in self.rows.items():
             active = face in self.screens
             row.setVisible(
-                (not face)
+                (
+                    (not face)
+                    or (
+                        self.program.category == "navigation_3d"
+                        and (active or bool(row.indices))
+                    )
+                )
                 if self.active_mode
                 else bool(face) and (active or bool(row.indices))
             )
@@ -144,10 +150,8 @@ class EpochComposer(QWidget):
 
     def update_headers(self) -> None:
         previous: tuple[str, ...] = ()
-        for face, row in self.rows.items():
-            if (bool(face) == bool(self.active_mode)) or (
-                face and face not in self.screens and not row.indices
-            ):
+        for row in self.rows.values():
+            if row.isHidden():
                 continue
             row.identity_header = not previous
             row.show_header = row.signature != previous
@@ -155,6 +159,7 @@ class EpochComposer(QWidget):
             row.arrange()
 
     def refresh_rows(self, face: str = "", preferred: int | None = None) -> None:
+        self.mode.setEnabled(self.program.category in (None, "navigation_3d"))
         for name, row in self.rows.items():
             row.bind(self.program, preferred if face == name else None)
         self.show_rows()
@@ -232,7 +237,12 @@ class EpochComposer(QWidget):
         return self.program
 
     def value(self) -> Program:
-        program = reference_mode(self.reference_value(), bool(self.active_mode))
+        reference = self.reference_value()
+        program = (
+            reference
+            if self.active_mode and reference.category == "navigation_3d"
+            else reference_mode(reference, bool(self.active_mode))
+        )
         epoch = program.sequence[0]
         assert isinstance(epoch, Epoch)
         if any(s.instance_id in self.pending_assets for s in epoch.settings):
@@ -260,6 +270,11 @@ class EpochComposer(QWidget):
 
     def change_type(self, face: str, kind: str) -> None:
         if not self.isEnabled():
+            return
+        if self.program.category == "media_presentation" and kind in (
+            "3D arena",
+            "Looming image",
+        ):
             return
         row = self.rows[face]
         try:

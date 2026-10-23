@@ -138,56 +138,65 @@ class StartActivation:
             start_deadline_ns = self.clock() + self.limit_state.current.setup_ns
             if attempt.cancel_requested:
                 raise RuntimeError("attempt cancelled")
-            schema = (
-                self.schema_factory(attempt.prepared) if self.schema_factory else None
-            )
-            if not isinstance(schema, dict) or schema.get("schema_version") != 1:
-                raise RuntimeError("versioned writer schema unavailable")
-            schema["controller_metadata"] = {
-                "SESSION_CONFIG.json.projector_brightness": projector_brightness_schema()
-            }
-            attempt.output_formats = output_formats(
-                schema, {output.output_key for output in attempt.prepared.outputs}
-            )
-            writer = MetadataWriter(
-                attempt.reservation.protocol_directory,
-                max_operations=self.limit_state.current.max_metadata_operations,
-                max_bytes=self.limit_state.current.max_metadata_bytes,
-                clock=self.clock,
-                session_id=attempt.context.session_id,
-            )
-            attempt.writer = writer
-            session_document: dict[str, object] = {
-                "schema_version": 1,
-                "session_id": attempt.context.session_id,
-                "controller_generation": self.generation,
-                "session_setup_wall_time": attempt.prepared.anchor_wall_time,
-                "session_setup_monotonic_ns": attempt.prepared.anchor_monotonic_ns,
-                "local_timezone": attempt.prepared.local_timezone,
-                "configuration_revision": attempt.prepared.configuration_revision,
-                "provenance": software_provenance(attempt, self.supervisor_state),
-                "projector_brightness": deepcopy(self.device.projector_brightness)
-                if self.device.projector_brightness is not None
-                else {
+            if attempt.reservation.persistent:
+                schema = (
+                    self.schema_factory(attempt.prepared)
+                    if self.schema_factory
+                    else None
+                )
+                if not isinstance(schema, dict) or schema.get("schema_version") != 1:
+                    raise RuntimeError("versioned writer schema unavailable")
+                schema["controller_metadata"] = {
+                    "SESSION_CONFIG.json.projector_brightness": projector_brightness_schema()
+                }
+                attempt.output_formats = output_formats(
+                    schema, {output.output_key for output in attempt.prepared.outputs}
+                )
+                writer = MetadataWriter(
+                    attempt.reservation.protocol_directory,
+                    max_operations=self.limit_state.current.max_metadata_operations,
+                    max_bytes=self.limit_state.current.max_metadata_bytes,
+                    clock=self.clock,
+                    session_id=attempt.context.session_id,
+                )
+                attempt.writer = writer
+                session_document: dict[str, object] = {
                     "schema_version": 1,
-                    "outcome": "unknown",
-                    "reason": "no adjustment observed in this controller lifetime",
-                },
-                "configuration": active_configuration_document(
-                    attempt.prepared.configuration
-                ),
-                "trials": [message_dict(plan) for plan in attempt.prepared.trials],
-                "outputs": [message_dict(plan) for plan in attempt.prepared.outputs],
-            }
-            if attempt.paired:
-                session_document["spikeglx"] = message_dict(attempt.prepared.spikeglx)
-                session_document["spikeglx_control_scope"] = "saving_only"
-            # From the first write on, an unactivated cancel keeps the files (E06).
-            attempt.closure.metadata_written = True
-            await self.metadata.persist(
-                attempt, "SESSION_CONFIG.json", "create_json", session_document
-            )
-            await self.metadata.persist(attempt, "SCHEMA.json", "create_json", schema)
+                    "session_id": attempt.context.session_id,
+                    "controller_generation": self.generation,
+                    "session_setup_wall_time": attempt.prepared.anchor_wall_time,
+                    "session_setup_monotonic_ns": attempt.prepared.anchor_monotonic_ns,
+                    "local_timezone": attempt.prepared.local_timezone,
+                    "configuration_revision": attempt.prepared.configuration_revision,
+                    "provenance": software_provenance(attempt, self.supervisor_state),
+                    "projector_brightness": deepcopy(self.device.projector_brightness)
+                    if self.device.projector_brightness is not None
+                    else {
+                        "schema_version": 1,
+                        "outcome": "unknown",
+                        "reason": "no adjustment observed in this controller lifetime",
+                    },
+                    "configuration": active_configuration_document(
+                        attempt.prepared.configuration
+                    ),
+                    "trials": [message_dict(plan) for plan in attempt.prepared.trials],
+                    "outputs": [
+                        message_dict(plan) for plan in attempt.prepared.outputs
+                    ],
+                }
+                if attempt.paired:
+                    session_document["spikeglx"] = message_dict(
+                        attempt.prepared.spikeglx
+                    )
+                    session_document["spikeglx_control_scope"] = "saving_only"
+                # From the first write on, an unactivated cancel keeps the files (E06).
+                attempt.closure.metadata_written = True
+                await self.metadata.persist(
+                    attempt, "SESSION_CONFIG.json", "create_json", session_document
+                )
+                await self.metadata.persist(
+                    attempt, "SCHEMA.json", "create_json", schema
+                )
             if self.clock() >= start_deadline_ns:
                 raise TimeoutError(
                     "Start preparation deadline elapsed before registration"
@@ -253,7 +262,13 @@ class StartActivation:
                     raise RuntimeError("Start retired before Running transition")
                 self.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
                 self.control_operations.complete_operation(
-                    command_id, success=True, progress="session activated"
+                    command_id,
+                    success=True,
+                    progress=(
+                        "session activated"
+                        if attempt.reservation.persistent
+                        else "dummy test session activated (recording off)"
+                    ),
                 )
                 self.publisher.publish()
             if attempt.paired and self.spikeglx_monitor is not None:

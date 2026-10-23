@@ -347,7 +347,12 @@ def test_saved_monitor_requires_exact_unique_active_identity(monkeypatch, matche
         get_win32_adapter=lambda monitor: monitor,
         get_win32_monitor=lambda monitor: monitor,
     )
-    with pytest.raises(DisplayUnavailableError, match=f"matched {matches} active"):
+    message = (
+        "A configured projector is not detected by Windows"
+        if matches == 0
+        else f"matched {matches} active"
+    )
+    with pytest.raises(DisplayUnavailableError, match=message):
         ModernGLPort._resolve_monitor("SAVED", glfw)
     glfw.get_monitors = lambda: [17]
     assert ModernGLPort._resolve_monitor("SAVED", glfw) == 17
@@ -1127,7 +1132,7 @@ def test_native_trial_skips_source_only_recipe_image_dependency():
     artifact = artifact.model_copy(
         update={"preview_layout": review_layout(artifact.display)}
     )
-    port.preview = NS()  # This source-dependency test uses an already prepared viewer.
+    port.preview = NS(update_layout=lambda layout, geometry: None)
     port._display = artifact.display
     port._moderngl = object()
     port.prepare_trial(artifact, resources)
@@ -3039,8 +3044,8 @@ def test_native_review_layouts_crop_only_preview_and_rotate_full_recording():
             r = tile.rect
             for x in (8, 24):
                 for y in (8, 24):
-                    source_x = 31 - x if tile.label in {"Left", "Right"} else x
-                    source_y = 31 - y if tile.label == "Bottom" else y
+                    source_x = 31 - x if tile.label in {"Left", "Front", "Right"} else x
+                    source_y = y
                     assert pixel(r.x + x, r.y + y) == bytes(
                         (0, 255 if source_y >= 16 else 0, 255 if source_x >= 16 else 0)
                     )
@@ -3150,3 +3155,248 @@ def test_stimulus_preview_pacing_skips_hidden_and_minimized(monkeypatch):
     viewer.owner.minimized = False
     assert viewer.frame_due()
     assert not viewer.frame_due()
+
+
+def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatch):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.visual_stimulus.rendering import preview_group as module
+
+    events, ordered, draws = [], [], []
+
+    class Window:
+        def __init__(self, glfw, moderngl, changed):
+            self.visible = False
+            self.context = object()
+            self.window = object()
+            self.changed = changed
+            self.crop = (0, 0, 1, 1)
+            self.title = "Combined"
+            self.due = True
+            self.hints = []
+
+        def prepare(self, shared):
+            pass
+
+        def activate(self):
+            pass
+
+        def set_visible(self, visible, hint):
+            self.visible = visible
+            self.hints.append(hint)
+            self.changed(True, visible, "")
+
+        def frame_due(self):
+            result, self.due = self.due, False
+            return result
+
+        def draw(self, texture, width, height):
+            draws.append((self.title, self.crop, width, height))
+
+        def service(self):
+            pass
+
+        def clear(self):
+            pass
+
+        def release(self):
+            pass
+
+        def disable(self, error):
+            self.visible = False
+
+    monkeypatch.setattr(module, "StimulusPreview", Window)
+    monkeypatch.setattr(module, "RigStimulusPreview", Window)
+    monkeypatch.setattr(
+        module,
+        "order_shared_outputs",
+        lambda outputs, pending: ordered.append(tuple(outputs)),
+    )
+    monkeypatch.setattr(module, "release_fences", lambda pending: None)
+    layout = NS(
+        composite_width=400,
+        composite_height=200,
+        tiles=(
+            NS(label="Front", rect=NS(x=0, y=0, width=200, height=200)),
+            NS(label="Bottom", rect=NS(x=200, y=0, width=200, height=200)),
+        ),
+    )
+    group = module.StimulusPreviewGroup(
+        None, None, lambda *args: events.append(args), layout
+    )
+    group.prepare(object())
+    group.set_visible(True, rpc.PreviewWindowPlacement(side=256))
+    assert group.combined.visible
+    geometry = make_prepared_trial().display.geometry
+    group.update_layout(layout, geometry)
+    assert group.combined.scene_geometry is geometry
+    assert group.combined.layout is layout
+    group.draw(object(), 400, 200)
+    assert len(draws) == 1 and draws[0][-2:] == (400, 200)
+    draws.clear()
+    hint = rpc.PreviewWindowPlacement(side=256, update_existing_only=True)
+    hint.stimulus_tiles.add(surface="Front", x=10, y=20, side=160)
+    hint.stimulus_tiles.add(surface="Bottom", x=200, y=20, side=160)
+    group.set_visible(True, hint)
+    assert not group.combined.visible and group.visible
+    assert group.windows["Bottom"].crop == (0.5, 0, 0.5, 1)
+    assert group.frame_due() and not group.frame_due()
+    group.set_visible(True, hint)
+    assert group.windows["Front"].hints[-1].update_existing_only
+    group.draw(object(), 400, 200)
+    assert len(draws) == 2 and all(draw[-2:] == (200, 200) for draw in draws)
+    # Hidden consumers still finish their reads before the texture is overwritten.
+    group.set_visible(False, rpc.PreviewWindowPlacement())
+    group.activate()
+    assert "Front" in ordered[-1] and "Bottom" in ordered[-1]
+    changed = NS(composite_width=800, composite_height=200, tiles=layout.tiles)
+    group.update_layout(changed)
+    assert group.windows["Bottom"].crop == (0.25, 0, 0.25, 1)
+    duplicate = rpc.PreviewWindowPlacement()
+    duplicate.CopyFrom(hint)
+    duplicate.stimulus_tiles.add(surface="Front", side=160)
+    with pytest.raises(ValueError, match="placement"):
+        group.set_visible(True, duplicate)
+    group.set_visible(False, rpc.PreviewWindowPlacement())
+    group.set_visible(True, hint)
+    assert not group.visible  # Polling cannot reopen a closed group.
+    group.release()
+    assert not group.windows
+
+
+def test_rig_preview_drag_reset_focus_and_camera_only_state(monkeypatch):
+    from cephvr.visual_stimulus.rendering import preview_rig as module
+
+    now, cursor = [1_000_000_000], [(10.0, 20.0)]
+    glfw = NS(
+        MOUSE_BUTTON_LEFT=0, PRESS=1, RELEASE=0, get_cursor_pos=lambda _: cursor[0]
+    )
+    monkeypatch.setattr(module, "host_time_ns", lambda: now[0])
+    viewer = module.RigStimulusPreview(glfw, NS(), lambda *_: None)
+    geometry = make_prepared_trial().display.geometry
+    viewer.scene_geometry = geometry
+    before = geometry.model_dump_json()
+    viewer.cursor_position(None, 40, 50)
+    assert (viewer.azimuth, viewer.elevation) == (25, 25)
+    viewer.mouse_button(None, 0, 1, 0)
+    viewer.cursor_position(None, 50, 40)
+    assert (viewer.azimuth, viewer.elevation) == (45, 35)
+    viewer.cursor_position(None, 50, 1000)
+    assert viewer.elevation == 80
+    viewer.cursor_position(None, -1000, -1000)
+    assert viewer.elevation == -80 and 0 <= viewer.azimuth < 360
+    viewer.focus_changed(None, False)
+    camera = (viewer.azimuth, viewer.elevation)
+    viewer.cursor_position(None, 0, 0)
+    assert (viewer.azimuth, viewer.elevation) == camera
+    now[0] += 1_000_000_000
+    viewer.mouse_button(None, 0, 1, 0)
+    viewer.mouse_button(None, 0, 0, 0)
+    now[0] += 200_000_000
+    viewer.mouse_button(None, 0, 1, 0)
+    assert (viewer.azimuth, viewer.elevation) == (25, 25)
+    assert viewer.drag_origin is None and geometry.model_dump_json() == before
+
+
+@pytest.mark.windows
+@pytest.mark.parametrize("face", ["front", "left", "right", "bottom"])
+def test_native_gpu_rig_crops_orients_and_never_writes_source(face):
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect, Surface
+    from cephvr.visual_stimulus.config.review_layout import layout_from_crops
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+    from cephvr.visual_stimulus.rendering.preview_rig import RigStimulusPreview
+
+    context = moderngl.create_standalone_context(require=430)
+    capture = ReviewCapture()
+    viewer = RigStimulusPreview(None, moderngl, lambda *_: None)
+    viewer.context = context
+    source = context.texture(
+        (64, 64),
+        4,
+        bytes(
+            value
+            for y in range(64)
+            for x in range(64)
+            for value in (16 + 3 * x, 16 + 3 * y, 64, 255)
+        ),
+    )
+    target = context.simple_framebuffer((256, 256), components=4)
+    try:
+        display = NS(active_outputs=(NS(output_id=face, rgb_bits_per_channel=8),))
+        layout = layout_from_crops(
+            display,
+            ((face, face.title(), PixelRect(x=8, y=8, width=48, height=48)),),
+            1,
+        )
+        texture = capture.compose((RenderedOutput(face, 64, 64, 8, source),), layout)
+        original = source.read()
+        composite = texture.read()
+        # Isolate each screen to inspect all four quadrants without occlusion.
+        surface = Surface(
+            surface_id=face,
+            bottom_left_mm=(-1, 0, -1),
+            bottom_right_mm=(1, 0, -1),
+            top_right_mm=(1, 0, 1),
+            top_left_mm=(-1, 0, 1),
+        )
+        viewer.scene_geometry = NS(surfaces=(surface,))
+        viewer.layout = layout
+        viewer.azimuth = viewer.elevation = 0
+        viewer.prepare_scene()
+        target.use()
+        viewer.draw_scene(texture, texture.width, texture.height, 256, 256)
+        pixels = target.read(components=4)
+        for x, u in ((76, 0.25), (180, 0.75)):
+            for y, v in ((76, 0.25), (180, 0.75)):
+                red, green, blue = pixels[(y * 256 + x) * 4 : (y * 256 + x) * 4 + 3]
+                raw_u, raw_v = (1 - v, 1 - u) if face == "bottom" else (u, v)
+                assert (red > 112, green > 112) == (raw_u > 0.5, raw_v > 0.5)
+                assert blue == 64
+        viewer.azimuth, viewer.elevation = 25, 25
+        viewer.draw_scene(texture, texture.width, texture.height, 256, 256)
+        assert target.read(components=4) != pixels
+        assert source.read() == original and texture.read() == composite
+        # Hidden/minimized windows never issue a draw or swap.
+        viewer.draw(texture, texture.width, texture.height)
+        viewer.visible, viewer.owner = True, NS(minimized=True)
+        viewer.draw(texture, texture.width, texture.height)
+    finally:
+        for resource in reversed(viewer.resources):
+            resource.release()
+        target.release()
+        capture.release()
+        source.release()
+        context.release()
+
+
+@pytest.mark.windows
+def test_native_rig_window_prepares_callbacks_and_releases_shared_resources():
+    glfw = pytest.importorskip("glfw")
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.rendering.preview_rig import RigStimulusPreview
+
+    assert glfw.init()
+    root = None
+    viewer = RigStimulusPreview(glfw, moderngl, lambda *_: None)
+    try:
+        glfw.default_window_hints()
+        glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
+        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+        root = glfw.create_window(16, 16, "CephVR hidden rig test", None, None)
+        assert root
+        viewer.prepare(root)
+        assert len(viewer.resources) == 3 and viewer.window is not None
+        assert not glfw.get_window_attrib(viewer.window, glfw.VISIBLE)
+        assert glfw.set_cursor_pos_callback(viewer.window, viewer.cursor_position)
+        assert glfw.set_mouse_button_callback(viewer.window, viewer.mouse_button)
+        assert glfw.set_window_focus_callback(viewer.window, viewer.focus_changed)
+        viewer.release()
+        assert not viewer.resources and viewer.window is None and viewer.context is None
+    finally:
+        if viewer.window is not None:
+            viewer.release()
+        if root:
+            glfw.destroy_window(root)
+        glfw.terminate()

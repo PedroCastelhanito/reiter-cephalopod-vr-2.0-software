@@ -110,6 +110,8 @@ class TrialLogs:
         self.publish = publish
 
     async def start_trial_log(self, attempt: Attempt, plan: pb.TrialPlan) -> None:
+        if not attempt.reservation.persistent:
+            return
         if attempt.writer is None or not attempt.trial_log_name:
             raise StorageError("trial metadata writer unavailable")
         attempt.writer.reserve_trial_log(attempt.trial_log_name)
@@ -129,6 +131,9 @@ class TrialLogs:
     async def finish_normal_trial_log(
         self, attempt: Attempt, plan: pb.TrialPlan
     ) -> None:
+        if not attempt.reservation.persistent:
+            attempt.trial_log_finished = True
+            return
         if attempt.interrupted:
             raise RuntimeError("normal trial closure superseded by interruption")
         outputs = _trial_output_index(attempt, plan)
@@ -160,6 +165,9 @@ class TrialLogs:
         )
 
     async def finish_interrupted_trial(self, attempt: Attempt) -> bool:
+        if not attempt.reservation.persistent:
+            attempt.trial_log_finished = True
+            return True
         closure = attempt.trial_closure
         if (
             attempt.trial_index < 0

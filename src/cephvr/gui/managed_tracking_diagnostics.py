@@ -145,7 +145,8 @@ class ManagedTrackingDiagnostics(QObject):
             return
         if not self.bridge.request("begin_tracking_diagnostic", **options):
             self._show_status(
-                "Tracking diagnostic command queue is unavailable.",
+                "Tracking diagnostic did not start. Wait for the controller "
+                "connection and try again.",
                 can_begin=True,
             )
             return
@@ -153,7 +154,7 @@ class ManagedTrackingDiagnostics(QObject):
         self.page.install_diagnostic_status(
             active=False,
             pending=True,
-            message="Waiting for controller admission",
+            message="Waiting for the controller to accept the request",
             can_begin=False,
         )
 
@@ -163,7 +164,9 @@ class ManagedTrackingDiagnostics(QObject):
             return
         snapshot = self.snapshot()
         if snapshot is None:
-            self._show_status("Controller state is unavailable.")
+            self._show_status(
+                "Waiting for controller status. Try again once connected."
+            )
             return
         try:
             options = close_request_options(snapshot)
@@ -171,7 +174,10 @@ class ManagedTrackingDiagnostics(QObject):
             self._show_status(str(error))
             return
         if not self.bridge.request("close_tracking_diagnostic", **options):
-            self._show_status("Tracking diagnostic close queue is unavailable.")
+            self._show_status(
+                "The request to stop the Tracking diagnostic was not sent. "
+                "Wait for the controller connection and try again."
+            )
             return
         self._close_requested = (
             str(options["diagnostic_id"]),
@@ -319,7 +325,7 @@ class ManagedTrackingDiagnostics(QObject):
             self.viewer.show_unavailable(str(error))
             return
         if not diagnostic.source_camera_serial:
-            self.viewer.show_unavailable("Tracking camera identity is unavailable")
+            self.viewer.show_unavailable("The Tracking camera could not be identified")
             return
         self._current_presentation = presentation
         self._presentation_connection = (epoch, generation)
@@ -377,7 +383,9 @@ class ManagedTrackingDiagnostics(QObject):
             self.viewer.use_frame_requested.connect(self.freeze_current_frame)
         self._viewer_open = True
         self._detached_identity = None
-        self.viewer.show_unavailable("Waiting for the first exact-source frame")
+        self.viewer.show_unavailable(
+            "Waiting for the first frame from the Tracking camera"
+        )
         self.viewer.show()
         self.viewer.raise_()
         self.page.diagnostic_viewer_button.setEnabled(True)

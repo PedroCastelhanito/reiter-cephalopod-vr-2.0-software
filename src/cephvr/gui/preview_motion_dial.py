@@ -1,6 +1,6 @@
 """Advanced preview instruments: motion dials and the arena world map."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import atan2, cos, degrees, hypot, radians, sin
 
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
@@ -17,7 +17,8 @@ AXIS_LABELS = {
     "tracking": ("fwd", "back", "right", "left"),
 }
 TOOLTIPS = {
-    "texture": "Planned subject motion: Back −90° down; Right 0° right; Front 90° up; Left 180° left. "
+    "texture": "Planned arena motion: Back −90° down; Right 0° right; Front 90° up; Left 180° left. "
+    "Each projector shows its own motion in arena coordinates. "
     "Arrow length is speed against the rings; the outer ring is signed angular speed.",
     "tracking": "Forward points up and rightward lateral motion right. Arrow length "
     "is speed against the rings; the outer ring is signed angular speed. "
@@ -65,19 +66,18 @@ def dial_readout(sample: DialSample) -> str:
     return f"{vector_text(sample)} · {rotation_text(sample)}"
 
 
-def instrument_painter(widget: QWidget) -> QPainter:
+def instrument_painter(
+    widget: QWidget, height: int | None = None, width: int = 204
+) -> QPainter:
     """Fit the complete instrument, including labels, without stretching its axes."""
     painter = QPainter(widget)
+    height = height or MotionDial.HEIGHT
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.fillRect(widget.rect(), QColor(colors_for(widget).console))
-    scale = min(widget.width() / MotionDial.SIZE, widget.height() / MotionDial.HEIGHT)
+    scale = min(widget.width() / width, widget.height() / height)
     # Amber phosphor keeps instruments directly under their section heading.
-    top = (
-        0
-        if minimal_frames(widget)
-        else (widget.height() - MotionDial.HEIGHT * scale) / 2
-    )
-    painter.translate((widget.width() - MotionDial.SIZE * scale) / 2, top)
+    top = 0 if minimal_frames(widget) else (widget.height() - height * scale) / 2
+    painter.translate((widget.width() - width * scale) / 2, top)
     painter.scale(scale, scale)
     return painter
 
@@ -108,8 +108,22 @@ class MotionDial(QWidget):
         sample = self.sample
         if sample is None:
             return
-        color = QColor(getattr(colors, sample.color))
-        painter.setPen(color)
+        center, ring, radius = self.draw_axes(painter, sample)
+        self.draw_marker(painter, sample, center, ring, radius)
+        painter.setPen(QColor(colors.text if not sample.message else colors.label))
+        text = dial_readout(sample)
+        painter.drawText(
+            QRectF(4, 192, MotionDial.SIZE - 8, 18),
+            Qt.AlignmentFlag.AlignCenter,
+            painter.fontMetrics().elidedText(
+                text, Qt.TextElideMode.ElideRight, MotionDial.SIZE - 8
+            ),
+        )
+
+    def draw_axes(
+        self, painter: QPainter, sample: DialSample
+    ) -> tuple[QPointF, float, float]:
+        colors = colors_for(self)
         center = QPointF(MotionDial.SIZE / 2, 104)
         up, down, right, left = AXIS_LABELS[sample.form]
         label_width = max(
@@ -160,6 +174,18 @@ class MotionDial(QWidget):
             )
         painter.setPen(QPen(QColor(colors.border), 4))
         painter.drawEllipse(center, ring, ring)
+        return center, ring, radius
+
+    def draw_marker(
+        self,
+        painter: QPainter,
+        sample: DialSample,
+        center: QPointF,
+        ring: float,
+        radius: float,
+    ) -> None:
+        colors = colors_for(self)
+        color = QColor(getattr(colors, sample.color, sample.color))
         if sample.angular_speed and sample.rotation_scale > 0:
             fraction = min(1.0, abs(sample.angular_speed) / sample.rotation_scale)
             sweep = max(12.0, 270 * fraction) * (1 if sample.angular_speed > 0 else -1)
@@ -177,6 +203,8 @@ class MotionDial(QWidget):
         if sample.vector is not None and sample.scale > 0 and not sample.message:
             dx, dy = screen_vector(sample)
             length = hypot(dx, dy)
+            if not length:
+                return
             reach = min(1.0, length / sample.scale) * radius
             tip = center + QPointF(dx / length * reach, dy / length * reach)
             angle = atan2(dy, dx)
@@ -187,15 +215,107 @@ class MotionDial(QWidget):
             painter.setBrush(color)
             painter.drawPolygon(QPolygonF([tip, back + normal, back - normal]))
             painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QColor(colors.text if not sample.message else colors.label))
-        text = dial_readout(sample)
-        painter.drawText(
-            QRectF(4, 192, MotionDial.SIZE - 8, 18),
-            Qt.AlignmentFlag.AlignCenter,
-            painter.fontMetrics().elidedText(
-                text, Qt.TextElideMode.ElideRight, MotionDial.SIZE - 8
-            ),
+
+
+PROJECTOR_COLORS = {
+    "Left": "#66c7f4",
+    "Front": "#ffbc5c",
+    "Right": "#d39aff",
+    "Bottom": "#69d59a",
+}
+
+
+class SharedMotionDial(MotionDial):
+    """Compatible vectors share axes and scales above a projector parameter table."""
+
+    TABLE_WIDTH = 360
+    HEADERS = ("Projector", "Speed", "Direction", "Angular")
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.samples: tuple[DialSample, ...] = ()
+        self.setAccessibleName("Shared projector directions")
+
+    def set_samples(self, samples: tuple[DialSample, ...]) -> None:
+        order = {name: index for index, name in enumerate(PROJECTOR_COLORS)}
+        samples = tuple(
+            sorted(samples, key=lambda s: order.get(s.name.split(" · ")[0], 4))
         )
+        self.samples = tuple(
+            replace(
+                sample,
+                color=PROJECTOR_COLORS.get(sample.name.split(" · ")[0], sample.color),
+            )
+            for sample in samples
+        )
+        self.setToolTip(
+            "Planned projector motion on shared axes; colors identify projectors.\n"
+            + "\n".join(f"{s.name}: {dial_readout(s)}" for s in self.samples)
+        )
+        self.update()
+
+    def sizeHint(self) -> QSize:
+        return QSize(self.TABLE_WIDTH, 236 + len(self.samples) * 24)
+
+    def parameter_rows(self) -> tuple[tuple[str, str, str, str], ...]:
+        rows = []
+        for sample in self.samples:
+            name = sample.name.split(" · ")[0]
+            if sample.message:
+                rows.append((name, sample.message, "—", "—"))
+                continue
+            speed = hypot(*(sample.vector or (0.0, 0.0)))
+            direction = sample.orientation_deg
+            if sample.vector is not None and speed:
+                dx, dy = screen_vector(sample)
+                direction = signed_degrees(degrees(atan2(-dy, dx)))
+            rows.append(
+                (
+                    name,
+                    f"{speed:.3g} {sample.unit}",
+                    f"{direction:.3g}°" if direction is not None else "—",
+                    rotation_text(sample),
+                )
+            )
+        return tuple(rows)
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:
+        painter = instrument_painter(self, self.sizeHint().height(), self.TABLE_WIDTH)
+        if not self.samples:
+            return
+        scale = max(s.scale for s in self.samples)
+        turns = max(s.rotation_scale for s in self.samples)
+        common = replace(self.samples[0], scale=scale, rotation_scale=turns)
+        painter.save()
+        painter.translate((self.TABLE_WIDTH - self.SIZE) / 2, 0)
+        center, ring, radius = self.draw_axes(painter, common)
+        for index, sample in enumerate(self.samples):
+            self.draw_marker(
+                painter,
+                replace(sample, scale=scale, rotation_scale=turns),
+                center,
+                ring - index * 3,
+                radius,
+            )
+        painter.restore()
+        colors = colors_for(self)
+        columns = (0, 94, 194, 282, self.TABLE_WIDTH)
+        for row, values in enumerate((self.HEADERS, *self.parameter_rows())):
+            y = 204 + row * 24
+            painter.setPen(QPen(QColor(colors.border), 1))
+            painter.drawLine(QPointF(0, y + 23), QPointF(self.TABLE_WIDTH, y + 23))
+            for column, text in enumerate(values):
+                painter.setPen(
+                    QColor(colors.label if row == 0 else self.samples[row - 1].color)
+                )
+                width = columns[column + 1] - columns[column] - 8
+                painter.drawText(
+                    QRectF(columns[column] + 4, y, width, 23),
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                    painter.fontMetrics().elidedText(
+                        text, Qt.TextElideMode.ElideRight, width
+                    ),
+                )
 
 
 @dataclass(frozen=True)

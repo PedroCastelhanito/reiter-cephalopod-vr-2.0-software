@@ -2,7 +2,16 @@
 
 from math import hypot
 
-from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, QTimer
+from PyQt6.QtCore import (
+    QEvent,
+    QObject,
+    QPoint,
+    QRect,
+    QRegularExpression,
+    QSize,
+    Qt,
+    QTimer,
+)
 from PyQt6.QtGui import (
     QColor,
     QLinearGradient,
@@ -10,6 +19,7 @@ from PyQt6.QtGui import (
     QPaintEvent,
     QPixmap,
     QRadialGradient,
+    QRegion,
 )
 from PyQt6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QLabel, QWidget
 
@@ -99,6 +109,17 @@ class CrtOverlay(QWidget):
         ):
             self.film = self.render_film(self.size(), ratio)
         painter = QPainter(self)
+        region = QRegion(self.rect())
+        for preview in self.host.findChildren(
+            QWidget, QRegularExpression("^(ExternalPreviewSlot|TrialPreviewPixels)$")
+        ):
+            if preview.window() is self.host.window() and preview.isVisibleTo(
+                self.host
+            ):
+                region -= QRegion(
+                    QRect(preview.mapTo(self.host, QPoint()), preview.size())
+                )
+        painter.setClipRegion(region)
         painter.drawPixmap(0, 0, self.film)
         if self.band_timer.isActive():
             band = QLinearGradient(0, self.band_y, 0, self.band_y + BAND_HEIGHT)

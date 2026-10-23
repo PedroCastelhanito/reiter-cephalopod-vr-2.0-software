@@ -6,8 +6,14 @@ from cephvr.control.v1 import types_pb2 as pb
 
 
 def output_plans(
-    backend: pb.BackendContext, trials: list[pb.TrialPlan], saving: bool
+    backend: pb.BackendContext,
+    trials: list[pb.TrialPlan],
+    saving: bool,
+    *,
+    recording: bool = True,
 ) -> tuple[pb.OutputPlan, ...]:
+    if not recording:
+        return ()
     tags: tuple[tuple[str, str], ...] = (
         ("stimulus_LOG", "json"),
         ("stimulus_frames", "jsonl"),

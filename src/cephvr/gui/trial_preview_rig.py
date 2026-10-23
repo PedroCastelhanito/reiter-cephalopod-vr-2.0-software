@@ -25,6 +25,7 @@ class PreviewRig(TankDiagram):
         self, geometry: PreviewGeometry, canvases: dict[str, PreviewCanvas]
     ) -> None:
         super().__init__()
+        self.setObjectName("TrialPreviewPixels")
         self.snapshot = geometry
         self.rig = geometry.rig
         self.canvases = canvases
@@ -85,8 +86,8 @@ class PreviewRig(TankDiagram):
                 ]
             )
             if face == "Bottom":
-                # Undo the portrait quarter-turn; preserve the calibrated output flips.
-                source = QPolygonF([source[i] for i in (1, 2, 3, 0)])
+                # Undo the portrait turn and the physical folded mirror path.
+                source = QPolygonF([source[i] for i in (2, 1, 0, 3)])
             transform = QTransform()
             if QTransform.quadToQuad(source, polygon, transform):
                 painter.save()

@@ -172,6 +172,10 @@ def add_stimulus(
             }
         )
     node["scene_id"] = scene_id
+    if program.category == "media_presentation" and family != "arena":
+        source["motion"] = {key: {"kind": "hold"} for key in ("x", "y", "rotation")}
+        if family == "texture":
+            source["phase_x"] = source["phase_y"] = {"kind": "hold"}
     node["settings"].append(source)
     return parse_program_json(json.dumps(data), max_bytes=DEFAULT_DOCUMENT_BYTES)
 

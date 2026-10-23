@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.recording import recording_enabled
 
 
 class PlanningError(ValueError):
@@ -103,6 +104,8 @@ def plan_outputs(
         if settings.backend_name != name or not settings.enabled:
             raise PlanningError(f"{name} resolved settings are missing or disabled")
         tags_by_backend[name] = _tags(name, settings)
+    if not recording_enabled(prepared.configuration.backends):
+        tags_by_backend = {name: () for name in tags_by_backend}
     for trial_number, trial in enumerate(prepared.trials, 1):
         if (
             trial.context.session != prepared.context
@@ -130,9 +133,10 @@ def requested_output_identities(
     }
     if set(settings) != set(backends):
         raise PlanningError("requested output owners differ from active backends")
-    return _output_identities(
-        prepared, {name: _tags(name, item) for name, item in settings.items()}, backends
-    )
+    tags = {name: _tags(name, item) for name, item in settings.items()}
+    if not recording_enabled(prepared.configuration.backends):
+        tags = {name: () for name in tags}
+    return _output_identities(prepared, tags, backends)
 
 
 def _output_identities(
@@ -169,7 +173,7 @@ def _output_identities(
                         extension=extension,
                     )
                 )
-    if not outputs:
+    if not outputs and recording_enabled(prepared.configuration.backends):
         raise PlanningError("no required output was planned")
     return outputs
 

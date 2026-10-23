@@ -26,6 +26,7 @@ from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.initial_pose import initial_pose_fields
 from cephvr.gui.looming_size import LoomingSize
+from cephvr.gui.motion_source import MotionSource
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import NodePath, data_node, node_at
@@ -102,6 +103,7 @@ class StimulusParameters(QWidget):
         self.extra_body.setSpacing(18)
         self.closed_loop = False
         self.fades: StimulusFades | None = None
+        self.motion_source: MotionSource | None = None
         self.body.addWidget(self.advanced)
         row = QHBoxLayout()
         self.message = FormNotice()
@@ -122,7 +124,13 @@ class StimulusParameters(QWidget):
     def set_closed_loop(self, closed: bool) -> None:
         self.closed_loop = closed
         if self.feedback is not None:
-            self.feedback.set_closed_loop(closed)
+            self.feedback.set_closed_loop(
+                closed
+                and (
+                    self.program is None
+                    or self.program.category != "media_presentation"
+                )
+            )
 
     def show_more(self, checked: bool) -> None:
         self.advanced.setVisible(checked)
@@ -194,8 +202,10 @@ class StimulusParameters(QWidget):
         self.forms.clear()
         self.asset_forms.clear()
         self.pending_profiles.clear()
+        self.motion_source = None
         self.feedback = None
         self.arena_limits = None
+        self.fades = None
         self.message.clear()
         self.message.setVisible(not self.compact)
         self.reset_button.hide()
@@ -217,6 +227,8 @@ class StimulusParameters(QWidget):
             values[k]["kind"] == "keyframes" for k in ("width", "height")
         )
         for name, fields in SECTIONS:
+            if name == "Motion" and program.category == "media_presentation":
+                continue
             if name == "Motion" and values["kind"] == "image" and not looming:
                 continue
             keys = [
@@ -277,7 +289,10 @@ class StimulusParameters(QWidget):
                 node,
                 setting,
                 self.duration_override or node.duration,
-                allow_link=not looming and values["kind"] != "video",
+                allow_link=not self.compact
+                and not looming
+                and values["kind"] != "video"
+                and program.category != "media_presentation",
             )
             self.linked_to, self.fades = appearance.linked_to, appearance.fades
             self.linked_to.currentIndexChanged.connect(self.update_link_controls)
@@ -298,14 +313,21 @@ class StimulusParameters(QWidget):
             image.changed.connect(self.mark_changed)
             self.forms.append(image)
             self.extra_body.addWidget(image)
+            if program.category == "media_presentation":
+                angular_parent = image.motion.angular.parentWidget()
+                if angular_parent is not None:
+                    angular_parent.hide()
             if not self.compact:
                 self.primary.addWidget(field("Fit", image.fit))
-                self.primary.addWidget(image.motion.basic)
+                if program.category != "media_presentation":
+                    self.primary.addWidget(image.motion.basic)
         self.feedback = FeedbackMappings(
             setting,
             [channel.model_dump(mode="json") for channel in program.input_channels],
         )
-        self.feedback.set_closed_loop(self.closed_loop)
+        self.feedback.set_closed_loop(
+            self.closed_loop and program.category != "media_presentation"
+        )
         self.feedback.changed.connect(self.mark_changed)
         self.extra_body.addWidget(self.feedback)
         assets = (
@@ -363,6 +385,8 @@ class StimulusParameters(QWidget):
 
     def candidate(self) -> dict[str, Any]:
         assert self.program is not None
+        if self.motion_source is not None:
+            self.motion_source.validate()
         candidate = self.program.model_dump(mode="json")
         setting = data_node(candidate, self.node_index)["settings"][self.layer_index]
         for form in self.forms:
@@ -402,7 +426,10 @@ class StimulusParameters(QWidget):
                 )
         if self.fades is not None:
             setting["opacity"] = self.fades.read()
-            if setting["kind"] == "texture":
+            if (
+                setting["kind"] == "texture"
+                and self.program.category != "media_presentation"
+            ):
                 setting["linked_to"] = self.linked_to.currentData()
                 if setting["linked_to"] is not None:
                     setting["phase_x"] = {"kind": "hold"}

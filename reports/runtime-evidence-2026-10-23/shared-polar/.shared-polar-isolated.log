@@ -1,0 +1,43 @@
+F.........
+================================== FAILURES ===================================
+______ test_shared_polar_keeps_static_bottom_colours_and_toggle_identity ______
+
+timeline = <cephvr.gui.preview_timeline.StimulusTimeline object at 0x0000023D889FCCA0>
+
+    def test_shared_polar_keeps_static_bottom_colours_and_toggle_identity(timeline):
+        geometry, settings = linked_plan()
+        source = settings[0]
+        hold = Hold(kind="hold")
+        settings[0] = source.model_copy(update={
+            "phase_x": hold, "phase_y": hold,
+            "motion": source.motion.model_copy(update={"x": hold, "y": hold, "rotation": hold}),
+        })
+        timeline.merge_directions = True
+        timeline.set_program(with_settings(tuple(settings), tuple(settings), tuple(settings)), "", "Static", geometry)
+        timeline.set_advanced(True)
+        timeline.set_elapsed(2)
+        assert set(timeline.active_sources) == {"Left", "Front", "Right", "Bottom"}
+        assert len(timeline.shared_dials) == 1
+        dial = next(iter(timeline.shared_dials.values()))
+        assert [s.name.split(" � ")[0] for s in dial.samples] == ["Left", "Front", "Right", "Bottom"]
+        assert len({s.color for s in dial.samples}) == 4
+        bottom = dial.samples[-1]
+        assert bottom.vector is None and bottom.angular_speed == 0 and not bottom.message
+        assert not dial.grab().isNull()
+        timeline.set_projector_visible("Bottom", False)
+        assert len(dial.samples) == 3
+        timeline.set_projector_visible("Bottom", True)
+        assert len(dial.samples) == 4 and dial.samples[-1] == bottom
+        timeline.combined = False
+        timeline.rebuild_instruments()
+        timeline.refresh()
+        assert not timeline.shared_dials
+>       assert not timeline.projector_cards["Bottom"].isHidden()
+E       assert not True
+E        +  where True = <built-in method isHidden of ProjectorCard object at 0x0000023D889FFBE0>()
+E        +    where <built-in method isHidden of ProjectorCard object at 0x0000023D889FFBE0> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x0000023D889FFBE0>.isHidden
+
+tests\gui\test_preview_timeline.py:639: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_preview_timeline.py::test_shared_polar_keeps_static_bottom_colours_and_toggle_identity
+1 failed, 9 passed, 79 deselected in 0.49s

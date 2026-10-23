@@ -7,6 +7,7 @@ from cephvr.gui.components import equal_row_height, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
+from cephvr.gui.motion_source import MotionSource
 from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.gui.stimulus_parameters import StimulusParameters
@@ -126,6 +127,31 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
                 (captions[i][0] if i < len(captions) else title, control)
                 for i, (title, control) in enumerate(result[1:])
             ],
+        ]
+    if program is not None and program.category == "media_presentation":
+        kept = []
+        for title, control in result:
+            if title in ("Asset", "Fit", "Start (s)", "At end"):
+                kept.append((title, control))
+            else:
+                control.hide()
+        result = kept
+        if len(result) == 1:
+            result.append(("Fit", label("")))
+        while len(result) < 4:
+            result.append(("", label("")))
+    if (
+        motion is not None
+        and editor.fades is not None
+        and editor.linked_to.isEnabled()
+        and program is not None
+        and program.category != "media_presentation"
+    ):
+        editor.motion_source = MotionSource(editor.linked_to)
+        editor.motion_source.currentIndexChanged.connect(editor.mark_changed)
+        result[1:1] = [
+            ("Motion source", editor.motion_source),
+            ("Linked to", editor.linked_to),
         ]
     for title, control in result:
         control.setMinimumWidth(0)

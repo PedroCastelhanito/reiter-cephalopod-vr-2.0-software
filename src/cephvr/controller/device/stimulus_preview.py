@@ -12,6 +12,7 @@ from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import ConfigurationState, LifecycleState, LimitsState
 from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.preview_placement import valid_stimulus_tiles
 from cephvr.shared.preview_rates import valid_rates
 
 
@@ -117,6 +118,7 @@ class StimulusPreviewController:
             placement = request.placement
             if (
                 placement.ByteSize() > 256
+                or not valid_stimulus_tiles(placement)
                 or (placement.side and not 128 <= placement.side <= 2048)
                 or (
                     any(

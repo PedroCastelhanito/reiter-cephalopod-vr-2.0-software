@@ -1,0 +1,19 @@
+{
+  "controller_generation": "6e2a7425-30fd-4bdc-97d5-f90b1c05e4de",
+  "captured_monotonic_ns": "755236014111400",
+  "state_revision": "111",
+  "configuration": {
+    "revision": "1"
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": null,
+  "errors": null,
+  "warnings": null,
+  "runtime_incidents": null,
+  "launcher_event_opened": true
+}

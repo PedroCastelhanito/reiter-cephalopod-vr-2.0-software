@@ -214,6 +214,12 @@ def bind_command(
             command=child, diagnostic_id=request.diagnostic_id
         ), link
     if isinstance(request, wire.StimulusPreviewRequest):
+        from cephvr.shared.preview_placement import valid_stimulus_tiles
+
+        if request.placement.ByteSize() > 256 or not valid_stimulus_tiles(
+            request.placement
+        ):
+            raise ValueError("invalid stimulus preview placement")
         if request.configuration_revision != revision:
             raise ValueError("preview configuration revision differs")
         return visual_stimulus.StimulusPreviewCommand(

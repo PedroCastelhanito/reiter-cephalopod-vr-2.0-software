@@ -53,10 +53,13 @@ class OutputReservation:
         session_id: str,
         generation: str,
         anchor: datetime,
+        *,
+        persistent: bool = True,
     ):
         require_uuid4(session_id)
         require_uuid4(generation)
         resolved_root = _resolved_path(root)
+        self.persistent = persistent
         date = anchor.strftime("%Y%m%d")
         time = anchor.strftime("%H%M%S")
         experiment_directory = resolved_root / f"{date}_{safe_component(experiment)}"
@@ -104,6 +107,7 @@ class OutputReservation:
         canonical = _resolved_path(directory)
         root = canonical.parent.parent
         instance = cls.__new__(cls)
+        instance.persistent = True
         instance._bind_paths(
             _resolved_path(root),
             canonical.parent,
@@ -140,6 +144,8 @@ class OutputReservation:
         return instance
 
     def acquire(self) -> list[Path]:
+        if not self.persistent:
+            return []
         if self.held:
             raise StorageError("reservation already held")
         self._acquire_path_guard()
@@ -416,16 +422,20 @@ class OutputReservation:
         self.release()
 
     def complete(self) -> None:
-        self._finish(None)
+        if self.persistent:
+            self._finish(None)
 
     def close_unactivated(self) -> None:
         """Keep all files; mark a never-activated Setup finished, then release.
 
         The caller seals the writer first and clears the recovery pointer after.
         """
-        self._finish("not_activated")
+        if self.persistent:
+            self._finish("not_activated")
 
     def cancel(self) -> None:
+        if not self.persistent:
+            return
         if self._lock_fd is None and self._path_guard is None:
             raise StorageError("reservation is not held")
         for child in (self.protocol_directory, self.spikeglx_directory):

@@ -71,7 +71,12 @@ class TrialLifecycleValidation:
             <= callbacks[0].observed_monotonic_ns
             <= ingress_ns
             or setting is None
-            or (not recording_scope_unavailable and len(recording) != 1)
+            or (
+                session.recording_enabled
+                and not recording_scope_unavailable
+                and len(recording) != 1
+            )
+            or (not session.recording_enabled and recording)
             or (
                 recording
                 and (

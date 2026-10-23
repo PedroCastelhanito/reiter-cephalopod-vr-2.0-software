@@ -26,6 +26,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.recording import recording_enabled
 
 
 async def prepare_worker_payloads(
@@ -131,16 +132,18 @@ async def prepare_worker_payloads(
         camera_setup.native_timestamp_available = resolved.native_timestamp_available
         camera_setup.native_counter_available = resolved.native_counter_available
         camera_setup.camera_clock.CopyFrom(resolved.camera_clock)
-        recording = build_recording_settings(
-            session.confirmed_settings,
-            resolved,
-            configuration.file_policies,
-            role,
-            session_config_reference=session_config_reference(request),
-            nominal_frame_rate_hz=nominal_frame_rate(
-                role, setting, resolved, session.pulse_resolution
-            ),
-        )
+        recording = None
+        if recording_enabled(request.plan.configuration.backends):
+            recording = build_recording_settings(
+                session.confirmed_settings,
+                resolved,
+                configuration.file_policies,
+                role,
+                session_config_reference=session_config_reference(request),
+                nominal_frame_rate_hz=nominal_frame_rate(
+                    role, setting, resolved, session.pulse_resolution
+                ),
+            )
         if recording is not None:
             camera_setup.recording.CopyFrom(recording)
             if (

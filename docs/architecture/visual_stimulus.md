@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 31
+**Status:** Accepted · **Revision:** 34
 
 - Apply G01's 20 Hz preview cadence before optional composition and synchronization;
   slower renderer batches show at their source rate. Hidden/minimized viewers skip
@@ -54,7 +54,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   owns the backend's public control endpoint, preparation coordination and aggregate
   lifecycle evidence; the renderer owns display/GPU resources and live stimulus state.
   Controller configuration and trial authority remain under E05/E07/E08.
-- The renderer also owns one optional native Visual Stimulus review window, prepared
+- The renderer owns one optional Visual Stimulus preview resource: a Combined GPU
+  rig window prepared at Setup and up to four lazily created Per-projector windows
+  sharing its GL resources. Only the selected mode is visible. Combined maps the
+  existing preview texture's calibrated tiles onto the prepared screen planes,
+  compensating operator tile mirrors and the protocol rig's folded Bottom path.
+  GLFW mouse input changes only the inspection camera; Per-projector sampling,
+  stimulus projection and recording remain unchanged. Geometry updates with each
+  prepared trial. No CPU pixel readback or extra stimulus render is introduced.
+  Fence every previous reader before compositor reuse, including a
+  window hidden after drawing. Closing one individual window hides the group; polling
+  cannot reopen it. Retain all windows through confirmed resource cleanup.
+- The renderer's optional native Visual Stimulus preview resource is prepared
   at Setup and controlled through authenticated controller/coordinator commands with
   exact session, configuration and process identity. Show/Hide and native X change
   only visibility; status reports attest availability/visibility. Apply requested size
@@ -131,7 +142,16 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 17
+
+- A protocol declares Media presentation, Texture drift or 3D navigation, consistently
+  across trials. Presentation permits static 2D layers, overlays, playback and opacity
+  fades, but rejects moving layers, animated size and motion feedback, including
+  condition/repetition alternatives. Saved texture-motion links are retained but ignored
+  in Presentation: no link validation or executable binding. Fixed initialization is
+  not motion. Drift permits
+  existing 2D motion families and fades; navigation permits the existing one-arena and
+  2D-overlay composition. Canonical validation governs GUI and headless submission.
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -204,7 +224,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v03"></a>
 ### V03 — Versioned JSON stimulus-program files
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 13
+
+- Optional source category persists with the canonical program and prepared source;
+  missing category means unclassified legacy content, preserved without conversion.
+  G01 requires explicit classification rather than silently accepting inferred labels.
 
 - Store reusable authored programs as versioned JSON documents (scenes, epoch/group
   structure, conditions, parameter settings). Keep media external, resolved through
@@ -579,9 +603,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 19
 
-- The rendering worker always runs one recording thread for required trial evidence
+- Outside [E04](supervisor.md#e04) dummy test sessions, the rendering worker runs one recording thread for required trial evidence
   (V28). E13 video saving additionally enables an FFmpeg/NVENC subprocess and the
   tiled review capture path. No separate recording process, pixel-slot transport
   or evidence bridge. The coordinator owns preparation/lifecycle aggregation.
@@ -632,7 +656,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v13"></a>
 ### V13 — Trial replay from program and actual render evidence
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 13
 
 - Analysis software owns offline reconstruction and lossless export. The experiment
   backend records immutable program/resolved-plan information, matching asset
@@ -644,7 +668,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Reproduce the recorded sequence, not an ideal rerun of the plan. Required evidence
   follows V12; recording-video drops cannot drop replay state.
 - Retain the complete prepared snapshot and replay manifest in `_stimulus_LOG.json`
-  even with saving Off; logging failure enters E06 incident classification.
+  even with stimulus video saving Off, except E04 dummy test sessions; logging
+  failure enters E06 incident classification.
   Replay-relevant content fingerprints/provenance are a scoped exception to E04's
   filename-only asset logging. Reference external originals by fingerprint; never
   bundle/copy assets or create a managed archive. The operator maintains one backed-up,
@@ -1180,7 +1205,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 30
+**Status:** Accepted · **Revision:** 32
 
 - Active experiment Visual Stimulus always saves scientific data and metadata:
   recipe/program provenance, effective state, per-output submission/marker evidence,
@@ -1201,10 +1226,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - The native preview instead crops to configured calibrated valid-area bounds
   (intended-coverage bounds when absent), never to detected black pixels. For four
   independent screens place Left–Front–Right above Bottom centered beneath Front,
-  mirroring Left/Right horizontally and Bottom vertically for operator viewing;
-  keep Front unchanged and preserve cropped aspect ratios, without labels or
+  mirroring Left/Front/Right horizontally for operator viewing and keeping the
+  Bottom raster unmirrored; preserve cropped aspect ratios, without labels or
   label-strip spacing. Preview and recording
   use the same compositor implementation with separate retained layouts and targets.
+  V01's Combined rig window samples those tiles on calibrated screen planes; the
+  flat tile arrangement remains the Per-projector sampling source, not rig geometry.
 - Retain both layouts, full output dimensions, mapping/mesh/valid-area values and
   photometric calibration values in each immutable prepared recipe, including video
   Off. Tile metadata records source and destination rectangles, labels and review

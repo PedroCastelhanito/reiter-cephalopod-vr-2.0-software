@@ -136,7 +136,7 @@ class SetupResolution:
         if self.output_planner is None:
             raise RuntimeError("output reservation planner unavailable")
         outputs = self.output_planner(attempt.prepared, attempt.ready)
-        if not outputs:
+        if not outputs and attempt.reservation.persistent:
             raise RuntimeError("required output plan unavailable")
         for name in attempt.required:
             activity_requirements(attempt, name)

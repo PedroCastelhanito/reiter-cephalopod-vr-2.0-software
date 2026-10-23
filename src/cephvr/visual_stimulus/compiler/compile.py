@@ -413,6 +413,13 @@ def compile_trial(
         )
     ):
         settings = occurrence.settings
+        if program.category == "media_presentation":
+            settings = tuple(
+                setting.model_copy(update={"linked_to": None})
+                if isinstance(setting, TextureSettings)
+                else setting
+                for setting in settings
+            )
         _validate_writers(settings, index)
         _check_ranges(settings, index, duration_ns)
         end = cursor + duration_ns

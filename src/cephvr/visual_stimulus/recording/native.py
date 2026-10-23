@@ -23,6 +23,7 @@ from cephvr.platform.windows.file_sync import (
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.platform.windows.nvenc_capabilities import NvencProbeOwner
 from cephvr.shared.auth import Principal
+from cephvr.shared.recording import recording_enabled
 from cephvr.shared.supervised_encoder import SupervisedEncoderLauncher
 from cephvr.visual_stimulus.config.models.artifact_models import (
     PreparedTrial,
@@ -106,6 +107,7 @@ class NativeRecording:
         self.encoder_owner = EncoderTrialOwner(
             self.launcher, video_sync_factory, clock_ns=clock_ns
         )
+        self.recording = True
         self.saving = False
         self.review_scale_factor = 1
         self.capture_slots = 0
@@ -173,6 +175,9 @@ class NativeRecording:
         self._setup_deadline_ns = deadline_ns
         self._setup_work = request.command.target.work
         self._setup_parent_operation = request.command.parent_operation
+        self.recording = recording_enabled(request.session.configuration.backends)
+        if not self.recording:
+            return
         limits, policy = request.policies.limits, request.policies
         if limits.evidence_pending_bytes <= 0 or (
             self.saving and limits.capture_slots <= 0
@@ -289,6 +294,8 @@ class NativeRecording:
     def prepare_artifacts(
         self, artifacts: tuple[PreparedTrial, ...], deadline_ns: int
     ) -> Future[None] | None:
+        if not self.recording:
+            return None
         future: Future[None] = Future()
 
         def prepare() -> None:
@@ -319,6 +326,11 @@ class NativeRecording:
             if self._output_results is None:
                 raise RuntimeError("preceding recording has not reached output closure")
             self._reset_trial_state()
+        if not self.recording:
+            if request.outputs:
+                raise ValueError("dummy session must not reserve recording outputs")
+            self._artifact, self._schedule = artifact, request
+            return None
         if artifact.identity.trial_id not in self._recipes:
             raise RuntimeError("Setup did not precompute this trial's recipe bytes")
         encoding = artifact.review_encoding
@@ -598,6 +610,9 @@ class NativeRecording:
         )
 
     def begin_finish(self, cutoff_ns: int, deadline_ns: int) -> None:
+        if not self.recording:
+            self._output_results = ()
+            return
         if self._session is None:
             raise RuntimeError("scheduled recording is missing")
         if self._finish_deadline_ns is None:
@@ -615,6 +630,9 @@ class NativeRecording:
             )
 
     def begin_cancel(self, deadline_ns: int) -> None:
+        if not self.recording:
+            self._output_results = ()
+            return
         self._cancelled = True
         if self._finish_deadline_ns is None:
             now_ns = self.clock_ns()

@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-23",
+  "timezone": "Asia/Tokyo",
+  "task": "hierarchical-code-review",
+  "source_revision": "59a973ac3ffc6fb331bbee1d93c6b283d6b90474",
+  "dirty_tree": true,
+  "source_hash_scope": "captured at review completion; existing uncommitted edits preserved",
+  "sha256": {
+    "src/cephvr/gui/controller_bridge.py": "aeac6934b01471c21ef5cceb4a4aa2d8def1c38cf3b601bb9fd984353b5d19b1",
+    "src/cephvr/gui/main.py": "3c955cd09aab6237e93e553b7fe5cec2ebff75af377d13500af674e4ae2d89d4",
+    "src/cephvr/client/session.py": "f5699f84573cfd60a5e3710404cc3e8af2d4e794244f22d4cb94a1a9195123e7",
+    "config/backends/gui_config.toml": "cea55fdf6c0579003c7a7f5b11ff5281e8313bd32c4e9121dfbc7d00a6dce806",
+    "src/cephvr/gui/preview_timeline.py": "7298b8a52b7d2c5f7dc0b89faef4bb37489da51d79e3ea7081393a35c8c7d3e0",
+    "src/cephvr/gui/preview_motion_samples.py": "27832c1ef77dfa05c8821c13f65670d5d4252f14900a57b845dbb78bfc8619cd",
+    "src/cephvr/gui/preview_projector_cards.py": "1c7a7d5e412529eea78d24ab1c0b5d10bc3bda9dcf2651a22f7d33a2397d2a91",
+    "src/cephvr/gui/preview_grouping.py": "e5390e295a1ef104291e3ce4c7be15169fdc6d3fa22fea38cf40fe488d560c70",
+    "src/cephvr/visual_stimulus/recording/capture.py": "f403b628ac95339aa48c0aa11a79a2514be98ef4a089d0a6d24a4512ed2cec5b"
+  },
+  "models": {
+    "discovery": "3 GPT-6 Luna high focused reviewers",
+    "verification": "GPT-6.1 Sol high",
+    "adjudication": "GPT-6 Astra high"
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr tests",
+      "outcome": "pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr",
+      "outcome": "pass, 868 sources"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "pass, 758 modules, zero boundary violations; cohesion advisories retained"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m vulture --min-confidence 100",
+      "outcome": "exit1, seven unused callback/test parameters; no accepted defect"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass; existing CRLF conversion warnings"
+    }
+  ],
+  "probes": "sol-gui-probes.txt",
+  "limits": [
+    "Scoped source review, not exhaustive audit",
+    "No full behavioral suite rerun",
+    "No native application, device, hardware or rig acceptance",
+    "Direct asyncio attempt stalled and was interrupted; deterministic coroutine probe used",
+    "Offscreen benchmark is synthetic UI preparation timing, not rig throughput",
+    "No implementation edits"
+  ]
+}

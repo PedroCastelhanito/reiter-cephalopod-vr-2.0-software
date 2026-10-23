@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-23",
+  "timezone": "Asia/Tokyo",
+  "revision": "59a973ac3ffc6fb331bbee1d93c6b283d6b90474",
+  "dirty_tree": true,
+  "scope": "GUI bridge shutdown, lazy Advanced instrument preparation, verification of concurrent unused-helper removal",
+  "model_hierarchy": [
+    "GPT-6 Luna high implementation",
+    "GPT-6.1 Sol high integration/test review",
+    "GPT-6 Astra high final adjudication"
+  ],
+  "sha256_at_completion": {
+    "src/cephvr/gui/controller_bridge.py": "b073991c018f677e894dad36a234b815bf2598f02b5cede60f0beb8688c554f0",
+    "src/cephvr/gui/main.py": "2a5131dd196ea920ba28345c01cae1b9f5003627faa99e2950dd29eaef077800",
+    "src/cephvr/client/session.py": "1fbefdc338e2f74b53b643e5e9ca1b201bf501733b6b336add1f5632bd14977d",
+    "src/cephvr/gui/preview_timeline.py": "5fa5cde6e1e606cfc7162bb0e8970cc3479a5cc6a4a9e97d63a4ca3453d0ee21",
+    "src/cephvr/gui/preview_motion_samples.py": "faaa686c8b6295ef34d0d96572b3eda60e1dc5fe3aa4cf4cb4d10f9d2301c815",
+    "src/cephvr/gui/preview_grouping.py": "a66139c6f57db6429941217ced0b4c3e12507ed4cbe6f999994fbb304c0c04d7",
+    "tests/gui/test_preview_timeline.py": "cc27b1e154e1537bfdb6790283d513081a380921b5a22e7d0cbb71cd7daa728b",
+    "tests/gui/test_dashboard.py": "47cde1a7198e458b87c2acd4afe18598b690cab23ee8250580e5765a5c0191ac",
+    "tests/client/test_controller_rpc.py": "50d6394d867d50d0929ff739fbac29cfb60cd1b595902186c9e9eecb12f48482"
+  },
+  "tests": [
+    {
+      "command": ".venv/Scripts/python.exe -u -m pytest tests/gui/test_preview_timeline.py tests/gui/test_dashboard.py tests/client -q -m 'not windows and not rig' -k 'bridge or preview or client' --timeout=30 --timeout-method=thread",
+      "environment": "QT_QPA_PLATFORM=offscreen; permitted local authenticated loopback and temp access",
+      "result": "266 passed,723 deselected in84.55s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_preview_timeline.py",
+      "result": "91 passed,1.40s after nonvacuous sample assertions; Luna reported"
+    },
+    {
+      "method": "focused bridge/client7-case selection; bridge-tests.txt",
+      "result": "7 passed in3.48s; Luna reported"
+    }
+  ],
+  "static_checks": {
+    "ruff": "GUI/client source/tests pass",
+    "format": "9 scoped files pass",
+    "mypy": "--platform win32 GUI/client203 sources pass",
+    "boundaries": "758 modules,0 violations; existing cohesion advisories",
+    "git_diff_check": "pass; existing unrelated CRLF conversion warnings",
+    "unused_helper": "rg has_motion src tests: no matches"
+  },
+  "reviews": "Sol and Astra: no remaining actionable source/test-design findings; final behavioral execution owned by root/Luna",
+  "benchmark": "benchmark.py and benchmark-results.json",
+  "failed_attempt": "Initial broader tests/gui tests/client run interrupted after several minutes with no output. Empty gui-client-tests.txt retained; cause not established. No full-suite pass claimed. Agent overlapping focused attempt also stopped; later focused and integration runs passed.",
+  "limits": [
+    "No running application restart or hardware/device/rig execution",
+    "Normal cancellation prompt in focused tests; exceptional cleanup after3s diagnostic can join indefinitely to avoid destroying live QThread",
+    "Advanced first opening remains synchronous; sampled data cached afterward",
+    "Performance comparison synthetic same fixture, historical single before measurement",
+    "Concurrent shared-polar edits preserved; helper deletion was already made there, verified here"
+  ]
+}

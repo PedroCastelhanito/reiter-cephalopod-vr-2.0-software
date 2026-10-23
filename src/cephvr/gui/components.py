@@ -4,6 +4,7 @@ from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import (
     QColor,
     QFont,
+    QFontMetrics,
     QIcon,
     QPainter,
     QPaintEvent,
@@ -75,7 +76,7 @@ class Button(QPushButton):
         return size
 
     def paint_phosphor_navigation(self) -> None:
-        """Big `>` marks the current page and previews a hovered one; no brackets.
+        """Every page has `>`; the selected page adds a coral trailing `<`.
         Icon and label share one ink so every state changes both together."""
         colors = colors_for(self)
         option = QStyleOptionButton()
@@ -86,20 +87,25 @@ class Button(QPushButton):
         selected = self.isChecked()
         hovered = self.underMouse() and self.isEnabled()
         ink = colors.coral if selected else colors.text if hovered else colors.muted
-        if selected or hovered:
-            marker = QFont(self.font())
-            marker.setPixelSize(SIZES.title_font + 8)
-            painter.setFont(marker)
-            painter.setPen(QColor(colors.coral if selected else colors.label))
-            painter.drawText(
-                QRectF(10, 0, 20, self.height()), Qt.AlignmentFlag.AlignVCenter, ">"
-            )
-            painter.setFont(self.font())
+        marker = QFont(self.font())
+        marker.setPixelSize(SIZES.title_font + 8)
+        painter.setFont(marker)
+        painter.setPen(QColor(ink))
+        painter.drawText(
+            QRectF(10, 0, 20, self.height()), Qt.AlignmentFlag.AlignVCenter, ">"
+        )
+        painter.setFont(self.font())
         x = 32
+        content_left = x
         name = self.property("iconName")
         size = self.iconSize()
         if isinstance(name, str):
-            device_icon(name, ink).paint(
+            icon = device_icon(name, ink)
+            pixmap = icon.pixmap(size)
+            content_left += round(
+                QRegion(pixmap.mask()).boundingRect().left() / pixmap.devicePixelRatio()
+            )
+            icon.paint(
                 painter,
                 x,
                 (self.height() - size.height()) // 2,
@@ -108,11 +114,33 @@ class Button(QPushButton):
             )
             x += size.width() + 6
         painter.setPen(QColor(ink))
+        marker_metrics = QFontMetrics(marker)
+        gap = content_left - (10 + marker_metrics.boundingRect(">").right())
+        text = self.fontMetrics().elidedText(
+            self.text(),
+            Qt.TextElideMode.ElideRight,
+            max(0, self.width() - x - gap - marker_metrics.horizontalAdvance("<") - 8),
+        )
         painter.drawText(
             QRectF(x, 0, self.width() - x - 8, self.height()),
             Qt.AlignmentFlag.AlignVCenter,
-            self.text(),
+            text,
         )
+        if selected:
+            painter.setFont(marker)
+            painter.drawText(
+                QRectF(
+                    x
+                    + self.fontMetrics().boundingRect(text).right()
+                    + gap
+                    - marker_metrics.boundingRect("<").left(),
+                    0,
+                    20,
+                    self.height(),
+                ),
+                Qt.AlignmentFlag.AlignVCenter,
+                "<",
+            )
         painter.end()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:

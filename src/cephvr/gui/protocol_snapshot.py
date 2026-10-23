@@ -9,6 +9,7 @@ from cephvr.gui.configuration_files import JSON, envelope, fields, text
 from cephvr.gui.protocol_batches import grouped_program
 from cephvr.gui.protocol_document import TrialDraft, blank_program
 from cephvr.gui.protocol_history import EditHistory
+from cephvr.visual_stimulus.config.categories import CATEGORY_LABELS
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
@@ -35,7 +36,10 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
             "format": "cephvr-program-import",
             "program": program.model_dump(mode="json"),
         }
-    data = envelope(value, FORMAT, {"mode", "asset_root", "trials", "selected_trial"})
+    keys = {"mode", "asset_root", "trials", "selected_trial"}
+    if isinstance(value, dict) and "category_templates" in value:
+        keys.add("category_templates")
+    data = envelope(value, FORMAT, keys)
     if data["mode"] not in ("Not set", "Open-loop", "Closed-loop"):
         raise ValueError("Unknown protocol mode")
     text(data["asset_root"], "Asset folder")
@@ -46,19 +50,38 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
         selected == -1 if not data["trials"] else 0 <= selected < len(data["trials"])
     ):
         raise ValueError("Selected trial is outside the schedule")
+    categories: set[str | None] = set()
     for number, raw in enumerate(data["trials"], 1):
         trial = fields(raw, TRIAL_KEYS, f"Trial {number}")
         for key in TRIAL_KEYS - {"program"}:
             text(trial[key], f"Trial {number} {key}")
-        parse_program_json(
+        program = parse_program_json(
             json.dumps(trial["program"]), max_bytes=DEFAULT_DOCUMENT_BYTES
         )
+        categories.add(program.category)
+        if len(categories) > 1:
+            raise ValueError("All trials must use the same protocol category")
         if trial["arena_boundaries_json"]:
             from cephvr.visual_stimulus.config.models.program_model import (
                 TrialArenaBoundaries,
             )
 
             TrialArenaBoundaries.model_validate_json(trial["arena_boundaries_json"])
+    templates = data.get("category_templates", {})
+    if not isinstance(templates, dict) or any(
+        category not in CATEGORY_LABELS for category in templates
+    ):
+        raise ValueError("Unknown protocol category template")
+    for category, template in templates.items():
+        fields(template, {"trials", "selected_trial"}, "Category template")
+        checked = validate_protocol(
+            {key: item for key, item in data.items() if key != "category_templates"}
+            | template
+        )
+        if any(
+            trial["program"].get("category") != category for trial in checked["trials"]
+        ):
+            raise ValueError("Template trials must use their owning category")
     return data
 
 
@@ -84,12 +107,17 @@ def capture_protocol(page: ProtocolPage) -> JSON:
             }
             for trial in page.editor.drafts
         ],
+        **(
+            {"category_templates": page.category_templates}
+            if page.category_templates
+            else {}
+        ),
     }
 
 
 def restore_protocol(page: ProtocolPage, data: JSON) -> None:
     if data["format"] == "cephvr-program-import":
-        page.editor.set_program(
+        page.import_program(
             parse_program_json(
                 json.dumps(data["program"]), max_bytes=DEFAULT_DOCUMENT_BYTES
             )
@@ -110,6 +138,7 @@ def restore_protocol(page: ProtocolPage, data: JSON) -> None:
     ]
     for draft in drafts:
         draft.group_for_editing()
+    page.category_templates = dict(data.get("category_templates", {}))
     page.session_mode.setCurrentText(data["mode"])
     page.assets.folders["root"].editor.setText(data["asset_root"])
     editor = page.editor

@@ -1,7 +1,7 @@
 """Compact reference row; advanced controls and layer actions stay out of the grid."""
 
 from PyQt6.QtCore import QPoint, QSize, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QResizeEvent
+from PyQt6.QtGui import QResizeEvent, QStandardItemModel
 from PyQt6.QtWidgets import (
     QGridLayout,
     QLabel,
@@ -139,28 +139,60 @@ class ProjectorReference(QWidget):
             + [("", self.actions_button)]
         )
         self.headings = [label(title, "label") for title, _ in self.columns]
+        if self.parameters.motion_source is not None:
+            self.parameters.motion_source.currentIndexChanged.connect(
+                self.motion_source_changed
+            )
         self.arrange()
         self.layout_changed.emit()
 
+    def motion_source_changed(self) -> None:
+        self.arrange()
+        self.layout_changed.emit()
+
+    def visible_columns(self) -> list[tuple[str, QWidget]]:
+        source = self.parameters.motion_source
+        if source is None:
+            return self.columns
+        linked = source.currentText() == "Linked"
+        hidden = (
+            {title for title, _ in self.columns}
+            - {"", "Layer", "Stimulus", "Asset", "Motion source", "Linked to"}
+            if linked
+            else {"Linked to"}
+        )
+        return [
+            (title, control) for title, control in self.columns if title not in hidden
+        ]
+
     @property
     def signature(self) -> tuple[str, ...]:
-        return tuple(title for title, _ in self.columns)
+        return tuple(title for title, _ in self.visible_columns())
 
     def arrange(self) -> None:
         if not self.columns:
             return
         self.narrow = self.width() < 900
+        columns = self.visible_columns()
+        headings = []
+        for column, heading in zip(self.columns, self.headings, strict=True):
+            visible = column in columns
+            if visible:
+                headings.append(heading)
+            else:
+                heading.hide()
+                column[1].hide()
         while self.grid.count():
             self.grid.takeAt(0)
-        for col in range(8):
+        for col in range(max(10, len(self.columns))):
             self.grid.setColumnMinimumWidth(col, 0)
             self.grid.setColumnStretch(col, 0)
-        for row in range(6):
+        for row in range(10):
             self.grid.setRowMinimumHeight(row, 0)
         header_height = max(h.sizeHint().height() for h in self.headings)
         self.grid.setRowMinimumHeight(0, header_height)
         for index, ((_, control), heading) in enumerate(
-            zip(self.columns, self.headings, strict=True)
+            zip(columns, headings, strict=True)
         ):
             slot = index if self.face or index == 0 else index + 2
             if self.narrow and self.parameters.layer_index < 0 and 3 <= slot < 7:
@@ -168,7 +200,7 @@ class ProjectorReference(QWidget):
                 control.hide()
                 continue
             visible = self.identity_header if slot < 4 else self.show_header
-            heading.setText(self.columns[index][0] if visible or self.narrow else "")
+            heading.setText(columns[index][0] if visible or self.narrow else "")
             heading.setFixedHeight(header_height)
             if self.narrow:
                 # Identity and source above three numeric fields on small windows.
@@ -180,9 +212,26 @@ class ProjectorReference(QWidget):
                     (4, 0, 1),
                     (4, 1, 1),
                     (4, 2, 1),
+                    (6, 0, 1),
+                    (6, 1, 1),
                     (0, 3, 1),
                 )
-                row, col, span = positions[slot]
+                if index == len(columns) - 1:
+                    row, col, span = 0, 3, 1
+                elif self.parameters.motion_source is not None and slot >= 4:
+                    if slot == 4:
+                        row, col, span = 4, 0, 4
+                    elif self.parameters.motion_source.currentText() == "Linked":
+                        row, col, span = 6, 0, 4
+                    else:
+                        parameter = slot - 5
+                        row, col, span = (
+                            6 + 2 * (parameter // 2),
+                            2 * (parameter % 2),
+                            2,
+                        )
+                else:
+                    row, col, span = positions[slot]
                 self.grid.setRowMinimumHeight(row, header_height)
             else:
                 row, col, span = 0, index, 1
@@ -197,7 +246,7 @@ class ProjectorReference(QWidget):
             asset_column = 3 if self.face else 1
             for col, width in (
                 (0, 74),
-                (len(self.columns) - 1, self.actions_button.width()),
+                (len(columns) - 1, self.actions_button.width()),
             ):
                 self.grid.setColumnMinimumWidth(col, width)
             if self.face:
@@ -205,7 +254,7 @@ class ProjectorReference(QWidget):
                 self.grid.setColumnMinimumWidth(2, 115)
             self.grid.setColumnMinimumWidth(asset_column, 160)
             self.grid.setColumnStretch(asset_column, 1)
-            for col in range(asset_column + 1, len(self.columns) - 1):
+            for col in range(asset_column + 1, len(columns) - 1):
                 self.grid.setColumnMinimumWidth(col, 95)
                 self.grid.setColumnStretch(col, 1)
         empty = self.parameters.layer_index < 0
@@ -311,6 +360,17 @@ class ProjectorReference(QWidget):
             kind, kind
         )
         self.stimulus.blockSignals(True)
+        model = self.stimulus.model()
+        if isinstance(model, QStandardItemModel):
+            for i in range(self.stimulus.count()):
+                item = model.item(i)
+                if item is not None:
+                    item.setEnabled(
+                        not (
+                            program.category == "media_presentation"
+                            and self.stimulus.itemData(i) == "Looming image"
+                        )
+                    )
         self.stimulus.setCurrentIndex(max(0, self.stimulus.findData(kind)))
         self.stimulus.blockSignals(False)
         self.parameters.bind(program, 0, selected, self.face)

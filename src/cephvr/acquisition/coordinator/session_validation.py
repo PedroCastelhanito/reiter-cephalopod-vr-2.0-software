@@ -12,6 +12,7 @@ from cephvr.acquisition.state import (
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.recording import recording_enabled
 
 
 def validate_setup_request(
@@ -68,6 +69,7 @@ def validate_setup_request(
         requested_configuration_revision=request.plan.configuration_revision,
         reserved_outputs=reserved_outputs,
         tracking_required=tracking_required,
+        recording_enabled=recording_enabled(request.plan.configuration.backends),
         setup_deadline_ns=deadline_ns,
     )
 
@@ -120,6 +122,10 @@ def _acquisition_outputs(
         if output.extension != expected_extension or output.output_key != expected_key:
             raise ValueError("Setup acquisition output identity differs from E04")
         saved.append(control.OutputPlan.FromString(output.SerializeToString()))
+    if not recording_enabled(request.plan.configuration.backends):
+        if saved:
+            raise ValueError("dummy session must not reserve acquisition outputs")
+        return []
     if request.plan.trials:
         expected = {
             f"{trial.context.trial_id}:acquisition:{tag}"

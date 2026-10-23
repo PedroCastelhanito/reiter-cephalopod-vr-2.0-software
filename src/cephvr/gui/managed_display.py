@@ -65,7 +65,8 @@ class ManagedDisplayOperations:
         ):
             self.pairing_finished()
             self.spikeglx.console.appendPlainText(
-                "Pairing was not sent: controller command queue is unavailable."
+                "Pairing was not changed. The controller cannot accept commands "
+                "right now; wait for the connection and try again."
             )
 
     def pairing_finished(self) -> None:
@@ -98,7 +99,8 @@ class ManagedDisplayOperations:
             pulse_channels=payloads,
         ):
             self.spikeglx.console.appendPlainText(
-                "Pulse mapping was not sent: controller command queue is unavailable."
+                "Pulse mapping was not sent. The controller cannot accept commands "
+                "right now; wait for the connection and try again."
             )
 
     def open_calibration(self, arena_path: str) -> None:
@@ -114,7 +116,8 @@ class ManagedDisplayOperations:
             return
         if not self.send("open_display_calibration", **intent):
             self.projectors.console.appendPlainText(
-                "Calibration was not sent: controller command queue is unavailable."
+                "Calibration did not start. The controller cannot accept commands "
+                "right now; wait for the connection and try again."
             )
 
     def close_calibration(self) -> None:
@@ -132,7 +135,8 @@ class ManagedDisplayOperations:
             diagnostic_id=evidence.diagnostic_id,
         ):
             self.projectors.console.appendPlainText(
-                "Calibration close was not sent: controller command queue is unavailable."
+                "The request to close calibration was not sent. The controller cannot "
+                "accept commands right now; wait for the connection and try again."
             )
 
     def install_inventory(self, epoch: int, generation: str, raw: bytes) -> None:

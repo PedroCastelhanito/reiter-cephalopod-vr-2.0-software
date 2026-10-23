@@ -1,5 +1,88 @@
 # Visual Stimulus status
 
+Oct23 `preview-space-and-shared-polar`: [G01rev309](../docs/architecture/gui.md#g01)
+enlarges Combined's GUI allocation while retaining the existing GPU rig. Compatible
+projector vectors share a colored polar plot and projector-row parameter table;
+Per-projector adapts placement and retains static Bottom. No renderer, calibration,
+recording, physical output or camera-preview backend change.91 timeline and125 selected
+Dashboard tests pass offscreen; native/full-load checks remain open.
+[Current evidence and limits](runtime.md#combined-space-and-shared-polar-table--2026-10-23).
+
+Oct23 `no-recording-dummy-session`: implements the owner-requested
+[E04](../docs/architecture/supervisor.md#e04) all-recording-Off exception.
+[Current validation and limits](runtime.md#no-recording-dummy-session--2026-10-23).
+
+Oct23 `dummy-setup-empty-catalogue`: owner-observed Setup failure is reproduced by
+the real [E08](../docs/architecture/system-contracts.md#e08) catalogue validator:
+dummy recipe preparation sent revision1 without adding resources after revision0
+empty. A two-line guard keeps the acknowledged empty catalogue until actual worker
+resources arrive. Saving-enabled preparation and supervisor checks are unchanged;
+this precedes renderer Setup and is independent of the GPU rig view.102 affected
+coordinator/supervisor checks pass; Ruff/format, Win32 mypy and boundaries pass.
+Failed native session/recovery remain unverified and untouched.
+[Assessment/evidence](runtime.md#no-recording-dummy-session--2026-10-23),
+[dated reproduction](runtime-evidence-2026-10-23/dummy-setup-catalogue/README.md).
+
+Oct23 `preview-rotation-and-projector-windows`: owner confirms physical rotation
+is coherent; reported preview direction mismatches remain distinct from rig output.
+[E13](../docs/architecture/visual_stimulus.md#e13) revision31 updates operator
+orientation, and [G01](../docs/architecture/gui.md#g01) revision305 compensates the
+Bottom folded mirror in protocol planning. The subsequent owner-authorized
+`gpu-combined-rig-preview` replaces Combined with one GPU screen-plane rig window
+under [G01](../docs/architecture/gui.md#g01) revision308,
+[V01](../docs/architecture/visual_stimulus.md#v01) revision34 and E13 revision32.
+Left-drag rotates its inspection camera; double-click resets. It samples existing
+calibrated composite tiles with protocol rig orientation; Per-projector is unchanged.
+No projector/calibration/recording pixel change, stimulus-observer change or CPU
+readback.117 rendering cases (including native GPU pixels and hidden GLFW lifetime)
+and26 selected GUI cases pass; Ruff/format7 files, Win32 mypy5 sources and758-module
+boundaries/zero pass. GPU geometry/camera behavior lives in a focused owner under
+ARCH-002; native.py retains only assembly. Cost and native/physical acceptance remain
+unmeasured. [GPU rig methods/images](runtime-evidence-2026-10-23/gpu-rig-preview/README.md).
+[Current assessment](runtime.md#preview-rotation-and-combined-windows--2026-10-23),
+[methods/evidence](runtime-evidence-2026-10-23/preview-rotation/README.md),
+[rig checklist](rig-verification.md#protocol-category-previews).
+
+Oct23 `protocol-category-templates`: owner revised [V02](../docs/architecture/visual_stimulus.md#v02)
+to ignore saved texture-motion links in Media presentation. Canonical source retains
+links, link validation is bypassed for this category and compiler settings remove them
+before writer/geometry checks and rendering. Motion restrictions remain in force.
+37 compilation/configuration tests plus3 subtests pass, including inactive-link source
+retention/executable removal. GUI template restoration, checks and native limitations
+are recorded in [Runtime](runtime.md#protocol-category-and-preview-design--2026-10-23).
+
+Oct23 `protocol-category-preview-design`: implemented optional canonical categories
+and cross-trial capability validation under [V02](../docs/architecture/visual_stimulus.md#v02)
+and [V03](../docs/architecture/visual_stimulus.md#v03), with legacy content preserved.
+[V01](../docs/architecture/visual_stimulus.md#v01) preview ownership now includes
+Combined or up to four lazy per-surface windows sampling the existing calibrated
+preview texture, with per-context reader fences, grouped visibility/cleanup and the
+existing20Hz ceiling. No GUI pixel transport or change to recording composition.
+ARCH-002 isolates the preview group and category validator; native.py retains assembly.
+[Implementation and current checks](runtime.md#protocol-category-and-preview-design--2026-10-23);
+[native/full-load acceptance](rig-verification.md#protocol-category-previews) remains open.
+
+Oct23 `device-warning-clarity`: wrong-GPU remedy now uses plain language while
+preserving RTX5060Ti, executable-specific settings and full-application restart
+requirements under [V19](../docs/architecture/visual_stimulus.md#v19).
+117 rendering/controller-communication checks pass; GUI warning review and validation
+limits are recorded in [Runtime](runtime.md#device-warning-clarity--2026-10-23).
+
+Oct23 `projector-unavailable-message`: missing saved displays now report
+"A configured projector is not detected by Windows" instead of a raw interface
+identifier. The remedy covers power, display cables, Windows display enablement,
+Devices > Projectors refresh/assignments and Setup. Ambiguous identity diagnostics
+remain distinct. This implements [V19](../docs/architecture/visual_stimulus.md#v19)'s
+actionable unavailable-output feedback without changing placement or cleanup rules.
+ARCH-002 review: the existing monitor resolver and error remedy own this change;
+native.py's size advisory does not justify extracting its four-line diagnostic branch.
+No new dependencies/state. Rendering and authenticated controller-communication
+tests:117 passed,1 deselected; changed-file Ruff check/format, Win32 mypy(two source
+files) and backend boundaries(751 modules,zero violations) pass. Initial sandbox
+runs encountered temporary-directory denial and stalled loopback tests; the complete
+rerun outside the sandbox passed. Native disconnected-projector dialog unverified;
+the running application was not restarted.
+
 
 Oct22 current result: the image-read ctypes lifetime defect and helper retirement
 proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording
@@ -2674,6 +2757,14 @@ pre-session renderer launch shape and reconciles exact retained executor complet
 admission is not treated as cleanup success.
 
 ## ARCH-002 implementation review
+
+Oct23 `hierarchical-code-review`: Luna discovery and Astra review of dummy recording
+setup/scheduling/completion and optional preview reader fences found no new confirmed
+defect. `recording/capture.py:217` sorts/rebuilds the bounded ready queue under its
+lock on every completion. An ordered-append fast path with out-of-order fallback
+is a conditional optimization only: profile first and preserve reservation ordering
+under V12. No bottleneck or rig improvement was measured. No renderer changes are
+recommended solely from size warnings. [Review scope/checks](runtime.md#maintainability-review).
 
 Oct19 `code-sweep-oct19` removes the unused engine-access wrapper and unused scalar
 sRGB decoder. Texture patterns reuse the identical existing `_mix`, `_smoothstep` and `_num`

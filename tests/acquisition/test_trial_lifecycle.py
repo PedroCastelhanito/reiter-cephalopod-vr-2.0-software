@@ -1088,3 +1088,18 @@ async def test_repeated_safety_off_preserves_first_trial_terminal_evidence(
     assert calls == [100, 200]  # Repeat safety OFF still reaches hardware.
     assert sent == [retained]
     assert trial.pulse_off.SerializeToString(deterministic=True) == retained
+
+
+def test_dummy_started_requires_camera_callback_without_recording_activity():
+    validator, worker, evidence, session, trial = _started_case(
+        recording_unavailable=False
+    )
+    session.recording_enabled = False
+    validator.validate_started(
+        worker, evidence, session, trial, ingress_ns=120, allowance_ns=250
+    )
+    evidence.started.first_activity.clear()
+    with pytest.raises(ValueError, match="camera callback"):
+        validator.validate_started(
+            worker, evidence, session, trial, ingress_ns=120, allowance_ns=250
+        )

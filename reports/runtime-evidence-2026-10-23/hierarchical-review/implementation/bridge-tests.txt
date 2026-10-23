@@ -1,0 +1,19 @@
+# GUI bridge stop lifecycle tests — 2026-10-23
+
+Environment: Windows, Python 3.11.15, pytest 9.1.1. Tests ran with permitted local loopback access; each case had a 30-second timeout. The workspace was dirty during this run; this is focused implementation evidence, not a clean-tree or rig result.
+
+Command:
+
+```powershell
+$env:PYTHONUNBUFFERED='1'; .\.venv\Scripts\python.exe -m pytest -vv -s --timeout=30 tests/gui/test_dashboard.py::test_managed_bridge_stop_interrupts_backoff_and_is_idempotent tests/gui/test_dashboard.py::test_managed_bridge_stop_cancels_initial_sync_and_runs_client_cleanup tests/gui/test_dashboard.py::test_managed_bridge_stop_cancels_connected_dispatch_cleanup tests/gui/test_dashboard.py::test_managed_gui_shutdown_checks_qthread_completion tests/client/test_controller_rpc.py::test_cancelled_gui_observation_closes_watch_and_releases_lease tests/client/test_controller_rpc.py::test_cancel_during_explicit_release_still_closes_watch tests/client/test_controller_rpc.py::test_gui_observes_before_explicit_control_claim
+```
+
+Result: **7 passed in 3.48s**.
+
+- `test_managed_bridge_stop_interrupts_backoff_and_is_idempotent` — passed; includes stop-before-start, repeated stop, and a real QThread start/stop with `wait(1000)`.
+- `test_managed_bridge_stop_cancels_initial_sync_and_runs_client_cleanup` — passed; cleanup was held open while stop was repeated.
+- `test_managed_bridge_stop_cancels_connected_dispatch_cleanup` — passed; dispatch cleanup was held open while stop was repeated.
+- `test_managed_gui_shutdown_checks_qthread_completion` — passed; confirms the timed wait result selects the cleanup fallback.
+- `test_cancelled_gui_observation_closes_watch_and_releases_lease` — passed; confirms cancellation skips explicit `ReleaseControl`, and closing the exact watch releases the lease.
+- `test_cancel_during_explicit_release_still_closes_watch` — passed; confirms pending release cancellation still closes the watch and reader.
+- `test_gui_observes_before_explicit_control_claim` — passed; confirms normal context exit retains explicit release behavior.

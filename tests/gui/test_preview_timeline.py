@@ -277,6 +277,63 @@ def test_advanced_previews_default_hidden_and_toggle_instruments(timeline):
     assert timeline.panels and timeline.epochs
 
 
+def test_hidden_instruments_prepare_once_and_rebuild_on_plan_changes(
+    timeline, monkeypatch
+):
+    from cephvr.gui.preview_motion_samples import InstrumentPlan
+
+    geometry, _ = linked_plan()
+    program = review_program()
+    prepared = []
+    prepare = InstrumentPlan.prepare_panel
+
+    def track_prepare(plan, panel):
+        prepared.append(panel.source.key)
+        prepare(plan, panel)
+
+    monkeypatch.setattr(InstrumentPlan, "prepare_panel", track_prepare)
+    timeline.clear("")
+    timeline.set_program(program, "", "Lazy")
+
+    assert not prepared and not timeline.dials
+    assert timeline.projector_names() == ("Left", "Right")
+    assert timeline.panels and timeline.dial_samples == []
+    hover_before = timeline.readout_lines(2)
+    timeline.set_projector_visible("Left", False)
+    assert timeline.projector_names() == ("Left", "Right")
+
+    timeline.set_advanced(True)
+    first_count = len(timeline.all_panels)
+    assert len(prepared) == first_count and timeline.dial_samples
+    assert timeline.readout_lines(2) == hover_before
+    assert not timeline.projector_cards["Left"].isVisible()
+
+    timeline.set_advanced(False)
+    timeline.set_advanced(True)
+    assert len(prepared) == first_count
+
+    timeline.set_advanced(False)
+    timeline.set_program(program, "new-seed", "Lazy", geometry)
+    assert len(prepared) == first_count
+    timeline.set_advanced(True)
+    assert len(prepared) == first_count * 2
+
+    timeline.set_advanced(False)
+    changed_geometry = geometry.model_copy(update={"observer_mm": (1, 0, 0)})
+    timeline.set_program(program, "new-seed", "Lazy", changed_geometry)
+    assert len(prepared) == first_count * 2
+    timeline.set_advanced(True)
+    assert len(prepared) == first_count * 3
+
+    timeline.set_advanced(False)
+    timeline.set_program(
+        program.model_copy(deep=True), "new-seed", "Lazy", changed_geometry
+    )
+    assert len(prepared) == first_count * 3
+    timeline.set_advanced(True)
+    assert len(prepared) == first_count * 4
+
+
 @pytest.mark.parametrize("stacked", [False, True])
 def test_source_controls_belong_to_motion_plots_not_timeline(timeline, stacked):
 
@@ -479,6 +536,8 @@ def test_arena_map_and_body_frame_dial_follow_planned_continuity(timeline):
 
     timeline.set_advanced(True)
 
+    timeline.set_elapsed(0)
+
     panel = timeline.panels[0]
 
     assert (panel.form, panel.arena, panel.driving) == ("tracking", True, False)
@@ -518,7 +577,10 @@ def test_projector_card_instruments_wrap_to_the_column_width(timeline):
 
     timeline.set_advanced(True)
 
-    app.processEvents()
+    timeline.set_playback(0, running=False)
+
+    for _ in range(3):
+        app.processEvents()
 
     card = timeline.maps[0].parentWidget().parentWidget()
 
@@ -530,7 +592,8 @@ def test_projector_card_instruments_wrap_to_the_column_width(timeline):
 
     timeline.dial_area.setFixedWidth(MotionDial.SIZE + 60)
 
-    app.processEvents()
+    for _ in range(3):
+        app.processEvents()
 
     assert grid.columns == 1 and dial.y() > world.y()
 
@@ -540,7 +603,8 @@ def test_projector_card_instruments_wrap_to_the_column_width(timeline):
 
     timeline.dial_area.setFixedWidth(2 * MotionDial.SIZE + 80)
 
-    app.processEvents()
+    for _ in range(3):
+        app.processEvents()
 
     assert grid.columns == 2 and dial.y() == world.y() and dial.x() > world.x()
 
@@ -599,6 +663,74 @@ def test_authored_trajectory_uses_tracking_form_and_size_lane(timeline):
     assert lane.traces[0].unit == "deg"
 
     assert lane.traces[0].segments[-1][-1] == pytest.approx((14, 5 + 2 * 9))
+
+
+def test_shared_polar_keeps_static_bottom_colours_and_toggle_identity(timeline):
+    geometry, settings = linked_plan()
+    source = settings[0]
+    hold = Hold(kind="hold")
+    settings[0] = source.model_copy(
+        update={
+            "phase_x": hold,
+            "phase_y": hold,
+            "motion": source.motion.model_copy(
+                update={"x": hold, "y": hold, "rotation": hold}
+            ),
+        }
+    )
+    timeline.merge_directions = True
+    timeline.set_program(
+        with_settings(tuple(settings), tuple(settings), tuple(settings)),
+        "",
+        "Static",
+        geometry,
+    )
+    timeline.set_advanced(True)
+    timeline.set_elapsed(2)
+    assert set(timeline.active_sources) == {"Left", "Front", "Right", "Bottom"}
+    assert len(timeline.shared_dials) == 1
+    dial = next(iter(timeline.shared_dials.values()))
+    assert [s.name.split(" · ")[0] for s in dial.samples] == [
+        "Left",
+        "Front",
+        "Right",
+        "Bottom",
+    ]
+    assert len({s.color for s in dial.samples}) == 4
+    bottom = dial.samples[-1]
+    assert bottom.vector is None and bottom.angular_speed == 0 and not bottom.message
+    assert dial.HEADERS == ("Projector", "Speed", "Direction", "Angular")
+    rows = dial.parameter_rows()
+    assert [row[0] for row in rows] == ["Left", "Front", "Right", "Bottom"]
+    assert rows[-1][1:] == ("0 mm/s", f"{bottom.orientation_deg:.3g}°", "0°/s")
+    assert all(row[1].endswith("mm/s") and row[3].endswith("°/s") for row in rows)
+    assert not dial.grab().isNull()
+    timeline.set_projector_visible("Bottom", False)
+    assert len(dial.samples) == 3
+    assert [row[0] for row in dial.parameter_rows()] == ["Left", "Front", "Right"]
+    timeline.set_projector_visible("Bottom", True)
+    assert len(dial.samples) == 4 and dial.samples[-1] == bottom
+    timeline.combined = False
+    timeline.rebuild_instruments()
+    timeline.refresh()
+    assert not timeline.shared_dials
+    assert not timeline.projector_cards["Bottom"].findChild(MotionDial).isHidden()
+
+
+def test_shared_polar_separates_incompatible_units(timeline):
+    geometry, settings = linked_plan()
+    angular = review_program().sequence[1].settings[0]
+    settings = tuple(settings) + (angular,)
+    timeline.merge_directions = True
+    timeline.set_program(
+        with_settings(settings, settings, settings), "", "Mixed units", geometry
+    )
+    assert not timeline.shared_dials
+    timeline.set_advanced(True)
+    timeline.set_elapsed(2)
+    assert set(timeline.shared_dials) == {("texture", "mm/s"), ("texture", "deg/s")}
+    for (_, unit), dial in timeline.shared_dials.items():
+        assert dial.samples and {s.unit for s in dial.samples} == {unit}
 
 
 def test_projector_card_retains_every_same_face_layer(timeline):
@@ -816,14 +948,19 @@ def linked_plan():
 
 
 @pytest.mark.parametrize("spin", [0, -30, 30])
-def test_linked_dials_match_renderer_rates_and_keep_independent_scales(timeline, spin):
+@pytest.mark.parametrize("shared", [False, True])
+def test_linked_dials_match_renderer_rates_and_keep_independent_scales(
+    timeline, spin, shared
+):
 
     from math import hypot, radians
 
+    from cephvr.gui.preview_motion_dial import screen_vector
     from cephvr.visual_stimulus.rendering.state import InstanceState
     from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
 
     geometry, settings = linked_plan()
+    timeline.merge_directions = shared
 
     source = settings[0]
 
@@ -886,6 +1023,24 @@ def test_linked_dials_match_renderer_rates_and_keep_independent_scales(timeline,
         abs(radians(spin) * 60) if spin else 50
     )
 
+    if spin:
+        assert samples["bottom"].vector is None
+        assert samples["bottom"].angular_speed == spin
+        # Leftward Bottom rotation produces each face's own arena translation.
+        for face, direction in (
+            ("front", (-1, 0)),
+            ("right", (0, -1)),
+            ("left", (0, 1)),
+        ):
+            sample = samples[face]
+            dx, dy = screen_vector(sample)
+            speed = hypot(dx, dy)
+            sign = 1 if spin > 0 else -1
+            assert (dx / speed, dy / speed) == pytest.approx(
+                tuple(sign * component for component in direction), abs=1e-8
+            )
+            assert sample.angular_speed == 0
+
 
 @pytest.mark.parametrize("reset", [False, True])
 def test_linked_dials_retain_boundary_orientation_through_stop_and_relink(
@@ -913,6 +1068,7 @@ def test_linked_dials_retain_boundary_orientation_through_stop_and_relink(
 
     program = with_settings(*epochs)
 
+    timeline.set_advanced(True)
     timeline.set_program(program, "", "Continuity", geometry)
 
     states = {}
@@ -935,6 +1091,13 @@ def test_linked_dials_retain_boundary_orientation_through_stop_and_relink(
         bind_texture_links(states, geometry, now_ns=epoch.start_ns)
 
         timeline.set_elapsed(epoch.start + 1)
+
+        samples = {s.name.split(" ")[0].lower(): s for s in timeline.dial_samples}
+        for setting in epoch.settings:
+            sample = samples[setting.instance_id]
+            current = timeline.plan.values(index, setting.instance_id, 1_000_000_000)
+            if sample.vector is None:
+                assert sample.orientation_deg == pytest.approx(current["rotation"])
 
         for setting in epoch.settings:
             expected = {
@@ -968,6 +1131,7 @@ def test_linked_dials_rebuild_for_geometry_and_isolate_unavailable_sources(timel
 
     program = with_settings(tuple(settings), tuple(settings), tuple(settings))
 
+    timeline.set_advanced(True)
     timeline.set_program(program, "", "Missing geometry")
 
     timeline.set_elapsed(2)
@@ -1018,6 +1182,9 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
     from cephvr.gui.previews import PreviewWorkspace
 
     geometry, settings = linked_plan()
+    settings[0] = settings[0].model_copy(
+        update={"phase_x": Rate(kind="rate", function=constant(-0.5))}
+    )
 
     if driving:
         settings = [
@@ -1057,6 +1224,8 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
         dialog.advanced_toggle.setChecked(True)
 
+        plot.set_playback(0, running=False)
+
         dialog.resize(*size)
 
         dialog.show()
@@ -1070,7 +1239,8 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
         for width in (size[0] // 3, size[0] - 180, size[0] // 4):
             dialog.splitter.setSizes([size[0] - width, width])
 
-            app.processEvents()
+            for _ in range(3):
+                app.processEvents()
 
             viewport = plot.dial_area.viewport()
 
@@ -1080,14 +1250,21 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
 
             cards = plot.instrument_host.instruments
 
-            assert len(cards) == 4
-
-            assert [card.findChild(QLabel).name_text for card in cards] == [
-                "Left",
-                "Front",
-                "Right",
-                "Bottom",
-            ]
+            assert len(cards) == (4 if driving else 1)
+            if driving:
+                assert [card.findChild(QLabel).name_text for card in cards] == [
+                    "Left",
+                    "Front",
+                    "Right",
+                    "Bottom",
+                ]
+            else:
+                assert [s.name.split(" · ")[0] for s in cards[0].samples] == [
+                    "Left",
+                    "Front",
+                    "Right",
+                    "Bottom",
+                ]
 
             assert plot.cards.spacing() == 16
             bounds = cards[0].geometry()
@@ -1107,8 +1284,9 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
                     / host.cell_size.width()
                     * host.cell_size.height()
                 )
-                assert bounds.height() <= row_height + 1
-                if host.height() > row_height + 2:
+                if driving:
+                    assert bounds.height() <= row_height + 1
+                if driving and host.height() > row_height + 2:
                     assert margins.top() > 0
 
             for card in cards:
@@ -1120,7 +1298,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
                     card.mapTo(viewport, card.rect().bottomRight())
                 )
 
-                for dial in card.grid.instruments:
+                for dial in card.grid.instruments if driving else ():
                     assert dial.isVisible() and dial.width() > 0 and dial.height() > 0
 
                     assert card.rect().contains(dial.mapTo(card, QPoint()))
@@ -1252,8 +1430,10 @@ def test_linked_subject_directions_align_across_projectors(timeline, vx, vy, rot
         with_settings(*(tuple(settings),) * 3), "", "Subject", geometry
     )
 
+    timeline.set_advanced(True)
     timeline.set_elapsed(2)
 
+    assert timeline.dial_samples
     for sample in timeline.dial_samples:
         assert not sample.message
 
@@ -1312,9 +1492,11 @@ def test_rig_authored_translation_stays_aligned_while_texture_rotates(
         assert data["phase_x"] == data["phase_y"] == {"kind": "hold"}
         authored.append(TextureSettings.model_validate_json(json.dumps(data)))
     timeline.set_program(with_settings(*(tuple(authored),) * 3), "", "Rig", geometry)
+    timeline.set_advanced(True)
     expected = (30 * cos(radians(direction)), -30 * sin(radians(direction)))
     for time in (1, 7, 24):
         timeline.set_elapsed(time)
+        assert timeline.dial_samples
         for sample in timeline.dial_samples:
             assert not sample.message
             assert screen_vector(sample) == pytest.approx(expected, abs=1e-8)
@@ -1356,7 +1538,9 @@ def test_rig_authored_reference_drives_linked_projectors(timeline):
     timeline.set_program(
         with_settings(*(tuple(settings),) * 3), "", "Rig linked", geometry
     )
+    timeline.set_advanced(True)
     timeline.set_elapsed(2)
+    assert timeline.dial_samples
     for sample in timeline.dial_samples:
         assert not sample.message
         assert screen_vector(sample) == pytest.approx((0, 30), abs=1e-8)

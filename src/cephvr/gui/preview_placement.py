@@ -63,6 +63,8 @@ class PreviewSlot(QWidget):
     ) -> None:
         self.sources = sources
         self.reserve_active = reserve_active
+        count = sum(item.visible or item.pending for item in sources)
+        self.setMinimumWidth(416 if reserve_active and count >= 3 else 0)
         self.arrange(self.eligible_sources())
 
     def eligible_sources(self) -> tuple[PreviewView, ...]:
@@ -250,19 +252,58 @@ def preview_window_placement(
     main: QWidget, key: str = ""
 ) -> rpc.PreviewWindowPlacement:
     """Measure the open-frame layout without retaining speculative visibility."""
+    stimulus_workspace = main.findChild(PreviewWorkspace)
+    if (
+        key == "stimulus"
+        and stimulus_workspace is not None
+        and stimulus_workspace.isVisible()
+    ):
+        stimulus = stimulus_workspace.stimulus_area
+        _activate_ancestor_layouts(stimulus)
+        targets = stimulus.frames
+        if not targets:
+            raise ValueError("Enable projectors to place stimulus previews")
+        first = next(iter(targets.values())).target
+        host = first.window() or main
+        placement = _preview_window_placement(host, first)
+        if "" not in targets:
+            for name, target_frame in targets.items():
+                tile = _preview_window_placement(host, target_frame.target)
+                placement.stimulus_tiles.add(
+                    surface=name, x=tile.x, y=tile.y, side=tile.side
+                )
+        if QGuiApplication.platformName() == "windows":
+            hwnd, pid, creation = gui_window_identity(int(host.winId()))
+            placement.gui_window_handle = hwnd
+            placement.gui_process_id = pid
+            placement.gui_process_creation_time_100ns = creation
+        return placement
     area = main.findChild(PreviewSlot)
     workspace = _embedding_workspace(area)
     previous = area.eligible_sources() if area is not None else ()
     prospective = area is not None and any(
         item.key == key and not item.visible for item in area.sources
     )
+    camera_hidden = (
+        workspace.preview_host.isHidden() if workspace is not None else False
+    )
+    camera_sizes = workspace.splitter.sizes() if workspace is not None else []
     if prospective:
         assert area is not None
         area.arrange(
             tuple(item for item in area.sources if item in previous or item.key == key)
         )
         if workspace is not None:
+            if camera_hidden:
+                workspace.preview_host.show()
+                # QSplitter otherwise reserves its handle only after Show events.
+                handle = workspace.splitter.handle(1)
+                if handle is not None:
+                    handle.show()
             area.attach_controls(workspace, external=True)
+            if camera_hidden:
+                _activate_ancestor_layouts(area)
+                workspace.split_sections()
     frame = area.frames.get(key) if area is not None else None
     slot = (
         frame.target
@@ -316,6 +357,12 @@ def preview_window_placement(
             area.arrange(previous)
             if workspace is not None:
                 area.attach_controls(workspace, external=True)
+                if camera_hidden:
+                    workspace.preview_host.hide()
+                    handle = workspace.splitter.handle(1)
+                    if handle is not None:
+                        handle.hide()
+                    workspace.splitter.setSizes(camera_sizes)
         if measuring:
             assert card is not None and owner is not None
             card.hide()

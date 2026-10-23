@@ -22,7 +22,7 @@ class DisplayLayout(QWidget):
     def paint_text(self) -> str:
         """Empty-state message: what to do, or what refreshing found."""
         if self.refreshed:
-            return "No available projectors have been identified"
+            return "No projectors detected"
         return (
             "No displays listed yet. Use the refresh button in the Displays table "
             "to detect them."

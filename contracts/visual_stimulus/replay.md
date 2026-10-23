@@ -1,5 +1,8 @@
 # Visual Stimulus replay from trial records
 
+E04 all-recording-Off dummy test sessions produce no files or recording workers;
+the output requirements below apply to sessions with recording enabled.
+
 Governing rule: [V13](../../docs/architecture/visual_stimulus.md#v13). E13 owns lossy review
 recordings and the save switch; V12 owns required detailed evidence. This declares
 the analysis software's offline reconstruction contract. The experiment backend owns

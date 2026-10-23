@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import Card, button, combo, equal_row_height
-from cephvr.gui.configuration_files import ConfigurationFiles
+from cephvr.gui.configuration_files import JSON, ConfigurationFiles
 from cephvr.gui.layouts import column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_batches import grouped_program
@@ -28,9 +28,11 @@ from cephvr.gui.protocol_snapshot import (
     restore_protocol,
     validate_protocol,
 )
+from cephvr.gui.protocol_templates import switch_category
 from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.stimulus_assets import StimulusAssetsCard
 from cephvr.gui.view import DashboardView
+from cephvr.visual_stimulus.config.categories import CATEGORY_LABELS
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
@@ -75,6 +77,11 @@ class ProtocolPage(QWidget):
         toolbar = QHBoxLayout()
         toolbar.setSpacing(10)
         toolbar.addWidget(self.session_mode, 1)
+        self.category = combo(tuple(CATEGORY_LABELS.values()))
+        self.category.setPlaceholderText("Choose category")
+        self.category.setCurrentIndex(-1)
+        self.category.setAccessibleName("Protocol category")
+        toolbar.addWidget(self.category, 1)
         self.load_button = button("Load…")
         self.load_button.clicked.connect(self.choose_load)
         self.save_button = button("Save as…")
@@ -94,7 +101,10 @@ class ProtocolPage(QWidget):
         )
         self.editor = ProtocolEditor(sample=sample)
         self._schedule_empty = False
+        self.category_templates: dict[str, JSON] = {}
         self.editor.changed.connect(self.mark_changed)
+        self.editor.changed.connect(self.sync_category)
+        self.category.currentIndexChanged.connect(self.change_category)
         self.assets.folders["root"].editor.textChanged.connect(
             self.editor.subgroup.composer.set_asset_root
         )
@@ -115,6 +125,56 @@ class ProtocolPage(QWidget):
         )
         self.config_files.message.connect(self.show_file_message)
         self.config_files.loaded_document.connect(self.remember_program_import)
+
+    def sync_category(self) -> None:
+        categories = {draft.program.category for draft in self.editor.drafts}
+        category = next(iter(categories)) if len(categories) == 1 else None
+        self.category.blockSignals(True)
+        self.category.setCurrentIndex(
+            tuple(CATEGORY_LABELS).index(category) if category else -1
+        )
+        self.category.blockSignals(False)
+
+    def change_category(self, index: int) -> None:
+        if not self.program_card.isEnabled():
+            self.sync_category()
+            return
+        if index < 0:
+            self.sync_category()
+            return
+        if not self.editor.flush_parameters():
+            self.sync_category()
+            return
+        category = tuple(CATEGORY_LABELS)[index]
+        try:
+            switch_category(self, category)
+        except ValueError as error:
+            self.sync_category()
+            self.show_error("Category conflicts with this protocol", error)
+            return
+
+    def import_program(self, program: object) -> None:
+        from cephvr.visual_stimulus.config.models.program_model import Program
+
+        if not isinstance(program, Program):
+            raise TypeError("Expected a canonical stimulus program")
+        category = self.editor.program.category
+        if category is not None:
+            if program.category not in (None, category):
+                raise ValueError("Imported trial has a different protocol category")
+            program = parse_program_json(
+                program.model_copy(update={"category": category}).model_dump_json(),
+                max_bytes=DEFAULT_DOCUMENT_BYTES,
+            )
+        if any(
+            draft.program.category != program.category
+            for index, draft in enumerate(self.editor.drafts)
+            if index != self.editor.index
+        ):
+            raise ValueError(
+                "Select a matching category for the whole protocol before importing"
+            )
+        self.editor.set_program(program)
 
     def remember_program_import(self, data: object, path: str) -> None:
         if isinstance(data, dict) and data.get("format") == "cephvr-program-import":
@@ -244,6 +304,7 @@ class ProtocolPage(QWidget):
         editor.trials.blockSignals(False)
         editor.render_selection()
         editor.blockSignals(False)
+        self.sync_category()
 
     def apply_schedule(
         self, configuration: object, *, flush_parameters: bool = True
@@ -259,6 +320,9 @@ class ProtocolPage(QWidget):
             )
         if not self.editor.drafts:
             raise ValueError("Add at least one trial")
+        categories = {draft.program.category for draft in self.editor.drafts}
+        if len(categories) != 1:
+            raise ValueError("Choose one category for the complete protocol")
         if self._schedule_empty:
             raise ValueError("Add a managed trial before submitting the session")
         if self.session_mode.currentText() == "Not set":
@@ -324,11 +388,11 @@ class ProtocolPage(QWidget):
             program = parse_program_json(
                 data.decode("utf-8"), max_bytes=DEFAULT_DOCUMENT_BYTES
             )
+            self.import_program(program)
         except (OSError, ValueError) as error:
             self.show_error("Cannot load program", error)
             return
         self.editor.drafts[self.editor.index].path = path
-        self.editor.set_program(program)
         self.message.hide()
 
     def show_error(self, title: str, error: Exception) -> None:

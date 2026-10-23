@@ -2098,3 +2098,35 @@ def test_top_down_rgba_input_keeps_owned_buffer_without_cpu_row_copy(height):
     assert _ffmpeg_input_order(frame) is frame
     assert frame.pixels is pixels
     assert pixels == bytearray(range(height * 8))
+
+
+@pytest.mark.parametrize("cancel", [False, True])
+def test_dummy_native_recording_creates_no_writer_or_output(
+    native_recording, tmp_path, cancel
+):
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    from .support import make_prepared_trial
+
+    recording = native_recording
+    setup = visual.WorkerSetup()
+    setup.settings.save_visual_stimulus_data = False
+    backend = setup.session.configuration.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    backend.visual_stimulus.save_visual_stimulus_data = False
+    announced = []
+    recording.configure(setup, lambda key, path: announced.append(key), 100)
+    artifact = make_prepared_trial()
+    assert recording.prepare_artifacts((artifact,), 100) is None
+    assert recording.schedule(visual.WorkerSchedule(), artifact) is None
+    assert recording._session is None and recording._worker is None
+    assert not recording._recipes and not announced
+    assert recording.poll_finished() is None
+    if cancel:
+        recording.begin_cancel(200)
+    else:
+        recording.begin_finish(100, 200)
+    assert recording.poll_finished() == ()
+    assert not recording.cleanup(200).outstanding
+    assert not list(tmp_path.iterdir())

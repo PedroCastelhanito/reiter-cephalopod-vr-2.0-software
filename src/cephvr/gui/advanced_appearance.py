@@ -26,7 +26,7 @@ class AdvancedAppearance(QWidget):
         allow_link: bool = True,
     ) -> None:
         super().__init__()
-        self.linked_to = combo(("Independent",))
+        self.linked_to = combo(("Self",))
         self.linked_to.setMinimumWidth(0)
         self.linked_to.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed

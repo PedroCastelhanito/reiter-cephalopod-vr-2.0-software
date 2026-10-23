@@ -115,6 +115,7 @@ class SessionRecord:
     output_results: dict[str, control.OutputResult] = field(default_factory=dict)
     requested_configuration_revision: int | None = None
     tracking_required: bool = False
+    recording_enabled: bool = True
     setup_cancelled: bool = False
     ready_report: control.ReadyReport | None = None
     trial: TrialRecord | None = None

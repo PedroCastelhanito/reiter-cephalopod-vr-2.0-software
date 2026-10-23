@@ -1,0 +1,77 @@
+.............................F..........FFFFFF.......................... [ 84%]
+.............                                                            [100%]
+================================== FAILURES ===================================
+__________ test_projector_card_instruments_wrap_to_the_column_width ___________
+tests\gui\test_preview_timeline.py:537: in test_projector_card_instruments_wrap_to_the_column_width
+    assert grid.columns == 1 and dial.y() > world.y()
+E   assert (1 == 1 and 0 > 0)
+E    +  where 1 = <cephvr.gui.preview_projector_cards.InstrumentGrid object at 0x0000019EAEF04310>.columns
+E    +  and   0 = <built-in method y of MotionDial object at 0x0000019EAEFA7250>()
+E    +    where <built-in method y of MotionDial object at 0x0000019EAEFA7250> = <cephvr.gui.preview_motion_dial.MotionDial object at 0x0000019EAEFA7250>.y
+E    +  and   0 = <built-in method y of WorldMap object at 0x0000019EAEFA77F0>()
+E    +    where <built-in method y of WorldMap object at 0x0000019EAEFA77F0> = <cephvr.gui.preview_motion_dial.WorldMap object at 0x0000019EAEFA77F0>.y
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size0-None] _
+tests\gui\test_preview_timeline.py:1100: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert (
+E   assert 60 <= 1
+E    +  where 60 = abs((197 - 257))
+E    +    where 197 = <built-in method y of QPoint object at 0x0000019EB0B3D2A0>()
+E    +      where <built-in method y of QPoint object at 0x0000019EB0B3D2A0> = PyQt6.QtCore.QPoint(100, 197).y
+E    +        where PyQt6.QtCore.QPoint(100, 197) = <built-in method center of QRect object at 0x0000019EB0B3D380>()
+E    +          where <built-in method center of QRect object at 0x0000019EB0B3D380> = PyQt6.QtCore.QRect(0, 0, 202, 395).center
+E    +    and   257 = <built-in method y of QPoint object at 0x0000019EB0B3D1C0>()
+E    +      where <built-in method y of QPoint object at 0x0000019EB0B3D1C0> = PyQt6.QtCore.QPoint(87, 257).y
+E    +        where PyQt6.QtCore.QPoint(87, 257) = <built-in method center of QRect object at 0x0000019EB0B3D460>()
+E    +          where <built-in method center of QRect object at 0x0000019EB0B3D460> = PyQt6.QtCore.QRect(0, 0, 175, 516).center
+E    +            where PyQt6.QtCore.QRect(0, 0, 175, 516) = <built-in method rect of InstrumentGrid object at 0x0000019EAF588790>()
+E    +              where <built-in method rect of InstrumentGrid object at 0x0000019EAF588790> = <cephvr.gui.preview_projector_cards.InstrumentGrid object at 0x0000019EAF588790>.rect
+E    +                where <cephvr.gui.preview_projector_cards.InstrumentGrid object at 0x0000019EAF588790> = <cephvr.gui.preview_timeline.StimulusTimeline object at 0x0000019EAF588EE0>.instrument_host
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size0-amber_phosphor] _
+tests\gui\test_preview_timeline.py:1100: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert (
+E   assert 60 <= 1
+E    +  where 60 = abs((197 - 257))
+E    +    where 197 = <built-in method y of QPoint object at 0x0000019EB0B3D9A0>()
+E    +      where <built-in method y of QPoint object at 0x0000019EB0B3D9A0> = PyQt6.QtCore.QPoint(100, 197).y
+E    +        where PyQt6.QtCore.QPoint(100, 197) = <built-in method center of QRect object at 0x0000019EB0B3DBD0>()
+E    +          where <built-in method center of QRect object at 0x0000019EB0B3DBD0> = PyQt6.QtCore.QRect(0, 0, 202, 395).center
+E    +    and   257 = <built-in method y of QPoint object at 0x0000019EB0B3DA80>()
+E    +      where <built-in method y of QPoint object at 0x0000019EB0B3DA80> = PyQt6.QtCore.QPoint(87, 257).y
+E    +        where PyQt6.QtCore.QPoint(87, 257) = <built-in method center of QRect object at 0x0000019EB0B3DAF0>()
+E    +          where <built-in method center of QRect object at 0x0000019EB0B3DAF0> = PyQt6.QtCore.QRect(0, 0, 175, 516).center
+E    +            where PyQt6.QtCore.QRect(0, 0, 175, 516) = <built-in method rect of InstrumentGrid object at 0x0000019EAEFA5B40>()
+E    +              where <built-in method rect of InstrumentGrid object at 0x0000019EAEFA5B40> = <cephvr.gui.preview_projector_cards.InstrumentGrid object at 0x0000019EAEFA5B40>.rect
+E    +                where <cephvr.gui.preview_projector_cards.InstrumentGrid object at 0x0000019EAEFA5B40> = <cephvr.gui.preview_timeline.StimulusTimeline object at 0x0000019EAEFA4F70>.instrument_host
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size1-None] _
+tests\gui\test_preview_timeline.py:1119: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert card.isVisible()
+E   assert False
+E    +  where False = <built-in method isVisible of ProjectorCard object at 0x0000019EB0B7DEA0>()
+E    +    where <built-in method isVisible of ProjectorCard object at 0x0000019EB0B7DEA0> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x0000019EB0B7DEA0>.isVisible
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size1-amber_phosphor] _
+tests\gui\test_preview_timeline.py:1119: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert card.isVisible()
+E   assert False
+E    +  where False = <built-in method isVisible of ProjectorCard object at 0x0000019EB0B03010>()
+E    +    where <built-in method isVisible of ProjectorCard object at 0x0000019EB0B03010> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x0000019EB0B03010>.isVisible
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size2-None] _
+tests\gui\test_preview_timeline.py:1119: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert card.isVisible()
+E   assert False
+E    +  where False = <built-in method isVisible of ProjectorCard object at 0x0000019EB0B401F0>()
+E    +    where <built-in method isVisible of ProjectorCard object at 0x0000019EB0B401F0> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x0000019EB0B401F0>.isVisible
+_ test_all_projector_plots_fit_visible_workspace_without_scroll[False-size2-amber_phosphor] _
+tests\gui\test_preview_timeline.py:1119: in test_all_projector_plots_fit_visible_workspace_without_scroll
+    assert card.isVisible()
+E   assert False
+E    +  where False = <built-in method isVisible of ProjectorCard object at 0x0000019EB0B09360>()
+E    +    where <built-in method isVisible of ProjectorCard object at 0x0000019EB0B09360> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x0000019EB0B09360>.isVisible
+=========================== short test summary info ===========================
+FAILED tests/gui/test_preview_timeline.py::test_projector_card_instruments_wrap_to_the_column_width
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size0-None]
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size0-amber_phosphor]
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size1-None]
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size1-amber_phosphor]
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size2-None]
+FAILED tests/gui/test_preview_timeline.py::test_all_projector_plots_fit_visible_workspace_without_scroll[False-size2-amber_phosphor]
+7 failed, 78 passed in 1.63s

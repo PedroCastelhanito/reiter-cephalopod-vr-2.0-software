@@ -21,7 +21,7 @@ def role_prepared_functions(
         for output in session.reserved_outputs
         if output.output_tag in {output_prefix, f"{output_prefix}_frames"}
     )
-    recording_key = f"{role_name}.recording"
+    recording_key = f"{role_name}.recording" if session.recording_enabled else None
     capture_key = f"{role_name}.capture"
     capture_closure = [capture_key]
     if recording_key is not None:

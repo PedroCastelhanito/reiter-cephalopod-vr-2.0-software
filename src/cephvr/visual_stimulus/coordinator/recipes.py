@@ -11,6 +11,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.commands import CommandLedger
 from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.recording import recording_enabled
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
 from .ports import PeerPort
@@ -93,6 +94,7 @@ class RecipeOwner:
                 self.identity.backend,
                 list(setup.plan.trials),
                 setup.settings.visual_stimulus.save_visual_stimulus_data,
+                recording=recording_enabled(setup.plan.configuration.backends),
             )
             if item.output_tag == "stimulus_LOG"
         }
@@ -102,6 +104,8 @@ class RecipeOwner:
             )
             for trial_id in self.plans
         ]
+        if not obligations:
+            return  # The acknowledged revision-zero catalogue already declares empty.
         resources = [*self.state.resources, *obligations]
         revision = self.state.catalogue_revision + 1
         await self.supervisor.receipt(
@@ -124,6 +128,8 @@ class RecipeOwner:
         outputs = [
             item for item in schedule.outputs if item.output_tag == "stimulus_LOG"
         ]
+        if not self.plans and not schedule.outputs:
+            return
         if len(outputs) != 1 or tid not in self.plans:
             raise ValueError("schedule lacks its exact required stimulus log")
         output = outputs[0]
@@ -164,6 +170,8 @@ class RecipeOwner:
         release_deadline_ns: int,
     ) -> None:
         tid = release.command.work.trial.trial_id
+        if not self.plans:
+            return
         self.start_times[tid] = release.start_monotonic_ns
         if tid in self.tasks:
             raise ValueError("recipe release already retained")
