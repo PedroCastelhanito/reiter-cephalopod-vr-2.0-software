@@ -92,9 +92,10 @@ class Reticle(QWidget):
 class PreviewFrame(QWidget):
     """Bracketed native-window footprint, separate from the ordinary cards."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, decorated: bool = True) -> None:
         super().__init__()
         self.setObjectName("PreviewWindowFrame")
+        self.decorated = decorated
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMinimumWidth(200)
         self.setMinimumHeight(192)
@@ -116,6 +117,7 @@ class PreviewFrame(QWidget):
         self.metrics.hide()
         self.target = QWidget(self)
         self.target.setObjectName("ExternalPreviewSlot")
+        self.target.setProperty("framelessPreview", not decorated)
         self.target.setAccessibleName("Preview window placement")
         self.reticle = Reticle(self.target)
         self.snap_button = button("Snap")
@@ -148,7 +150,10 @@ class PreviewFrame(QWidget):
             # covers the interior, so the second line sits outside the footprint.
             bracket(painter, rect.adjusted(-3, -3, 3, 3), colors.border, 22)
         bracket(
-            painter, rect, colors.accent if retro else colors.focus, 16 if retro else 12
+            painter,
+            rect,
+            colors.accent if retro else colors.focus,
+            16 if retro else 12,
         )
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
@@ -174,7 +179,9 @@ class PreviewFrame(QWidget):
 
     def fit_target(self) -> None:
         scale = self.devicePixelRatioF()
-        extra_width, extra_height = preview_frame_extra(scale)
+        extra_width, extra_height = (
+            preview_frame_extra(scale) if self.decorated else (0, 0)
+        )
         width_extra, height_extra = (
             ceil(extra_width / scale),
             ceil(extra_height / scale),

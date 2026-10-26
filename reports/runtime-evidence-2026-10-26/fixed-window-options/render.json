@@ -1,0 +1,15 @@
+{
+  "menus": [
+    "Style"
+  ],
+  "styles": [
+    "Standard",
+    "Retro console",
+    "Amber phosphor"
+  ],
+  "crt_visible": true,
+  "sidebar": [
+    true,
+    true
+  ]
+}

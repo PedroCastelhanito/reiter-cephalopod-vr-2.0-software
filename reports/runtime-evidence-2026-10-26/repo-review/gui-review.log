@@ -1,0 +1,1436 @@
+bringing up nodes...
+bringing up nodes...
+
+................F......F.........................................F...... [  6%]
+...F...[gw2] node down: Not properly terminated
+F..F.....[gw3] node down: Not properly terminated
+F....................................................................... [ 14%]
+F......F................................................................ [ 21%]
+........................................................................ [ 28%]
+.F......F..........................F...........F........................ [ 35%]
+........................................................................ [ 41%]
+........................................................................ [ 48%]
+........................................................................ [ 55%]
+...FF.FF....[gw1] node down: Not properly terminated
+F....................................................................... [ 63%]
+........................................................................ [ 69%]
+...................................[gw5] node down: Not properly terminated
+F..........................................[gw7] node down: Not properly terminated
+F..........F.F............F.......................F.............F....... [ 83%]
+..............................................................F......... [ 90%]
+..........F.......................[gw6] node down: Not properly terminated
+F[gw8] node down: Not properly terminated
+F.......[gw9] node down: Not properly terminated
+F.................................[gw11] node down: Not properly terminated
+F[gw10] node down: Not properly terminated
+F.................[gw13] node down: Not properly terminated
+F[gw12] node down: Not properly terminated
+F........[gw14] node down: Not properly terminated
+F[gw0] node down: Not properly terminated
+F.[gw4] node down: Not properly terminated
+F.[gw18] node down: Not properly terminated
+F                                                                        [ 99%]
+================================== FAILURES ===================================
+_____________ test_review_stimulus_viewer_lives_in_runtime_layout _____________
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000224EA30A010>
+
+    def test_review_stimulus_viewer_lives_in_runtime_layout(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+    
+        visible: set[str] = set()
+        shown: list[str] = []
+        cv = SimpleNamespace(
+            WINDOW_NORMAL=0,
+            WND_PROP_VISIBLE=1,
+            error=RuntimeError,
+            namedWindow=lambda title, _: visible.add(title),
+            imshow=lambda title, _: shown.append(title),
+            waitKey=lambda _: None,
+            moveWindow=lambda *_: None,
+            resizeWindow=lambda *_: None,
+            setWindowTitle=lambda *_: None,
+            destroyWindow=lambda title: visible.discard(title),
+            getWindowProperty=lambda title, _: int(title in visible),
+        )
+        monkeypatch.setitem(sys.modules, "cv2", cv)
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        owner_state = {"minimized": False}
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda _minimized=None: owner_state["minimized"],
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 1920, 1080)
+            )
+            target.resize(1440, 940)
+            target.show()
+            app.processEvents()
+            # Before Start the Dashboard has no preview footprints.
+            assert not target.preview_slot.isVisible()
+            show_previews(target)
+            app.processEvents()
+>           assert target.preview_slot.isVisible()
+E           assert False
+E            +  where False = <built-in method isVisible of PreviewSlot object at 0x00000224E72C7370>()
+E            +    where <built-in method isVisible of PreviewSlot object at 0x00000224E72C7370> = <cephvr.gui.preview_placement.PreviewSlot object at 0x00000224E72C7370>.isVisible
+E            +      where <cephvr.gui.preview_placement.PreviewSlot object at 0x00000224E72C7370> = <cephvr.gui.window.DashboardWindow object at 0x00000224EA435E10>.preview_slot
+
+tests\gui\test_dashboard.py:244: AssertionError
+__ test_multiple_review_previews_have_independent_source_frames[standard-0] ___
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000224DAEF7D90>
+page = 0, style = 'standard'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                width, height = (0, 0) if key == "stimulus" else preview_frame_extra()
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+>               assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000224E9FC2570>(PyQt6.QtCore.QRect(308, 639, 287, 317))
+E                +    where <built-in method contains of QRect object at 0x00000224E9FC2570> = PyQt6.QtCore.QRect(308, 639, 285, 285).contains
+E                +      where PyQt6.QtCore.QRect(308, 639, 285, 285) = QRect(PyQt6.QtCore.QPoint(308, 639), PyQt6.QtCore.QSize(285, 285))
+E                +        where PyQt6.QtCore.QPoint(308, 639) = <built-in method mapToGlobal of QWidget object at 0x00000224DC18E050>(PyQt6.QtCore.QPoint())
+E                +          where <built-in method mapToGlobal of QWidget object at 0x00000224DC18E050> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC18E050>.mapToGlobal
+E                +          and   PyQt6.QtCore.QPoint() = QPoint()
+E                +        and   PyQt6.QtCore.QSize(285, 285) = <built-in method size of QWidget object at 0x00000224DC18E050>()
+E                +          where <built-in method size of QWidget object at 0x00000224DC18E050> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC18E050>.size
+
+tests\gui\test_dashboard.py:368: AssertionError
+__ test_multiple_review_previews_have_independent_source_frames[standard-2] ___
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000224DAEF7F10>
+page = 2, style = 'standard'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                width, height = (0, 0) if key == "stimulus" else preview_frame_extra()
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+>               assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000224E72ED7E0>(PyQt6.QtCore.QRect(928, 640, 313, 343))
+E                +    where <built-in method contains of QRect object at 0x00000224E72ED7E0> = PyQt6.QtCore.QRect(928, 640, 311, 311).contains
+E                +      where PyQt6.QtCore.QRect(928, 640, 311, 311) = QRect(PyQt6.QtCore.QPoint(928, 640), PyQt6.QtCore.QSize(311, 311))
+E                +        where PyQt6.QtCore.QPoint(928, 640) = <built-in method mapToGlobal of QWidget object at 0x00000224DC171FC0>(PyQt6.QtCore.QPoint())
+E                +          where <built-in method mapToGlobal of QWidget object at 0x00000224DC171FC0> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC171FC0>.mapToGlobal
+E                +          and   PyQt6.QtCore.QPoint() = QPoint()
+E                +        and   PyQt6.QtCore.QSize(311, 311) = <built-in method size of QWidget object at 0x00000224DC171FC0>()
+E                +          where <built-in method size of QWidget object at 0x00000224DC171FC0> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC171FC0>.size
+
+tests\gui\test_dashboard.py:368: AssertionError
+_ test_multiple_review_previews_have_independent_source_frames[retro_console-0] _
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000224DAEF7D90>
+page = 0, style = 'retro_console'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                width, height = (0, 0) if key == "stimulus" else preview_frame_extra()
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+>               assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000224DC19CC80>(PyQt6.QtCore.QRect(308, 630, 287, 317))
+E                +    where <built-in method contains of QRect object at 0x00000224DC19CC80> = PyQt6.QtCore.QRect(308, 630, 285, 285).contains
+E                +      where PyQt6.QtCore.QRect(308, 630, 285, 285) = QRect(PyQt6.QtCore.QPoint(308, 630), PyQt6.QtCore.QSize(285, 285))
+E                +        where PyQt6.QtCore.QPoint(308, 630) = <built-in method mapToGlobal of QWidget object at 0x00000224DC1B3E20>(PyQt6.QtCore.QPoint())
+E                +          where <built-in method mapToGlobal of QWidget object at 0x00000224DC1B3E20> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC1B3E20>.mapToGlobal
+E                +          and   PyQt6.QtCore.QPoint() = QPoint()
+E                +        and   PyQt6.QtCore.QSize(285, 285) = <built-in method size of QWidget object at 0x00000224DC1B3E20>()
+E                +          where <built-in method size of QWidget object at 0x00000224DC1B3E20> = <PyQt6.QtWidgets.QWidget object at 0x00000224DC1B3E20>.size
+
+tests\gui\test_dashboard.py:368: AssertionError
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw2] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw2' crashed while running 'tests/gui/test_dashboard.py::test_review_setup_click_logs_simulated_intent'
+_ test_multiple_review_previews_have_independent_source_frames[retro_console-2] _
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000224E4E8F7D0>
+page = 2, style = 'retro_console'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                width, height = (0, 0) if key == "stimulus" else preview_frame_extra()
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+>               assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E               assert False
+E                +  where False = <built-in method contains of QRect object at 0x00000224DC19F3E0>(PyQt6.QtCore.QRect(928, 637, 313, 343))
+E                +    where <built-in method contains of QRect object at 0x00000224DC19F3E0> = PyQt6.QtCore.QRect(928, 637, 311, 311).contains
+E                +      where PyQt6.QtCore.QRect(928, 637, 311, 311) = QRect(PyQt6.QtCore.QPoint(928, 637), PyQt6.QtCore.QSize(311, 311))
+E                +        where PyQt6.QtCore.QPoint(928, 637) = <built-in method mapToGlobal of QWidget object at 0x00000224E59763B0>(PyQt6.QtCore.QPoint())
+E                +          where <built-in method mapToGlobal of QWidget object at 0x00000224E59763B0> = <PyQt6.QtWidgets.QWidget object at 0x00000224E59763B0>.mapToGlobal
+E                +          and   PyQt6.QtCore.QPoint() = QPoint()
+E                +        and   PyQt6.QtCore.QSize(311, 311) = <built-in method size of QWidget object at 0x00000224E59763B0>()
+E                +          where <built-in method size of QWidget object at 0x00000224E59763B0> = <PyQt6.QtWidgets.QWidget object at 0x00000224E59763B0>.size
+
+tests\gui\test_dashboard.py:368: AssertionError
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw3' crashed while running 'tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Setting up]'
+___________ test_devices_draft_icons_local_edits_and_command_gates ____________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002107C981630>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002106DFF01F0>
+
+    def test_devices_draft_icons_local_edits_and_command_gates(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[2].click()
+        devices = window.devices
+        assert window.stack.currentWidget() is devices
+        assert [devices.tab_bar.tabText(i) for i in range(4)] == [
+            "Cameras",
+            "Microcontroller",
+            "Projectors",
+            "SpikeGLX",
+        ]
+        assert all(not devices.tab_bar.tabIcon(i).isNull() for i in range(4))
+        camera = devices.cameras
+        camera.fields["trigger_frequency_hz"].setText("1234")
+        camera.edit("trigger_frequency_hz", "1234")
+        for index, panel in enumerate(devices.panels[1:], start=1):
+            devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            if panel is devices.spikeglx:
+                assert not panel.action_buttons[0].isEnabled()
+                continue
+            if panel is devices.projectors:
+                panel.refresh_button.click()
+            else:
+                panel.scan_button.click()
+>           assert "no hardware command sent" in panel.console.toPlainText()
+E           AssertionError: assert 'no hardware command sent' in '13:46:02  [GUI]       No projectors detected. Turn on the projectors, check their display cables, then click Refresh in Devices > Projectors before testing or running Setup. You can still edit and save settings.'
+E            +  where '13:46:02  [GUI]       No projectors detected. Turn on the projectors, check their display cables, then click Refresh in Devices > Projectors before testing or running Setup. You can still edit and save settings.' = <built-in method toPlainText of LogConsole object at 0x000002106F2A6320>()
+E            +    where <built-in method toPlainText of LogConsole object at 0x000002106F2A6320> = <cephvr.gui.consoles.LogConsole object at 0x000002106F2A6320>.toPlainText
+E            +      where <cephvr.gui.consoles.LogConsole object at 0x000002106F2A6320> = <cephvr.gui.projectors.ProjectorsPanel object at 0x000002106F263D00>.console
+
+tests\gui\test_dashboard.py:3209: AssertionError
+_________ test_camera_trigger_form_reflows_and_destroys_owned_editors _________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000002106DFF01F0>
+
+    def test_camera_trigger_form_reflows_and_destroys_owned_editors(app):
+        from cephvr.gui.cameras import CamerasPanel
+    
+        destroyed = []
+        for cycle in range(3):
+            panel = CamerasPanel(sample=True)
+            panel.destroyed.connect(lambda: destroyed.append(True))
+            panel.apply_view(review_view(Phase.CONFIGURATION))
+            panel.show()
+            app.processEvents()
+            form = panel.trigger_form
+            fields = form.fields
+            source, rate, pin = form.controls
+            source.setFocus()
+            QTest.keyClick(source, Qt.Key.Key_End)
+            rate.setText("60")
+            pin.setText("9")
+            minimums = sorted(
+                control.minimumSizeHint().width() for control in form.controls
+            )
+            narrow = (
+                sum(minimums[-2:])
+                + 2 * form.grid.horizontalSpacing()
+                + panel.width()
+                - form.width()
+            )
+            for width, stacked in (
+                (narrow, True),
+                (max(572, narrow * 2), False),
+                (narrow, True),
+            ):
+                panel.resize(width, 883)
+                app.processEvents()
+                assert form.grid.count() == 3 and form.fields == fields
+                assert all(form.rect().contains(item.geometry()) for item in fields)
+                assert all(
+                    item.rect().contains(control.geometry())
+                    for item, control in zip(fields, form.controls, strict=True)
+                )
+                assert all(control.width() > 0 for control in form.controls)
+                assert source.currentText() == source.toolTip() == "External controller"
+>               assert (
+                    source.fontMetrics().horizontalAdvance(source.currentText())
+                    < source.width()
+                )
+E               AssertionError: assert 152 < 150
+E                +  where 152 = <built-in method horizontalAdvance of QFontMetrics object at 0x000002106E13B450>('External controller')
+E                +    where <built-in method horizontalAdvance of QFontMetrics object at 0x000002106E13B450> = <PyQt6.QtGui.QFontMetrics object at 0x000002106E13B450>.horizontalAdvance
+E                +      where <PyQt6.QtGui.QFontMetrics object at 0x000002106E13B450> = <built-in method fontMetrics of SelectionBox object at 0x000002106F2A6A70>()
+E                +        where <built-in method fontMetrics of SelectionBox object at 0x000002106F2A6A70> = <cephvr.gui.components.SelectionBox object at 0x000002106F2A6A70>.fontMetrics
+E                +    and   'External controller' = <built-in method currentText of SelectionBox object at 0x000002106F2A6A70>()
+E                +      where <built-in method currentText of SelectionBox object at 0x000002106F2A6A70> = <cephvr.gui.components.SelectionBox object at 0x000002106F2A6A70>.currentText
+E                +  and   150 = <built-in method width of SelectionBox object at 0x000002106F2A6A70>()
+E                +    where <built-in method width of SelectionBox object at 0x000002106F2A6A70> = <cephvr.gui.components.SelectionBox object at 0x000002106F2A6A70>.width
+
+tests\gui\test_dashboard.py:3290: AssertionError
+_____________ test_plot_legends_are_view_only_and_survive_refresh _____________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002107D3A4940>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002106DFF01F0>
+
+    def test_plot_legends_are_view_only_and_survive_refresh(
+        window: DashboardWindow, app: QApplication
+    ):
+        panel = window.devices.projectors
+        before = panel.calibration_files.snapshot()
+        participation = dict(panel.participation)
+        panel.tank.setFixedWidth(180)
+        panel.tank.grab()
+        regions = dict(panel.tank.legend_regions)
+        assert set(regions) == set(panel.tank.visible_elements)
+        assert len({region.y() for region in regions.values()}) > 1
+        angles = (panel.tank.azimuth, panel.tank.elevation)
+        for key, region in regions.items():
+            assert panel.tank.visible_elements[key]
+            QTest.mouseClick(
+                panel.tank, Qt.MouseButton.LeftButton, pos=region.center().toPoint()
+            )
+            assert not panel.tank.visible_elements[key]
+            assert panel.tank.drag_origin is None
+        assert (panel.tank.azimuth, panel.tank.elevation) == angles
+        window.apply_view(review_view(Phase.RUNNING))
+        panel.update_geometry()
+        assert not any(panel.tank.visible_elements.values())
+        panel.tank.grab()
+        assert panel.tank.legend_regions == regions
+        for key, region in panel.tank.legend_regions.items():
+            QTest.mouseClick(
+                panel.tank, Qt.MouseButton.LeftButton, pos=region.center().toPoint()
+            )
+>           assert panel.tank.visible_elements[key]
+E           assert False
+
+tests\gui\test_dashboard.py:12080: AssertionError
+____ test_direct_group_editor_starts_open_and_uses_only_group_repetitions _____
+[gw4] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001FB529CC310>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001FB504201F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-review-gui-20261026/popen-gw4/test_direct_group_editor_start0')
+
+    def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
+        window, app, tmp_path
+    ):
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_snapshot import (
+            capture_protocol,
+            restore_protocol,
+            validate_protocol,
+        )
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(grouped_program(blank_program()))
+        assert editor.path == (0, 0) and editor.subgroup.isVisible()
+        assert not hasattr(editor, "back_button") and not hasattr(editor, "breadcrumb")
+        assert not hasattr(editor, "shuffle_trial_button")
+        editor.subgroup.composer.duration.setText("00:00:01")
+        editor.group_editor.repetitions.setText("300")
+        editor.group_editor.mark_changed()
+        assert editor.group_editor.apply()
+        assert editor.subgroup.composer.duration.text() == "00:00:01"
+        editor.subgroup.apply()
+        editor.hierarchy.contents.block_actions.add.click()
+        assert editor.path == (0, 1)
+        assert len(editor.program.sequence[0].body) == 2
+        assert (
+            len(expand_program(editor.program, seed_decimal="0", max_expanded_epochs=1000))
+            == 600
+        )
+        assert editor.subgroup.parameter_fields[2].isHidden()
+        assert editor.subgroup.summary.isHidden()
+        assert editor.group_editor.summary.isHidden()
+        assert not editor.hierarchy.contents.toolTip()
+        assert editor.hierarchy.contents_title.text() == "Epochs"
+        saved = capture_protocol(window.protocol)
+        editor.add_trial()
+        assert editor.path == (0, 0)
+        restore_protocol(window.protocol, validate_protocol(saved))
+        assert editor.path == (0, 0) and editor.subgroup.isVisible()
+        for width in (1280, 720):
+            window.resize(width, 1100)
+            app.processEvents()
+            for control in (editor.output_preview_button,):
+>               assert (
+                    control.isVisible()
+                    and control.width() >= control.minimumSizeHint().width()
+                )
+E               assert (True and 80 >= 82)
+E                +  where True = <built-in method isVisible of Button object at 0x000001FB553CD000>()
+E                +    where <built-in method isVisible of Button object at 0x000001FB553CD000> = <cephvr.gui.components.Button object at 0x000001FB553CD000>.isVisible
+E                +  and   80 = <built-in method width of Button object at 0x000001FB553CD000>()
+E                +    where <built-in method width of Button object at 0x000001FB553CD000> = <cephvr.gui.components.Button object at 0x000001FB553CD000>.width
+E                +  and   82 = <built-in method width of QSize object at 0x000001FB58ED8350>()
+E                +    where <built-in method width of QSize object at 0x000001FB58ED8350> = PyQt6.QtCore.QSize(82, 40).width
+E                +      where PyQt6.QtCore.QSize(82, 40) = <built-in method minimumSizeHint of Button object at 0x000001FB553CD000>()
+E                +        where <built-in method minimumSizeHint of Button object at 0x000001FB553CD000> = <cephvr.gui.components.Button object at 0x000001FB553CD000>.minimumSizeHint
+
+tests\gui\test_dashboard.py:17258: AssertionError
+__________ test_calibration_button_reflects_confirmed_managed_output __________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000210714E15A0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002107A345A10>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-review-gui-20261026/popen-gw1/test_calibration_button_reflec0')
+
+    def test_calibration_button_reflects_confirmed_managed_output(
+        window, monkeypatch, tmp_path
+    ):
+        panel = window.devices.projectors
+        table = panel.calibration
+        arena = tmp_path / "frame_grid.glb"
+        prepared = []
+        result = [arena]
+    
+        def prepare(**kwargs):
+            prepared.append(kwargs.get("view", "frame_grid"))
+            return result[0]
+    
+        monkeypatch.setattr(panel, "prepare_calibration", prepare)
+        output_requests = []
+        panel.calibration_launch_requested.connect(output_requests.append)
+        launched: list[bool] = []
+        closed: list[bool] = []
+        table.launch_requested.connect(lambda: launched.append(True))
+        table.close_requested.connect(lambda: closed.append(True))
+        assert set(table.findChildren(QPushButton)) == {table.presentation_button}
+        assert not table.isAncestorOf(panel.measurements)
+        assert panel.measurements.isAncestorOf(table.measurement_button)
+        assert table.body.indexOf(table.presentation_button) < table.body.indexOf(
+>           table.table
+        )
+E       AttributeError: 'CalibrationCards' object has no attribute 'table'
+
+tests\gui\test_dashboard.py:12749: AttributeError
+______ test_reference_advanced_controls_align_to_fields_and_retain_first ______
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002107CB24AF0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002106DFF01F0>
+
+    def test_reference_advanced_controls_align_to_fields_and_retain_first(window, app):
+        from cephvr.gui.protocol_document import blank_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        open_protocol_group(editor, generate=True)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Bottom"))
+        composer.change_type("Front", "Texture")
+        row = composer.rows["Front"]
+        row.actions_button.setChecked(True)
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+            row.align_advanced()
+            QTest.qWait(10)
+            app.processEvents()
+            params = row.parameters
+>           assert params.extra_body.itemAt(1).widget() is params.retain
+E           assert <PyQt6.QtWidgets.QWidget object at 0x000002106E0AB250> is <PyQt6.QtWidgets.QCheckBox object at 0x000002106E0AA950>
+E            +  where <PyQt6.QtWidgets.QWidget object at 0x000002106E0AB250> = <built-in method widget of QWidgetItem object at 0x000002107D41B9A0>()
+E            +    where <built-in method widget of QWidgetItem object at 0x000002107D41B9A0> = <PyQt6.QtWidgets.QWidgetItem object at 0x000002107D41B9A0>.widget
+E            +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000002107D41B9A0> = <built-in method itemAt of QVBoxLayout object at 0x000002107D087EB0>(1)
+E            +        where <built-in method itemAt of QVBoxLayout object at 0x000002107D087EB0> = <PyQt6.QtWidgets.QVBoxLayout object at 0x000002107D087EB0>.itemAt
+E            +          where <PyQt6.QtWidgets.QVBoxLayout object at 0x000002107D087EB0> = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x000002107D084AF0>.extra_body
+E            +  and   <PyQt6.QtWidgets.QCheckBox object at 0x000002106E0AA950> = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x000002107D084AF0>.retain
+
+tests\gui\test_dashboard.py:13067: AssertionError
+_ test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity0-False] _
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+linked = False, velocity = (30.0, 40.0)
+
+    @pytest.mark.parametrize("linked", [False, True])
+    @pytest.mark.parametrize("velocity", [(30.0, 40.0), (-40.0, 30.0)])
+    def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, velocity):
+        import math
+        from types import SimpleNamespace
+    
+>       from tests.visual_stimulus.test_compilation import (
+            _linked_texture_fixture,
+            _texture_rate,
+        )
+
+tests\gui\test_dashboard.py:23609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\_pytest\assertion\rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    """Deterministic Visual Stimulus expansion, duration, and transition compiler checks."""
+    
+    from __future__ import annotations
+    
+    import json
+    import unittest
+    from copy import deepcopy
+    from unittest.mock import patch
+    
+>   from tests.visual_stimulus.support import (
+        _linked_texture_fixture,
+        _texture_rate,
+        fixture_source,
+        make_prepared_trial,
+        make_program,
+    )
+E   ImportError: cannot import name '_linked_texture_fixture' from 'tests.visual_stimulus.support' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\visual_stimulus\support.py)
+
+tests\visual_stimulus\test_compilation.py:10: ImportError
+_ test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity0-True] _
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+linked = True, velocity = (30.0, 40.0)
+
+    @pytest.mark.parametrize("linked", [False, True])
+    @pytest.mark.parametrize("velocity", [(30.0, 40.0), (-40.0, 30.0)])
+    def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, velocity):
+        import math
+        from types import SimpleNamespace
+    
+>       from tests.visual_stimulus.support import (
+            _linked_texture_fixture,
+            _texture_rate,
+        )
+
+tests\gui\test_dashboard.py:23609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\_pytest\assertion\rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    """Deterministic Visual Stimulus expansion, duration, and transition compiler checks."""
+    
+    from __future__ import annotations
+    
+    import json
+    import unittest
+    from copy import deepcopy
+    from unittest.mock import patch
+    
+>   from tests.visual_stimulus.support import (
+        _linked_texture_fixture,
+        _texture_rate,
+        fixture_source,
+        make_prepared_trial,
+        make_program,
+    )
+E   ImportError: cannot import name '_linked_texture_fixture' from 'tests.visual_stimulus.support' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\visual_stimulus\support.py)
+
+tests\visual_stimulus\test_compilation.py:10: ImportError
+_ test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity1-False] _
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+linked = False, velocity = (-40.0, 30.0)
+
+    @pytest.mark.parametrize("linked", [False, True])
+    @pytest.mark.parametrize("velocity", [(30.0, 40.0), (-40.0, 30.0)])
+    def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, velocity):
+        import math
+        from types import SimpleNamespace
+    
+>       from tests.visual_stimulus.support import (
+            _linked_texture_fixture,
+            _texture_rate,
+        )
+
+tests\gui\test_dashboard.py:23609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\_pytest\assertion\rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    """Deterministic Visual Stimulus expansion, duration, and transition compiler checks."""
+    
+    from __future__ import annotations
+    
+    import json
+    import unittest
+    from copy import deepcopy
+    from unittest.mock import patch
+    
+>   from tests.visual_stimulus.support import (
+        _linked_texture_fixture,
+        _texture_rate,
+        fixture_source,
+        make_prepared_trial,
+        make_program,
+    )
+E   ImportError: cannot import name '_linked_texture_fixture' from 'tests.visual_stimulus.support' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\visual_stimulus\support.py)
+
+tests\visual_stimulus\test_compilation.py:10: ImportError
+_ test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity1-True] _
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+linked = True, velocity = (-40.0, 30.0)
+
+    @pytest.mark.parametrize("linked", [False, True])
+    @pytest.mark.parametrize("velocity", [(30.0, 40.0), (-40.0, 30.0)])
+    def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, velocity):
+        import math
+        from types import SimpleNamespace
+    
+>       from tests.visual_stimulus.support import (
+            _linked_texture_fixture,
+            _texture_rate,
+        )
+
+tests\gui\test_dashboard.py:23609: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\_pytest\assertion\rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    """Deterministic Visual Stimulus expansion, duration, and transition compiler checks."""
+    
+    from __future__ import annotations
+    
+    import json
+    import unittest
+    from copy import deepcopy
+    from unittest.mock import patch
+    
+>   from tests.visual_stimulus.support import (
+        _linked_texture_fixture,
+        _texture_rate,
+        fixture_source,
+        make_prepared_trial,
+        make_program,
+    )
+E   ImportError: cannot import name '_linked_texture_fixture' from 'tests.visual_stimulus.support' (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\visual_stimulus\support.py)
+
+tests\visual_stimulus\test_compilation.py:10: ImportError
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw1] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw1' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[0000]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw5] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw5' crashed while running 'tests/gui/test_dashboard.py::test_setup_serves_as_new_session_after_completion'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw7] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw7' crashed while running 'tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Ready]'
+____ test_per_projector_compact_layout_preserves_plots_and_fps[size0-None] ____
+[gw4] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001FB504201F0>
+size = (700, 350), style = None
+
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    @pytest.mark.parametrize("size", [(700, 350), (700, 430), (1100, 430), (700, 650)])
+    def test_per_projector_compact_layout_preserves_plots_and_fps(app, size, style):
+        from cephvr.gui.preview_timeline import StimulusTimeline
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.stimulus_preview_area import StimulusPreviewArea
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        timeline = StimulusTimeline()
+        area = StimulusPreviewArea(timeline)
+        area.setProperty("retroConsole", style is not None)
+        area.setProperty("retroPalette", style)
+        if style is not None:
+            area.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in ("Left", "Front", "Right", "Bottom"):
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        timeline.set_program(program, "", "Drift")
+        timeline.set_advanced(True)
+        timeline.set_elapsed(12)
+        area.apply_view(PreviewView("stimulus", "Stimulus", visible=True), True)
+        area.mode.setCurrentText("Per-projector")
+        area.resize(*size)
+        area.show()
+        try:
+            for _ in range(3):
+                app.processEvents()
+            assert (area.width(), area.height()) == size
+            for name, frame in area.frames.items():
+                card = timeline.projector_cards[name]
+                assert card.isVisibleTo(area)
+>               assert card.width() >= 100 and card.height() >= 100
+E               assert (171 >= 100 and 95 >= 100)
+E                +  where 171 = <built-in method width of ProjectorCard object at 0x000001FB5F155120>()
+E                +    where <built-in method width of ProjectorCard object at 0x000001FB5F155120> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB5F155120>.width
+E                +  and   95 = <built-in method height of ProjectorCard object at 0x000001FB5F155120>()
+E                +    where <built-in method height of ProjectorCard object at 0x000001FB5F155120> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB5F155120>.height
+
+tests\gui\test_dashboard.py:24793: AssertionError
+_ test_per_projector_compact_layout_preserves_plots_and_fps[size0-amber_phosphor] _
+[gw4] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001FB504201F0>
+size = (700, 350), style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    @pytest.mark.parametrize("size", [(700, 350), (700, 430), (1100, 430), (700, 650)])
+    def test_per_projector_compact_layout_preserves_plots_and_fps(app, size, style):
+        from cephvr.gui.preview_timeline import StimulusTimeline
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.stimulus_preview_area import StimulusPreviewArea
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        timeline = StimulusTimeline()
+        area = StimulusPreviewArea(timeline)
+        area.setProperty("retroConsole", style is not None)
+        area.setProperty("retroPalette", style)
+        if style is not None:
+            area.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in ("Left", "Front", "Right", "Bottom"):
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        timeline.set_program(program, "", "Drift")
+        timeline.set_advanced(True)
+        timeline.set_elapsed(12)
+        area.apply_view(PreviewView("stimulus", "Stimulus", visible=True), True)
+        area.mode.setCurrentText("Per-projector")
+        area.resize(*size)
+        area.show()
+        try:
+            for _ in range(3):
+                app.processEvents()
+            assert (area.width(), area.height()) == size
+            for name, frame in area.frames.items():
+                card = timeline.projector_cards[name]
+                assert card.isVisibleTo(area)
+>               assert card.width() >= 100 and card.height() >= 100
+E               assert (171 >= 100 and 99 >= 100)
+E                +  where 171 = <built-in method width of ProjectorCard object at 0x000001FB553E5D80>()
+E                +    where <built-in method width of ProjectorCard object at 0x000001FB553E5D80> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB553E5D80>.width
+E                +  and   99 = <built-in method height of ProjectorCard object at 0x000001FB553E5D80>()
+E                +    where <built-in method height of ProjectorCard object at 0x000001FB553E5D80> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB553E5D80>.height
+
+tests\gui\test_dashboard.py:24793: AssertionError
+_ test_per_projector_compact_layout_preserves_plots_and_fps[size0-retro_console] _
+[gw4] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001FB504201F0>
+size = (700, 350), style = 'retro_console'
+
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    @pytest.mark.parametrize("size", [(700, 350), (700, 430), (1100, 430), (700, 650)])
+    def test_per_projector_compact_layout_preserves_plots_and_fps(app, size, style):
+        from cephvr.gui.preview_timeline import StimulusTimeline
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.stimulus_preview_area import StimulusPreviewArea
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        timeline = StimulusTimeline()
+        area = StimulusPreviewArea(timeline)
+        area.setProperty("retroConsole", style is not None)
+        area.setProperty("retroPalette", style)
+        if style is not None:
+            area.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in ("Left", "Front", "Right", "Bottom"):
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        timeline.set_program(program, "", "Drift")
+        timeline.set_advanced(True)
+        timeline.set_elapsed(12)
+        area.apply_view(PreviewView("stimulus", "Stimulus", visible=True), True)
+        area.mode.setCurrentText("Per-projector")
+        area.resize(*size)
+        area.show()
+        try:
+            for _ in range(3):
+                app.processEvents()
+            assert (area.width(), area.height()) == size
+            for name, frame in area.frames.items():
+                card = timeline.projector_cards[name]
+                assert card.isVisibleTo(area)
+>               assert card.width() >= 100 and card.height() >= 100
+E               assert (171 >= 100 and 99 >= 100)
+E                +  where 171 = <built-in method width of ProjectorCard object at 0x000001FB58D912D0>()
+E                +    where <built-in method width of ProjectorCard object at 0x000001FB58D912D0> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB58D912D0>.width
+E                +  and   99 = <built-in method height of ProjectorCard object at 0x000001FB58D912D0>()
+E                +    where <built-in method height of ProjectorCard object at 0x000001FB58D912D0> = <cephvr.gui.preview_projector_cards.ProjectorCard object at 0x000001FB58D912D0>.height
+
+tests\gui\test_dashboard.py:24793: AssertionError
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+[gw8] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000026B07FBE950>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000026B03200280>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1920, 940)
+        app.processEvents()
+        assert window.dashboard.mode == "wide"
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        app.processEvents()
+        device_hud_top = (
+            window.devices.cameras.columns[1].hud_card.mapTo(window, QPoint()).y()
+        )
+>       assert (
+            device_hud_top + window.dashboard.view_tabs.height() + SIZES.card_gap == hud_top
+        )
+E       assert ((86 + 38) + 14) == 86
+E        +  where 38 = <built-in method height of QTabBar object at 0x0000026B07FB27A0>()
+E        +    where <built-in method height of QTabBar object at 0x0000026B07FB27A0> = <PyQt6.QtWidgets.QTabBar object at 0x0000026B07FB27A0>.height
+E        +      where <PyQt6.QtWidgets.QTabBar object at 0x0000026B07FB27A0> = <cephvr.gui.dashboard.Dashboard object at 0x0000026B07FBF010>.view_tabs
+E        +        where <cephvr.gui.dashboard.Dashboard object at 0x0000026B07FBF010> = <cephvr.gui.window.DashboardWindow object at 0x0000026B07FBE950>.dashboard
+E        +  and   14 = Metrics(tool_window_gap=12, page_margin=20, card_gap=14, column_gap=16, card_padding=16, card_top=14, compact_card_pad...y_gap=10, sidebar_width=262, controls_min_width=300, controls_max_width=620, status_min_width=220, wide_breakpoint=760).card_gap
+
+tests\gui\test_dashboard.py:4652: AssertionError
+___________ test_gui_display_number_is_local_and_shared_with_layout ___________
+[gw6] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000021C31F54310>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021C2FF71A50>
+
+    def test_gui_display_number_is_local_and_shared_with_layout(
+        window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from cephvr.gui import projectors
+    
+        monkeypatch.setattr(projectors.QGuiApplication, "primaryScreen", lambda: None)
+        panel = window.devices.projectors
+        panel.request("Refresh displays")
+        assert panel.table.item(0, 1).text() == "1"
+        assert panel.diagram.outputs[0][0] == "1"
+>       assert "numbers are independent" in panel.console.toPlainText()
+E       AssertionError: assert 'numbers are independent' in '13:48:15  [GUI]       1 secondary displays discovered; primary display excluded.'
+E        +  where '13:48:15  [GUI]       1 secondary displays discovered; primary display excluded.' = <built-in method toPlainText of LogConsole object at 0x0000021C31F37520>()
+E        +    where <built-in method toPlainText of LogConsole object at 0x0000021C31F37520> = <cephvr.gui.consoles.LogConsole object at 0x0000021C31F37520>.toPlainText
+E        +      where <cephvr.gui.consoles.LogConsole object at 0x0000021C31F37520> = <cephvr.gui.projectors.ProjectorsPanel object at 0x0000021C31F949D0>.console
+
+tests\gui\test_dashboard.py:5196: AssertionError
+__________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000224DC2D03A0>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000224EA435BD0>
+
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert panel.findChildren(QTableWidget) == []
+        open_protocol_group(panel.editor)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            for action in (editor.output_preview_button,):
+>               assert action.width() >= action.minimumSizeHint().width()
+E               assert 80 >= 82
+E                +  where 80 = <built-in method width of Button object at 0x00000224DD9F7490>()
+E                +    where <built-in method width of Button object at 0x00000224DD9F7490> = <cephvr.gui.components.Button object at 0x00000224DD9F7490>.width
+E                +  and   82 = <built-in method width of QSize object at 0x00000224E8178890>()
+E                +    where <built-in method width of QSize object at 0x00000224E8178890> = PyQt6.QtCore.QSize(82, 40).width
+E                +      where PyQt6.QtCore.QSize(82, 40) = <built-in method minimumSizeHint of Button object at 0x00000224DD9F7490>()
+E                +        where <built-in method minimumSizeHint of Button object at 0x00000224DD9F7490> = <cephvr.gui.components.Button object at 0x00000224DD9F7490>.minimumSizeHint
+
+tests\gui\test_dashboard.py:10039: AssertionError
+____ test_managed_camera_projection_distinguishes_open_capture_and_cleanup ____
+[gw8] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000026B0576EA70>
+
+    def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_cameras import ManagedCameras
+        from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+    
+        panel = window.devices.cameras
+        panel.managed = True
+        state = pb.Snapshot()
+        state.configuration.revision = 3
+        entry = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.behavioral.device.device_id = panel.drafts[0].serial
+        entry.acquisition.behavioral.enabled = True
+        entry.acquisition.behavioral.device.frame_timing = 1
+        calls = []
+        binding = ManagedCameras(
+            panel,
+            SimpleNamespace(
+                request=lambda action, **kw: calls.append((action, kw)) or True
+            ),
+            lambda *_: False,
+        )
+        view = state.acquisition_devices.behavioral
+        view.device_open = True
+        previews = binding.install(state)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                previews=previews,
+            )
+        )
+        assert panel.connect_button.text() == "Disconnect selected"
+        assert not panel.preset_field.isEnabled()
+        panel.connect_button.click()
+        assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
+        assert not panel.connect_button.isEnabled()
+        binding.finished("camera", False, "still open")
+        view.preview_running = True
+        previews = binding.install(state)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                previews=previews,
+            )
+        )
+        assert panel.connect_button.text() == "Disconnect selected"
+        viewers = ManagedPreviewViewers(
+            lambda: state,
+            panel,
+            lambda role, kind, **options: binding.queue(
+                "camera", role=role, kind=kind, **options
+            ),
+            placement=lambda key: key.encode(),
+        )
+        viewers.preview_visibility(panel.drafts[0].key, True)
+        count = len(calls)
+        assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        assert calls[-1][1]["placement"] == panel.drafts[0].key.encode()
+        assert not panel.connect_button.isEnabled()
+        viewers.preview_visibility(panel.drafts[0].key, True)
+        panel.connect_button.click()
+        assert len(calls) == count
+>       assert "Preview was not sent" in panel.console.toPlainText()
+E       AssertionError: assert 'Preview was not sent' in '13:48:45  [GUI]       Camera inventory uses local review samples.\n13:48:46  [GUI]       camera: still open\n13:48:46...view request was not sent. Wait for the current camera action to finish and the controller to connect, then try again.'
+E        +  where '13:48:45  [GUI]       Camera inventory uses local review samples.\n13:48:46  [GUI]       camera: still open\n13:48:46...view request was not sent. Wait for the current camera action to finish and the controller to connect, then try again.' = <built-in method toPlainText of LogConsole object at 0x0000026B07F9C430>()
+E        +    where <built-in method toPlainText of LogConsole object at 0x0000026B07F9C430> = <cephvr.gui.consoles.LogConsole object at 0x0000026B07F9C430>.toPlainText
+E        +      where <cephvr.gui.consoles.LogConsole object at 0x0000026B07F9C430> = <cephvr.gui.cameras.CamerasPanel object at 0x0000026B07FBB880>.console
+
+tests\gui\test_dashboard.py:14623: AssertionError
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw6] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw6' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[0001]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw8] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw8' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw9] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw9' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[12a4]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw11] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw11' crashed while running 'tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Stop after trial-expected1]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw10] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw10' crashed while running 'tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Abort now-expected0]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw13] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw13' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[12345]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw12] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw12' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[1234]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw14] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw14' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[123]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw0' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[ABCD]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw4] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw4' crashed while running 'tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[\\uff11\\uff12\\uff13\\uff14]'
+_________________________ tests/gui/test_dashboard.py _________________________
+[gw18] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+worker 'gw18' crashed while running 'tests/gui/test_dashboard.py::test_texture_setup_checklist_retains_stages_through_ready[standard]'
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_review_stimulus_viewer_lives_in_runtime_layout
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-0]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-2]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-0]
+FAILED tests/gui/test_dashboard.py::test_review_setup_click_logs_simulated_intent
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-2]
+FAILED tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Setting up]
+FAILED tests/gui/test_dashboard.py::test_devices_draft_icons_local_edits_and_command_gates
+FAILED tests/gui/test_dashboard.py::test_camera_trigger_form_reflows_and_destroys_owned_editors
+FAILED tests/gui/test_dashboard.py::test_plot_legends_are_view_only_and_survive_refresh
+FAILED tests/gui/test_dashboard.py::test_direct_group_editor_starts_open_and_uses_only_group_repetitions
+FAILED tests/gui/test_dashboard.py::test_calibration_button_reflects_confirmed_managed_output
+FAILED tests/gui/test_dashboard.py::test_reference_advanced_controls_align_to_fields_and_retain_first
+FAILED tests/gui/test_dashboard.py::test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity0-False]
+FAILED tests/gui/test_dashboard.py::test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity0-True]
+FAILED tests/gui/test_dashboard.py::test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity1-False]
+FAILED tests/gui/test_dashboard.py::test_texture_drift_preserves_mm_speed_across_projector_pitches[velocity1-True]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[0000]
+FAILED tests/gui/test_dashboard.py::test_setup_serves_as_new_session_after_completion
+FAILED tests/gui/test_dashboard.py::test_stop_cancels_setup_without_a_dialog[Ready]
+FAILED tests/gui/test_dashboard.py::test_per_projector_compact_layout_preserves_plots_and_fps[size0-None]
+FAILED tests/gui/test_dashboard.py::test_per_projector_compact_layout_preserves_plots_and_fps[size0-amber_phosphor]
+FAILED tests/gui/test_dashboard.py::test_per_projector_compact_layout_preserves_plots_and_fps[size0-retro_console]
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_gui_display_number_is_local_and_shared_with_layout
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_managed_camera_projection_distinguishes_open_capture_and_cleanup
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[0001]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[12a4]
+FAILED tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Stop after trial-expected1]
+FAILED tests/gui/test_dashboard.py::test_stop_requires_a_choice_during_session[Abort now-expected0]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[12345]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[1234]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[123]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[ABCD]
+FAILED tests/gui/test_dashboard.py::test_four_digit_subject_and_species_setup[\uff11\uff12\uff13\uff14]
+FAILED tests/gui/test_dashboard.py::test_texture_setup_checklist_retains_stages_through_ready[standard]
+38 failed, 1044 passed in 318.22s (0:05:18)

@@ -133,21 +133,6 @@ class DashboardAppearance(QObject):
             window, [window.page_title, *(card.caption for card in self.card_titles)]
         )
         self.window_films = WindowFilms(window)
-        menu.addSeparator()
-        self.crt_action = QAction("CRT effects", menu)
-        self.crt_action.setCheckable(True)
-        self.crt_action.setChecked(
-            settings.value("review/crt", True, type=bool) if settings else True
-        )
-        self.crt_action.toggled.connect(self.set_crt)
-        menu.addAction(self.crt_action)
-        self.band_action = QAction("Refresh band", menu)
-        self.band_action.setCheckable(True)
-        self.band_action.setChecked(
-            settings.value("review/crt_band", False, type=bool) if settings else False
-        )
-        self.band_action.toggled.connect(self.set_band)
-        menu.addAction(self.band_action)
         self.select(saved_style(settings), persist=False)
         window.protocol.editor.timeline.screens_changed.connect(
             self.refresh_protocol_cards
@@ -244,18 +229,6 @@ class DashboardAppearance(QObject):
             self.settings.setValue("appearance/style", self.name)
             self.settings.sync()
 
-    def set_crt(self, enabled: bool) -> None:
-        self.apply_crt()
-        if self.settings is not None:
-            self.settings.setValue("review/crt", enabled)
-            self.settings.sync()
-
-    def set_band(self, enabled: bool) -> None:
-        self.apply_crt()
-        if self.settings is not None:
-            self.settings.setValue("review/crt_band", enabled)
-            self.settings.sync()
-
     def refresh_protocol_cards(self) -> None:
         """Screen rows gain their advanced cards when displays become available."""
         added = False
@@ -273,12 +246,11 @@ class DashboardAppearance(QObject):
             self.apply_crt()
 
     def apply_crt(self) -> None:
-        enabled = self.retro and self.crt_action.isChecked()
-        band = self.band_action.isChecked()
+        enabled = self.retro
         alpha = (
             PHOSPHOR_SCANLINE_ALPHA if self.name == "amber_phosphor" else SCANLINE_ALPHA
         )
-        self.crt.apply(enabled, band=band, scanline_alpha=alpha)
+        self.crt.apply(enabled, scanline_alpha=alpha)
         self.window_films.set(enabled, alpha)
         self.dashboard.preview_workspace.restyle(enabled)
 

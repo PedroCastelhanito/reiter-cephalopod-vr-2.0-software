@@ -89,7 +89,7 @@ class ReviewDashboardWindow(DashboardWindow):
 
 
 class ReviewControls(QObject):
-    """Keep optional fixture inspection in the View menu, outside the Dashboard."""
+    """Keep optional fixture inspection in the Review menu, outside the Dashboard."""
 
     def __init__(
         self,
@@ -102,10 +102,7 @@ class ReviewControls(QObject):
         super().__init__(window)
         menu_bar = window.menuBar()
         assert menu_bar is not None
-        # Share the window's own View menu rather than adding a second one.
-        menu = next(
-            (item.menu() for item in menu_bar.actions() if item.text() == "View"), None
-        ) or menu_bar.addMenu("View")
+        menu = menu_bar.addMenu("Review")
         assert menu is not None
         phases = menu.addMenu("Preview session state")
         assert phases is not None
@@ -235,9 +232,13 @@ class ReviewControls(QObject):
         delay = 0
         for phase, wait in SIMULATED_STEPS.get(action, ()):
             delay += wait
-            QTimer.singleShot(
-                delay, lambda phase=phase: self.advance_simulation(token, phase)
+            timer = QTimer(self)
+            timer.setSingleShot(True)
+            timer.timeout.connect(
+                lambda phase=phase: self.advance_simulation(token, phase)
             )
+            timer.timeout.connect(timer.deleteLater)
+            timer.start(delay)
 
     def show_sample_motion(self) -> None:
         """Give the dummy run an epoch timeline and dials without touching saved edits."""

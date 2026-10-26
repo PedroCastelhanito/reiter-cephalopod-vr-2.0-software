@@ -1,5 +1,782 @@
 # Controller and supervisor status
 
+Oct26 MCU-release shutdown warning resolved: acquisition skipped a redundant Close
+only after its claim was already absent/acknowledged released.156 focused checks
+and a45-second native dummy stop/shutdown pass, no warning and zero managed
+processes; original settings restored. [Current acquisition evidence](acquisition.md#mcu-release-during-shutdown--2026-10-26).
+
+## Running navigation lock — 2026-10-26
+
+`running-navigation-lock` implements the owner's [G01 revision333](../docs/architecture/gui.md#g01)
+change: Starting/Running/Stopping/Finalizing force the main page to Dashboard and
+disable other main buttons, Devices rail/tabs and Tracking tabs. The central page
+selector also rejects bypass routes and restores the checked button. Leaving the
+run phases restores navigation. Main Dashboard clicks return to Configure and close
+all preview viewers; Dashboard child Configure/Monitor routes remain available.
+Reuse the existing closure queue for pending camera/stimulus viewers, cancel deferred
+opens and permit closing an already-visible inactive source. Recording choices,
+session commands and preview layout preferences retain their owners and values.
+
+ARCH-002: navigation stays in the small shell owner; generalize the workspace's
+existing close-intent set/helper rather than adding another state or timer.
+PreviewWorkspace's size advisory remains cohesive visibility/selection/layout work;
+no new dependency, lifecycle authority or backend command type.30 owning navigation,
+pending-close/sidebar checks plus seven placement/log/inline-control integration
+checks pass. Cross-page placement fixtures now use Ready because runtime navigation
+is deliberately locked; their footprint assertion follows the existing frameless
+caption rule. Ruff/format, Win32 mypy and boundaries760/zero pass. [Evidence and commands](runtime-evidence-2026-10-26/running-navigation-lock/context.md).
+No native app restart or live-trial/window-closure acceptance in this increment.
+
+## Live preview retest — 2026-10-26
+
+Requested fresh-runtime171-second dummy run verifies two Video off/on/reselect
+cycles with both cameras and Stimulus. Both native camera windows close, capture
+continues, and both reopen; no orphan image. A dragged divider remains at x951
+after the second cycle at1442x972. Camera images fill their square GUI targets.
+Authenticated snapshots confirm hidden/reopened states and no controller errors.
+Live header drag/Snap remains unverified: blank-title cameras absent from both
+automation window inventories, owner could not perform the manual check now.
+Stop confirms cleanup; normal shutdown RPC succeeds and zero managed processes
+remain. Final stderr nevertheless reports MCU claim release unconfirmed because
+controller exited before Close RPC completed; track on existing exit diagnostic.
+Original two config files restored byte-for-byte. Full-load/DPI/recording decode
+not tested. [Raw evidence/method](runtime-evidence-2026-10-26/preview-live-retest/context.md).
+
+## Video section close race — 2026-10-26
+
+Owner screenshot shows a camera window remaining over Stimulus with Video off.
+Source review found two dropped-intent paths: PreviewWorkspace skipped hide during
+a pending open/layout update; ManagedPreviewViewers submitted multiple closes to
+one camera command slot, so later requests could be refused. Under existing G01
+close-and-reselect behavior, retain pending section-close intent and serialize
+camera hides ahead of layout updates. Remove accepted intents, clear on disconnect,
+and let explicit Show replace an unsent hide; do not retry failed backend commands.
+Stimulus/capture remain independent. ARCH-002: focused sets/maps in existing
+visibility owners, no new timer/dependency or backend lifecycle state. Workspace
+size advisory remains cohesive toolbar/selection/layout ownership.
+29 owning GUI checks pass, including pending-open/layout, both-camera serialization,
+quick section restoration, later explicit reopen and disconnect invalidation.
+Ruff/format, Win32 mypy two owners and boundaries760/zero pass. Current live trial
+not restarted; native whole-section toggle confirmation remains on the existing
+preview interaction task.
+[Method and validation](runtime-evidence-2026-10-26/video-hide-race/context.md).
+
+Oct26 G01rev332 camera headers now overlay the private image without changing
+client/outer bounds. Camera GUI targets are borderless squares with no obsolete
+caption reserve.171 platform/acquisition and16 GUI checks pass; active trial not
+restarted. See [Acquisition](acquisition.md) for current evidence and limits.
+
+## Preview interaction transitions — 2026-10-26
+
+G01rev331 starts Video/Stimulus at50/50 and retains the manually chosen divider
+proportion across hidden/reappearing sections. A stale queued camera hide or
+placement-only request after cleanup is harmless; explicit open still validates.
+ARCH-002: one display-only ratio in the existing workspace and a guard in the
+existing command owner; no new dependency. The workspace size advisory remains
+cohesive toolbar/visibility/layout ownership.30 focused GUI/command tests and24
+compact/Combined layout checks pass; Ruff/format, Win32 mypy and760-module boundary
+check pass. Concurrent card-review compact assertions did not reproduce here.
+
+A46-minute saved-protocol dummy run exercised both camera previews, divider drag,
+Advanced off/on, Combined/Per-projector and Video off/on. Initial50/50 and Advanced
+restoration were observed; Video restoration exposed a further proportion jump,
+fixed afterward with explicit ratio storage and regression coverage. Final ratio
+change has not been rerun in a live trial. Camera native dragging/Snap remains
+unverified because blank-title windows were not tool targets; renderer control
+approval timed out. Tool waiting extended the run; this is not full-load acceptance.
+Stop returned Configuration with cleanup_confirmed and no controller errors.
+Application close then emitted PROCESS_INSPECTION_FAILED (QueryFullProcessImageNameW
+WinError5) and native bool_dealloc at finalization; cause unresolved. Subsequent
+CLI shutdown found no listener; managed process inventory was empty. Do not treat
+that application exit as a clean shutdown pass. Test output roots restored while
+preserving the concurrently changed tracking recording selection.
+[Raw evidence and method](runtime-evidence-2026-10-26/preview-interactions/context.md).
+
+Oct26 `polar-column-heading`: G01rev329 removes duplicate projector headings and
+card padding beside visible Per-projector images, giving polar plots more space.
+Plots-only mode restores identity headings.13 compact-layout/ownership cases pass
+across four sizes and three styles; Ruff/format, Win32 mypy and boundaries pass.
+Offscreen1100x430 render inspected; running app remains untouched.
+[Render](runtime-evidence-2026-10-26/polar-column-heading/columns.png).
+
+
+Oct26 `polar-speed-precision`: G01 polar speed-scale labels now display one decimal
+(11.8682→11.9), without rounding underlying vectors/scales. Four owning offscreen
+polar/readout checks, Ruff, Win32 mypy and boundaries pass; live app not restarted.
+
+
+## Compact Per-projector layout fix — 2026-10-26
+
+`preview-per-projector-compact-clipping` is fixed under existing G01/G02: choose
+columns/stacking from image-plus-plot space, retain measured FPS footer room, allow
+narrower borderless columns and remove stale outer-layout minimum constraints.
+ARCH-002: focused layout owner and existing Qt scaling; no dependencies or backend
+changes.25 GUI checks pass across three themes/four sizes, asserting actual size
+and complete plot/footer containment. Ruff/format, Win32 mypy and boundaries759/zero
+pass; existing unrelated source-size advisories remain.
+
+Final137-second saved-protocol run confirms all four live plots and both FPS lines
+at1442x972 with Video widened, in Retro and Amber. Plot/projector toggles and
+maximize/restore pass. Stop returns Configuration/cleanup confirmed; normal runtime
+shutdown succeeds and original settings are restored. Initial48-second attempt
+caught remaining FPS clipping and prompted the final constraint fix.
+[Source, screenshots, snapshots, checks and limits](runtime-evidence-2026-10-26/preview-compact-fix/context.md).
+
+Separate unresolved observations: retained supervisor FFmpeg closure warning after
+intermediate stop conflicts with session-level output-closure confirmation (see
+[Acquisition](acquisition.md)); preview readback later showed27.7–36.5fps against
+the20Hz cap (see [Visual Stimulus](visual_stimulus.md)). No recording-integrity,
+full-duration, alternate-DPI, physical timing or all-saving-off acceptance claimed.
+
+## Native preview check — 2026-10-26
+
+`preview-native-dummy-check` exercised G01/G02 in the managed Windows runtime for
+172seconds of the saved50-minute protocol, with behavior recording enabled. Two
+Video off/on/reselect cycles, splitter resizing, Combined/Per-projector switching
+and Left off/on settled correctly; no recurring heading/toolbar jitter observed,
+and the new Video card aligned with Stimulus at1920x1032.
+
+Initially observed defect (resolved by the compact fix above) `preview-per-projector-compact-clipping`: at1442x972 with a
+wider Video column, four Per-projector views lost enabled plots and clipped Preview
+FPS footers; maximizing restored them. Camera preview sampled8.5–12.9fps versus
+30fps source; stimulus approximately19–20fps versus60fps source, not a performance
+acceptance. Initial camera placement briefly appeared outside its frame before
+settling. Automated focus/restoration behavior remains unattributed.
+
+Stop now confirmed interrupted output closure and controller cleanup. ffprobe read
+5152frames/171.733333s at30fps. Normal authenticated shutdown succeeded, process
+inventory was empty, and original config files/Retro appearance were restored.
+[Native screenshots, snapshots, output and method](runtime-evidence-2026-10-26/preview-native-dummy-check/context.md).
+This supplements the earlier offscreen evidence below; full-duration, alternate-DPI,
+physical calibration and all-saving-off dummy acceptance remain open in the
+[rig checklist](rig-verification.md). No implementation changes in this increment.
+
+## Video preview card — 2026-10-26
+
+`video-preview-card` implements [G01](../docs/architecture/gui.md#g01) revision326:
+camera streams use the existing Card component with the same growing layout,
+padding and spacing as Stimulus. Card headings and top/bottom edges align;
+individual brackets/FPS and whole-section visibility retain existing behavior.
+ARCH-002: replaces the bare host with the shared Card, no new dependency/state or
+responsibility; the workspace remains a cohesive owner despite its size advisory.
+23 preview/layout checks pass, including three-style aligned cards, narrow grid,
+splitter movement and pending-update stability. Ruff check/format, Win32 mypy and
+boundaries759/zero pass. Inspected the full-shell offscreen Amber render.
+[Evidence](runtime-evidence-2026-10-26/video-preview-card/context.md).
+No live GUI restart or camera/DPI acceptance; existing rig checks remain open.
+
+## Monitor projector toggle stability — 2026-10-26
+
+`monitor-projector-toggle-stability`: under [G01/G02](../docs/architecture/gui.md#g01)
+and [V01](../docs/architecture/visual_stimulus.md#v01), retain projector selector
+widgets when the configured list is unchanged and reuse surviving stimulus frames
+and cells across exclusions/instrument rebuilds. Native viewers compare actual
+window size before resizing and show/hide only on visibility transitions. This
+removes avoidable GUI allocation/layout and render-thread window operations; the
+owner-observed live source-FPS dip has not been measured or proven eliminated.
+Manual-placement guards, snap/reopen, ownership and all-off suspension remain.
+ARCH-002 review keeps these changes in their existing focused owners; no dependency
+or authoritative state added. PreviewWorkspace's existing size advisory remains
+cohesive workspace presentation; the change there is a two-line early return.
+
+Current dirty-worktree validation on Oct26: `pytest tests/gui/test_dashboard.py -q
+-k 'advanced_content_and_projector_filters or advanced_projector_toggles or
+category_preview_modes or stimulus_preview_reclaims'` passes20; separate
+`-k preview_toolbar_wraps` passes3. Offscreen tests assert retained frame/control
+identity and stationary controls/toolbar in Combined and Per-projector across
+default, Amber and Retro styles. `pytest tests/visual_stimulus/test_rendering.py -q`
+passes119, including no redundant resize/show, manual moves, snap and reopen.
+Ruff check/format on the three changed sources and two owning test modules pass;
+Win32 mypy on those sources passes; boundaries759/zero violations, existing size
+advisories. Initial combined23-case GUI run reached100% then exited1 without a
+summary; both separate selections exit0. Two intermediate mypy narrowing errors
+were corrected. Concurrent work preserved. No application restart, live FPS,
+native multiwindow/DPI or rig acceptance; existing [rig checks](rig-verification.md)
+remain open. Restart GUI and renderer to load both parts of this fix.
+
+## Aligned compact projector rows — 2026-10-26
+
+`aligned-projector-rows` implements the owner's approved Compact proposal under
+[G01 revision327](../docs/architecture/gui.md#g01). One native Qt grid aligns the
+projector/layer rail, Stimulus/Motion source and Asset/Speed/Linked to guides and
+control baselines. The second row ends at Asset's right edge, excluding the separate
+accessible Advanced icon button. Self/Linked preserves source width and guides;
+narrow layouts reflow. Expanded retain/fade controls share a compact strip, and
+the Advanced card also ends at Asset's edge. Existing family controls, canonical
+validation, atomic edits, layer menus and focus highlighting retain ownership.
+
+`motion-source-after-locked-bind` repairs a conformance defect under existing G01:
+binding while a parent editor was disabled made isEnabled() look like unsupported
+linking, so Self/Linked was omitted and stayed absent after unlock. Check local
+enablement up to StimulusParameters instead, preserving the owning support flag
+and inherited session lock. No new capability state or duplicated eligibility rule.
+Four locked-bind regressions fail before repair; all17 focused family/layout/link
+checks pass afterward (7.59s), including saved Linked/fade state rebound under a
+lock,246px width, popup options and intentionally absent media controls. Ruff/
+format, Win32 mypy and boundaries760/zero pass. Inspected the restored row after
+disabled binding/unlock. [Evidence](runtime-evidence-2026-10-26/motion-source-locked-bind/context.md).
+No runtime restart, native/DPI or device acceptance; saved configuration untouched.
+
+ARCH-002 review removed independent parameter-grid sizing; no new dependency or
+model state. StimulusParameters remains its cohesive family-binding/commit owner
+despite its existing size advisory; this change only assembles existing widgets.
+
+Isolated hidden Edge/CDP checks measure shared left edges and control baselines
+within0.5px across all four projectors at736/600/375/320px outer widths. No overflow
+or browser errors. Self/Linked switching, same-grid Advanced, asset changes and
+retained numeric edits pass. Desktop and expanded Advanced captures inspected;
+font inheritance made explicit throughout the product mockup. Source, wrapper,
+checker, results and captures are in the authorized thread visualization folder
+`2026/10/26/01a17586-62df-7660-b6ca-af466c7051c3`, named
+`aligned-projector-rows.html`, `aligned-projector-review.html`,
+`check-aligned-projectors.cjs`, `aligned-projector-checks.json` and
+`aligned-projectors-*.png`. Prior two-variant artifacts remain beside them as the
+reviewed source of the owner's Compact selection. The final native layout includes
+the owner's subsequent Asset-edge correction.24 owning GUI checks pass for mixed
+families, three styles,1400/780/520px reflow, source popup/switching, layers, asset
+copy/paste, atomic edits and fades; four source/Advanced geometry cases pass again
+after the final assertion. Ruff check/format, Win32 mypy and boundaries759/zero
+pass. [Native Qt renders and method](runtime-evidence-2026-10-26/aligned-projector-rows/context.md)
+were inspected. These are isolated offscreen checks; no running app restart or
+native/DPI/hardware acceptance.
+
+## Video preview pending-layout stability — 2026-10-26
+
+`preview-toggle-jitter` fixes a reproduced preview geometry jump under
+[G01](../docs/architecture/gui.md#g01) revision325. Pending camera commands added
+a misleading closing label that wrapped the heading; selectors also disappeared,
+allowing the toolbar to reflow. Eligible selectors now remain visible and disabled
+while pending, without the transient closing label. Other authority/master/recording
+gates and native viewer ownership remain unchanged.
+
+ARCH-002 review keeps this in the existing workspace refresh owner with no new
+dependency or state. Its 557-line size advisory is a cohesive workspace/control
+owner; this repair removes a branch rather than adding a responsibility.
+38 related preview checks pass; final14 checks cover pending/visible geometry,
+all three styles, wide/narrow toolbars and eligibility gates. Ruff check/format,
+Win32 mypy, boundaries (759 modules, zero violations) and whitespace pass.
+[Evidence and limits](runtime-evidence-2026-10-26/preview-toggle-jitter/context.md).
+No running-app restart or native camera/DPI acceptance; existing
+[preview rig work](rig-verification.md) remains open.
+
+## Preview vector and Combined surface style — 2026-10-26
+
+`preview-marker-style` implements [G01](../docs/architecture/gui.md#g01) revision323:
+cosmetic2px translation/rotation strokes, directional rotation arrowheads and
+theme-derived projector identities (Left coral, Front projection gold, Right
+cream/mirror, Bottom amber/accent). The same palette reaches the renderer-owned
+Combined surface outlines; its surround uses the GUI card color. Owner clarified
+the projector surfaces inside Combined, so GUI preview brackets retain ordinary
+theme styling. No stimulus texture, physical output or recording color changes.
+
+Optional bounded RGB display hints extend the existing placement message, validated
+at both stimulus boundaries and rejected for cameras. Bindings regenerated from
+proto. ARCH-002 reuses focused theme/painter/placement/GL owners with no dependency,
+process or authoritative-state addition; existing size advisories remain.
+252 selected checks pass:112 instruments,119 rendering,3 GUI placement,10 camera
+admission and8 authenticated loopback. Native standalone-GL assertions verify
+exact surround/outline pixels and unchanged source/composite textures. Ruff
+check/format11 files, Win32 mypy9 sources, boundaries758/zero and whitespace pass.
+Combined/Per-projector offscreen images inspected after fixing early palette
+capture; final fixture exits0 with explicit teardown. [Dated commands/attempts/images](runtime-evidence-2026-10-26/preview-marker-style/context.md).
+Running app untouched; full GUI/backend restart and native/DPI/rig acceptance remain.
+
+## Plot font and pretrial indicators — 2026-10-26
+
+`preview-plot-font` includes the owner's follow-up no-arrows-before-Start request
+under [G01](../docs/architecture/gui.md#g01) revision321. Shared instrument text now
+uses the preview-info family/weight/spacing and12px size without growing when the
+plot expands; small instruments can shrink. Configuration/Ready/Starting ignore
+elapsed fields. With no playback time, configured plots/table stay visible while
+vectors, angular indicators, current orientation and arena pose/history are empty.
+Existing live-input/errors remain explicit; other rows show Waiting for trial.
+Playback0 restores current planned values. No renderer/motion semantics change.
+
+ARCH-002 review reuses focused painter/refresh/window owners, no new dependency or
+authoritative state; existing timeline size advisory remains cohesive.100 timeline
+and five focused Dashboard checks pass, including three-theme effective font
+metrics, ready-to-playback transitions, shared/per-projector samples and map state.
+Ruff check/format5 files, Win32 mypy3 sources, boundaries758/zero and whitespace
+pass. Offscreen Ready render inspected. [Dated methods/images/limits](runtime-evidence-2026-10-26/plot-font-and-prestart/context.md).
+Concurrent Front-only fixture and830px cell-overflow failures were subsequently
+resolved by advanced-preview-content-projectors (see compact toolbar assessment):
+the final36-case selection includes projector/layout cases and all12 geometry
+variants pass. No running-app restart or native/DPI/hardware acceptance claimed.
+
+## Stimulus preview layout — 2026-10-26
+
+`stimulus-preview-layout` implements [G01](../docs/architecture/gui.md#g01)
+revision319: borderless renderer windows sit within themed preview brackets;
+source/representative group preview FPS appears under each image. Combined drift
+uses equal expanding image/instrument columns, with a centered, scaled plot/table
+instead of the340px rail. Existing Per-projector/navigation proportions, camera
+chrome, group-rate semantics, stale markers and lifecycle owners remain intact.
+ARCH-002 review reuses focused frame/placement/instrument owners; adds an explicit
+decoration parameter without a dependency or authoritative runtime state change.
+
+46 selected Dashboard and204 timeline/rendering tests pass;13 geometry/category
+cases pass again after final proportion/tooltip refinements and removal of an
+unused Dashboard fixture. Combined teardown exits1 without a diagnostic were
+isolated to that fixture interaction; final13-case run exits0 with summary.
+No production defect is inferred from the earlier exits. Ruff check/format7
+files, Win32 mypy5 sources and boundaries758/zero pass (existing size advisories).
+Three styles rendered offscreen, including narrow Combined and Per-projector;
+inspected readiness frames and planned plots. [Commands, attempts, source hashes,
+render method and images](runtime-evidence-2026-10-26/stimulus-preview-layout/context.md).
+No app restart, native/DPI/full-load or hardware acceptance; see the existing
+[rig checklist](rig-verification.md).
+
+## Video and Stimulus preview selection — 2026-10-26
+
+Owner's subsequent FPS-placement screenshot: current concurrent
+`stimulus-preview-layout` source already removes metrics from the header and calls
+each frame's `set_metrics(view)`, placing Source/Preview FPS below its target.
+No duplicate source change was needed. Two focused metrics/category checks exit0
+(`pytest tests/gui/test_dashboard.py -q -k 'preview_frame_metrics_show_live or
+category_preview_modes_keep_camera_space' --basetemp=.pytest_tmp_fps_footer_small
+--timeout=30`). Two broader14-case attempts report each case passed but exit1
+without a summary/diagnostic; their teardown result remains unexplained and is not
+a clean suite pass. Follow-up: `stimulus-preview-layout` isolated the interaction
+and removed this test's unused full-Dashboard fixture; the final13-case combined
+run exits0 (4.20s), as detailed above. The earlier failures remain historical;
+no native restart or screenshot of the updated running application is claimed.
+
+`preview-video-and-stimulus-selection` implements [G01](../docs/architecture/gui.md#g01)
+revision318. Configuration/Setting up/Ready now reserve named camera footprints
+for active cameras selected for video recording. Preserve revision317's hidden
+Video group when none are eligible, plus existing recording/authority gates and
+open/pending viewer closure. Running hidden cameras still free their frame space.
+Stimulus now shows/hides projection frames in the selected mode: one Combined rig
+or all configured Per-projector surfaces. Instrument selections remain independent;
+pre-Setup selected projections keep their readiness message. Native group requests
+and tile placement use the existing transport/owner.
+
+ARCH-002 review reuses focused workspace/footprint/request owners without new
+dependencies, transport or renderer state; existing cohesion advisories remain.
+Broad preview run:124 pass, one stale camera-placement fixture fails; that fixture
+now uses a camera instead of the Advanced-owned Stimulus. Final10 focused checks
+pass, covering both modes/readiness states, all-frame toggles, instrument/Video
+independence, preparation/recording gates and pending placement. Two authenticated
+completion cases pass separately. Ruff check/format6 files, Win32 mypy5 sources,
+boundaries758/zero and whitespace pass. Offscreen on/off layouts inspected.
+[Methods, corrections, limits and images](runtime-evidence-2026-10-26/video-stimulus-selection/context.md).
+No running-app restart, native/DPI or hardware acceptance claimed.
+
+## Hide empty Video preview — 2026-10-26
+
+`preview-hide-empty-video` implements [G01](../docs/architecture/gui.md#g01)
+revision317: no active camera with video selected and no open/pending viewer hides
+the Video group and camera column. Stimulus fills the remaining width. Selecting
+camera video restores the group with its existing master preference; open viewers
+retain closure controls. ARCH-002 review reuses the cohesive workspace refresh and
+toolbar layout, with no new state, dependency or ownership change.
+
+Local offscreen validation: `python -m pytest tests/gui/test_dashboard.py -q -k
+'preview_inline_controls_follow_camera_recording_choices or
+preview_controls_hide_when_unavailable_and_restore or video_previews_toggle or
+preview_selection_waits or stimulus_preview_belongs or preview_toolbar_wraps'`
+passes23 cases; one temporary-directory setup error is resolved by rerunning
+`-k video_previews_toggle_hides_section --basetemp .test-tmp-hide-video-20261026`
+(1 pass). Five interaction-gate cases pass again after adding group assertions.
+The four recording/layout cases cover Configuration/Ready in Standard/Retro,
+full-width stimulus and restoration; existing open-viewer closure remains covered.
+Ruff check/format on previews.py and test_dashboard.py, Win32 mypy on previews.py,
+backend boundaries (758 modules, zero violations; existing size advisories) and
+whitespace checks pass. No running-app restart, native/DPI or hardware acceptance.
+
+## Preview layout before Setup — 2026-10-26
+
+`preview-before-setup-layout` implements [G01](../docs/architecture/gui.md#g01)
+revision316: the current draft/category/geometry now fills selected Combined or
+Per-projector instruments before playback reports elapsed time. Instruments sample
+the initial planned state; the timeline/current epoch remain unset, native pixels
+keep their readiness message, and live-only fields keep waiting. Existing
+draft/geometry updates, selected projector toggles and category layout owners are
+reused. ARCH-002 review adds no dependency/state; the cohesive timeline refresh
+owner receives one call change, retaining its existing size advisory.
+
+105 focused cases pass:14 Dashboard and91 timeline checks, including pre-Setup
+shared values, per-projector/static Bottom, media and arena layouts, current
+geometry, Advanced/request gates, linked motion and playback clock behavior.
+Ruff check/format2 files, Win32 mypy1 source, boundaries758/zero (existing
+advisories) and whitespace pass. Offscreen Combined and Per-projector images
+inspected. [Dated commands, fixture corrections, method and images](runtime-evidence-2026-10-26/preview-before-setup/context.md).
+No running application restart, native/DPI/hardware acceptance claimed.
+
+## Amber tab marker alignment — 2026-10-26
+
+`tab-chevron-alignment` repairs [G02](../docs/architecture/gui.md#g02)'s existing
+marker spacing: leading chevrons follow Qt's actual icon position rather than
+assuming icons move with centered text in expanded tabs. Shared tab padding gains
+2px per side to contain the marker and its6px icon gap. Trailing markers retain
+their text anchor. ARCH-002 review reuses the focused decoration/theme owners;
+no new dependency or state, and existing theme size advisory remains cohesive.
+
+Both1400/1920px regression cases fail before the fix and pass afterward. Four
+focused checks pass, including existing paint/hover/trailing markers, narrow
+overflow and full-label fit. Ruff check/format3 files, Win32 mypy2 sources,
+boundaries758/zero (existing advisories) and whitespace pass. Real offscreen
+tab strip inspected; [dated assessment and image](runtime-evidence-2026-10-26/tab-chevron-alignment/context.md).
+No running-app restart, native/DPI or hardware acceptance claimed.
+
+## Compact preview toolbar — 2026-10-26
+
+`advanced-preview-content-projectors` implements [G01](../docs/architecture/gui.md#g01)
+revision322/[V01](../docs/architecture/visual_stimulus.md#v01) revision35: independent
+Stimulus/Plots toggles precede configured available projector buttons. Combined is
+retained; each projector filters its image/surface, plot vectors/rows and size traces
+in both layouts. No synthetic Arena button or unavailable projector button is added.
+All-projectors-off closes native viewers and retains Stimulus intent for restoration;
+explicit off, lost authority/inactive source or removal clears applicable intent.
+A bounded display-only surface-exclusion field crosses the existing placement RPC;
+renderer exclusions never write scientific source textures or projection outputs.
+ARCH-002 reuses existing layout/visibility and renderer owners, no dependency or
+whole-runtime reference. PreviewWorkspace's new size advisory is reviewed: it still
+owns one cohesive presentation/request state; timeline keeps its existing instrument
+assembly/refresh responsibility. Separate frame/placement/render owners remain.
+
+36 focused GUI cases pass (967 deselected,6.32s),15 renderer/admission cases pass
+(254 deselected,1.13s), and all100 timeline cases pass (1.78s). Final two integration
+cases pass again after clearing suspended intent on source removal. Tests cover both
+layouts, content combinations, independent projector filtering, all-off/reopen,
+available projector changes, camera-mask rejection, malformed masks and GPU pixels:
+excluded surfaces/outlines disappear while source/composite pixels stay unchanged.
+Ruff check/format10 files, Win32 mypy7 sources and boundaries758/zero pass; bindings
+regenerated from19 authoritative protos. Existing generated-file ignore policy retained.
+Offscreen compact toolbar/per-projector pairs inspected; an isolated capture produced
+images but exited1 during teardown without diagnostic, so it is visual evidence only.
+[Commands, provenance and limits](runtime-evidence-2026-10-26/advanced-content/context.md).
+No app restart or native multiwindow/DPI/full-load acceptance; existing rig checks remain.
+
+`preview-on-off-only` supersedes the former disabled-state styling under
+[G01](../docs/architecture/gui.md#g01) revision315/[G02](../docs/architecture/gui.md#g02)
+revision146. Preview controls show only solid ON or outlined OFF. Existing disabled
+interaction gates hide per-item buttons; master switches remain visible and choices
+reappear when usable. Pre-Setup waiting selection, pending requests and remembered
+projector choices retain their behavior. ARCH-002 reuses the existing refresh and
+layout owners and removes obsolete disabled QSS, with no new dependency/state;
+the shared theme's existing cohesion advisory remains appropriate.
+22 focused tests pass (861 deselected,15.61s): hide/restore across all interaction
+gates, three-style ON/OFF/hover and responsive layout, independent masters and
+waiting cancellation. Ruff check/format3 files, Win32 mypy2 sources, boundaries758/
+zero and whitespace pass. [Current evidence](runtime-evidence-2026-10-26/preview-contrast/on-off-only.md).
+The earlier four-state image/context is historical and superseded. No running-app
+restart or native/DPI/hardware acceptance.
+
+`stimulus-preview-advanced` follows the owner's correction under
+[G01](../docs/architecture/gui.md#g01) revision314: Stimulus is first in Advanced,
+Video contains cameras only, and their master visibility/cancellation paths are
+independent. Advanced closes the native stimulus viewer through the existing
+request and requires reselection; instrument choices retain their existing behavior.
+ARCH-002 reuses the same control/layout/request owner without new state or dependencies.
+14 focused offscreen tests pass (859 deselected,8.70s), covering open and waiting
+Stimulus, independent masters, source replacement, three-style wrapping and existing
+camera cancellation. Ruff check/format2 files, Win32 mypy1 source, boundaries758/zero
+and whitespace pass. No native/device acceptance or app restart. [Follow-up evidence](runtime-evidence-2026-10-26/preview-toolbar/stimulus-advanced.md).
+
+`compact-preview-toolbar` implements [G01](../docs/architecture/gui.md#g01)
+revision312/[G02](../docs/architecture/gui.md#g02) revision143's compact Monitor
+controls: adjacent master switches and short per-item toggle buttons, bottom divider,
+and whole-group narrow reflow. Current unavailable-control visibility follows G01 above. Video still closes
+viewers and requires reselection; Advanced retains projector choices. Preview
+requests, readiness, authority, recording gates and local master preferences keep
+their existing owners. ARCH-002 review reuses PreviewWorkspace and shared theme
+QSS, removes obsolete checkbox rules and adds no dependency or preview state;
+the theme size advisory remains a cohesive formatting owner.
+
+25 focused cases pass, including three-style wide/narrow/wide geometry and existing
+preview lifecycle/recording gates. Ruff check/format4 files, Win32 mypy2 sources,
+boundaries758/zero and whitespace checks pass. Offscreen images show39–40px wide
+and70–72px wrapped height; full Amber rendering inspected. Initial stale fixture,
+caption and unsettled-layout assertions were corrected. Commands, attempts, source
+hashes and image method are in [dated evidence](runtime-evidence-2026-10-26/preview-toolbar/context.md).
+No running-app restart, native/DPI/device acceptance; existing [rig checks](rig-verification.md) remain.
+
+## Projector discovery messages — 2026-10-26
+
+`projector-discovery-log` follows [G02](../docs/architecture/gui.md#g02)'s concise
+outcome convention: one discovery summary includes missing assigned faces and
+power/cable/Refresh guidance once. Empty inventory no longer logs both zero
+displays and successful identification. Successful numbering guidance stays in
+inventory tooltips; identification failures and duplicate-identity warnings remain
+available. The Projectors console starts empty instead of claiming no connection
+checks alongside discovery results. Setup's existing prerequisite guidance remains.
+ARCH-002 review simplifies existing presentation assembly without added state or
+dependencies; the panel's existing size advisory does not justify extraction.
+
+Seven offscreen cases pass (863 deselected,18.77s): empty/partial/full inventories,
+identified/unidentified displays, saved assignments, disconnected draft retention,
+Setup rejection and review inventory. Earlier selection also passed7 in14.35s.
+Ruff check/format2 files, Win32 mypy1 source, boundaries758/zero (existing size
+advisories) and whitespace pass. [Method/provenance](runtime-evidence-2026-10-26/projector-discovery-log/context.md).
+Concurrent work preserved. No running-app restart or native/hardware acceptance.
+
+## Shared configuration card style
+
+`shared-gui-group-cards` applies the owner's broader styling request under
+[G02 revision152](../docs/architecture/gui.md#g02). Existing EditingCard surfaces
+now group Session/Subject metadata and Data/Videos saving options; Protocol type,
+Assets folder and Epoch settings; MCU connection/Inputs/Outputs; SpikeGLX
+connection/channel mapping; projector brightness, Tank/Subject position/Subject to
+screens, measurements and synchronization; and Tracking configuration, crop,
+resolution, reference, distance calibration and search controls. Existing camera,
+projector/layer/variation and Tracking stage cards retain the same shared treatment.
+Inventory tables, readouts/logs, timelines and preview plots retain their section
+containers; comparative input/measurement tables stay compact inside a group.
+
+Shared titles wrap at narrow widths and preserve popup-owned focus. The review
+found Tracking's action row forcing a525px minimum into a418px viewport; focused
+TrackingControls now reflows toolbar/actions without changing callbacks or drafts.
+ARCH-002: reuse existing painting/focus behavior and actual widgets, no dependency
+or persistent state. Extract the separable configuration toolbar from the large
+Tracking owner; other larger owners receive only focused presentation assembly
+changes and keep existing authority. Saving grids retain camera checkbox identity
+across refreshes. Existing validation, snapshot keys and runtime locks remain.
+
+Three-style cross-tab checks cover viewport containment, wrapped titles, actual
+focus and painted fills at1175/720px.13 configuration views were rendered and
+inspected, including narrow Tracking. Final owning run:57 passed,880 deselected,
+116.03s, zero uncaught Qt errors. Ruff check/format19 source files and owning test,
+Win32 mypy19 sources and boundaries760/zero pass; existing size advisories remain.
+[Method, captures and validation](runtime-evidence-2026-10-26/shared-gui-group-cards/context.md).
+No running-app restart or native/DPI/full-workload acceptance.
+
+Expanded preview checks in the concurrent worktree also fail on a missing Combined
+frame key and95–99px compact plot heights against a100px assertion. These findings
+are outside this configuration presentation increment; attribution remains
+unresolved under `preview-interaction-transitions`. They prevent a whole-GUI-suite
+pass claim; no preview assertion or production preview code was changed here.
+
+`editing-card-reuse`: owner-approved implementation under [G01](../docs/architecture/gui.md#g01)
+(card amendment revision324) and [G02](../docs/architecture/gui.md#g02) revision149.
+Variation rules now use individually labelled cards; existing Tracking StageCards
+receive the shared fill/focus treatment; Camera config separates identity/preset
+from trigger settings; projection calibration uses one card per face. Inventory,
+MCU pin and pixel-to-mm measurement tables retain their existing compact layout.
+
+`screen-dimension-row-cards` extends the shared surface to Front/Left/Right/Bottom
+physical screen dimensions (G01rev330/G02rev151). Compact rows share aligned headers
+and column widths, resting/editing fills, accent and Editing label. Width/Height
+editors and read-only derived distance retain existing draft/signals, calibration
+bindings, snapshot keys and locks. Headers reserve wrapped height at narrow widths.
+ARCH-002: replaces only the table presentation in the focused geometry owner;
+reuses EditingSurface with no dependency or duplicated geometry state.13 owning
+layout/draft/measurement/snapshot checks pass; three style/geometry/focus cases
+pass again after the final identity-label refinement. Ruff/format, Win32 mypy and
+boundaries759/zero pass; unrelated size advisories remain. Desktop620px and
+narrow420px Amber renders inspected. [Method and renders](runtime-evidence-2026-10-26/editing-cards/screen-dimensions.md).
+No running-app restart or native/DPI acceptance.
+
+`editing-card-popup-focus` corrects the shared focus check under G02 revision150.
+Qt's isAncestorOf excludes separate popup windows even when owned by a card's
+control; walking the focused widget's parent chain retains editing fill/accent and
+label while choosing dropdown options. Selection/Escape restores ordinary focus;
+moving to another card clears the old highlight. ARCH-002: a four-line ownership
+walk in the existing focused component, no extra state, event filters or dependency.
+Six popup cases cover selection/cancellation, combo/menu ownership and painted
+fills in all three styles. Before repair all three combo cases reproduced the
+defect; after repair14 popup/projector/variation checks pass in17.25s. Ruff/format,
+Win32 mypy and boundaries759/zero pass, with existing unrelated size advisories.
+[Popup check evidence](runtime-evidence-2026-10-26/editing-cards/popup-focus.txt).
+Offscreen validation only; no running-app restart or native DPI acceptance.
+
+ARCH-002: extract the existing projector painting/focus behavior into EditingSurface
+and EditingCard, reused by all these owners. Replace the variation table/hover
+coordination with a simple card stack; retain original controls, values, sampling,
+validation, camera/MCU linkage and calibration operations. No dependencies or
+backend changes. Empty variation rules disable parameter editors, not their Remove
+button. Removal also appears for keyboard focus; deferred hover dispatch remains.
+
+Final offscreen regression:42 passed,866 deselected in67.66s. Covers variations,
+three-theme focus, wide/narrow layout, layer targeting, invalid-rule recovery,
+Tracking method/stage/draft retention, camera selection/pin/locks, and calibration
+steps/live coalescing/gates. Initial checks found and repaired disabled empty-rule
+removal after reparenting; a missing selected epoch in the new focus fixture was
+corrected. The pre-existing linked-Speed test's50ms wait was replaced by a bounded
+wait for the existing notice/clean-state conditions; assertions remain unchanged.
+Ruff check/format10 files, Win32 mypy9 sources, boundaries759/zero and whitespace
+pass. Existing size advisories remain; only focused integration changes extend the
+large Projectors owner, and styling stays in the focused extracted component.
+Four600px Amber renders of actual Qt groups visually inspected; capture exits0.
+No running-app restart, native DPI or hardware acceptance; no full-suite claim.
+[Method and provenance](runtime-evidence-2026-10-26/editing-cards/context.md).
+
+Owner follow-up `protocol-card-darkening`: G02rev148 slightly darkens Amber card
+resting/editing fills to #293236/#373429 while retaining contrast and focus accent.
+Existing three-theme card checks pass (3 cases,1.17s); theme lint/format pass.
+ARCH-002: two token changes only, no added behavior or dependency. No app restart.
+
+`protocol-mixed-stimulus-layout` is implemented under
+[G01](../docs/architecture/gui.md#g01) revision320 and
+[G02](../docs/architecture/gui.md#g02) revision147 after owner approval of the
+single inline card preview. Each projector keeps its Layer selector and receives
+contrasting fill, 18px separation, a stable Stimulus/Asset/Advanced identity line
+and locally labelled parameter fields below. Focus within a card adds the theme
+editing fill, a left accent and Editing label. No inspector or structural divider
+lines. Narrow cards reflow while retaining usable stimulus selectors.
+
+ARCH-002 review reuses ProjectorReference, the existing family controls and native
+Qt focus notification; removes obsolete cross-row shared-heading coordination.
+No additional dependency or duplicate experiment state. Theme tokens stay with the
+existing cohesive theme owner (size advisory retained). Layer management, assets,
+copy/paste, validation, linked source and Advanced ownership remain unchanged.
+
+Final focused offscreen run:18 passed in16.01s (885 deselected), covering all three
+themes, mixed Image/Texture/Video/Looming, wide/narrow/wide geometry, painted focus
+transfer, asset edits, layer actions, motion links and Advanced. A broader run had
+45 passes and one50ms notice-timing failure; its linked-variation scenarios passed
+in the subsequent13-case run (16.29s). An initial captured run printed all8 passes
+then exited1 without summary; explicit-output subsequent runs exit0. Ruff check/
+format4 files, Win32 mypy3 sources and boundaries758/zero pass. No full-suite claim.
+Amber wide/narrow native-widget offscreen renders inspected after loading the
+bundled font and releasing widgets explicitly. No running-app restart or native
+DPI/hardware acceptance. [Render method and provenance](runtime-evidence-2026-10-26/protocol-cards/context.md).
+
+## Short projector subtabs — 2026-10-26
+
+`projector-tab-labels`: renamed the projector subtabs to Geometry, Calibration,
+Synchronization under [G01](../docs/architecture/gui.md#g01) revision313 and
+[G02](../docs/architecture/gui.md#g02) revision144. Existing card titles, tab order,
+icons and page ownership remain. ARCH-002 review selects three label replacements
+in the existing cohesive Projectors owner; no dependency or extraction needed.
+
+On the dirty f82be21f28d3c1141adeabe2558c29808062727a-based tree, repository Python
+3.11 `pytest tests/gui/test_dashboard.py -q -k
+'configuration_scroll_keeps_projector_status_fixed or projector_config_tabs_keep_column_width or phosphor_tab_bars_elide'
+--basetemp=.pytest_tmp_projector_tab_labels_final --timeout=30` passes all three
+checks (866 deselected,7.91s). Existing tests assert exact names, fixed status-column
+placement, preserved drafts and narrow overflow; the Amber test now confirms all
+three full labels fit their styled text rectangles at1920×1032. Ruff check/format
+two files, Win32 mypy one source and boundaries758/zero pass, with existing size
+advisories. A retried multi-file patch left duplicate test snippets after a later
+documentation hunk failed; these were removed and final lint passes. Concurrent
+changes preserved. No application restart or native/DPI acceptance claimed.
+
+## Offline rig plot — 2026-10-26
+
+`rig-plot-offline` implements [G01rev312](../docs/architecture/gui.md#g01):
+Setup geometry uses saved reference output dimensions for enabled assigned
+projector cones when displays are absent. Detected modes take precedence;
+missing/invalid saved dimensions omit that cone while retaining tank/screens.
+Discovery and output admission are unchanged. ARCH-002 review keeps this in
+the existing geometry assembly operation, with no dependencies or duplicated
+state; the panel's existing size advisory does not justify extracting this loop.
+
+The owning regression first failed with a missing offline Front footprint.
+Final three offscreen cases pass, including disconnect/reconnect precedence,
+invalid saved dimensions, rotation and disconnected Bottom folded optics with
+Right disabled. Ruff check/format, Win32 mypy (one source), boundaries (758
+modules, zero violations; existing size advisories) and whitespace pass.
+[Method/source context](runtime-evidence-2026-10-26/rig-plot-offline/context.md).
+No running-app restart or native/hardware acceptance claimed; existing
+[rig checks](rig-verification.md) remain open.
+
+## Fixed window options — 2026-10-26
+
+`gui-fixed-window-options` implements the owner's menu simplification under
+[G01rev311](../docs/architecture/gui.md#g01)/[G02rev142](../docs/architecture/gui.md#g02).
+The managed window omits View/Side navigation and always uses sidebar links,
+ignoring the obsolete layout preference. Style contains only Standard, Retro
+console and Amber phosphor. Retro-family styles include their CRT film/glow
+automatically (including Amber); Standard omits both. The splash follows the same
+rule and ignores the former saved CRT toggle. Local fixture controls retain their
+existing behavior in a Review menu. Refresh-band controls, settings access, timer,
+state, motion and painting are deleted. ARCH-002 review removes mechanisms from
+their current focused owners without adding dependencies or state; no extraction
+is needed for these deletions. Concurrent source/report changes are retained.
+
+Focused tests cover legacy false sidebar/CRT preferences, obsolete band-enabled
+preferences, exact Style menu contents, managed menu removal, style switching,
+popup/owned-window films, projected pixel exclusion, sidebar switching/reflow and
+startup preference/reveal behavior. Initial run:16 passed,2 failed (a removed
+navigation test parameter still referenced by its final assertion, and a test
+comparing projected-widget images across different style geometries). Corrected
+the former for permanent sidebar navigation; the latter now toggles only the film
+inside the test to retain its original pixel-exclusion assertion without layout
+changes. An isolated preview attempt confirmed that test mismatch.
+Ruff GUI/owning-test check and format6 files pass; Win32 mypy5 sources passes;
+boundaries758/zero with existing size advisories and whitespace checks pass.
+Final focused selection:18 passed,848 deselected in77.66s. An isolated offscreen
+managed-window sample with old sidebar/CRT=False and band=True settings confirms
+Style contains only the three choices, both sidebar groups remain visible and CRT
+is active; its1280×900 render was visually inspected. Results are retained with
+[method/provenance](runtime-evidence-2026-10-26/fixed-window-options/context.md).
+No application restart, device operation or native/DPI acceptance is claimed.
+
+## Trial add-button alignment — 2026-10-26
+
+`trial-add-width` corrects the trailing + button's extra2px inset on each side
+under [G01](../docs/architecture/gui.md#g01)/[G02](../docs/architecture/gui.md#g02).
+The existing viewport now owns its full width, matching visible trial rows while
+retaining row height, trailing spacing, scrolling and delete behavior. ARCH-002
+review chooses one geometry correction in the focused TrialList owner; no new
+state, abstraction or dependency. No architecture behavior change.
+
+Three existing owning layout/action cases pass (Standard, Retro, Amber;
+863 deselected,8.16s), checking both edges before/after scrollbar use and1280/720px
+resizing. Amber was added to existing parameterization. Initial checks exposed
+the long-name row's off-viewport logical width and Amber's uppercase caption;
+assertions now compare the visible row bounds and style-appropriate caption.
+Ruff check/format2 files, Win32 mypy1 source, boundaries758/zero with existing
+cohesion advisories, and whitespace checks pass. An isolated offscreen Amber
+Trials card was visually inspected: viewport and add-button width176px, both
+starting at0. [Image](runtime-evidence-2026-10-26/trial-add-width/trials.png).
+No application restart or native/DPI/device acceptance is claimed.
+
+## Motion source popup and column — 2026-10-26
+
+`protocol-motion-source-popup` corrects the scroll-hidden Self entry and preserves
+the latest screenshot's 246px wide-row column for both choices under
+[G01](../docs/architecture/gui.md#g01) revision310. The existing view's minimum
+height follows styled row hints plus frame; the column no longer stretches when
+Linked to replaces motion fields. Narrow layouts retain reflow. ARCH-002 review
+reuses focused widget/layout owners without dependencies or new state.
+
+Six focused offscreen checks pass across Standard/Amber and wide/narrow layouts,
+including both popup choices without scrolling, mouse selection of Self, stable
+width, link validation and persistence. Ruff check/format, Win32 mypy (two sources)
+and backend boundaries (758 modules, zero violations; existing unrelated size
+advisories) pass. [Dated evidence and attempt assessment](runtime-evidence-2026-10-26/motion-source/context.md).
+The running application was not restarted; native/DPI acceptance remains unverified.
+
+## Amber readability — 2026-10-26
+
+Current owner tuning (`amber-brightness-balance`,
+[G02rev143](../docs/architecture/gui.md#g02)) slightly darkens the lifted charcoal
+surfaces and softens gold/coral text, frames and hover fills. Font weight/width
+and CRT strength retain their accepted values. ARCH-002 review uses palette-only
+edits in the existing theme owner; no dependencies or new mechanism. Five focused
+contrast, disabled-field, theme-switch, popup and navigation cases pass
+(864 deselected,10.21s); Ruff check/format and Win32 mypy for theme.py, boundaries
+758/zero with existing advisories and whitespace checks pass. The1280×900
+offscreen sample was visually inspected; native screen appearance remains unverified
+and the running application was not restarted.
+[Balanced palette evidence](runtime-evidence-2026-10-26/amber-brightness-balance/context.md).
+
+`amber-readability` implements the owner's screenshot correction under
+[G02rev141](../docs/architecture/gui.md#g02): brighter charcoal surfaces, brighter
+amber labels/navigation/frames and pale-gold values, semibold lettering with
+0.6px body tracking, and scanline opacity reduced from 60/255 to 28/255. Existing
+heading tracking and shared window/dialog styling remain with their current owners.
+ARCH-002 review selects token/QSS edits in the cohesive theme owner and one film
+constant; no dependency, state, process or interface additions warrant extraction.
+The existing theme size advisory remains a cohesion review, not a runtime defect.
+
+Offscreen sample Dashboard renders at 1920×1032 and 1280×900 were inspected;
+the narrower saving labels wrap without clipping. Actual field metrics confirm
+600 weight and approximately 0.6px additional spacing. Initial focused tests had
+12 passes and two failures from pixel thresholds for the former darker border and
+coral; those thresholds now allow the intentionally brighter colors while retaining
+white-strip and non-coral rejection. The broader run exposed the header's obsolete
+regular-weight assertion and an antialiased marker threshold; both now match the
+requested style. Final focused suite: 17 passed,848 deselected in32.35s (`pytest
+tests/gui/test_dashboard.py -q -k 'amber or phosphor or retro_family_switch or sidebar'`).
+Theme switching verifies wider semibold field text and restores Retro spacing.
+Ruff check/format (three files), Win32 mypy (two sources), boundary check (758
+modules, zero violations, existing size advisories), and whitespace checks pass.
+No native application restart, hardware operation or alternate-DPI acceptance.
+[Render evidence and method](runtime-evidence-2026-10-26/amber-readability/context.md).
+
 <a id="no-recording-dummy-session--2026-10-23"></a>
 ## No-recording dummy session - 2026-10-23
 
@@ -353,6 +1130,42 @@ was inspected offscreen; native/DPI appearance remains unverified. No dependenci
 or state added; the shared tab painter remains the owner under ARCH-002.
 
 ## Device warning clarity — 2026-10-23
+
+Current Oct26 `projector-warning-diagnostics`: owner requested shorter feedback
+after the first revision. Startup display rejection names the assigned face(s)
+and problem, followed by one recovery instruction covering power/cables, Windows
+Display, Devices > Projectors Refresh/assignment and Setup. The review omits
+redundant progress when a failure is present and hides the saved display/output
+identity line; Copy details retains the exact original diagnostic.
+This implements existing [E03](../docs/architecture/gui.md#e03)/
+[V19](../docs/architecture/visual_stimulus.md#v19) feedback requirements without
+changing acknowledgement actions, assignments, rejection classification or cleanup.
+ARCH-002 review extracts assignment preflight into the existing focused native
+display helper; native.py keeps assembly/ownership despite its size advisory.
+No new dependency or persistent state. First unavailable output is reported;
+remaining assignments are checked on the next attempt, with no fallback.
+
+Repository Python3.11: `pytest tests/visual_stimulus/test_rendering.py -q -m
+"not windows and not rig" --basetemp .test-tmp-projector-warning-final` passes112
+(6 deselected); `pytest tests/visual_stimulus/test_controller_communication.py -q
+-m "not windows and not rig" --basetemp .test-tmp-projector-warning-communication-allowed
+--timeout=30 --maxfail=1` passes8 with loopback permission; offscreen
+`pytest tests/gui/test_dashboard.py -q -k 'retained_summary or retained_dialog'`
+passes4 (869 deselected). Coverage includes mapped/shared faces, unmapped output
+identity, case-insensitive unique matching, no windows before complete preflight,
+GLFW release, retained formatting/copy/acknowledgement and authenticated rejection.
+Ruff check/format5 changed source/test files, Win32 mypy3 source files,
+boundaries758/zero and whitespace pass. Initial combined sandbox run produced
+fixture errors and was interrupted; bounded communication retry timed out creating
+asyncio's loopback socket pair before the permitted rerun passed. Concurrent work
+preserved. Final shortened revision:112 rendering tests (6 deselected),8
+authenticated loopback tests and4 offscreen retained-summary/dialog tests
+(879 deselected) pass, using the same commands with fresh workspace basetemps
+`.test-tmp-projector-warning-short` and
+`.test-tmp-projector-warning-short-communication`. Regression checks verify
+identity/progress omission from the summary and exact diagnostic retention in
+Copy details. Ruff check/format5 files, Win32 mypy2 source files and boundaries758/
+zero pass. No app restart, native dialog/DPI or physical display acceptance.
 
 `device-warning-clarity`: simplified projector discovery/empty-state warnings,
 missing assigned-projector guidance, GPU selection instructions, rejected GUI
@@ -5587,6 +6400,46 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 [rig checklist](rig-verification.md).
 
 ## Current scope and review
+
+Oct26 `repo-cleanup-and-code-review` preserves the owner's working tree based on
+`f82be21f28d3c1141adeabe2558c29808062727a`. Astra adjudicated Luna's source/caller
+audit and focused fixes under [ARCH-002](../architecture.md#arch-002):
+
+- Advanced-off retains pending stimulus closes in the existing viewer-close queue.
+  Removed redundant show/hide branching after the managed camera hide early return.
+- Local-review simulation timers now belong to ReviewControls. Explicit test-window
+  deferred deletion exposed callbacks surviving the owner: the same isolated test
+  went from a passing body followed by native exit `0xC0000409` to clean exit0.
+  Preserve cumulative delays and supersession tokens; no experiment timers change.
+- [G01 revision334](../docs/architecture/gui.md#g01) stacks existing Protocol cards
+  at narrow widths. Variation rows reflow existing editors; camera selector hints
+  use actual content. Three-theme renders verify timeline fields and Variation
+  values. The 514-line Variation owner remains cohesive row editing/layout state;
+  no whole-runtime dependency or extra abstraction was introduced.
+- Eleven shared test helpers moved unchanged into owning support modules. Stale
+  assertions now exercise current sidebar, frameless preview and calibration-card
+  behavior. Compact plots retain full containment, 128px native targets and full
+  FPS rows; no unsupported 100px plot-height policy is imposed.
+
+Final full GUI validation passes all1071 tests in267.47seconds with no worker
+crashes. All2643 local backend tests pass (5 skipped/48 deselected), including752
+controller and168 supervisor cases. No original scenarios were removed; five GUI
+regressions were added. Narrow arena headings wrap to preserve exact shared column
+alignment; the timeline test enforces its intended400px viewport before checking
+bounded painting. Focused39 and the final two regression checks also pass.
+Ruff/format999 files, Win32 mypy871 sources, boundaries760/zero and19-schema
+regeneration pass; generated binding hashes match. Two synthetic native preview
+checks pass; no camera/experiment actions were used. Current commands, raw results,
+failed attempts and renders are in [review evidence](runtime-evidence-2026-10-26/repo-review/context.md).
+The older CalibrationCards construction access violation is not causally attributed
+to the timer fix; native/DPI/rig acceptance and the owner's font preference stay open.
+
+Oct26 `age-placeholder-example`: the Dashboard Age input now shows `e.g. 30`
+under the existing `AGE (dph)` label, following G01/G02. ARCH-002 review uses one
+placeholder replacement without changing values, validation, state or dependencies.
+Owning offscreen Dashboard test passes (1 passed,882 deselected); Ruff check/format2
+files, Win32 mypy1 source and boundaries758/zero pass. Native appearance/restart
+not checked; concurrent edits preserved.
 
 <a id="maintainability-review"></a>
 

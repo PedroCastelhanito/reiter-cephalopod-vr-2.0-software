@@ -388,10 +388,15 @@ def retained_summary(state: pb.Snapshot) -> str:
             completed += 1
             continue
         description = f"{action_label(operation.command)} — {result}"
-        if operation.progress:
-            description += f"; {operation.progress}"
+        if operation.progress and not operation.HasField("failure"):
+            description += f"\n    {operation.progress}"
         if operation.HasField("failure"):
-            description += f"; {operation.failure.message}"
+            message = "\n".join(
+                line
+                for line in operation.failure.message.splitlines()
+                if not line.startswith("Saved display: ")
+            )
+            description += f"\n    {message}"
         actionable.append(f"  • {description}")
     if actionable:
         groups.append(["Operations needing attention:", *actionable])

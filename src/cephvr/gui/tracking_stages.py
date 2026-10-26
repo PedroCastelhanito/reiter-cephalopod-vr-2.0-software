@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QCheckBox, QVBoxLayout, QWidget
 
-from cephvr.gui.components import Card
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.theme import SIZES
 
 STAGES = (
@@ -24,7 +24,7 @@ def preview_switch() -> QCheckBox:
     return toggle
 
 
-class StageCard(Card):
+class StageCard(EditingCard):
     def __init__(self, title: str) -> None:
         super().__init__(title)
         self.enabled = preview_switch()

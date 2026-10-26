@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
@@ -20,6 +21,7 @@ from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_draf
 from cephvr.gui.camera_snapshot import CameraSnapshot
 from cephvr.gui.camera_trigger_form import CameraTriggerForm
 from cephvr.gui.components import Card, StatusColumn, button, combo, field
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
 from cephvr.gui.pin_numbers import PinNumber
@@ -128,9 +130,14 @@ class CamerasPanel(ResponsiveColumns):
         inventory.body.addLayout(actions)
         left_layout.addWidget(inventory)
         self.configuration = Card("Camera config")
+        self.configuration.body.setSpacing(SIZES.group_gap)
+        self.identity_card = EditingCard("Camera and preset")
+        self.trigger_card = EditingCard("Trigger")
+        self.configuration.body.addWidget(self.identity_card)
+        self.configuration.body.addWidget(self.trigger_card)
         self.role = combo((*CAMERA_ROLES, "Unassigned"))
         self.role.currentTextChanged.connect(self.assign_role)
-        self.configuration.body.addWidget(field("ROLE", self.role))
+        self.identity_card.body.addWidget(field("ROLE", self.role))
         self._finish_configuration(left_layout)
         self.snapshots = CameraSnapshot(self)
         self.config_files = self.snapshots.files
@@ -169,7 +176,9 @@ class CamerasPanel(ResponsiveColumns):
     def _finish_configuration(self, left_layout: QVBoxLayout) -> None:
         self.fields: dict[str, QLineEdit] = {}
         self.trigger_source = combo(("Internal clock", "External controller"))
-        self.trigger_source.setMinimumContentsLength(8)
+        self.trigger_source.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToContents
+        )
         self.trigger_source.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
         )
@@ -202,14 +211,14 @@ class CamerasPanel(ResponsiveColumns):
             (source_field, rate_field, field("PIN", self.trigger_pin)),
             (self.trigger_source, rate, self.trigger_pin),
         )
-        self.configuration.body.addWidget(self.trigger_form)
+        self.trigger_card.body.addWidget(self.trigger_form)
         self.trigger_source.currentTextChanged.connect(self.trigger_source.setToolTip)
         self.preset_field = PresetField()
         self.preset = self.preset_field.editor
         self.preset.textChanged.connect(lambda value: self.edit("preset", value))
         self.preset.editingFinished.connect(self.inspect_preset)
         self.preset_field.path_selected.connect(lambda _: self.inspect_preset())
-        self.configuration.body.addWidget(field("PARAMETER FILE", self.preset_field))
+        self.identity_card.body.addWidget(field("PARAMETER FILE", self.preset_field))
         left_layout.addWidget(self.configuration)
         left_layout.addStretch()
         self.table.currentCellChanged.connect(lambda *_: self.load_selected())

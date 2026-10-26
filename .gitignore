@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 /.pytest-*/
 /.pytest_tmp_*/
+/.test-tmp*/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -55,6 +56,7 @@ __pycache__/
 
 # Captured run datasets and reproducible binaries remain local.
 /reports/**/recordings/
+/reports/**/output/
 /reports/runtime-evidence-2026-10-21/pilot-alignment/*.npy
 /reports/runtime-evidence-2026-10-21/pilot-alignment/*.npz
 /reports/**/*.whl

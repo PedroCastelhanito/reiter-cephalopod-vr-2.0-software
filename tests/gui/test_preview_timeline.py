@@ -34,6 +34,133 @@ def constant(value):
     return Constant(kind="constant", value=value)
 
 
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+@pytest.mark.parametrize("scale", [0.75, 1, 2])
+def test_instrument_font_matches_preview_info(app, monkeypatch, style, scale):
+    from PyQt6.QtGui import QFont, QImage, QPainter
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui import preview_motion_dial
+    from cephvr.gui.preview_frame import PreviewFrame
+    from cephvr.gui.preview_motion_dial import SharedMotionDial
+    from cephvr.gui.theme import (
+        RETRO_PALETTES,
+        load_terminal_font,
+        phosphor_stylesheet,
+        retro_stylesheet,
+    )
+
+    load_terminal_font()
+    host = QWidget()
+    if style != "standard":
+        host.setStyleSheet(
+            retro_stylesheet(RETRO_PALETTES[style][0])
+            + (phosphor_stylesheet() if style == "amber_phosphor" else "")
+        )
+    frame = PreviewFrame()
+    frame.setParent(host)
+    frame.metrics.ensurePolished()
+    dial = SharedMotionDial()
+    dial.setParent(host)
+    dial.ensurePolished()
+    size = dial.sizeHint()
+    dial.resize(round(size.width() * scale), round(size.height() * scale))
+    canvas = QImage(dial.size(), QImage.Format.Format_ARGB32_Premultiplied)
+
+    class ImagePainter(QPainter):
+        def __init__(self, widget):
+            super().__init__(canvas)
+
+    monkeypatch.setattr(preview_motion_dial, "QPainter", ImagePainter)
+    painter = preview_motion_dial.instrument_painter(
+        dial, size.height(), size.width(), centered=True
+    )
+    try:
+        font, expected = painter.font(), frame.metrics.font()
+        actual_scale = painter.transform().m11()
+        assert font.family() == expected.family()
+        assert font.weight() == expected.weight()
+        assert (
+            font.pointSizeF() * dial.logicalDpiY() / 72 * actual_scale
+            == pytest.approx(expected.pixelSize() * min(1, actual_scale), abs=0.05)
+        )
+        if expected.letterSpacingType() == QFont.SpacingType.AbsoluteSpacing:
+            assert font.letterSpacing() * actual_scale == pytest.approx(
+                expected.letterSpacing() * min(1, actual_scale), abs=0.05
+            )
+    finally:
+        painter.end()
+        host.close()
+
+
+@pytest.mark.parametrize("angular", [-10, 10])
+@pytest.mark.parametrize("scale", [1, 2])
+@pytest.mark.parametrize("style", [None, "retro_console", "amber_phosphor"])
+def test_rotation_marker_arrowhead_and_device_width(app, angular, scale, style):
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QPen, QTransform
+
+    from cephvr.gui.preview_motion_data import DialSample
+    from cephvr.gui.theme import projector_marker_colors
+
+    class Painter:
+        def __init__(self):
+            self.pens, self.paths, self.polygons = [], [], []
+
+        def transform(self):
+            return QTransform().scale(scale, scale)
+
+        def setPen(self, pen):
+            if isinstance(pen, QPen):
+                self.pens.append(pen)
+
+        def setBrush(self, brush):
+            pass
+
+        def drawPath(self, path):
+            self.paths.append(path)
+
+        def drawPolygon(self, polygon):
+            self.polygons.append(polygon)
+
+        def drawLine(self, start, end):
+            pass
+
+    painter = Painter()
+    dial = MotionDial()
+    dial.setProperty("retroConsole", style is not None)
+    dial.setProperty("retroPalette", style)
+    center = QPointF(100, 100)
+    dial.draw_marker(
+        painter,
+        DialSample("Bottom", "accent", "texture", "mm/s", None, angular, 20, 20),
+        center,
+        50,
+        40,
+    )
+    assert len(painter.paths) == len(painter.polygons) == 1
+    tip, left, right = painter.polygons[0]
+    assert tip == painter.paths[0].currentPosition()
+    direction = tip - (left + right) / 2
+    radial = tip - center
+    assert (radial.x() * direction.y() - radial.y() * direction.x()) * angular < 0
+    assert (direction.x() ** 2 + direction.y() ** 2) ** 0.5 * scale == pytest.approx(7)
+    assert painter.pens[0].isCosmetic() and painter.pens[0].widthF() == 2
+    assert painter.pens[0].color().name() == projector_marker_colors(dial)["Bottom"]
+    painter = Painter()
+    dial.draw_marker(
+        painter,
+        DialSample("Left", "accent", "texture", "mm/s", (10, 0), None, 20, 20),
+        center,
+        50,
+        40,
+    )
+    assert len(painter.polygons) == 1
+    assert painter.pens[0].isCosmetic() and painter.pens[0].widthF() == 2
+    assert painter.pens[0].color().name() == projector_marker_colors(dial)["Left"]
+    dial.close()
+
+
 def with_settings(*epochs):
     """Replace the review fixture's three epochs' settings, keeping their timing."""
 
@@ -536,6 +663,10 @@ def test_arena_map_and_body_frame_dial_follow_planned_continuity(timeline):
 
     timeline.set_advanced(True)
 
+    assert timeline.map_samples[0].pose is None
+    assert not timeline.map_samples[0].path
+    assert timeline.map_samples[0].message == "Waiting for trial"
+
     timeline.set_elapsed(0)
 
     panel = timeline.panels[0]
@@ -686,6 +817,14 @@ def test_shared_polar_keeps_static_bottom_colours_and_toggle_identity(timeline):
         geometry,
     )
     timeline.set_advanced(True)
+    pending = next(iter(timeline.shared_dials.values()))
+    assert timeline.elapsed is None
+    assert len(pending.samples) == 4
+    assert all(
+        s.vector is None and s.angular_speed is None and s.orientation_deg is None
+        for s in pending.samples
+    )
+    assert all(s.message == "Waiting for trial" for s in pending.samples)
     timeline.set_elapsed(2)
     assert set(timeline.active_sources) == {"Left", "Front", "Right", "Bottom"}
     assert len(timeline.shared_dials) == 1
@@ -715,6 +854,10 @@ def test_shared_polar_keeps_static_bottom_colours_and_toggle_identity(timeline):
     timeline.refresh()
     assert not timeline.shared_dials
     assert not timeline.projector_cards["Bottom"].findChild(MotionDial).isHidden()
+    timeline.set_playback(None, running=False)
+    assert all(
+        s.vector is None and s.angular_speed is None for s in timeline.dial_samples
+    )
 
 
 def test_shared_polar_separates_incompatible_units(timeline):
@@ -1211,6 +1354,7 @@ def test_all_projector_plots_fit_visible_workspace_without_scroll(
     dialog = PreviewWorkspace(None)
     dialog.setProperty("retroPalette", style)
     dialog.setProperty("retroConsole", style is not None)
+    dialog.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
 
     try:
         plot = dialog.timeline
@@ -1371,8 +1515,8 @@ def test_retro_projector_headings_are_uppercase_and_glow(timeline):
         assert {heading.styleSheet() for heading in timeline.headings} == {expected}
 
 
-def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
-    from PyQt6.QtWidgets import QCheckBox, QWidget
+def test_retro_preview_controls_and_headings_glow(app):
+    from PyQt6.QtWidgets import QCheckBox, QPushButton, QWidget
 
     from cephvr.gui.previews import PreviewWorkspace
     from cephvr.gui.view import PreviewView
@@ -1388,14 +1532,15 @@ def test_retro_preview_controls_are_checkboxes_and_headings_glow(app):
         allowed=True,
     )
     toggle, show = dialog.advanced_toggle, dialog.controls["behavior"]
-    assert isinstance(toggle, QCheckBox) and isinstance(show, QCheckBox)
+    assert isinstance(toggle, QCheckBox) and isinstance(show, QPushButton)
     assert toggle.isCheckable() and show.isCheckable()
     host.setProperty("retroConsole", True)
     dialog.restyle(True)
     assert dialog.names["behavior"].graphicsEffect() is not None
     # Stream toggles are named by their stream (no "Show" wording).
-    assert show.text() == dialog.views["behavior"].name
-    assert toggle.text() == "Advanced previews"
+    assert show.text() == "Behavior"
+    assert show.accessibleName() == dialog.views["behavior"].name
+    assert toggle.text() == "Advanced"
     toggle.setEnabled(False)
     toggle.setEnabled(True)
     dialog.apply_views((PreviewView("camera", "Camera", visible=False),), allowed=True)

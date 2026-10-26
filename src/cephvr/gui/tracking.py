@@ -5,19 +5,12 @@ from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
-from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QStackedWidget, QTabBar
+from PyQt6.QtWidgets import QFileDialog, QStackedWidget, QTabBar
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.cameras import CamerasPanel
-from cephvr.gui.components import (
-    Card,
-    StatusColumn,
-    button,
-    combo,
-    equal_row_height,
-    field,
-)
+from cephvr.gui.components import StatusColumn, button, configuration_file_card
 from cephvr.gui.configuration_files import LOCKED_REASON, ConfigurationFiles
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.notices import FormNotice
@@ -27,6 +20,7 @@ from cephvr.gui.tracking_codec import (
     encode_diagnostic_draft,
     encode_tracking_draft,
 )
+from cephvr.gui.tracking_controls import TrackingControls
 from cephvr.gui.tracking_draft import validated_draft
 from cephvr.gui.tracking_forms import TrackingForms
 from cephvr.gui.tracking_live import TrackingDiagnosticPresentation
@@ -50,39 +44,17 @@ class TrackingPage(ResponsiveColumns):
         self.snapshot_draft = False
         self.notice = FormNotice()
         self.notice.setParent(self)
-        self.configuration = Card("Tracking configuration")
-        row = QHBoxLayout()
+        self.configuration = TrackingControls()
         self.source_serial = ""
         self.source_description = "Tracking cam · not assigned"
-        self.pipeline = combo(("Water flow", "Fin flow"))
-        row.addWidget(field("Pipeline", self.pipeline), 1)
-        actions = QHBoxLayout()
+        self.pipeline = self.configuration.pipeline
         self.load_button = button("Load…")
         self.save_button = button("Save as…")
-        self.preview_button = button("Annotate")
-        self.preview_button.setToolTip(
-            "Open the local reference-frame annotation window."
-        )
-        self.diagnostic_button = button("Live diagnostic")
-        self.diagnostic_viewer_button = button("Open viewer")
-        self.diagnostic_viewer_button.setEnabled(False)
-        self.diagnostic_button.setToolTip(
-            "Run selected Tracking diagnostics over the assigned camera preview."
-        )
-        row.addWidget(self.load_button, 0, Qt.AlignmentFlag.AlignBottom)
-        row.addWidget(self.save_button, 0, Qt.AlignmentFlag.AlignBottom)
-        equal_row_height(self.pipeline, self.load_button, self.save_button)
-        self.configuration.body.addLayout(row)
-        for control in (
-            self.diagnostic_button,
-            self.diagnostic_viewer_button,
-            self.preview_button,
-        ):
-            actions.addWidget(control, 1)
-        equal_row_height(
-            self.diagnostic_button, self.diagnostic_viewer_button, self.preview_button
-        )
-        self.configuration.body.addLayout(actions)
+        self.preview_button = self.configuration.preview_button
+        self.diagnostic_button = self.configuration.diagnostic_button
+        self.diagnostic_viewer_button = self.configuration.diagnostic_viewer_button
+        self.file_card = configuration_file_card(self.load_button, self.save_button)
+        layout.addWidget(self.file_card)
         layout.addWidget(self.configuration)
         self.tabs = QTabBar()
         for name in ("Preprocessing", "Calibration", "Pose", "Motion"):

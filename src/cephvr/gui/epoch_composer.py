@@ -3,7 +3,7 @@
 import json
 from math import isfinite
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
 from cephvr.gui.components import combo
@@ -17,6 +17,7 @@ from cephvr.gui.protocol_document import blank_program
 from cephvr.gui.reference_draft import reference_mode, replace_reference
 from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_presets import add_file_stimulus, remove_stimulus
+from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
 
@@ -45,7 +46,8 @@ class EpochComposer(QWidget):
         self.batch_label.setMaxLength(128)
         self.mode.currentIndexChanged.connect(self.change_mode)
         self.references = QVBoxLayout()
-        self.references.setSpacing(8)
+        self.references.setSpacing(SIZES.group_gap)
+        self.references.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.body.addLayout(self.references)
         self.picker = PreparedFilePicker(self)
         self.picker.selected.connect(
@@ -78,7 +80,6 @@ class EpochComposer(QWidget):
         reference.forward_requested.connect(lambda: self.reorder(face, 1))
         reference.backward_requested.connect(lambda: self.reorder(face, -1))
         self.rows[face] = reference
-        reference.layout_changed.connect(self.update_headers)
         self.references.addWidget(reference)
         reference.bind(self.program)
 
@@ -141,22 +142,11 @@ class EpochComposer(QWidget):
             if face:
                 row.add.setEnabled(active)
                 row.stimulus.setEnabled(active)
-        self.update_headers()
         self.message.status(
             "Enable projectors in Devices to add 2D stimuli"
             if not self.screens and not self.active_mode
             else ""
         )
-
-    def update_headers(self) -> None:
-        previous: tuple[str, ...] = ()
-        for row in self.rows.values():
-            if row.isHidden():
-                continue
-            row.identity_header = not previous
-            row.show_header = row.signature != previous
-            previous = row.signature
-            row.arrange()
 
     def refresh_rows(self, face: str = "", preferred: int | None = None) -> None:
         self.mode.setEnabled(self.program.category in (None, "navigation_3d"))

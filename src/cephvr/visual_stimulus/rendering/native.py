@@ -29,6 +29,7 @@ from cephvr.visual_stimulus.rendering.native_display import (
     attach_window_context,
     configure_window,
     idle_device_color,
+    resolve_output_monitors,
     verify_framebuffer,
 )
 from cephvr.visual_stimulus.rendering.output_masks import (
@@ -145,7 +146,7 @@ class ModernGLPort:
         ]
         if not matches:
             raise DisplayUnavailableError(
-                "A configured projector is not detected by Windows"
+                "Windows does not detect the assigned display"
             )
         if len(matches) != 1:
             raise DisplayUnavailableError(
@@ -187,10 +188,7 @@ class ModernGLPort:
         created: list[_OutputContext] = []
         try:
             # Resolve every saved identity before exposing any output window.
-            monitors = tuple(
-                (output, self.monitor_resolver(output.device_identity, glfw))
-                for output in display.active_outputs
-            )
+            monitors = resolve_output_monitors(display, glfw, self.monitor_resolver)
             for output, monitor in monitors:
                 self.announce(f"visual_stimulus:window:{output.output_id}", None)
                 self._window_obligations.add(output.output_id)

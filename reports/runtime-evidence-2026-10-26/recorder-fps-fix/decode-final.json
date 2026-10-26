@@ -1,0 +1,55 @@
+{
+  "command": [
+    "ffprobe",
+    "-v",
+    "error",
+    "-count_frames",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=nb_read_frames,nb_frames,duration",
+    "-of",
+    "json",
+    "reports\\runtime-evidence-2026-10-26\\recorder-fps-fix\\output\\20261026_ephys-pilot\\SP0004-111509\\protocol-data\\0004_111520_behavioral_cam.mp4"
+  ],
+  "returncode": 0,
+  "stdout": "{\n    \"programs\": [\n\n    ],\n    \"stream_groups\": [\n\n    ],\n    \"streams\": [\n        {\n            \"duration\": \"44.466667\",\n            \"nb_frames\": \"1334\",\n            \"nb_read_frames\": \"1334\"\n        }\n    ]\n}\n",
+  "stderr": "",
+  "frame_log_completion": {
+    "type": "completion",
+    "outcome": "completed",
+    "timing": {
+      "recording_end_monotonic_ns": 1003407504791300,
+      "first_recorded_frame_id": 0,
+      "final_received_frame_count": 1334,
+      "accounting_complete": true
+    },
+    "video": {
+      "recorded_frame_count": 1334,
+      "selected_source_frame_count": 1334,
+      "duplicate_frame_count": 0
+    },
+    "pulses": {
+      "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "on_dispatched_monotonic_ns": 1003362954701800,
+      "on_acknowledged_monotonic_ns": 1003362989493200,
+      "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+      "off_dispatched_monotonic_ns": 1003407506951000,
+      "off_acknowledged_monotonic_ns": 1003407535593900
+    },
+    "post_cutoff": {
+      "accounting_complete": true,
+      "excluded_frame_count": 2,
+      "last_native_counter": 1335
+    },
+    "transport_summary": {
+      "buffer_underruns": null,
+      "failed_buffers": 0,
+      "missed_frames": 0,
+      "resend_requests": null,
+      "resend_packets": null,
+      "resynchronizations": 0
+    },
+    "diagnostics": []
+  }
+}

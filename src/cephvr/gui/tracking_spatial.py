@@ -19,7 +19,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, field, label
+from cephvr.gui.components import button, field, label
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
 
@@ -156,7 +157,7 @@ class PreprocessingPage(QWidget):
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(SIZES.card_gap)
-        self.crop = Card("Input crop")
+        self.crop = EditingCard("Input crop")
         self.enabled = QCheckBox("Enable crop")
         row = QHBoxLayout()
         row.addWidget(self.enabled)
@@ -170,7 +171,7 @@ class PreprocessingPage(QWidget):
         self.region.setEnabled(False)
         self.enabled.toggled.connect(self.region.setEnabled)
         body.addWidget(self.crop)
-        self.resize_card = Card("Processing resolution")
+        self.resize_card = EditingCard("Processing resolution")
         self.scale = QSpinBox()
         self.scale.setRange(10, 100)
         self.scale.setValue(100)
@@ -182,7 +183,7 @@ class PreprocessingPage(QWidget):
         body.addStretch()
 
 
-class DistanceCalibration(Card):
+class DistanceCalibration(EditingCard):
     def __init__(self) -> None:
         super().__init__("Pixel-to-mm calibration · Required for Tracking")
         self.draw = button("Set endpoints")

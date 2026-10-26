@@ -9,6 +9,7 @@ from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QDialog, QGridLayout, QLabel, QVBoxLayout, QWidget
 
 from cephvr.gui.projector_geometry import FACES
+from cephvr.gui.theme import colors_for
 from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
 
 if TYPE_CHECKING:
@@ -55,7 +56,7 @@ class PulseCanvas(QWidget):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#101010"))
+        painter.fillRect(self.rect(), QColor(colors_for(self).window))
         timing = self.preview.timing
         try:
             size = timing.resolutions().get(self.face)

@@ -5,13 +5,14 @@ from typing import Any
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QHeaderView, QLineEdit
 
-from cephvr.gui.components import Card, button, combo
+from cephvr.gui.components import button, combo, remove_button
 from cephvr.gui.device_panel import entry
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.tables import DataTable
 
 
-class BlackoutZones(Card):
+class BlackoutZones(EditingCard):
     changed = pyqtSignal()
 
     def __init__(self) -> None:
@@ -52,7 +53,7 @@ class BlackoutZones(Card):
         self.table.set_control(row, 0, face)
         for column, editor in enumerate(fields, 1):
             self.table.set_control(row, column, editor)
-        remove = button("×", "compact", hint="Remove blackout zone")
+        remove = remove_button("Remove blackout zone")
         remove.clicked.connect(lambda: self.remove(record))
         self.table.set_control(row, 5, remove)
         if data is not None:

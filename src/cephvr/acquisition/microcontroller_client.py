@@ -226,6 +226,8 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
         ).cancelled
 
     async def close(self, *, deadline_ns: int) -> None:
+        if not self.claim_id:
+            return
         await self._call(wire.MICROCONTROLLER_IO_KIND_CLOSE, deadline_ns)
         self.claim_id = ""
 

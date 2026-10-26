@@ -133,6 +133,18 @@ class RecordingSession:
         self._finish_results: list[control.OutputResult] | None = None
         self._finalization = FinalizationProgress()
 
+    @property
+    def released_encoder_resource(self) -> str | None:
+        """Exact helper release evidence, independent of output durability."""
+        if (
+            self._finished
+            and self._encoder is not None
+            and self._encoder.cleanup_complete
+            and self._encoder.launch_id
+        ):
+            return f"ffmpeg:{self._encoder.launch_id}"
+        return None
+
     def prepare(self) -> None:
         if self._prepared:
             raise RecordingFailure("recording thread already prepared")

@@ -21,11 +21,12 @@ void main() { uv = in_uv; gl_Position = vec4(in_position, 0, 1); }
 _FRAGMENT = """#version 430
 in vec2 uv; out vec4 color;
 uniform sampler2D image; uniform vec4 crop; uniform bool outline;
+uniform vec3 outline_color;
 void main() {
     vec2 margin = 0.5 / vec2(textureSize(image, 0));
     vec2 point = clamp(crop.xy + uv * crop.zw,
                       crop.xy + margin, crop.xy + crop.zw - margin);
-    color = outline ? vec4(0.35, 0.72, 0.92, 1) : vec4(texture(image, point).rgb, 1);
+    color = outline ? vec4(outline_color, 1) : vec4(texture(image, point).rgb, 1);
 }
 """
 
@@ -107,6 +108,7 @@ class RigStimulusPreview(StimulusPreview):
         self.title = "CephVR Visual stimulus · Rig (drag to rotate)"
         self.scene_geometry: Geometry | None = None
         self.layout: ReviewLayout | None = None
+        self.hidden_surfaces: set[str] = set()
         self.azimuth, self.elevation = 25.0, 25.0
         self.drag_origin: tuple[float, float] | None = None
         self.last_press_ns = 0
@@ -114,6 +116,8 @@ class RigStimulusPreview(StimulusPreview):
         self.program: Any = None
         self.buffer: Any = None
         self.array: Any = None
+        self.background = (0.035, 0.055, 0.07)
+        self.surface_colors: dict[str, tuple[float, float, float]] = {}
 
     def prepare(self, shared_window: Any) -> None:
         super().prepare(shared_window)
@@ -191,7 +195,7 @@ class RigStimulusPreview(StimulusPreview):
         context.disable(
             self.moderngl.DEPTH_TEST | self.moderngl.BLEND | self.moderngl.CULL_FACE
         )
-        context.clear(0.035, 0.055, 0.07)
+        context.clear(*self.background)
         if self.scene_geometry is not None and self.layout is not None:
             texture.use(0)
             self.program["image"].value = 0
@@ -203,6 +207,8 @@ class RigStimulusPreview(StimulusPreview):
             for surface, corners in projected_screens(
                 self.scene_geometry, self.azimuth, self.elevation, w, h
             ):
+                if surface.surface_id in self.hidden_surfaces:
+                    continue
                 tile = tiles.get(surface.surface_id)
                 if tile is not None:
                     rect = tile.rect
@@ -225,4 +231,7 @@ class RigStimulusPreview(StimulusPreview):
                     self.program["outline"].value = False
                     self.array.render(mode=self.moderngl.TRIANGLE_FAN)
                 self.program["outline"].value = True
+                self.program["outline_color"].value = self.surface_colors.get(
+                    surface.surface_id, (0.35, 0.72, 0.92)
+                )
                 self.array.render(mode=self.moderngl.LINE_LOOP)

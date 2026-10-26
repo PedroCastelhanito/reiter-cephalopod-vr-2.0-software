@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLabel, QSizePolicy
 
 from cephvr.gui.cameras import CamerasPanel
 from cephvr.gui.components import Card, label
+from cephvr.gui.editing_card import EditingCard
+from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
 
 
@@ -16,15 +18,20 @@ class RecordingsCard(Card):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.cameras = cameras
         self.can_edit = False
-        self.source_grid = QGridLayout()
-        self.source_grid.setHorizontalSpacing(8)
-        self.source_grid.setVerticalSpacing(10)
-        self.source_grid.setColumnMinimumWidth(2, 24)
-        self.body.addLayout(self.source_grid)
-        self.video_heading = label("Videos", "label")
-        self.data_heading = label("Data", "label")
-        for heading in (self.video_heading, self.data_heading):
-            heading.setProperty("subsection", True)
+        self.body.setSpacing(SIZES.group_gap)
+        self.data_group, self.video_group = EditingCard("Data"), EditingCard("Videos")
+        self.data_grid, self.video_grid = QGridLayout(), QGridLayout()
+        for group, grid in (
+            (self.data_group, self.data_grid),
+            (self.video_group, self.video_grid),
+        ):
+            grid.setHorizontalSpacing(8)
+            grid.setVerticalSpacing(10)
+            grid.setColumnMinimumWidth(2, 24)
+            group.body.addLayout(grid)
+            self.body.addWidget(group)
+        self.video_heading = self.video_group.caption
+        self.data_heading = self.data_group.caption
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
         self.touched: set[str] = set()
@@ -76,8 +83,9 @@ class RecordingsCard(Card):
         for camera in self.cameras.drafts:
             if camera.key not in self.record:
                 self.add_recording(camera.key, camera.role)
-        while self.source_grid.count():
-            self.source_grid.takeAt(0)
+        for grid in (self.data_grid, self.video_grid):
+            while grid.count():
+                grid.takeAt(0)
         video_items = [
             (self.source_labels[key], control)
             for key, control in self.record.items()
@@ -88,22 +96,15 @@ class RecordingsCard(Card):
             (self.velocity_label, self.velocities),
             (self.spikeglx_label, self.spikeglx),
         ]
-        row = 0
-        for heading, items in (
-            (self.data_heading, data_items),
-            (self.video_heading, video_items),
+        for grid, items in (
+            (self.data_grid, data_items),
+            (self.video_grid, video_items),
         ):
-            if row:
-                self.source_grid.setRowMinimumHeight(row, 12)
-                row += 1
-            self.source_grid.addWidget(heading, row, 0, 1, 5)
-            row += 1
             for index, (caption, control) in enumerate(items):
                 column = (index % 2) * 3
-                self.source_grid.addWidget(control, row + index // 2, column)
-                self.source_grid.addWidget(caption, row + index // 2, column + 1)
-                self.source_grid.setColumnStretch(column + 1, 1)
-            row += (len(items) + 1) // 2
+                grid.addWidget(control, index // 2, column)
+                grid.addWidget(caption, index // 2, column + 1)
+                grid.setColumnStretch(column + 1, 1)
         self.refresh_controls()
 
     def recording_changed(self) -> None:

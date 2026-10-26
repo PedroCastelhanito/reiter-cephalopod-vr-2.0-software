@@ -234,6 +234,12 @@ async def _camera(
             state.session.context.session_id if session_view else camera.preview_run_id
         )
         if not run_id:
+            if kind == rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW or (
+                kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                and request.preview_placement.update_existing_only
+            ):
+                # Session cleanup may finish before a queued window-only update.
+                return
             raise ClientError("No current preview run for this camera.")
         request.preview_run_id = run_id
     outcome = await client.execute("ExecuteCameraCommand", request)

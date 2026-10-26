@@ -5,17 +5,141 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
+from uuid import uuid4
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.lifecycle_reports import LifecycleReports, ReportHooks
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.runtime import ControllerRuntime
-from cephvr.controller.state import Attempt, ControllerLimits
+from cephvr.controller.state import (
+    Attempt,
+    ConfigurationState,
+    ControllerLimits,
+    LifecycleState,
+    LimitsState,
+    SupervisorState,
+)
 from cephvr.shared.commands import CommandLedger
+
+
+@dataclass
+class _Backend:
+    context: pb.BackendContext
+
+
+@dataclass
+class _Fixture:
+    reports: LifecycleReports
+    lifecycle: LifecycleState
+    supervisor: SupervisorState
+    attempt: Attempt
+    backend: pb.BackendContext
+    publications: list[int]
+
+
+def _limits() -> ControllerLimits:
+    return ControllerLimits(
+        setup_ns=100,
+        setup_cancel_ns=100,
+        ready_ns=100,
+        finished_ns=100,
+        registration_ns=100,
+        recovery_ns=100,
+        metadata_ns=100,
+        validation_ns=100,
+        lead_ns=3,
+        controller_release_ns=2,
+        backend_release_ns=1,
+        start_evidence_ns=100,
+        stop_evidence_ns=100,
+        max_metadata_operations=4,
+        max_metadata_bytes=100_000,
+        history_ns=100,
+        space_query_ns=100,
+        low_space_bytes=1,
+    )
+
+
+def _fixture(root: Path) -> _Fixture:
+    session_id = str(uuid4())
+    generation = str(uuid4())
+    session = pb.SessionContext(controller_generation=generation, session_id=session_id)
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=str(uuid4())
+    )
+    trial = pb.TrialContext(session=session, trial_id=str(uuid4()), trial_number=1)
+    prepared = pb.PreparedSession(context=session)
+    prepared.trials.add(context=trial)
+    reservation = OutputReservation(
+        root, "experiment", "subject", session_id, generation, datetime.now(UTC)
+    )
+    participant = cast(BackendPort, _Backend(backend))
+    attempt = Attempt(
+        context=session,
+        prepared=prepared,
+        reservation=reservation,
+        required={"visual_stimulus": participant},
+        setup_operations={"visual_stimulus": "setup"},
+        visual_stimulus_setup_dispatched=True,
+    )
+    attempt.scope_commands["scope"] = ("visual_stimulus", "incident", 1)
+    attempt.setup_deadline_ns = 100
+    attempt.ready_deadline_ns = 100
+    attempt.trial_index = 0
+    attempt.trial_operation = "trial-command"
+    attempt.trial_participants["visual_stimulus"] = participant
+    lifecycle = LifecycleState(
+        session=pb.SessionState(phase=pb.SESSION_PHASE_SETTING_UP),
+        trial=pb.TrialState(phase=pb.TRIAL_PHASE_PREPARING),
+        attempt=attempt,
+    )
+    configuration = ConfigurationState(
+        pb.ExperimentConfiguration(), pb.ControlPolicies()
+    )
+    supervisor = SupervisorState(last_seen_ns=0)
+    publications = [0]
+
+    def publish() -> None:
+        publications[0] += 1
+
+    def spawn(coroutine: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
+        return asyncio.create_task(coroutine)
+
+    async def late_cleanup(_attempt: Attempt) -> None:
+        pass
+
+    async def log_event(*_args: object, **_kwargs: object) -> None:
+        pass
+
+    hooks = ReportHooks(
+        publish=publish,
+        spawn=spawn,
+        late_cleanup=late_cleanup,
+        log_event=log_event,
+        clock=lambda: 0,
+        activity_requirements=lambda _attempt, _name: (
+            frozenset(),
+            frozenset(),
+            frozenset(),
+            frozenset(),
+            frozenset(),
+        ),
+        source_producers=lambda _attempt, _name: {},
+    )
+    reports = LifecycleReports(
+        lifecycle=lifecycle,
+        configuration=configuration,
+        supervisor=supervisor,
+        limits=LimitsState(_limits()),
+        hooks=hooks,
+    )
+    return _Fixture(reports, lifecycle, supervisor, attempt, backend, publications)
 
 
 def _id() -> str:

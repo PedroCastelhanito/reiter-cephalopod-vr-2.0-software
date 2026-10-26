@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="11" time="14.703" timestamp="2026-10-26T13:58:43.058632+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_review_stimulus_viewer_lives_in_runtime_layout" time="0.887" /><testcase classname="tests.gui.test_dashboard" name="test_multiple_review_previews_have_independent_source_frames[standard-0]" time="0.773"><failure message="AssertionError: assert set() == {'camera-1', ...', 'stimulus'}&#10;  &#10;  Extra items in the right set:&#10;  'camera-1'&#10;  'camera-2'&#10;  'stimulus'&#10;  Use -v to get more diff">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001DA90354DC0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001DA9F10F590&gt;
+page = 0, style = 'standard'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -&gt; None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                frame = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""]
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.frames[key]
+                )
+                width, height = preview_frame_extra() if frame.decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+&gt;           assert set(viewers.windows) == set(keys)
+E           AssertionError: assert set() == {'camera-1', ...', 'stimulus'}
+E             
+E             Extra items in the right set:
+E             'camera-1'
+E             'camera-2'
+E             'stimulus'
+E             Use -v to get more diff
+
+tests\gui\test_dashboard.py:371: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_multiple_review_previews_have_independent_source_frames[standard-2]" time="0.839"><failure message="AssertionError: assert set() == {'camera-1', 'camera-2'}&#10;  &#10;  Extra items in the right set:&#10;  'camera-1'&#10;  'camera-2'&#10;  Use -v to get more diff">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001DA90354DC0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001DA901FC590&gt;
+page = 2, style = 'standard'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -&gt; None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                frame = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""]
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.frames[key]
+                )
+                width, height = preview_frame_extra() if frame.decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+&gt;           assert set(viewers.windows) == set(keys)
+E           AssertionError: assert set() == {'camera-1', 'camera-2'}
+E             
+E             Extra items in the right set:
+E             'camera-1'
+E             'camera-2'
+E             Use -v to get more diff
+
+tests\gui\test_dashboard.py:371: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_multiple_review_previews_have_independent_source_frames[retro_console-0]" time="1.530"><failure message="AssertionError: assert set() == {'camera-1', ...', 'stimulus'}&#10;  &#10;  Extra items in the right set:&#10;  'camera-1'&#10;  'camera-2'&#10;  'stimulus'&#10;  Use -v to get more diff">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001DA90354DC0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001DAA01B52D0&gt;
+page = 0, style = 'retro_console'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -&gt; None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                frame = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""]
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.frames[key]
+                )
+                width, height = preview_frame_extra() if frame.decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+&gt;           assert set(viewers.windows) == set(keys)
+E           AssertionError: assert set() == {'camera-1', ...', 'stimulus'}
+E             
+E             Extra items in the right set:
+E             'camera-1'
+E             'camera-2'
+E             'stimulus'
+E             Use -v to get more diff
+
+tests\gui\test_dashboard.py:371: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_multiple_review_previews_have_independent_source_frames[retro_console-2]" time="1.507"><failure message="AssertionError: assert set() == {'camera-1', 'camera-2'}&#10;  &#10;  Extra items in the right set:&#10;  'camera-1'&#10;  'camera-2'&#10;  Use -v to get more diff">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001DA90354DC0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001DA9EFA0250&gt;
+page = 2, style = 'retro_console'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -&gt; None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                frame = (
+                    target.dashboard.preview_workspace.stimulus_area.frames[""]
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.frames[key]
+                )
+                width, height = preview_frame_extra() if frame.decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+&gt;           assert set(viewers.windows) == set(keys)
+E           AssertionError: assert set() == {'camera-1', 'camera-2'}
+E             
+E             Extra items in the right set:
+E             'camera-1'
+E             'camera-2'
+E             Use -v to get more diff
+
+tests\gui\test_dashboard.py:371: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_setup_click_logs_simulated_intent" time="1.075" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_hide_defers_stimulus_close_until_pending_finishes[False-False]" time="0.028" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_hide_defers_stimulus_close_until_pending_finishes[False-True]" time="0.027" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_hide_defers_stimulus_close_until_pending_finishes[True-False]" time="0.034" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_hide_defers_stimulus_close_until_pending_finishes[True-True]" time="0.030" /><testcase classname="tests.gui.test_dashboard" name="test_review_simulation_steps_are_cancelled_with_their_owner" time="2.318" /></testsuite></testsuites>

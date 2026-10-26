@@ -205,3 +205,56 @@ async def test_controller_client_keeps_claim_when_close_rpc_is_unavailable() -> 
         await client.close(deadline_ns=100)
 
     assert client.claim_id == "claim-1"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("claimed", [False, True])
+async def test_teardown_does_not_release_an_absent_or_acknowledged_claim(
+    claimed, capsys
+):
+    from cephvr.control.v1 import services_pb2 as wire
+
+    class Stub:
+        calls = 0
+
+        async def ExecuteMicrocontrollerIo(self, request, **kwargs):
+            self.calls += 1
+            assert self.calls == 1
+            assert request.claim_id == "claim-1"
+            assert request.kind == wire.MICROCONTROLLER_IO_KIND_CLOSE
+            return wire.MicrocontrollerIoResult(
+                command_id=request.command_id, succeeded=True
+            )
+
+    stub = Stub()
+    client = ControllerMicrocontrollerClient(
+        stub,
+        Principal("acquisition", str(uuid4()), "token"),
+        "controller-1",
+        requested=lambda: None,
+        clock=lambda: 0,
+    )
+    if claimed:
+        client.claim_id = "claim-1"
+        await client.close(deadline_ns=500)
+    assert not client.claim_id
+    native = _Native(running=False)
+    channels = _Channel(), _Channel()
+    await _close(
+        _Server(),
+        SimpleNamespace(
+            serial=client,
+            state=SimpleNamespace(resources={}),
+            resource_ledger=SimpleNamespace(),
+        ),
+        SimpleNamespace(),
+        native,
+        123,
+        456,
+        *channels,
+        500,
+    )
+    assert stub.calls == int(claimed)
+    assert native.checked is None
+    assert all(channel.closed for channel in channels)
+    assert not capsys.readouterr().err

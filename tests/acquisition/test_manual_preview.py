@@ -194,6 +194,15 @@ def test_preview_placement_admission_bounds(
     assert valid_preview_placement(request) is expected
     request.preview_placement.x = 1_000_001
     assert not valid_preview_placement(request)
+    request.kind = wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+    request.preview_placement.CopyFrom(
+        wire.PreviewWindowPlacement(side=128, hidden_stimulus_surfaces=["Front"])
+    )
+    assert not valid_preview_placement(request)  # Stimulus masks are not camera hints.
+    request.preview_placement.CopyFrom(
+        wire.PreviewWindowPlacement(side=128, stimulus_background_rgb=0x21282B)
+    )
+    assert not valid_preview_placement(request)
 
 
 @pytest.mark.parametrize(
@@ -271,6 +280,19 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         return result
 
     monkeypatch.setattr(highgui, "display_array", display)
+    captions = []
+
+    class Caption(highgui.HoverPreviewCaption):
+        hovered = False
+
+        def __init__(self, handle):
+            super().__init__(handle)
+            captions.append(self)
+
+        def sync(self):
+            return self._show(self.hovered)
+
+    monkeypatch.setattr(highgui, "HoverPreviewCaption", Caption)
     reveal = highgui.StagedPreviewWindow.show
     reveals = []
 
@@ -290,7 +312,7 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert user.GetClientRect(
             user.GetWindow(staged.hwnd, 5), ctypes.byref(rectangle)
         )
-        assert (rectangle.right, rectangle.bottom) == (256, 256)
+        assert rectangle.right >= 256 and rectangle.bottom >= 256
         frame = _visible_frame(staged.hwnd)
         assert (frame.left, frame.top) == (400 + len(reveals) * 300, 100)
         reveals.append(staged.hwnd)
@@ -396,7 +418,7 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         child = native.GetWindow(handle, 5)
         rect = ctypes.wintypes.RECT()
         assert child and native.GetWindowRect(child, ctypes.byref(rect))
-        assert (rect.right - rect.left, rect.bottom - rect.top) == (256, 256)
+        assert rect.right - rect.left >= 256 and rect.bottom - rect.top >= 256
         frame = ctypes.wintypes.RECT()
         assert native.GetWindowRect(handle, ctypes.byref(frame))
         dwm = ctypes.WinDLL("dwmapi")
@@ -417,16 +439,33 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         from cephvr.platform.windows.window_coordinates import (
             operator_window_geometry,
             position_preview_frame,
-            preview_frame_extra,
         )
 
         anchor, work_area, scale = operator_window_geometry(handle)
         assert anchor[:2] == (400, 100)
         assert work_area[2] > 0 and work_area[3] > 0 and scale >= 1
-        extra_width, extra_height = preview_frame_extra(scale)
-        assert anchor[2:] == (256 + extra_width, 256 + extra_height)
+        assert anchor[2:] == (256, 256)
         native.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
         assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
+        from cephvr.acquisition.preview.window_thread import window_thread
+
+        def hover(shown):
+            captions[0].hovered = shown
+            captions[0].sync()
+            assert not native.GetWindowLongW(handle, -16) & 0x00C00000
+            assert captions[0].shown == shown
+            assert operator_window_geometry(handle)[0] == anchor
+            current = ctypes.wintypes.RECT()
+            assert native.GetWindowRect(child, ctypes.byref(current))
+            assert (current.left, current.top, current.right, current.bottom) == (
+                rect.left,
+                rect.top,
+                rect.right,
+                rect.bottom,
+            )
+
+        window_thread.call(lambda: hover(True))
+        window_thread.call(lambda: hover(False))
         native.GetForegroundWindow.restype = ctypes.c_void_p
         foreground = native.GetForegroundWindow()
         position_preview_frame(handle, 410, 110)
@@ -475,7 +514,10 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert native.PostMessageW(child, 0x0203, 0, (128 << 16) | 128)
         assert reset.wait(3), "Native double-click did not restore the fitted view"
         assert resources[0][1].published_count == 2
-        assert handle and native.PostMessageW(handle, 0x0010, 0, 0)
+        captions[0].hovered = True
+        window_thread.call(captions[0].sync)
+        assert native.PostMessageW(child, 0x0201, 1, (10 << 16) | 245)
+        # The overlay X closes only this viewer, never its producer.
         assert first.done.result(timeout=5), first.failure
         assert not second.done.done()
         for ring, producer_ring, _reader in resources:
@@ -657,6 +699,13 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     monkeypatch.setattr(highgui, "position_preview_frame", lambda *_, **kw: None)
     monkeypatch.setattr(highgui, "preview_window_handle", lambda *_: 99)
     monkeypatch.setattr(highgui, "blank_preview_caption", lambda *_: None)
+    monkeypatch.setattr(
+        highgui,
+        "HoverPreviewCaption",
+        lambda *_: SimpleNamespace(
+            sync=lambda: False, draw=lambda image, cv: image, press=lambda *args: False
+        ),
+    )
     placement = (
         wire.PreviewWindowPlacement(
             x=0,

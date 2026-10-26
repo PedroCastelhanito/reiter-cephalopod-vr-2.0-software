@@ -9,7 +9,7 @@ from dataclasses import replace
 from fractions import Fraction
 
 import pytest
-from tests.visual_stimulus.support import make_prepared_trial
+from tests.visual_stimulus.support import glb_fixture, make_prepared_trial, pack_glb
 
 from cephvr.visual_stimulus.config.models.program_model import (
     Asset,
@@ -894,55 +894,6 @@ def test_bounded_video_worker_hands_off_a_leased_exact_frame_off_render_thread()
     current.release()
     assert worker_ids and all(item != render_thread for item in worker_ids)
     assert playback.cleanup(deadline_ns=time.perf_counter_ns() + 1_000_000_000) == ()
-
-
-def glb_fixture(*, texture=False, external=False):
-    binary = struct.pack("<9f3H", 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 2)
-    document = {
-        "asset": {"version": "2.0"},
-        "buffers": [{"byteLength": len(binary)}],
-        "bufferViews": [
-            {"buffer": 0, "byteOffset": 0, "byteLength": 36},
-            {"buffer": 0, "byteOffset": 36, "byteLength": 6},
-        ],
-        "accessors": [
-            {"bufferView": 0, "componentType": 5126, "type": "VEC3", "count": 3},
-            {"bufferView": 1, "componentType": 5123, "type": "SCALAR", "count": 3},
-        ],
-        "meshes": [
-            {
-                "primitives": [
-                    {"attributes": {"POSITION": 0}, "indices": 1, "material": 0}
-                ]
-            }
-        ],
-        "nodes": [{"mesh": 0}],
-        "scenes": [{"nodes": [0]}],
-        "scene": 0,
-        "extensionsRequired": ["KHR_materials_unlit"],
-        "materials": [
-            {
-                "extensions": {"KHR_materials_unlit": {}},
-                "pbrMetallicRoughness": {"baseColorFactor": [0.5, 0.25, 1, 1]},
-            }
-        ],
-    }
-    if texture:
-        document["images"] = [{"uri": "textures/fish.png"}]
-        document["textures"] = [{"source": 0, "sampler": 0}]
-        document["samplers"] = [{"wrapS": 33648, "minFilter": 9987}]
-    if external:
-        document["buffers"][0]["uri"] = "mesh.bin"
-    return document, binary
-
-
-def pack_glb(document, binary):
-    data = json.dumps(document).encode()
-    data += b" " * (-len(data) % 4)
-    binary += b"\x00" * (-len(binary) % 4)
-    chunks = struct.pack("<II", len(data), 0x4E4F534A) + data
-    chunks += struct.pack("<II", len(binary), 0x004E4942) + binary
-    return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
 
 
 @pytest.mark.parametrize("external", [False, True])

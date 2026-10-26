@@ -1,0 +1,23 @@
+2026-10-26; base f82be21f28d3c1141adeabe2558c29808062727a, concurrent dirty worktree.
+Repository Python 3.11; isolated offscreen Qt, no native app/device commands.
+
+Trace: focus moves SelectionBox -> QListView -> QFrame -> SelectionBox -> EditingCard.
+The QListView is owned by the card, but card.isAncestorOf(view) returns False.
+
+Before fix:
+pytest tests/gui/test_dashboard.py -q -k editing_card_keeps --basetemp=.pytest_tmp_card_popup_before --timeout=30 --tb=short
+3 failed (combo popup in Standard/Retro/Amber), 3 passed (menus), 924 deselected, 6.71s.
+
+After fix:
+pytest tests/gui/test_dashboard.py -q -k 'editing_card_keeps or mixed_projector_cards or variation_cards_focus or projector_cards_label' --basetemp=.pytest_tmp_card_popup_after --timeout=30 --tb=short
+14 passed, 916 deselected, 17.25s.
+
+Popup tests use actual combo/menu events, mouse selection, Escape cancellation,
+Editing label and rendered fill assertions, then transfer focus to a second card
+and verify the first returns to its resting fill. Other checks retain projector
+editing, field copy/paste and variation-removal behavior.
+
+Ruff check/format: editing_card.py and test_dashboard.py pass.
+Win32 mypy: editing_card.py passes.
+Boundary checker: 759 modules, zero violations, existing unrelated size advisories.
+No full-suite or native multiwindow/DPI acceptance claim.

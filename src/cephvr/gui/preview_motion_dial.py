@@ -4,11 +4,19 @@ from dataclasses import dataclass, replace
 from math import atan2, cos, degrees, hypot, radians, sin
 
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
-from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF
+from PyQt6.QtGui import (
+    QColor,
+    QFont,
+    QPainter,
+    QPainterPath,
+    QPaintEvent,
+    QPen,
+    QPolygonF,
+)
 from PyQt6.QtWidgets import QSizePolicy, QWidget
 
 from cephvr.gui.preview_motion_data import DialSample
-from cephvr.gui.theme import colors_for, minimal_frames
+from cephvr.gui.theme import SIZES, colors_for, minimal_frames, projector_marker_colors
 from cephvr.visual_stimulus.config.rig_coordinates import signed_degrees
 
 AXIS_LABELS = {
@@ -67,7 +75,11 @@ def dial_readout(sample: DialSample) -> str:
 
 
 def instrument_painter(
-    widget: QWidget, height: int | None = None, width: int = 204
+    widget: QWidget,
+    height: int | None = None,
+    width: int = 204,
+    *,
+    centered: bool = False,
 ) -> QPainter:
     """Fit the complete instrument, including labels, without stretching its axes."""
     painter = QPainter(widget)
@@ -76,9 +88,22 @@ def instrument_painter(
     painter.fillRect(widget.rect(), QColor(colors_for(widget).console))
     scale = min(widget.width() / width, widget.height() / height)
     # Amber phosphor keeps instruments directly under their section heading.
-    top = 0 if minimal_frames(widget) else (widget.height() - height * scale) / 2
+    top = (
+        0
+        if minimal_frames(widget) and not centered
+        else (widget.height() - height * scale) / 2
+    )
     painter.translate((widget.width() - width * scale) / 2, top)
     painter.scale(scale, scale)
+    # Match preview info text; enlarging the plot must not enlarge its lettering.
+    font = QFont(widget.font())
+    text_scale = max(1.0, scale)
+    font.setPointSizeF(SIZES.label_font * 72 / widget.logicalDpiY() / text_scale)
+    if font.letterSpacingType() == QFont.SpacingType.AbsoluteSpacing:
+        font.setLetterSpacing(
+            font.letterSpacingType(), font.letterSpacing() / text_scale
+        )
+    painter.setFont(font)
     return painter
 
 
@@ -97,6 +122,12 @@ class MotionDial(QWidget):
         return QSize(MotionDial.SIZE, MotionDial.HEIGHT)
 
     def set_sample(self, sample: DialSample) -> None:
+        sample = replace(
+            sample,
+            color=projector_marker_colors(self).get(
+                sample.name.split(" · ")[0], sample.color
+            ),
+        )
         self.sample = sample
         self.setToolTip(TOOLTIPS[sample.form])
         self.setAccessibleName(f"{sample.name} motion dial")
@@ -170,9 +201,11 @@ class MotionDial(QWidget):
             painter.drawText(
                 QRectF(center.x() + 4, center.y() - radius + 2, radius, 14),
                 Qt.AlignmentFlag.AlignLeft,
-                f"{sample.scale:g}",
+                f"{sample.scale:.1f}",
             )
-        painter.setPen(QPen(QColor(colors.border), 4))
+        pen = QPen(QColor(colors.border), 1.5)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
         painter.drawEllipse(center, ring, ring)
         return center, ring, radius
 
@@ -185,7 +218,23 @@ class MotionDial(QWidget):
         radius: float,
     ) -> None:
         colors = colors_for(self)
-        color = QColor(getattr(colors, sample.color, sample.color))
+        color = QColor(
+            projector_marker_colors(self).get(
+                sample.name.split(" · ")[0], getattr(colors, sample.color, sample.color)
+            )
+        )
+        pen = QPen(color, 2, cap=Qt.PenCapStyle.RoundCap)
+        pen.setCosmetic(True)
+        head_scale = max(1.0, abs(painter.transform().m11()))
+
+        def arrowhead(tip: QPointF, direction: QPointF) -> None:
+            back = tip - direction * (7 / head_scale)
+            normal = QPointF(-direction.y(), direction.x()) * (3.5 / head_scale)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(color)
+            painter.drawPolygon(QPolygonF([tip, back + normal, back - normal]))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+
         if sample.angular_speed and sample.rotation_scale > 0:
             fraction = min(1.0, abs(sample.angular_speed) / sample.rotation_scale)
             sweep = max(12.0, 270 * fraction) * (1 if sample.angular_speed > 0 else -1)
@@ -198,8 +247,13 @@ class MotionDial(QWidget):
                 90,
                 sweep,
             )
-            painter.setPen(QPen(color, 4, cap=Qt.PenCapStyle.RoundCap))
+            painter.setPen(pen)
             painter.drawPath(path)
+            angle = radians(90 + sweep)
+            sign = 1 if sweep > 0 else -1
+            arrowhead(
+                path.currentPosition(), QPointF(-sin(angle) * sign, -cos(angle) * sign)
+            )
         if sample.vector is not None and sample.scale > 0 and not sample.message:
             dx, dy = screen_vector(sample)
             length = hypot(dx, dy)
@@ -208,21 +262,9 @@ class MotionDial(QWidget):
             reach = min(1.0, length / sample.scale) * radius
             tip = center + QPointF(dx / length * reach, dy / length * reach)
             angle = atan2(dy, dx)
-            painter.setPen(QPen(color, 2.5))
+            painter.setPen(pen)
             painter.drawLine(center, tip)
-            back = tip - QPointF(cos(angle) * 9, sin(angle) * 9)
-            normal = QPointF(-sin(angle) * 4, cos(angle) * 4)
-            painter.setBrush(color)
-            painter.drawPolygon(QPolygonF([tip, back + normal, back - normal]))
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-
-
-PROJECTOR_COLORS = {
-    "Left": "#66c7f4",
-    "Front": "#ffbc5c",
-    "Right": "#d39aff",
-    "Bottom": "#69d59a",
-}
+            arrowhead(tip, QPointF(cos(angle), sin(angle)))
 
 
 class SharedMotionDial(MotionDial):
@@ -237,14 +279,15 @@ class SharedMotionDial(MotionDial):
         self.setAccessibleName("Shared projector directions")
 
     def set_samples(self, samples: tuple[DialSample, ...]) -> None:
-        order = {name: index for index, name in enumerate(PROJECTOR_COLORS)}
+        colors = projector_marker_colors(self)
+        order = {name: index for index, name in enumerate(colors)}
         samples = tuple(
             sorted(samples, key=lambda s: order.get(s.name.split(" · ")[0], 4))
         )
         self.samples = tuple(
             replace(
                 sample,
-                color=PROJECTOR_COLORS.get(sample.name.split(" · ")[0], sample.color),
+                color=colors.get(sample.name.split(" · ")[0], sample.color),
             )
             for sample in samples
         )
@@ -280,7 +323,9 @@ class SharedMotionDial(MotionDial):
         return tuple(rows)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
-        painter = instrument_painter(self, self.sizeHint().height(), self.TABLE_WIDTH)
+        painter = instrument_painter(
+            self, self.sizeHint().height(), self.TABLE_WIDTH, centered=True
+        )
         if not self.samples:
             return
         scale = max(s.scale for s in self.samples)
@@ -306,7 +351,14 @@ class SharedMotionDial(MotionDial):
             painter.drawLine(QPointF(0, y + 23), QPointF(self.TABLE_WIDTH, y + 23))
             for column, text in enumerate(values):
                 painter.setPen(
-                    QColor(colors.label if row == 0 else self.samples[row - 1].color)
+                    QColor(
+                        colors.label
+                        if row == 0
+                        else projector_marker_colors(self).get(
+                            self.samples[row - 1].name.split(" · ")[0],
+                            self.samples[row - 1].color,
+                        )
+                    )
                 )
                 width = columns[column + 1] - columns[column] - 8
                 painter.drawText(

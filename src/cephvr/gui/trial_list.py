@@ -67,7 +67,7 @@ class TrialList(QListWidget):
         bottom = self.visualItemRect(last).bottom() + 1 if last is not None else 0
         height = self.visualItemRect(last).height() if last is not None else 40
         self.add.setFixedHeight(height)
-        self.add.setGeometry(2, bottom + 6, max(36, viewport.width() - 4), height)
+        self.add.setGeometry(0, bottom + 6, viewport.width(), height)
         self.add.setVisible(bottom + 6 < viewport.height() and bottom + height + 6 > 0)
         rows = [self.hover_row if self.hover_row >= 0 else self.currentRow()]
         for slot, control in enumerate(self.removers):

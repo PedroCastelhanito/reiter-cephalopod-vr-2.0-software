@@ -1,5 +1,11 @@
 # Tracking status
 
+Oct26 `repo-cleanup-and-code-review`: Astra/Luna source/caller audit found no safe
+additional dead-code deletion or justified optimization in Tracking. All116 local
+non-rig Tracking tests pass in the final backend suite. Runtime behavior and
+outstanding rig acceptance are unchanged.
+[Review evidence](runtime-evidence-2026-10-26/repo-review/).
+
 Oct19 `gui-full-rig-test` image-only investigation repaired confirmed
 [T08](../docs/architecture/tracking.md#t08)/[E08](../docs/architecture/system-contracts.md#e08)
 diagnostic ownership/completion defects. Failed preparation now retains exact closed

@@ -1,0 +1,64 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+_____________ test_review_stimulus_viewer_lives_in_runtime_layout _____________
+tests\gui\test_dashboard.py:244: in test_review_stimulus_viewer_lives_in_runtime_layout
+    assert target.preview_slot.isVisible()
+E   assert False
+E    +  where False = <built-in method isVisible of PreviewSlot object at 0x0000020F7B394310>()
+E    +    where <built-in method isVisible of PreviewSlot object at 0x0000020F7B394310> = <cephvr.gui.preview_placement.PreviewSlot object at 0x0000020F7B394310>.isVisible
+E    +      where <cephvr.gui.preview_placement.PreviewSlot object at 0x0000020F7B394310> = <cephvr.gui.window.DashboardWindow object at 0x0000020F7B8376D0>.preview_slot
+__ test_multiple_review_previews_have_independent_source_frames[standard-0] ___
+tests\gui\test_dashboard.py:368: in test_multiple_review_previews_have_independent_source_frames
+    assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E   assert False
+E    +  where False = <built-in method contains of QRect object at 0x0000020F77DDD230>(PyQt6.QtCore.QRect(308, 639, 287, 317))
+E    +    where <built-in method contains of QRect object at 0x0000020F77DDD230> = PyQt6.QtCore.QRect(308, 639, 285, 285).contains
+E    +      where PyQt6.QtCore.QRect(308, 639, 285, 285) = QRect(PyQt6.QtCore.QPoint(308, 639), PyQt6.QtCore.QSize(285, 285))
+E    +        where PyQt6.QtCore.QPoint(308, 639) = <built-in method mapToGlobal of QWidget object at 0x0000020F6C7517E0>(PyQt6.QtCore.QPoint())
+E    +          where <built-in method mapToGlobal of QWidget object at 0x0000020F6C7517E0> = <PyQt6.QtWidgets.QWidget object at 0x0000020F6C7517E0>.mapToGlobal
+E    +          and   PyQt6.QtCore.QPoint() = QPoint()
+E    +        and   PyQt6.QtCore.QSize(285, 285) = <built-in method size of QWidget object at 0x0000020F6C7517E0>()
+E    +          where <built-in method size of QWidget object at 0x0000020F6C7517E0> = <PyQt6.QtWidgets.QWidget object at 0x0000020F6C7517E0>.size
+__ test_multiple_review_previews_have_independent_source_frames[standard-2] ___
+tests\gui\test_dashboard.py:368: in test_multiple_review_previews_have_independent_source_frames
+    assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E   assert False
+E    +  where False = <built-in method contains of QRect object at 0x0000020F77DDEB90>(PyQt6.QtCore.QRect(928, 640, 313, 343))
+E    +    where <built-in method contains of QRect object at 0x0000020F77DDEB90> = PyQt6.QtCore.QRect(928, 640, 311, 311).contains
+E    +      where PyQt6.QtCore.QRect(928, 640, 311, 311) = QRect(PyQt6.QtCore.QPoint(928, 640), PyQt6.QtCore.QSize(311, 311))
+E    +        where PyQt6.QtCore.QPoint(928, 640) = <built-in method mapToGlobal of QWidget object at 0x0000020F77EB2710>(PyQt6.QtCore.QPoint())
+E    +          where <built-in method mapToGlobal of QWidget object at 0x0000020F77EB2710> = <PyQt6.QtWidgets.QWidget object at 0x0000020F77EB2710>.mapToGlobal
+E    +          and   PyQt6.QtCore.QPoint() = QPoint()
+E    +        and   PyQt6.QtCore.QSize(311, 311) = <built-in method size of QWidget object at 0x0000020F77EB2710>()
+E    +          where <built-in method size of QWidget object at 0x0000020F77EB2710> = <PyQt6.QtWidgets.QWidget object at 0x0000020F77EB2710>.size
+_ test_multiple_review_previews_have_independent_source_frames[retro_console-0] _
+tests\gui\test_dashboard.py:368: in test_multiple_review_previews_have_independent_source_frames
+    assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E   assert False
+E    +  where False = <built-in method contains of QRect object at 0x0000020F74F54660>(PyQt6.QtCore.QRect(308, 630, 287, 317))
+E    +    where <built-in method contains of QRect object at 0x0000020F74F54660> = PyQt6.QtCore.QRect(308, 630, 285, 285).contains
+E    +      where PyQt6.QtCore.QRect(308, 630, 285, 285) = QRect(PyQt6.QtCore.QPoint(308, 630), PyQt6.QtCore.QSize(285, 285))
+E    +        where PyQt6.QtCore.QPoint(308, 630) = <built-in method mapToGlobal of QWidget object at 0x0000020F74EEF640>(PyQt6.QtCore.QPoint())
+E    +          where <built-in method mapToGlobal of QWidget object at 0x0000020F74EEF640> = <PyQt6.QtWidgets.QWidget object at 0x0000020F74EEF640>.mapToGlobal
+E    +          and   PyQt6.QtCore.QPoint() = QPoint()
+E    +        and   PyQt6.QtCore.QSize(285, 285) = <built-in method size of QWidget object at 0x0000020F74EEF640>()
+E    +          where <built-in method size of QWidget object at 0x0000020F74EEF640> = <PyQt6.QtWidgets.QWidget object at 0x0000020F74EEF640>.size
+_ test_multiple_review_previews_have_independent_source_frames[retro_console-2] _
+tests\gui\test_dashboard.py:368: in test_multiple_review_previews_have_independent_source_frames
+    assert QRect(slot.mapToGlobal(QPoint()), slot.size()).contains(frame)
+E   assert False
+E    +  where False = <built-in method contains of QRect object at 0x0000020F74F561F0>(PyQt6.QtCore.QRect(928, 637, 313, 343))
+E    +    where <built-in method contains of QRect object at 0x0000020F74F561F0> = PyQt6.QtCore.QRect(928, 637, 311, 311).contains
+E    +      where PyQt6.QtCore.QRect(928, 637, 311, 311) = QRect(PyQt6.QtCore.QPoint(928, 637), PyQt6.QtCore.QSize(311, 311))
+E    +        where PyQt6.QtCore.QPoint(928, 637) = <built-in method mapToGlobal of QWidget object at 0x0000020F6F13E440>(PyQt6.QtCore.QPoint())
+E    +          where <built-in method mapToGlobal of QWidget object at 0x0000020F6F13E440> = <PyQt6.QtWidgets.QWidget object at 0x0000020F6F13E440>.mapToGlobal
+E    +          and   PyQt6.QtCore.QPoint() = QPoint()
+E    +        and   PyQt6.QtCore.QSize(311, 311) = <built-in method size of QWidget object at 0x0000020F6F13E440>()
+E    +          where <built-in method size of QWidget object at 0x0000020F6F13E440> = <PyQt6.QtWidgets.QWidget object at 0x0000020F6F13E440>.size
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_review_stimulus_viewer_lives_in_runtime_layout
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-0]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-2]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-0]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-2]
+5 failed, 952 deselected in 12.34s

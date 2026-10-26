@@ -1,0 +1,18 @@
+{
+  "scope": "named external test fixtures created by this review",
+  "directories": 10,
+  "files": 6320,
+  "bytes": 111029425.0,
+  "names": [
+    "cephvr-review-backend-final-20261026",
+    "cephvr-review-gui-20261026",
+    "cephvr-review-gui-final-20261026",
+    "cephvr-review-gui-focused-20261026",
+    "cephvr-review-gui-focused2-20261026",
+    "cephvr-review-gui-last-two-20261026",
+    "cephvr-review-gui-validated-20261026",
+    "cephvr-review-last-two-agent-native-20261026",
+    "cephvr-review-last-two-fixed-20261026",
+    "cephvr-review-resources-20261026"
+  ]
+}

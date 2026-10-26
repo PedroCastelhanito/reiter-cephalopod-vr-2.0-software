@@ -25,6 +25,7 @@ from .support import (
     Preparation,
     Recorder,
     Reports,
+    _geometric_profiles,
     make_prepared_trial,
     valid_display_json,
 )
@@ -1316,7 +1317,7 @@ def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
     from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
     from cephvr.visual_stimulus.worker.lifecycle import LifecycleDriver
 
-    from .test_resources import glb_fixture, pack_glb
+    from .support import glb_fixture, pack_glb
 
     class ProtectedFile:
         def __init__(self, path: Path):
@@ -2009,8 +2010,6 @@ def test_native_preparation_compiles_deferred_recipe_and_installs_initial_reside
     trial.definition.stimulus.stimulus_seed_decimal = "17"
     request.settings.display.profile_json = valid_display_json()
     from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
-
-    from .test_display_calibration_rendering import _geometric_profiles
 
     display = parse_display_json(
         request.settings.display.profile_json, max_bytes=1_000_000

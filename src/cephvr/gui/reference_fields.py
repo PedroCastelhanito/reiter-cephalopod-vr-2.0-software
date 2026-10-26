@@ -143,7 +143,8 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
     if (
         motion is not None
         and editor.fades is not None
-        and editor.linked_to.isEnabled()
+        # Binding during a session lock must not hide a supported control on unlock.
+        and editor.linked_to.isEnabledTo(editor)
         and program is not None
         and program.category != "media_presentation"
     ):

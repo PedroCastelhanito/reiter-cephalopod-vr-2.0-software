@@ -174,6 +174,14 @@ def toggle_button(text: str, role: str = "secondary", *, hint: str = "") -> QPus
     return result
 
 
+def remove_button(hint: str) -> QPushButton:
+    """Square `×` that removes the row it sits in; hover-overlay removers stay compact."""
+    result = button("×", "icon", hint=hint)
+    result.setAccessibleName(hint)
+    result.setFixedSize(SIZES.icon_button, SIZES.icon_button)
+    return result
+
+
 def equal_row_height(*controls: QWidget) -> None:
     """Match row control heights; compact indicators are explicit exceptions."""
     for control in controls:
@@ -260,7 +268,7 @@ class Card(QFrame):
         self.body = QVBoxLayout(self)
         padding = SIZES.compact_card_padding if compact else SIZES.card_padding
         self.body.setContentsMargins(padding, 0, padding, padding)
-        self.body.setSpacing(10)
+        self.body.setSpacing(SIZES.body_gap)
         self.header = QHBoxLayout()
         self.header.setContentsMargins(
             0, 0, 0, SIZES.compact_card_top if compact else SIZES.card_top
@@ -303,6 +311,18 @@ class Card(QFrame):
             painter.drawRoundedRect(frame, radius, radius)
         if retro_console(self):
             double_frame(painter, frame, self)
+
+
+def configuration_file_card(load: QPushButton, save: QPushButton) -> Card:
+    """The one card that holds a page's Load/Save file actions."""
+    card = Card("Configuration file")
+    row = QHBoxLayout()
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setSpacing(SIZES.field_x_gap)
+    row.addWidget(load, 1)
+    row.addWidget(save, 1)
+    card.body.addLayout(row)
+    return card
 
 
 class StatusIndicator(QRadioButton):

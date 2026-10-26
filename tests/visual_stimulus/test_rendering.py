@@ -348,7 +348,7 @@ def test_saved_monitor_requires_exact_unique_active_identity(monkeypatch, matche
         get_win32_monitor=lambda monitor: monitor,
     )
     message = (
-        "A configured projector is not detected by Windows"
+        "Windows does not detect the assigned display"
         if matches == 0
         else f"matched {matches} active"
     )
@@ -358,7 +358,8 @@ def test_saved_monitor_requires_exact_unique_active_identity(monkeypatch, matche
     assert ModernGLPort._resolve_monitor("SAVED", glfw) == 17
 
 
-def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
+@pytest.mark.parametrize("mapped", [False, True])
+def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path, mapped):
     from cephvr.visual_stimulus.rendering.native import ModernGLPort
     from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
     from cephvr.visual_stimulus.rendering.types import ResourceReleaseReport
@@ -369,6 +370,15 @@ def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
         update={"output_id": "second", "device_identity": "missing"}
     )
     display = display.model_copy(update={"outputs": (first, second)})
+    if mapped:
+        display = display.model_copy(
+            update={
+                "mappings": tuple(
+                    mapping.model_copy(update={"output_id": second.output_id})
+                    for mapping in display.mappings
+                )
+            }
+        )
     resolved, terminated = [], []
 
     def resolve(identity, glfw):
@@ -381,8 +391,16 @@ def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
     # Any window or GL call would fail: identity preflight must precede creation.
     port._glfw = NS(terminate=lambda: terminated.append(True))
     port._moderngl = object()
-    with pytest.raises(DisplayUnavailableError, match="missing saved"):
+    with pytest.raises(DisplayUnavailableError, match="missing saved") as failure:
         port.initialize_display(display)
+    faces = (
+        ", ".join(mapping.surface_id.capitalize() for mapping in display.mappings)
+        if mapped
+        else "second"
+    )
+    assert f"{faces} projector: missing saved projector" in str(failure.value)
+    assert "Saved display: missing (output second)" in str(failure.value)
+    assert "Refresh in Devices > Projectors" in failure.value.remedy
     assert resolved == [first.device_identity, "missing"]
     assert terminated == [True]
     assert not port._outputs and not port._window_obligations
@@ -2907,6 +2925,7 @@ def test_stimulus_preview_places_before_owner_can_show_and_preserves_manual_move
     )
     glfw = NS(
         set_window_size=lambda window, w, h: events.append(("size", w, h)),
+        get_window_size=lambda window: (640, 640),
         set_window_pos=lambda *args: pytest.fail(
             "Win32 placement must use the visible frame"
         ),
@@ -2932,18 +2951,54 @@ def test_stimulus_preview_places_before_owner_can_show_and_preserves_manual_move
         "show",
     ]
     events.clear()
+    glfw.get_window_size = lambda window: (400, 400)
+    hint.update_existing_only = True
+    preview.set_visible(True, hint)
+    assert events == [("position", 410, 220), "sync"]
+    events.clear()
     revision[0] += 1
     hint.update_existing_only = True
     preview.set_visible(True, hint)
     assert not events
     hint.snap_to_grid = True
     preview.set_visible(True, hint)
-    assert events[:3] == [("size", 400, 400), ("position", 410, 220), "show"]
+    assert events == [("position", 410, 220), "sync"]
     preview.set_visible(False, rpc.PreviewWindowPlacement())
     events.clear()
     hint.update_existing_only = hint.snap_to_grid = False
     preview.set_visible(True, hint)
-    assert events[:3] == [("size", 400, 400), ("position", 410, 220), "show"]
+    assert events[:2] == [("position", 410, 220), "show"]
+
+
+def test_stimulus_preview_prepares_borderless_hidden_shared_window(monkeypatch):
+    from cephvr.visual_stimulus.rendering import preview as module
+
+    hints = {}
+    shared, window, context = object(), object(), object()
+    glfw = NS(
+        VISIBLE="visible",
+        FALSE=0,
+        DECORATED="decorated",
+        CONTEXT_VERSION_MAJOR="major",
+        CONTEXT_VERSION_MINOR="minor",
+        OPENGL_PROFILE="profile",
+        OPENGL_CORE_PROFILE="core",
+        default_window_hints=lambda: hints.clear(),
+        window_hint=lambda key, value: hints.update({key: value}),
+        create_window=lambda width, height, title, monitor, owner: (
+            window if owner is shared else None
+        ),
+        set_window_size_limits=lambda *args: None,
+        make_context_current=lambda *args: None,
+        swap_interval=lambda *args: None,
+    )
+    monkeypatch.setattr(module, "attach_window_context", lambda _: context)
+    viewer = module.StimulusPreview(glfw, NS(), lambda *_: None)
+    monkeypatch.setattr(viewer, "prepare_scene", lambda: None)
+    monkeypatch.setattr(viewer, "clear", lambda: None)
+    viewer.prepare(shared)
+    assert hints[glfw.VISIBLE] == hints[glfw.DECORATED] == glfw.FALSE
+    assert viewer.window is window and viewer.context is context
 
 
 def test_stimulus_native_close_hides_and_failed_release_retains_ownership(monkeypatch):
@@ -3162,6 +3217,8 @@ def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatc
     from cephvr.visual_stimulus.rendering import preview_group as module
 
     events, ordered, draws = [], [], []
+    now = [0]
+    monkeypatch.setattr(module, "host_time_ns", lambda: now[0])
 
     class Window:
         def __init__(self, glfw, moderngl, changed):
@@ -3171,6 +3228,7 @@ def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatc
             self.changed = changed
             self.crop = (0, 0, 1, 1)
             self.title = "Combined"
+            self.owner = None
             self.due = True
             self.hints = []
 
@@ -3226,6 +3284,33 @@ def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatc
     group.prepare(object())
     group.set_visible(True, rpc.PreviewWindowPlacement(side=256))
     assert group.combined.visible
+    filtered = rpc.PreviewWindowPlacement(
+        side=256,
+        hidden_stimulus_surfaces=["Front"],
+        stimulus_background_rgb=0x21282B,
+        stimulus_surface_colors={"Front": 0xFFD27A},
+    )
+    group.set_visible(True, filtered)
+    assert group.combined.background == pytest.approx((33 / 255, 40 / 255, 43 / 255))
+    assert group.combined.surface_colors["front"] == pytest.approx(
+        (1, 210 / 255, 122 / 255)
+    )
+    assert group.combined.hidden_surfaces == {"front"}
+    for values in (
+        {"stimulus_background_rgb": 0x1000000},
+        {"stimulus_surface_colors": {"Unknown": 0}},
+        {"stimulus_surface_colors": {"Front": 0x1000000}},
+    ):
+        with pytest.raises(ValueError, match="placement"):
+            group.set_visible(True, rpc.PreviewWindowPlacement(side=256, **values))
+    assert group.combined.visible
+    for invalid in (["Front", "Front"], ["Unknown"]):
+        with pytest.raises(ValueError, match="placement"):
+            group.set_visible(
+                True, rpc.PreviewWindowPlacement(hidden_stimulus_surfaces=invalid)
+            )
+    group.set_visible(True, rpc.PreviewWindowPlacement(side=256))
+    assert not group.combined.hidden_surfaces
     geometry = make_prepared_trial().display.geometry
     group.update_layout(layout, geometry)
     assert group.combined.scene_geometry is geometry
@@ -3240,10 +3325,23 @@ def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatc
     assert not group.combined.visible and group.visible
     assert group.windows["Bottom"].crop == (0.5, 0, 0.5, 1)
     assert group.frame_due() and not group.frame_due()
+    # A newly shown projector must not start a second group draw cadence.
+    now[0] = 25_000_000
+    group.windows["Bottom"].visible = False
+    group.set_visible(True, hint)
+    assert not group.frame_due()
+    now[0] = 50_000_000
+    assert group.frame_due() and not group.frame_due()
     group.set_visible(True, hint)
     assert group.windows["Front"].hints[-1].update_existing_only
     group.draw(object(), 400, 200)
     assert len(draws) == 2 and all(draw[-2:] == (200, 200) for draw in draws)
+    now[0] = 100_000_000
+    for window in group.windows.values():
+        window.owner = NS(minimized=True)
+    assert not group.frame_due()
+    group.windows["Front"].owner.minimized = False
+    assert group.frame_due()
     # Hidden consumers still finish their reads before the texture is overwritten.
     group.set_visible(False, rpc.PreviewWindowPlacement())
     group.activate()
@@ -3259,6 +3357,21 @@ def test_projector_preview_group_switches_crops_and_preserves_polling(monkeypatc
     group.set_visible(False, rpc.PreviewWindowPlacement())
     group.set_visible(True, hint)
     assert not group.visible  # Polling cannot reopen a closed group.
+    conflict = rpc.PreviewWindowPlacement(hidden_stimulus_surfaces=["Front"])
+    conflict.stimulus_tiles.add(surface="Front", side=160)
+    with pytest.raises(ValueError, match="placement"):
+        group.set_visible(True, conflict)
+    group.set_visible(
+        True,
+        rpc.PreviewWindowPlacement(
+            side=256, hidden_stimulus_surfaces=["Left", "Front", "Right", "Bottom"]
+        ),
+    )
+    assert not group.visible
+    group.set_visible(True, rpc.PreviewWindowPlacement(side=256))
+    assert group.combined.visible and not group.combined.hidden_surfaces
+    group.combined.owner = None
+    assert group.frame_due()  # Reopening the entire group is immediate.
     group.release()
     assert not group.windows
 
@@ -3309,6 +3422,8 @@ def test_native_gpu_rig_crops_orients_and_never_writes_source(face):
     context = moderngl.create_standalone_context(require=430)
     capture = ReviewCapture()
     viewer = RigStimulusPreview(None, moderngl, lambda *_: None)
+    viewer.background = (33 / 255, 40 / 255, 43 / 255)
+    viewer.surface_colors = {face: (1, 210 / 255, 122 / 255)}
     viewer.context = context
     source = context.texture(
         (64, 64),
@@ -3355,6 +3470,19 @@ def test_native_gpu_rig_crops_orients_and_never_writes_source(face):
         viewer.azimuth, viewer.elevation = 25, 25
         viewer.draw_scene(texture, texture.width, texture.height, 256, 256)
         assert target.read(components=4) != pixels
+        viewer.hidden_surfaces = {face}
+        viewer.draw_scene(texture, texture.width, texture.height, 256, 256)
+        hidden = target.read(components=4)
+        assert hidden[:3] == bytes((33, 40, 43))
+        viewer.hidden_surfaces = set()
+        viewer.draw_scene(texture, texture.width, texture.height, 256, 256)
+        outlined = target.read(components=4)
+        assert (255, 210, 122) in {
+            tuple(outlined[i : i + 3]) for i in range(0, len(outlined), 4)
+        }
+        assert (
+            len(set(zip(*[iter(hidden)] * 4, strict=True))) == 1
+        )  # No surface or outline remains.
         assert source.read() == original and texture.read() == composite
         # Hidden/minimized windows never issue a draw or swap.
         viewer.draw(texture, texture.width, texture.height)

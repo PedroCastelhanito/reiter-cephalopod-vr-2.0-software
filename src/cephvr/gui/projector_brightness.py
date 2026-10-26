@@ -3,11 +3,12 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QAbstractSpinBox, QHBoxLayout, QSpinBox
 
-from cephvr.gui.components import Card, button, field
+from cephvr.gui.components import button, field
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.view import DashboardView, Phase
 
 
-class ProjectorBrightnessCard(Card):
+class ProjectorBrightnessCard(EditingCard):
     requested = pyqtSignal(int)
 
     def __init__(self) -> None:

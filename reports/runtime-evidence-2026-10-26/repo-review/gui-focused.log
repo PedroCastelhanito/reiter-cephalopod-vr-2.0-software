@@ -1,0 +1,386 @@
+.F.F.FF.F.............................                                   [100%]
+================================== FAILURES ===================================
+__ test_multiple_review_previews_have_independent_source_frames[standard-0] ___
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001604F2FFBE0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001605E697490>
+page = 0, style = 'standard'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                decorated = key != "stimulus" and sys.platform != "win32"
+                width, height = preview_frame_extra() if decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+>                   target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+E               KeyError: ''
+
+tests\gui\test_dashboard.py:370: KeyError
+_ test_multiple_review_previews_have_independent_source_frames[retro_console-0] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001604F2FFBE0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016051D45450>
+page = 0, style = 'retro_console'
+
+    @pytest.mark.parametrize("page", [0, 2])
+    @pytest.mark.parametrize("style", ["standard", "retro_console"])
+    def test_multiple_review_previews_have_independent_source_frames(
+        app: QApplication, monkeypatch: pytest.MonkeyPatch, page: int, style: str
+    ) -> None:
+        import sys
+    
+        import cephvr.gui.review_preview as previews
+        from cephvr.platform.windows.window_coordinates import preview_frame_extra
+    
+        visible: set[str] = set()
+        monkeypatch.setitem(
+            sys.modules,
+            "cv2",
+            SimpleNamespace(
+                WINDOW_NORMAL=0,
+                WND_PROP_VISIBLE=1,
+                error=RuntimeError,
+                namedWindow=lambda title, _: visible.add(title),
+                imshow=lambda *_: None,
+                waitKey=lambda _: None,
+                moveWindow=lambda *_: None,
+                resizeWindow=lambda *_: None,
+                setWindowTitle=lambda *_: None,
+                destroyWindow=lambda title: visible.discard(title),
+                getWindowProperty=lambda title, _: int(title in visible),
+            ),
+        )
+        monkeypatch.setattr(previews, "position_preview_frame", lambda *_, **_kw: None)
+        monkeypatch.setattr(previews, "preview_window_handle", lambda _title: 99)
+        monkeypatch.setattr(previews, "blank_preview_caption", lambda _handle: None)
+        monkeypatch.setattr(
+            previews,
+            "StagedPreviewWindow",
+            lambda _: nullcontext(SimpleNamespace(show=lambda _: None)),
+        )
+        monkeypatch.setattr(
+            previews,
+            "bind_preview_owner",
+            lambda *_: SimpleNamespace(
+                sync=lambda *_: False,
+                close=lambda: None,
+                geometry=lambda: (0, 0, 300, 330),
+                placement_revision=lambda: None,
+                retarget=lambda _handle: None,
+            ),
+        )
+        target = DashboardWindow(sample=True)
+        controls = ReviewControls(target, fake_previews=True)
+        viewers = controls.preview_windows
+        assert viewers is not None
+        try:
+            target.appearance.select(style, persist=False)
+            monkeypatch.setattr(
+                target.screen(), "availableGeometry", lambda: QRect(0, 0, 2200, 1500)
+            )
+            target.resize(1600, 1100)
+            target.show()
+            target.select_page(page)
+            if page == 0:
+                show_previews(target)
+            for _ in range(4):
+                app.processEvents()
+            status = (
+                target.dashboard.status_column
+                if page == 0
+                else target.devices.cameras.status_column
+            )
+            original_log_height = status.console.height()
+            initial_placement = viewers.placement
+            positions = {}
+    
+            def placement(key):
+                hint = initial_placement(key)
+                decorated = key != "stimulus" and sys.platform != "win32"
+                width, height = preview_frame_extra() if decorated else (0, 0)
+                positions[key] = QRect(
+                    hint.x, hint.y, hint.side + width, hint.side + height
+                )
+                return hint
+    
+            viewers.placement = placement
+            enabled = {
+                camera.key for camera in target.devices.cameras.drafts if camera.enabled
+            }
+            keys = [
+                p.key
+                for p in target.dashboard.view.previews
+                if p.active and (page == 0 or p.key in enabled)
+            ][:3]
+            assert len(keys) == (3 if page == 0 else 2)
+            assert target.preview_slot.isHidden() is (page != 0)
+            for key in keys:
+                controls.preview_visibility(key, True)
+                app.processEvents()
+                viewers.poll_windows()
+            assert set(viewers.windows) == set(keys)
+            assert len(visible) == len(keys)
+            for key, frame in positions.items():
+                slot = (
+>                   target.dashboard.preview_workspace.stimulus_area.frames[""].target
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    if key == "stimulus" and page == 0
+                    else target.preview_slot.target_for(key)
+                )
+E               KeyError: ''
+
+tests\gui\test_dashboard.py:370: KeyError
+___________ test_devices_draft_icons_local_edits_and_command_gates ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001605BB90D30>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001604F2FFBE0>
+
+    def test_devices_draft_icons_local_edits_and_command_gates(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[2].click()
+        devices = window.devices
+        assert window.stack.currentWidget() is devices
+        assert [devices.tab_bar.tabText(i) for i in range(4)] == [
+            "Cameras",
+            "Microcontroller",
+            "Projectors",
+            "SpikeGLX",
+        ]
+        assert all(not devices.tab_bar.tabIcon(i).isNull() for i in range(4))
+        camera = devices.cameras
+        camera.fields["trigger_frequency_hz"].setText("1234")
+        camera.edit("trigger_frequency_hz", "1234")
+        for index, panel in enumerate(devices.panels[1:], start=1):
+            devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            if panel is devices.spikeglx:
+                assert not panel.action_buttons[0].isEnabled()
+                continue
+            if panel is devices.projectors:
+                panel.refresh_button.click()
+            else:
+                panel.scan_button.click()
+>           assert "no hardware command sent" in panel.console.toPlainText()
+E           AssertionError: assert 'no hardware command sent' in '14:02:10  [GUI]       No projectors detected. Turn on the projectors, check their display cables, then click Refresh in Devices > Projectors before testing or running Setup. You can still edit and save settings.'
+E            +  where '14:02:10  [GUI]       No projectors detected. Turn on the projectors, check their display cables, then click Refresh in Devices > Projectors before testing or running Setup. You can still edit and save settings.' = <built-in method toPlainText of LogConsole object at 0x000001605D59F880>()
+E            +    where <built-in method toPlainText of LogConsole object at 0x000001605D59F880> = <cephvr.gui.consoles.LogConsole object at 0x000001605D59F880>.toPlainText
+E            +      where <cephvr.gui.consoles.LogConsole object at 0x000001605D59F880> = <cephvr.gui.projectors.ProjectorsPanel object at 0x000001605D5FA710>.console
+
+tests\gui\test_dashboard.py:3215: AssertionError
+_________ test_camera_trigger_form_reflows_and_destroys_owned_editors _________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001604F2FFBE0>
+
+    def test_camera_trigger_form_reflows_and_destroys_owned_editors(app):
+        from cephvr.gui.cameras import CamerasPanel
+    
+        destroyed = []
+        for cycle in range(3):
+            panel = CamerasPanel(sample=True)
+            panel.destroyed.connect(lambda: destroyed.append(True))
+            panel.apply_view(review_view(Phase.CONFIGURATION))
+            panel.show()
+            app.processEvents()
+            form = panel.trigger_form
+            fields = form.fields
+            source, rate, pin = form.controls
+            source.setFocus()
+            QTest.keyClick(source, Qt.Key.Key_End)
+            rate.setText("60")
+            pin.setText("9")
+            minimums = sorted(
+                control.minimumSizeHint().width() for control in form.controls
+            )
+            narrow = (
+                sum(minimums[-2:])
+                + 2 * form.grid.horizontalSpacing()
+                + panel.width()
+                - form.width()
+            )
+            for width, stacked in (
+                (narrow, True),
+                (max(572, narrow * 2), False),
+                (narrow, True),
+            ):
+                panel.resize(width, 883)
+                app.processEvents()
+                assert form.grid.count() == 3 and form.fields == fields
+                assert all(form.rect().contains(item.geometry()) for item in fields)
+>               assert all(
+                    item.rect().contains(control.geometry())
+                    for item, control in zip(fields, form.controls, strict=True)
+                )
+E               assert False
+E                +  where False = all(<generator object test_camera_trigger_form_reflows_and_destroys_owned_editors.<locals>.<genexpr> at 0x0000016058CD9210>)
+
+tests\gui\test_dashboard.py:3290: AssertionError
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001605D5B3400>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001604F2FFBE0>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load�"
+        assert window.tracking.save_button.text() == "Save as�"
+        window.resize(1920, 940)
+        app.processEvents()
+        assert window.dashboard.mode == "wide"
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        app.processEvents()
+        device_hud_top = (
+            window.devices.cameras.columns[1].hud_card.mapTo(window, QPoint()).y()
+        )
+        assert device_hud_top == hud_top
+    
+        def visible_tab(index):
+            arrows = [
+                control for control in bar.findChildren(QToolButton) if control.isVisible()
+            ]
+            visible = bar.rect()
+            for control in arrows:
+                visible.setRight(min(visible.right(), control.x() - 1))
+            for _ in range(bar.count()):
+                center = bar.tabRect(index).center()
+                if visible.contains(center):
+                    return center
+                direction = (
+                    Qt.ArrowType.LeftArrow
+                    if center.x() < visible.left()
+                    else Qt.ArrowType.RightArrow
+                )
+                arrow = next(
+                    control for control in arrows if control.arrowType() == direction
+                )
+                assert arrow.isEnabled()
+                QTest.mouseClick(arrow, Qt.MouseButton.LeftButton)
+                app.processEvents()
+            pytest.fail("Device tab was not reachable through its scroll arrows")
+    
+        for width in (1920, 720, 1920):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(bar, Qt.MouseButton.LeftButton, pos=visible_tab(index))
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+>               assert bar.isVisible()
+E               assert False
+E                +  where False = <built-in method isVisible of QTabBar object at 0x000001605D598700>()
+E                +    where <built-in method isVisible of QTabBar object at 0x000001605D598700> = <PyQt6.QtWidgets.QTabBar object at 0x000001605D598700>.isVisible
+
+tests\gui\test_dashboard.py:4694: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[standard-0]
+FAILED tests/gui/test_dashboard.py::test_multiple_review_previews_have_independent_source_frames[retro_console-0]
+FAILED tests/gui/test_dashboard.py::test_devices_draft_icons_local_edits_and_command_gates
+FAILED tests/gui/test_dashboard.py::test_camera_trigger_form_reflows_and_destroys_owned_editors
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+5 failed, 33 passed, 920 deselected in 31.14s

@@ -1,0 +1,72 @@
+cycle 0 width 456 events 1 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 0 width 456 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 0 width 912 events 1 form (16, 74, 408, 82) stacked True
+contained False field (0, 0, 408, 37) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained False field (0, 45, 265, 37) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained False field (275, 45, 133, 37) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 0 width 912 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 0 width 456 events 1 form (16, 40, 472, 116) stacked False
+contained True field (0, 0, 472, 54) control (0, 18, 472, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 308, 54) control (0, 18, 308, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (318, 62, 154, 54) control (0, 18, 154, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 0 width 456 events 4 form (16, 40, 472, 82) stacked False
+contained True field (0, 28, 332, 54) control (0, 18, 332, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (342, 0, 60, 82) control (0, 46, 60, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (412, 28, 60, 54) control (0, 18, 60, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 456 events 1 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 456 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 912 events 1 form (16, 74, 408, 82) stacked True
+contained False field (0, 0, 408, 37) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained False field (0, 45, 265, 37) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained False field (275, 45, 133, 37) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 912 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 456 events 1 form (16, 40, 472, 116) stacked False
+contained True field (0, 0, 472, 54) control (0, 18, 472, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 308, 54) control (0, 18, 308, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (318, 62, 154, 54) control (0, 18, 154, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 1 width 456 events 4 form (16, 40, 472, 82) stacked False
+contained True field (0, 28, 332, 54) control (0, 18, 332, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (342, 0, 60, 82) control (0, 46, 60, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (412, 28, 60, 54) control (0, 18, 60, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 456 events 1 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 456 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 912 events 1 form (16, 74, 408, 82) stacked True
+contained False field (0, 0, 408, 37) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained False field (0, 45, 265, 37) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained False field (275, 45, 133, 37) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 912 events 4 form (16, 40, 408, 116) stacked True
+contained True field (0, 0, 408, 54) control (0, 18, 408, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 265, 54) control (0, 18, 265, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (275, 62, 133, 54) control (0, 18, 133, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 456 events 1 form (16, 40, 472, 116) stacked False
+contained True field (0, 0, 472, 54) control (0, 18, 472, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (0, 62, 308, 54) control (0, 18, 308, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (318, 62, 154, 54) control (0, 18, 154, 36) min 40 36 hint 264 36 layoutmin 0 54
+cycle 2 width 456 events 4 form (16, 40, 472, 82) stacked False
+contained True field (0, 28, 332, 54) control (0, 18, 332, 36) min 332 36 hint 332 36 layoutmin 0 54
+contained True field (342, 0, 60, 82) control (0, 46, 60, 36) min 40 36 hint 264 36 layoutmin 0 54
+contained True field (412, 28, 60, 54) control (0, 18, 60, 36) min 40 36 hint 264 36 layoutmin 0 54

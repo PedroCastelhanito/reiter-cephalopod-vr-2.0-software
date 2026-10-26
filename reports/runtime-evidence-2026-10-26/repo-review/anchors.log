@@ -1,0 +1,5 @@
+warning: in the working copy of 'LOG.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/runtime-bindings.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/visual_stimulus.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/visual_stimulus.md', CRLF will be replaced by LF the next time Git touches it
+Checked 66 newly added local Markdown anchors; missing: 0

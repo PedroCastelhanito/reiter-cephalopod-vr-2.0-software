@@ -1,6 +1,7 @@
 """Compact display assignments and desktop geometry; no rendering ownership."""
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -30,12 +31,13 @@ from cephvr.gui.calibration_profile import (
 from cephvr.gui.components import Card, combo
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.projector_assignments import (
     AssignmentPreferences,
     sync_assignment_controls,
 )
 from cephvr.gui.projector_brightness import ProjectorBrightnessCard
-from cephvr.gui.projector_calibration import CalibrationTable
+from cephvr.gui.projector_calibration import CalibrationCards
 from cephvr.gui.projector_codec import display_document, merge_projector_draft
 from cephvr.gui.projector_geometry import (
     RigGeometryEditor,
@@ -118,6 +120,7 @@ class ProjectorsPanel(DevicePanel):
             (("DISPLAY", "—"), ("PROJECTOR", "Unassigned"), ("OUTPUT", "Not tested")),
             (),
         )
+        self.console.clear()
         self.table = DataTable(0, 5)
         self.refresh_button = self.table.add_refresh_action(
             "Refresh available displays"
@@ -190,7 +193,7 @@ class ProjectorsPanel(DevicePanel):
         self.timing.blackouts.placement_button.clicked.connect(
             lambda: self.request_placement("blackout_placement")
         )
-        self.calibration = CalibrationTable(self.screen_editor.drafts)
+        self.calibration = CalibrationCards(self.screen_editor.drafts)
         self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
         self.measurements.body.insertWidget(1, self.calibration.measurement_button)
         self.measurements.changed.connect(self._mark_geometry_dirty)
@@ -255,7 +258,7 @@ class ProjectorsPanel(DevicePanel):
         synchronization_layout.setContentsMargins(0, 0, 0, 0)
         synchronization_layout.setSpacing(SIZES.card_gap)
         # VSync mode belongs to a card like the other synchronization controls.
-        self.vsync_card = Card("Display synchronization")
+        self.vsync_card = EditingCard("Display synchronization")
         self.vsync_card.body.addWidget(self.timing.mode_field)
         synchronization_layout.addWidget(self.vsync_card)
         synchronization_layout.addWidget(self.timing)
@@ -269,9 +272,9 @@ class ProjectorsPanel(DevicePanel):
         calibration_layout.addWidget(self.calibration)
         calibration_layout.addStretch()
         for title, card in (
-            ("Rig geometry", self.rig_page),
-            ("Projection calibration", calibration_page),
-            ("Projection synchronization", synchronization),
+            ("Geometry", self.rig_page),
+            ("Calibration", calibration_page),
+            ("Synchronization", synchronization),
         ):
             self.setup_tabs.addTab(title)
             self.setup_pages.addWidget(card)
@@ -649,26 +652,26 @@ class ProjectorsPanel(DevicePanel):
         self.table.selectRow(self.keys.index(current) if current in self.keys else 0)
         self.update_participation()
         self.show_selected()
-        self.console.appendPlainText(
-            f"{len(self.keys)} simulated projector displays loaded."
-            if self.review_displays is not None
-            else f"{len(self.keys)} secondary displays discovered; primary display excluded; no hardware command sent."
-        )
-        if issue:
-            self.console.appendPlainText(issue)
         if not self.keys:
-            self.console.appendPlainText(NO_PROJECTORS_MESSAGE)
+            message = NO_PROJECTORS_MESSAGE
+        elif self.review_displays is not None:
+            message = (
+                f"LOCAL REVIEW · {len(self.keys)} simulated projector displays loaded."
+            )
+        else:
+            message = f"{len(self.keys)} secondary displays discovered; primary display excluded."
+            if not native_bindings:
+                message += " CephVR could not identify the connected displays."
         missing = [
             name
             for key, name in self.assignments.items()
             if name != "Unassigned" and key not in self.keys
         ]
         if missing:
-            self.console.appendPlainText(
-                "Assigned projectors not detected: "
-                + ", ".join(missing)
-                + ". Check power and display cables, then click Refresh."
-            )
+            message += " Assigned projectors not detected: " + ", ".join(missing) + "."
+            if self.keys:
+                message += " Check power and display cables, then click Refresh."
+        self.console.appendPlainText(message)
         for control in self.enable_controls.values():
             control.setEnabled(self.can_review)
         for editor in self.projectors.values():
@@ -850,6 +853,16 @@ class ProjectorsPanel(DevicePanel):
             for key, aspect in self.display_aspects.items()
             if self.assignments.get(key, "Unassigned") != "Unassigned"
         }
+        for face, values in self.tank.screens.items():
+            if face in self.tank.aspects:
+                continue
+            try:
+                width = float(values.get("reference_width_px", ""))
+                height = float(values.get("reference_height_px", ""))
+            except ValueError:
+                continue
+            if all(math.isfinite(value) and value > 0 for value in (width, height)):
+                self.tank.aspects[face] = width / height
         self.tank.enabled_faces = self.enabled_screens
         self.tank.refresh()
 

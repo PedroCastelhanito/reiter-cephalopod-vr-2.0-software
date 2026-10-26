@@ -25,11 +25,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 36
 
 - Apply G01's 20 Hz preview cadence before optional composition and synchronization;
-  slower renderer batches show at their source rate. Hidden/minimized viewers skip
-  this work; reopen permits the first frame immediately.
+  slower renderer batches show at their source rate. Combined and per-projector
+  consumers share one cadence, including after individual visibility changes.
+  Hidden/minimized viewers skip this work; reopening the group permits its first
+  frame immediately.
 - Visible stimulus previews report E08 PreviewRates using completed renderer batches and
   successful preview swaps. The GL owner only queues optional reports through its
   existing bounded bridge; telemetry cannot introduce a required report or block
@@ -59,6 +61,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   sharing its GL resources. Only the selected mode is visible. Combined maps the
   existing preview texture's calibrated tiles onto the prepared screen planes,
   compensating operator tile mirrors and the protocol rig's folded Bottom path.
+  Apply G01's bounded display-only projector exclusions to Combined surfaces/outlines
+  and individual preview windows; hiding all surfaces leaves no native viewer visible.
+  Exclusions never alter output projection, recording textures or calibrated geometry.
   GLFW mouse input changes only the inspection camera; Per-projector sampling,
   stimulus projection and recording remain unchanged. Geometry updates with each
   prepared trial. No CPU pixel readback or extra stimulus render is introduced.

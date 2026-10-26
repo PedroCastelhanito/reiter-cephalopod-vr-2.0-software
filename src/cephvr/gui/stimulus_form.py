@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import button, combo, label
+from cephvr.gui.components import button, combo, label, remove_button
 
 TITLES = {
     "asset_id": "Asset",
@@ -274,9 +274,8 @@ class ValueEditor(QWidget):
             entries.append(child)
             child.changed.connect(self.changed)
             if not fixed:
-                remove = button("−", hint="Remove entry")
-                remove.setFixedWidth(32)
-                layout.addWidget(remove)
+                remove = remove_button("Remove entry")
+                layout.addWidget(remove, 0, Qt.AlignmentFlag.AlignVCenter)
 
                 def discard() -> None:
                     entries.remove(child)

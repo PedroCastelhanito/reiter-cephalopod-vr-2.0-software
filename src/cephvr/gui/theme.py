@@ -34,6 +34,8 @@ class Palette:
     page: str = "#09121a"
     sidebar: str = "#0d151d"
     card: str = "#121c25"
+    projector: str = "#24333f"
+    projector_edit: str = "#25435a"
     input: str = "#0c141b"
     border: str = "#2a3947"
     input_border: str = "#2b3d4c"
@@ -82,7 +84,13 @@ class Metrics:
     body_font: int = 14
     label_font: int = 12
     title_font: int = 17
+    card_title_font: int = 17
+    brand_font: int = 23
+    small_font: int = 11
     console_font: int = 12
+    icon_button: int = 26
+    group_gap: int = 18
+    body_gap: int = 10
     sidebar_width: int = 262
     controls_min_width: int = 300
     controls_max_width: int = 620
@@ -94,6 +102,8 @@ COLORS = Palette()
 SIZES = Metrics()
 
 RETRO_COLORS = Palette(
+    projector="#23383a",
+    projector_edit="#294a50",
     window="#0b1213",
     page="#0c1415",
     sidebar="#091011",
@@ -132,48 +142,50 @@ RETRO_TINTS = (
     RETRO_COLORS.mirror,
 )
 # Amber phosphor (satellite HUD): red-orange titles, pale-gold values and HUD/log text
-# over dim amber labels, dim frames with bright corner brackets, amber focus, orange
-# inverse fills and cream ready lamps on cool near-black.
+# over readable amber labels, clear frames with bright corner brackets, amber focus,
+# orange inverse fills and cream ready lamps on cool charcoal.
 PHOSPHOR_COLORS = Palette(
-    window="#191f21",
-    page="#191f21",
-    sidebar="#161b1d",
-    card="#191f21",
-    input="#14191b",
-    border="#82592b",
-    input_border="#94673a",
-    text="#ffd184",
-    muted="#c18c50",
-    label="#bf8a50",
-    accent="#ff9f40",
-    coral="#ff6a45",
+    projector="#293236",
+    projector_edit="#373429",
+    window="#21282b",
+    page="#21282b",
+    sidebar="#1e2427",
+    card="#21282b",
+    input="#1c2225",
+    border="#a9804a",
+    input_border="#b68a57",
+    text="#f2d399",
+    muted="#d6ab75",
+    label="#d6ab75",
+    accent="#f0ab55",
+    coral="#f27f5e",
     projection="#ffd27a",
     footprint="#ff5a40",
-    mirror="#ffd184",
-    focus="#ffb85c",
-    hover="#2a2116",
-    active="#14191b",
-    selection="#14191b",
-    primary="#191f21",
-    primary_hover="#2a2116",
-    secondary="#191f21",
-    danger="#191f21",
+    mirror="#f2d399",
+    focus="#f0ab55",
+    hover="#363025",
+    active="#1c2225",
+    selection="#1c2225",
+    primary="#21282b",
+    primary_hover="#363025",
+    secondary="#21282b",
+    danger="#21282b",
     danger_border="#ff5a40",
-    console="#14191b",
-    console_text="#ffd184",
+    console="#1c2225",
+    console_text="#f2d399",
     ready="#ffe7b0",
     waiting="#ff9f40",
     error="#ff5a40",
-    disabled="#9a7b52",
+    disabled="#ae916b",
 )
 # Buttons rest as outlined boxes over a faint tint and fill only on hover:
 # (resting tint, hover fill, outline/text).
-PHOSPHOR_BUTTON = ("transparent", "#e0872e", "#ff9f40")
-PHOSPHOR_STOP_BUTTON = ("transparent", "#ee6a52", "#ff6a50")
-# Unselected tab text and icons stay dim so the bracketed current tab stands out.
-PHOSPHOR_TAB_DIM = "#b0844f"
+PHOSPHOR_BUTTON = ("transparent", "#e49a44", "#f0ab55")
+PHOSPHOR_STOP_BUTTON = ("transparent", "#f38970", "#f27f5e")
+# Unselected tabs remain readable while the coral current tab stands out.
+PHOSPHOR_TAB_DIM = "#cba06b"
 # Left padding that leaves room for the `>` tab marker before icon and text.
-PHOSPHOR_TAB_GUTTER = 16
+PHOSPHOR_TAB_GUTTER = 18
 PHOSPHOR_TINTS = (
     PHOSPHOR_COLORS.accent,
     "#d98a5a",
@@ -217,10 +229,23 @@ RETRO_SIZES = replace(
     button_radius=0,
     field_radius=1,
     title_font=15,
+    card_title_font=14,
+    brand_font=19,
     body_font=13,
     console_font=13,
 )
 RETRO_FONT = "'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace"
+
+
+def projector_marker_colors(widget: QWidget) -> dict[str, str]:
+    colors = colors_for(widget)
+    return dict(
+        zip(
+            ("Left", "Front", "Right", "Bottom"),
+            (colors.coral, colors.projection, colors.mirror, colors.accent),
+            strict=True,
+        )
+    )
 
 
 def retro_console(widget: QWidget) -> bool:
@@ -250,7 +275,7 @@ def stylesheet(
     QWidget#Page {{ background: {c.page}; }}
     QFrame#Sidebar {{ background: {c.sidebar}; border-right: 1px solid {c.border}; }}
     QLabel {{ background: transparent; }}
-    QLabel[role='brand'] {{ font-size: 23px; font-weight: 700; }}
+    QLabel[role='brand'] {{ font-size: {s.brand_font}px; font-weight: 700; }}
     QLabel[role='title'] {{ font-size: {s.title_font}px; font-weight: 700; }}
     QLabel[role='eyebrow'] {{ color: {c.coral}; font-size: {s.title_font}px;
                             font-weight: 700; letter-spacing: 1.2px; }}
@@ -258,6 +283,7 @@ def stylesheet(
                           font-weight: 700; letter-spacing: 0.8px; }}
     QLabel[role='muted'] {{ color: {c.muted}; font-size: {s.label_font}px; }}
     QLabel[role='hint'] {{ color: {c.muted}; }}
+    QLabel[role='projector-title'] {{ color: {c.coral}; font-weight: 600; }}
     QLabel[role='error'] {{ color: {c.danger_border}; font-size: {s.label_font}px; }}
     QMenuBar {{ background: {c.sidebar}; color: {c.text};
                 border-bottom: 1px solid {c.border}; spacing: 4px; }}
@@ -329,7 +355,7 @@ def stylesheet(
     QTreeWidget[role='rail'] {{ background: transparent; border: none; outline: none; }}
     QTreeWidget[role='rail']::item {{ color: {c.muted}; padding: 9px 8px;
         border: 1px solid transparent; border-radius: {s.field_radius}px; }}
-    QFrame#Sidebar QTreeWidget[role='rail'] {{ font-size: 12px; }}
+    QFrame#Sidebar QTreeWidget[role='rail'] {{ font-size: {s.label_font}px; }}
     QFrame#Sidebar QTreeWidget[role='rail']::item {{ padding: 6px 6px; margin: 3px 0;
         background: transparent; border: 1px solid transparent;
         border-left: 2px solid transparent; border-radius: 0; }}
@@ -345,10 +371,6 @@ def stylesheet(
                                        font-weight: 700; min-height: 20px; }}
     QLabel[role='selector-source'] {{ color: {c.text}; min-height: 22px; }}
     QLabel:disabled, QLabel[role='label']:disabled, QLabel[role='selector-source']:disabled {{ color: {c.disabled}; }}
-    QCheckBox[role='viewer-toggle'] {{ padding: 3px; border: 1px solid transparent;
-                                      border-radius: 6px; }}
-    QCheckBox[role='viewer-toggle']:hover {{ background: {c.hover}; }}
-    QCheckBox[role='viewer-toggle']:focus {{ border-color: {c.focus}; }}
     QRadioButton[role='status-indicator'] {{ background: transparent; spacing: 8px; color: {c.muted}; }}
     QRadioButton[role='status-indicator']::indicator {{ width: 12px; height: 12px;
         border-radius: 7px; border: 1px solid {c.input_border}; background: {c.input}; }}
@@ -396,24 +418,33 @@ def stylesheet(
     QWidget#PreviewWorkspace QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; }}
     QWidget#PreviewWorkspace QLabel[role='eyebrow']:disabled {{ color: {c.disabled}; }}
     QWidget#PreviewWorkspace QLabel[role='muted'] {{ color: {c.label}; }}
-    QWidget#PreviewWorkspace QFrame#PreviewToggles {{ border: 1px solid {c.border};
-        border-radius: {s.field_radius}px; }}
+    QWidget#PreviewWorkspace QFrame#PreviewToggles {{ border: none;
+        border-bottom: 1px solid {c.border}; border-radius: 0; }}
+    QPushButton[role='preview-choice'] {{ padding: 3px 8px; border-radius: {s.field_radius}px;
+        background: transparent; color: {c.text}; }}
+    QPushButton[role='preview-choice']:hover {{ background: transparent; color: {c.text};
+        border-color: {c.focus}; }}
+    QPushButton[role='preview-choice']:checked,
+    QPushButton[role='preview-choice']:checked:hover {{ background: {c.accent};
+        color: {c.window}; border-color: {c.accent}; }}
+    QPushButton[role='preview-choice']:focus {{ border: 1px dashed {c.text}; }}
     QWidget#PreviewWorkspace QFrame#ProjectorCard {{ border: 1px solid {c.border};
         border-radius: {s.field_radius}px; }}
     """
 
 
 def retro_stylesheet(c: Palette = RETRO_COLORS) -> str:
+    s = RETRO_SIZES
     return (
-        stylesheet(c, RETRO_SIZES, RETRO_FONT)
+        stylesheet(c, s, RETRO_FONT)
         + f"""
     QTabBar::tab {{ border-radius: 0; }}
     QFrame[role='planner-divider'] {{ background: {c.border}; border: none; }}
-    QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 1px; font-size: 14px; }}
+    QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 1px;
+        font-size: {s.card_title_font}px; }}
     QLabel[role='label'] {{ letter-spacing: 1px; }}
     QLineEdit, QComboBox {{ color: {c.text}; }}
     QPushButton {{ letter-spacing: 0.8px; }}
-    QTabBar::tab {{ border-radius: 0; }}
     QPushButton:pressed {{ background: {c.active}; border: 1px solid {c.accent}; }}
     QCheckBox::indicator {{ border-radius: 0; width: 13px; height: 13px; }}
     QCheckBox::indicator:checked {{ background: {c.ready}; border-color: {c.ready}; }}
@@ -469,17 +500,18 @@ def suggestion_popup_stylesheet(editor: QWidget) -> str:
 
 
 def retro_chrome_stylesheet(c: Palette = RETRO_COLORS) -> str:
+    s = RETRO_SIZES
     return f"""
     QMainWindow, QWidget#Shell, QWidget#Page {{ background: {c.page}; }}
     QFrame#Sidebar {{ background: {c.sidebar}; border-right: 1px solid {c.border}; }}
     QFrame#Sidebar QLabel, QWidget#WindowHeader QLabel {{
         font-family: {RETRO_FONT}; color: {c.accent}; }}
-    QFrame#Sidebar QLabel[role='muted'] {{ color: {c.muted}; font-size: 11px; }}
-    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.projection}; }}
-    QFrame#Sidebar QLabel[role='brand'] {{ font-size: 19px; font-weight: 600;
+    QFrame#Sidebar QLabel[role='muted'] {{ color: {c.muted}; font-size: {s.small_font}px; }}
+    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.projection};
+        font-size: {s.brand_font}px; font-weight: 600;
         letter-spacing: 2px; padding: 0 0 12px 0;
         border-bottom: 1px solid {c.border}; }}
-    QFrame#Sidebar QPushButton {{ font-family: {RETRO_FONT}; font-size: 13px;
+    QFrame#Sidebar QPushButton {{ font-family: {RETRO_FONT}; font-size: {s.body_font}px;
         color: {c.muted}; border-radius: 0; border: 1px solid transparent; }}
     QFrame#Sidebar QPushButton:checked, QFrame#Sidebar QPushButton:hover {{
         color: {c.window}; background: {c.accent}; border: 1px solid {c.accent}; }}
@@ -496,7 +528,7 @@ def retro_chrome_stylesheet(c: Palette = RETRO_COLORS) -> str:
 
 
 def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
-    """Amber phosphor refinements over the Retro sheets: wide-tracked regular headings,
+    """Amber phosphor refinements over the Retro sheets: wider, stronger lettering,
     underlined fields, unboxed HUD/log text, inset checkboxes and bracketed
     navigation (brackets are painted by the navigation button)."""
     (tint, fill, ink), (stop_tint, stop_fill, stop_ink) = (
@@ -504,12 +536,13 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
         PHOSPHOR_STOP_BUTTON,
     )
     return f"""
+    QWidget {{ font-weight: 600; letter-spacing: 0.6px; }}
     QLabel[role='title'], QLabel[role='eyebrow'], QLabel[role='label'],
     QLabel[role='selector-heading'], QHeaderView::section {{
-        font-weight: 400; letter-spacing: 2px; }}
+        font-weight: 600; letter-spacing: 2px; }}
     QFrame[role='card'] QLabel[role='title'] {{ color: {c.coral}; letter-spacing: 2px; }}
     QPushButton, QPushButton[role='primary'], QPushButton[role='compact'] {{
-        font-weight: 400; background: {tint}; color: {ink};
+        font-weight: 600; background: {tint}; color: {ink};
         border: 1px solid {ink}; }}
     QPushButton:hover, QPushButton[role='primary']:hover,
     QPushButton[role='compact']:hover {{ background: {fill}; color: {c.window};
@@ -557,7 +590,7 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
         border: 1px solid transparent; text-align: left; }}
     QFrame#Sidebar QPushButton:checked, QFrame#Sidebar QPushButton:checked:hover {{ color: {c.coral}; }}
     QFrame#Sidebar QPushButton:hover {{ color: {c.text}; }}
-    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.coral}; font-weight: 400;
+    QFrame#Sidebar QLabel[role='brand'] {{ color: {c.coral}; font-weight: 600;
         letter-spacing: 4px; }}
     QListWidget[role='trials']::item:selected,
     QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.text};
@@ -575,7 +608,7 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QTabBar::tab:hover {{ color: {c.text}; }}
     QTabBar::tab:selected, QTabBar::tab:selected:hover {{ color: {c.coral}; }}
     QHeaderView::section {{ background: transparent; color: {c.muted}; border: none;
-        border-bottom: 1px dashed {c.border}; font-weight: 400; }}
+        border-bottom: 1px dashed {c.border}; font-weight: 600; }}
     QTableCornerButton::section {{ background: transparent; border: none; }}
     QTableWidget {{ background: transparent; border: none; }}
     QComboBox {{ combobox-popup: 0; }}

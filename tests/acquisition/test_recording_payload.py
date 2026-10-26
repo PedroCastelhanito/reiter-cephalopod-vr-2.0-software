@@ -11,6 +11,7 @@ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
 from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
 from cephvr.control.v1 import types_pb2 as control
+from tests.acquisition.support import _identity, _reservation
 
 
 @pytest.mark.parametrize("running", [False, True])
@@ -189,7 +190,6 @@ def test_locked_recording_selects_canonical_ffmpeg_input(
 ) -> None:
     from cephvr.acquisition.recording import session_prepare
     from cephvr.acquisition.v1 import messages_pb2 as acq
-    from tests.acquisition.test_recording_paths import _identity, _reservation
 
     identity = _identity()
     recorded = []

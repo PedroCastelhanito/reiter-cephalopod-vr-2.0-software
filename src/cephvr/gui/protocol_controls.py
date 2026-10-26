@@ -1,7 +1,7 @@
 """Responsive planner controls; program and history are owned by ProtocolEditor."""
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence, QShortcut
+from PyQt6.QtGui import QAction, QKeySequence, QResizeEvent, QShortcut
 from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
@@ -27,6 +27,7 @@ class PlannerControls(QWidget):
         self.grid = QGridLayout(self)
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setSpacing(14)
+        self._stacked: bool | None = None
         self.trial_card = Card("Trials")
         self.trial_card.setFixedWidth(208)
         self.trials = TrialList()
@@ -100,11 +101,31 @@ class PlannerControls(QWidget):
                     self.group_action if self.timeline.hasFocus() else self.epoch_action
                 ).emit(op)
             )
-        self.grid.addWidget(self.trial_card, 0, 0)
-        self.grid.addWidget(self.timeline_card, 0, 1)
-        self.grid.addWidget(self.settings_card, 1, 0, 1, 2)
+        self._arrange_grid()
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        self._arrange_grid()
+
+    def _arrange_grid(self) -> None:
+        stacked = self.width() < 700
+        if stacked == self._stacked:
+            return
+        self._stacked = stacked
+        for widget in (self.trial_card, self.timeline_card, self.settings_card):
+            self.grid.removeWidget(widget)
+        if stacked:
+            self.grid.addWidget(self.trial_card, 0, 0, 1, 2, Qt.AlignmentFlag.AlignLeft)
+            self.grid.addWidget(self.timeline_card, 1, 0, 1, 2)
+            self.grid.addWidget(self.settings_card, 2, 0, 1, 2)
+        else:
+            self.grid.addWidget(self.trial_card, 0, 0)
+            self.grid.addWidget(self.timeline_card, 0, 1)
+            self.grid.addWidget(self.settings_card, 1, 0, 1, 2)
         self.grid.setColumnStretch(1, 1)
-        self.grid.setRowStretch(2, 1)
+        for row in (2, 3):
+            self.grid.setRowStretch(row, 0)
+        self.grid.setRowStretch(3 if stacked else 2, 1)
 
     def minimumSizeHint(self) -> QSize:
         size = super().minimumSizeHint()

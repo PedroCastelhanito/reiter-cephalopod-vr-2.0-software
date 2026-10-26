@@ -1,0 +1,7 @@
+src\cephvr\platform\windows\placement_events.py:49: unused variable 'subclass' (100% confidence, 1 line)
+src\cephvr\visual_stimulus\rendering\preview_rig.py:140: unused variable 'mods' (100% confidence, 1 line)
+tests\platform\test_windows_jobs.py:51: unused variable 'inherit' (100% confidence, 1 line)
+tests\platform\test_windows_jobs.py:51: unused variable 'rights' (100% confidence, 1 line)
+tests\platform\test_windows_jobs.py:212: unused variable 'inherit' (100% confidence, 1 line)
+tests\platform\test_windows_jobs.py:212: unused variable 'rights' (100% confidence, 1 line)
+tests\supervisor\test_registration.py:227: unused variable 'grace' (100% confidence, 1 line)

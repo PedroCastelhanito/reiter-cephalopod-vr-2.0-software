@@ -1,4 +1,4 @@
-"""Optional CRT film and label glow for Review windows; presentation only."""
+"""Style-owned CRT film and label glow; presentation only."""
 
 from math import hypot
 
@@ -10,11 +10,9 @@ from PyQt6.QtCore import (
     QRegularExpression,
     QSize,
     Qt,
-    QTimer,
 )
 from PyQt6.QtGui import (
     QColor,
-    QLinearGradient,
     QPainter,
     QPaintEvent,
     QPixmap,
@@ -28,12 +26,9 @@ from cephvr.gui.theme import retro_colors, retro_console
 SCANLINE_PITCH = 3
 SCANLINE_ALPHA = 18
 # Amber phosphor scanlines read as stripes on bright fills, like a CRT terminal.
-PHOSPHOR_SCANLINE_ALPHA = 60
+PHOSPHOR_SCANLINE_ALPHA = 28
 VIGNETTE_ALPHA = 55
 GLOW_ALPHA = 140
-BAND_HEIGHT = 90
-BAND_SPEED = 70  # px per second; the band crosses a 900px window in about 13 s
-BAND_INTERVAL_MS = 50
 
 
 class CrtOverlay(QWidget):
@@ -44,10 +39,6 @@ class CrtOverlay(QWidget):
         self.host = host
         self.film: QPixmap | None = None
         self.scanline_alpha = SCANLINE_ALPHA
-        self.band_y = -BAND_HEIGHT
-        self.band_timer = QTimer(self)
-        self.band_timer.setInterval(BAND_INTERVAL_MS)
-        self.band_timer.timeout.connect(self.advance_band)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         # Native preview hosts can promote sibling overlays to HWNDs.
         self.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
@@ -56,26 +47,11 @@ class CrtOverlay(QWidget):
         host.installEventFilter(self)
         self.hide()
 
-    def set_active(self, active: bool, *, band: bool = False) -> None:
+    def set_active(self, active: bool) -> None:
         self.setGeometry(self.host.rect())
         self.setVisible(active)
         self.raise_()
-        # The rolling band repaints continuously, so it runs only when requested.
-        if active and band:
-            self.band_timer.start()
-        else:
-            self.band_timer.stop()
-            self.update()
-
-    def band_rect(self) -> QRect:
-        return QRect(0, self.band_y, self.width(), BAND_HEIGHT)
-
-    def advance_band(self) -> None:
-        before = self.band_rect()
-        self.band_y += BAND_SPEED * BAND_INTERVAL_MS // 1000
-        if self.band_y > self.height():
-            self.band_y = -BAND_HEIGHT
-        self.update(before.united(self.band_rect()))
+        self.update()
 
     def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if event is not None and event.type() == QEvent.Type.Resize:
@@ -121,13 +97,6 @@ class CrtOverlay(QWidget):
                 )
         painter.setClipRegion(region)
         painter.drawPixmap(0, 0, self.film)
-        if self.band_timer.isActive():
-            band = QLinearGradient(0, self.band_y, 0, self.band_y + BAND_HEIGHT)
-            ink = QColor(retro_colors(self).accent)
-            for position, alpha in ((0.0, 0), (0.7, 9), (1.0, 0)):
-                ink.setAlpha(alpha)
-                band.setColorAt(position, ink)
-            painter.fillRect(self.band_rect(), band)
 
 
 def set_glow(label: QLabel, enabled: bool) -> None:
@@ -217,12 +186,10 @@ class CrtEffects:
         self.overlay = CrtOverlay(host)
         self.glow_labels = glow_labels
 
-    def apply(
-        self, enabled: bool, *, band: bool = False, scanline_alpha: int = SCANLINE_ALPHA
-    ) -> None:
+    def apply(self, enabled: bool, *, scanline_alpha: int = SCANLINE_ALPHA) -> None:
         if scanline_alpha != self.overlay.scanline_alpha:
             self.overlay.scanline_alpha = scanline_alpha
             self.overlay.film = None
-        self.overlay.set_active(enabled, band=band)
+        self.overlay.set_active(enabled)
         for label in self.glow_labels:
             set_glow(label, enabled)

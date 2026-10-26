@@ -3,6 +3,7 @@
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLineEdit, QWidget
 
 from cephvr.gui.components import Card, StatusColumn, button, field
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
@@ -20,11 +21,13 @@ class DevicePanel(ResponsiveColumns):
         title: str,
         readbacks: tuple[tuple[str, str], ...],
         actions: tuple[str, ...],
+        *,
+        editing_card: bool = False,
     ) -> None:
         left, left_layout = column()
         right = StatusColumn()
         super().__init__(left, right)
-        self.configuration = Card(title)
+        self.configuration = EditingCard(title) if editing_card else Card(title)
         self.form = QGridLayout()
         self.form.setHorizontalSpacing(SIZES.field_x_gap)
         self.form.setVerticalSpacing(SIZES.field_y_gap)

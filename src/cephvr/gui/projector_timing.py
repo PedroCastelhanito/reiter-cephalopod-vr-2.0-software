@@ -12,8 +12,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, combo, field
+from cephvr.gui.components import button, combo, field
 from cephvr.gui.device_panel import entry
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.projector_blackouts import BlackoutZones
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.tables import DataTable
@@ -30,7 +31,7 @@ LEGACY_MODE_LABELS = {
 }
 
 
-class ProjectorTiming(Card):
+class ProjectorTiming(EditingCard):
     def __init__(self) -> None:
         super().__init__("Photodiode")
         self.pulse = QCheckBox("Enable photodiode pulse")

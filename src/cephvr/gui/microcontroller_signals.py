@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from cephvr.gui.components import button
+from cephvr.gui.components import button, remove_button
 
 if TYPE_CHECKING:
     from cephvr.gui.microcontroller import MicrocontrollerPanel
@@ -29,8 +29,7 @@ class MicrocontrollerSignals:
         }
         self.add_buttons = []
         for key, name in (("trial-state", "Trial state"),):
-            remove = button("×", "compact", hint=f"Remove {name}")
-            remove.setAccessibleName(f"Remove {name}")
+            remove = remove_button(f"Remove {name}")
             remove.clicked.connect(
                 lambda _checked=False, signal=key: self.remove(signal)
             )

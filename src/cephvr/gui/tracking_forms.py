@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
+from cephvr.gui.components import button, combo, equal_row_height, field, label
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.layouts import column
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.theme import SIZES
@@ -29,7 +30,7 @@ class TrackingForms:
         self.fields: dict[str, QLineEdit] = {}
         self.choices = {}
         self.subject, subject_layout = column()
-        self.reference = Card("Subject reference")
+        self.reference = EditingCard("Subject reference")
         self.set_reference = button("Set points")
         row = QHBoxLayout()
         row.addWidget(self.set_reference)
@@ -108,7 +109,7 @@ class TrackingForms:
         self.pose.body.addWidget(self.quality_button)
         self.pose.body.addWidget(self.quality)
         subject_layout.addWidget(self.pose)
-        self.search = Card("Search region")
+        self.search = EditingCard("Search region")
         self.pose.enabled.toggled.connect(self.search.setEnabled)
         row = QHBoxLayout()
         self.search_status = label("Not set", wrap=True)

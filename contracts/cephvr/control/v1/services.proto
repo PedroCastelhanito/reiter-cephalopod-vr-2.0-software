@@ -307,6 +307,9 @@ message PreviewWindowPlacement {
   bool update_existing_only = 7; // Display layout refresh must never reopen an X-closed viewer.
   bool snap_to_grid = 8; // Explicit operator reset of manual position/size.
   repeated StimulusPreviewTile stimulus_tiles = 9; // Stimulus only: 1..4 individual views; absent means Combined.
+  repeated string hidden_stimulus_surfaces = 10; // Display-only Left/Front/Right/Bottom exclusions, including Combined.
+  optional uint32 stimulus_background_rgb = 11; // Display-only GUI surround, packed 0xRRGGBB.
+  map<string, uint32> stimulus_surface_colors = 12; // Display-only face outline colors, packed 0xRRGGBB.
 }
 message CameraCommandRequest {
   OperatorCommand command = 1;

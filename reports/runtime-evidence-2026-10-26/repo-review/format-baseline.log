@@ -1,0 +1,12 @@
+unformatted: File would be reformatted
+  --> src\cephvr\gui\managed_preview_viewers.py:64:51
+   |
+63 |             options = (
+   -                 {"placement": self.placement(key)}
+   -                 if self.placement is not None
+   -                 else {}
+64 +                 {"placement": self.placement(key)} if self.placement is not None else {}
+65 |             )
+   |
+
+1 file would be reformatted, 997 files already formatted

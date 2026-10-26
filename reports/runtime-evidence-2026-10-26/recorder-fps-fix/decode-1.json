@@ -1,0 +1,18 @@
+{
+  "command": [
+    "ffprobe",
+    "-v",
+    "error",
+    "-count_frames",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=nb_read_frames,nb_frames,duration",
+    "-of",
+    "json",
+    "reports\\runtime-evidence-2026-10-26\\recorder-fps-fix\\output\\20261026_ephys-pilot\\SP0004-110716\\protocol-data\\0004_110737_behavioral_cam.mp4"
+  ],
+  "returncode": 0,
+  "stdout": "{\n    \"programs\": [\n\n    ],\n    \"stream_groups\": [\n\n    ],\n    \"streams\": [\n        {\n            \"duration\": \"81.866667\",\n            \"nb_frames\": \"2456\",\n            \"nb_read_frames\": \"2456\"\n        }\n    ]\n}\n",
+  "stderr": ""
+}

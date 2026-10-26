@@ -1,0 +1,3 @@
+A fresh GUI was launched in the existing application generation.
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -5,7 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -39,6 +39,7 @@ from cephvr.gui.stimulus_files import (
 )
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.gui.stimulus_scope import set_surfaces
+from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.models.parameter_catalogue import parameter_units
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -100,7 +101,7 @@ class StimulusParameters(QWidget):
         self.advanced_card = Card("Advanced settings", compact=True)
         self.advanced_layout.addWidget(self.advanced_card)
         self.extra_body = self.advanced_card.body
-        self.extra_body.setSpacing(18)
+        self.extra_body.setSpacing(SIZES.group_gap)
         self.closed_loop = False
         self.fades: StimulusFades | None = None
         self.motion_source: MotionSource | None = None
@@ -299,7 +300,17 @@ class StimulusParameters(QWidget):
             self.linked_to.currentIndexChanged.connect(self.mark_changed)
             self.update_link_controls()
             self.fades.changed.connect(self.mark_changed)
-            self.extra_body.addWidget(appearance)
+            if self.compact:
+                strip = QWidget()
+                strip_layout = QHBoxLayout(strip)
+                strip_layout.setContentsMargins(0, 0, 0, 0)
+                strip_layout.setSpacing(8)
+                self.extra_body.removeWidget(self.retain)
+                strip_layout.addWidget(self.retain, 1, Qt.AlignmentFlag.AlignBottom)
+                strip_layout.addWidget(appearance, 3)
+                self.extra_body.addWidget(strip)
+            else:
+                self.extra_body.addWidget(appearance)
         if values["kind"] == "arena":
             self.arena_limits = ArenaLimits()
             self.extra_body.addWidget(self.arena_limits)

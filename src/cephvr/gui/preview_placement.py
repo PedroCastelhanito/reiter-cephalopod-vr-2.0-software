@@ -1,5 +1,6 @@
 """Display-only placement hints for acquisition-owned camera windows."""
 
+import sys
 from math import ceil
 
 from PyQt6.QtCore import QPoint, QRect, QTimer, pyqtSignal
@@ -19,6 +20,7 @@ from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.gui.components import StatusColumn
 from cephvr.gui.preview_frame import PreviewFrame
 from cephvr.gui.previews import PreviewWorkspace, stream_caption
+from cephvr.gui.theme import colors_for, projector_marker_colors
 from cephvr.gui.view import PreviewView
 from cephvr.platform.windows.preview_owner import gui_window_identity
 from cephvr.platform.windows.window_coordinates import (
@@ -43,6 +45,7 @@ class PreviewSlot(QWidget):
         self.sources: tuple[PreviewView, ...] = ()
         self.arranged_sources: tuple[PreviewView, ...] = ()
         self.reserve_active = False
+        self.reserve_configured = False
         self.columns = 0
         self.set_sources(())
         self.metrics_timer = QTimer(self)
@@ -59,17 +62,26 @@ class PreviewSlot(QWidget):
         return next(iter(self.frames.values())).caption
 
     def set_sources(
-        self, sources: tuple[PreviewView, ...], *, reserve_active: bool = False
+        self,
+        sources: tuple[PreviewView, ...],
+        *,
+        reserve_active: bool = False,
+        reserve_configured: bool = False,
     ) -> None:
         self.sources = sources
         self.reserve_active = reserve_active
+        self.reserve_configured = reserve_configured
         count = sum(item.visible or item.pending for item in sources)
         self.setMinimumWidth(416 if reserve_active and count >= 3 else 0)
         self.arrange(self.eligible_sources())
 
     def eligible_sources(self) -> tuple[PreviewView, ...]:
-        # Only shown or opening streams take a frame, so hidden ones free space.
-        return tuple(item for item in self.sources if item.visible or item.pending)
+        # Reserve configured streams before playback; running hidden viewers free space.
+        return tuple(
+            item
+            for item in self.sources
+            if item.visible or item.pending or (self.reserve_configured and item.active)
+        )
 
     def arrange(self, sources: tuple[PreviewView, ...]) -> None:
         self.arranged_sources = sources
@@ -95,7 +107,7 @@ class PreviewSlot(QWidget):
         for index, (key, name) in enumerate(requested.items()):
             frame = previous.get(key)
             if frame is None:
-                frame = PreviewFrame()
+                frame = PreviewFrame(decorated=sys.platform != "win32")
                 frame.target.setProperty("preview_source", key)
                 frame.snap_button.setEnabled(bool(key))
                 frame.snap_button.clicked.connect(
@@ -113,6 +125,8 @@ class PreviewSlot(QWidget):
                 if source and source.pending
                 else source.reason
                 if source and source.reason
+                else "Available after Setup"
+                if source and not source.available
                 else "Ready · select Show"
             )
             frame.snap_button.setVisible(not waiting)
@@ -261,11 +275,27 @@ def preview_window_placement(
         stimulus = stimulus_workspace.stimulus_area
         _activate_ancestor_layouts(stimulus)
         targets = stimulus.frames
+        hidden = [
+            name
+            for name in ("Left", "Front", "Right", "Bottom")
+            if name not in stimulus.projectors
+            or not stimulus.timeline.projector_visible(name)
+        ]
         if not targets:
-            raise ValueError("Enable projectors to place stimulus previews")
+            return rpc.PreviewWindowPlacement(side=128, hidden_stimulus_surfaces=hidden)
         first = next(iter(targets.values())).target
         host = first.window() or main
         placement = _preview_window_placement(host, first)
+        placement.stimulus_background_rgb = int(
+            colors_for(stimulus).card.lstrip("#"), 16
+        )
+        placement.stimulus_surface_colors.update(
+            {
+                name: int(color.lstrip("#"), 16)
+                for name, color in projector_marker_colors(stimulus).items()
+            }
+        )
+        placement.hidden_stimulus_surfaces.extend(hidden)
         if "" not in targets:
             for name, target_frame in targets.items():
                 tile = _preview_window_placement(host, target_frame.target)
@@ -386,6 +416,7 @@ def _preview_window_placement(
     slot_rect = (
         QRect(slot.mapToGlobal(QPoint()), slot.size()) if slot is not None else None
     )
+    decorated = slot is None or not slot.property("framelessPreview")
     if QGuiApplication.platformName() == "windows":
         anchor_bounds, area_bounds, scale = operator_window_geometry(int(main.winId()))
         if slot_rect is not None:
@@ -400,21 +431,23 @@ def _preview_window_placement(
                 round(slot_rect.width() * scale),
                 round(slot_rect.height() * scale),
             )
-            return slot_preview_placement(slot_rect, QRect(*area_bounds), scale)
+            return slot_preview_placement(
+                slot_rect, QRect(*area_bounds), scale, decorated=decorated
+            )
         return square_preview_placement(
             QRect(*anchor_bounds), QRect(*area_bounds), scale
         )
     if slot_rect is not None:
-        return slot_preview_placement(slot_rect, area)
+        return slot_preview_placement(slot_rect, area, decorated=decorated)
     return square_preview_placement(main.frameGeometry(), area)
 
 
 def slot_preview_placement(
-    slot: QRect, area: QRect, scale: float = 1.0
+    slot: QRect, area: QRect, scale: float = 1.0, *, decorated: bool = True
 ) -> rpc.PreviewWindowPlacement:
     """Fit the detached square and its native frame within the reserved area."""
     bounds = slot.intersected(area)
-    extra_width, extra_height = preview_frame_extra(scale)
+    extra_width, extra_height = preview_frame_extra(scale) if decorated else (0, 0)
     side = min(
         2048,
         bounds.width() - extra_width,

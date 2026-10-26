@@ -1,5 +1,68 @@
 # Visual Stimulus status
 
+Oct26 `repo-cleanup-and-code-review`: Astra/Luna source/caller review found no
+additional safe runtime deletion or optimization. Shared GLB/geometry/texture test
+helpers moved unchanged to the existing support module under
+[ARCH-002](../architecture.md#arch-002), preserving scenarios and avoiding imports
+from test modules. Final local validation passes491 Visual Stimulus cases; all19
+schemas regenerate and installed binding hashes match. No rendering throughput or
+rig acceptance is inferred. [Review evidence](runtime-evidence-2026-10-26/repo-review/).
+
+Oct26 `preview-rate-readback`: fixed under [V01](../docs/architecture/visual_stimulus.md#v01)
+revision36. Each staggered per-projector timer previously triggered draws of all
+visible windows. One shared50ms group timer now gates all optional composition;
+individual toggles cannot multiply cadence. Hidden/minimized skip and immediate
+whole-group reopen retained.113 final rendering checks pass; Ruff/format, Win32
+mypy and boundaries pass. Native Combined/Per-projector and Left/Front toggles
+at1442x972 show settled19.7–20.0fps with plots/FPS visible; one finite sampling
+window reads20.6fps. No27.7–36.5fps recurrence. First81.87s run and normal shutdown
+pass. Final44.47s native run uses user-approved authenticated takeover after UI
+input timeouts: six Combined/projector/hide/reopen operations succeed, telemetry
+19.66–19.99fps with first reopened count interval20.90fps. Final minimized skip
+remains locally tested. Both recordings fully decode/count-match; cleanup and
+shutdown succeed, no runtime processes remain, settings restored byte-for-byte.
+No optical/DPI/full workload acceptance. [Evidence and limits](runtime-evidence-2026-10-26/recorder-fps-fix/context.md).
+
+Oct26 `monitor-projector-toggle-stability`: V01's existing native viewer now checks
+actual size before resizing and changes native visibility only on transitions,
+avoiding redundant render-thread work during projector mask/placement updates.
+Manual-placement, snap/reopen and owner binding retained.119 rendering tests,
+Ruff/format, Win32 mypy and boundaries pass. Live FPS improvement remains unmeasured;
+no renderer restart or rig acceptance. [GUI checks and limitations](runtime.md#monitor-projector-toggle-stability--2026-10-26).
+
+Oct26 `preview-marker-style`: [G01](../docs/architecture/gui.md#g01) revision323
+adds bounded display-only RGB hints through the existing authenticated preview
+placement path. Combined inspection uses the GUI card surround and theme-derived
+per-projector surface outlines matching plot markers; GUI preview brackets stay
+normally themed after owner clarification. GL applies colors only to the inspection
+clear/outline shader. Physical stimulus, source/composite textures, recordings,
+resource ownership and timing remain unchanged under V01/E08.
+119 rendering cases pass, including native standalone-GL exact surround/outline
+colors and source/composite preservation;8 authenticated transport and10 camera
+hint-admission cases also pass. Shared validation rejects malformed RGB/name maps
+and stimulus styling on camera requests. Ruff, Win32 mypy and boundaries pass;
+no running backend restart or native full-load/rig acceptance.
+[Current methods and limits](runtime-evidence-2026-10-26/preview-marker-style/context.md).
+
+Oct26 `advanced-preview-content-projectors`: [V01](../docs/architecture/visual_stimulus.md#v01)
+revision35/[G01](../docs/architecture/gui.md#g01) revision322 apply bounded display-only
+surface exclusions in Combined and Per-projector previews. All excluded means no
+native viewer; source projection/recording textures are unchanged. Five focused
+renderer cases pass, including actual standalone GPU draws proving suppressed
+surfaces/outlines and unchanged source/composite pixels; ten camera placement
+admission cases reject stimulus masks. Shared bindings regenerated, static checks
+pass. Native live multiwindow/DPI/full-load acceptance remains pending.
+[Current assessment and evidence](runtime.md#compact-preview-toolbar--2026-10-26).
+
+Oct26 `stimulus-preview-layout`: [G01](../docs/architecture/gui.md#g01) revision319
+uses borderless native stimulus viewers within themed GUI frames, FPS beneath each
+image and larger centered Combined instruments. GLFW still owns shared contexts,
+pixels and lifetime; existing visibility/owner/placement gates remain.46 Dashboard
+and204 timeline/rendering checks pass locally, with13 final layout checks repeated;
+static checks pass. Offscreen visual review covers placeholders/planned plots,
+not live native GPU windows. No app restart, DPI or physical-output acceptance.
+[Evidence and limitations](runtime.md#stimulus-preview-layout--2026-10-26).
+
 Oct23 `preview-space-and-shared-polar`: [G01rev309](../docs/architecture/gui.md#g01)
 enlarges Combined's GUI allocation while retaining the existing GPU rig. Compatible
 projector vectors share a colored polar plot and projector-row parameter table;
@@ -68,20 +131,18 @@ requirements under [V19](../docs/architecture/visual_stimulus.md#v19).
 117 rendering/controller-communication checks pass; GUI warning review and validation
 limits are recorded in [Runtime](runtime.md#device-warning-clarity--2026-10-23).
 
-Oct23 `projector-unavailable-message`: missing saved displays now report
-"A configured projector is not detected by Windows" instead of a raw interface
-identifier. The remedy covers power, display cables, Windows display enablement,
-Devices > Projectors refresh/assignments and Setup. Ambiguous identity diagnostics
-remain distinct. This implements [V19](../docs/architecture/visual_stimulus.md#v19)'s
-actionable unavailable-output feedback without changing placement or cleanup rules.
-ARCH-002 review: the existing monitor resolver and error remedy own this change;
-native.py's size advisory does not justify extracting its four-line diagnostic branch.
-No new dependencies/state. Rendering and authenticated controller-communication
-tests:117 passed,1 deselected; changed-file Ruff check/format, Win32 mypy(two source
-files) and backend boundaries(751 modules,zero violations) pass. Initial sandbox
-runs encountered temporary-directory denial and stalled loopback tests; the complete
-rerun outside the sandbox passed. Native disconnected-projector dialog unverified;
-the running application was not restarted.
+Oct26 `projector-warning-diagnostics` refines `projector-unavailable-message`:
+unavailable-output feedback identifies the assigned face(s) with one recovery
+instruction. The owner-requested shorter review leaves the saved Windows display/
+output identity in Copy details and omits redundant failure progress. Ambiguous identity
+diagnostics remain distinct. Under [V19](../docs/architecture/visual_stimulus.md#v19),
+placement, exact identity matching, all-output preflight and cleanup are preserved.
+ARCH-002 moves preflight into the existing native display helper, keeping lifecycle
+assembly in native.py with no new dependency/state.112 rendering checks and8
+authenticated communication checks pass;4 retained-review checks and static checks
+also pass. Initial sandbox fixture/socket failures are not counted as passes.
+[Current commands, evidence and limits](runtime.md#device-warning-clarity--2026-10-23).
+The running app was not restarted; native warning/physical display checks remain open.
 
 
 Oct22 current result: the image-read ctypes lifetime defect and helper retirement

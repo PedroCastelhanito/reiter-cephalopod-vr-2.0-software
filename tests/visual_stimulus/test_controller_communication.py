@@ -411,9 +411,7 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
             )
             assert operation.complete and not operation.succeeded
             assert (
-                "RTX 5060 Ti"
-                if startup_issue == "adapter"
-                else "Turn on the projectors"
+                "RTX 5060 Ti" if startup_issue == "adapter" else "Check power/cables"
             ) in operation.failure.message
             assert display.resources and all(
                 item.released for item in display.resources

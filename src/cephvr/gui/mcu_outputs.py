@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import button, combo, equal_row_height
+from cephvr.gui.components import button, combo, equal_row_height, remove_button
 from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS, MicrocontrollerSignals
 from cephvr.gui.pin_numbers import PinNumber
 
@@ -43,9 +43,6 @@ class MicrocontrollerOutputDrafts(MicrocontrollerSignals):
                 header.setSectionResizeMode(column, QHeaderView.ResizeMode.Fixed)
                 header.resizeSection(column, width)
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        for remove in panel.output_remove.values():
-            remove.setProperty("role", "icon")
-            remove.setFixedSize(26, 26)
         for key, (table, row) in self.rows.items():
             selector = combo(())
             selector.setAccessibleName(
@@ -125,9 +122,7 @@ class MicrocontrollerOutputDrafts(MicrocontrollerSignals):
         selector.setAccessibleName("Output type")
         pin.setAccessibleName("Unassigned output pin")
         pin.setPlaceholderText("2–13")
-        remove = button("×", "icon", hint="Remove output template")
-        remove.setFixedSize(26, 26)
-        remove.setAccessibleName("Remove output template")
+        remove = remove_button("Remove output template")
         test = button("Test", "compact")
         test.setEnabled(False)
         template = OutputTemplate(index, selector, pin, remove)

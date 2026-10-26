@@ -31,8 +31,8 @@ class ArenaPose(ValueEditor):
     def build(self, values: Any) -> None:
         grid = advanced_grid()
         self.body.addLayout(grid)
-        grid.addWidget(label("Initial position (mm)", "label"), 0, 0)
-        grid.addWidget(label("Orientation (°)", "label"), 0, 1)
+        grid.addWidget(label("Initial position (mm)", "label", wrap=True), 0, 0)
+        grid.addWidget(label("Orientation (°)", "label", wrap=True), 0, 1)
         self.position_fields: list[QWidget] = []
         self.orientation_fields: list[QWidget] = []
         for row, entries in enumerate(

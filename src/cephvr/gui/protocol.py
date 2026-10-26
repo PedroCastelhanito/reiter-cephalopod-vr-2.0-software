@@ -15,8 +15,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, combo, equal_row_height
+from cephvr.gui.components import button, combo, configuration_file_card
 from cephvr.gui.configuration_files import JSON, ConfigurationFiles
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.layouts import column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_batches import grouped_program
@@ -63,17 +64,18 @@ class ProtocolPage(QWidget):
         top.addWidget(
             self.assets,
             0,
-            1,
+            2,
             alignment=Qt.AlignmentFlag.AlignTop,
         )
-        top.setColumnStretch(0, 3)
-        top.setColumnStretch(1, 2)
+        top.setColumnStretch(0, 2)
+        top.setColumnStretch(1, 5)
+        top.setColumnStretch(2, 3)
         self.recordings = recordings
         self.can_edit = False
         self.session_mode = combo(("Not set", "Open-loop", "Closed-loop"))
         self.session_mode.currentTextChanged.connect(self.participation_changed.emit)
         recordings.changed.connect(self.participation_changed.emit)
-        self.program_card = Card("Protocol type")
+        self.program_card = EditingCard("Protocol type")
         toolbar = QHBoxLayout()
         toolbar.setSpacing(10)
         toolbar.addWidget(self.session_mode, 1)
@@ -86,9 +88,8 @@ class ProtocolPage(QWidget):
         self.load_button.clicked.connect(self.choose_load)
         self.save_button = button("Save as…")
         self.save_button.clicked.connect(self.choose_save)
-        equal_row_height(self.session_mode, self.load_button, self.save_button)
-        toolbar.addWidget(self.load_button, alignment=Qt.AlignmentFlag.AlignBottom)
-        toolbar.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.file_card = configuration_file_card(self.load_button, self.save_button)
+        top.addWidget(self.file_card, 0, 0, alignment=Qt.AlignmentFlag.AlignTop)
         self.program_card.body.addLayout(toolbar)
         self.message = FormNotice()
         self.message.hide()
@@ -96,7 +97,7 @@ class ProtocolPage(QWidget):
         top.addWidget(
             self.program_card,
             0,
-            0,
+            1,
             alignment=Qt.AlignmentFlag.AlignTop,
         )
         self.editor = ProtocolEditor(sample=sample)
@@ -190,15 +191,18 @@ class ProtocolPage(QWidget):
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
-        wide = self.width() >= 650
-        self.top_grid.removeWidget(self.assets)
-        self.top_grid.addWidget(
-            self.assets,
-            0 if wide else 1,
-            1 if wide else 0,
-            alignment=Qt.AlignmentFlag.AlignTop,
-        )
-        self.top_grid.setColumnStretch(1, 2 if wide else 0)
+        # Three cards in one row at wide widths; narrow windows stack them.
+        wide = self.width() >= 700
+        for index, card in enumerate((self.file_card, self.program_card, self.assets)):
+            self.top_grid.removeWidget(card)
+            self.top_grid.addWidget(
+                card,
+                0 if wide else index,
+                index if wide else 0,
+                alignment=Qt.AlignmentFlag.AlignTop,
+            )
+        for index, stretch in enumerate((2, 5, 3)):
+            self.top_grid.setColumnStretch(index, stretch if wide else 0)
 
     @property
     def tracking_active(self) -> bool:

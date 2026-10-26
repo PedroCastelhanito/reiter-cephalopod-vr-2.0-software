@@ -20,8 +20,15 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.action_cancellation import PendingAction
-from cephvr.gui.components import Card, button, combo, equal_row_height, field
+from cephvr.gui.components import (
+    button,
+    combo,
+    equal_row_height,
+    field,
+    remove_button,
+)
 from cephvr.gui.device_panel import DevicePanel
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS
 from cephvr.gui.paths import PathField
 from cephvr.gui.pin_numbers import PinNumber
@@ -55,6 +62,7 @@ class MicrocontrollerPanel(DevicePanel):
             "Microcontroller connection",
             (("PORT", "—"), ("FIRMWARE", "—"), ("TRIGGER TEST", "Not tested")),
             ("Test connection",),
+            editing_card=True,
         )
         self.port = combo(())
         self.port.setPlaceholderText("Scan for ports")
@@ -116,7 +124,7 @@ class MicrocontrollerPanel(DevicePanel):
         self.review_tests: set[str] = set()
         self.test_buttons: dict[str, QPushButton] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
-        self.triggers = Card("Outputs")
+        self.triggers = EditingCard("Outputs")
         self.output_table = self.pin_table("Output")
         self.triggers.body.addWidget(self.output_table)
         self.trial_pin = self.add_pin_row(
@@ -135,9 +143,7 @@ class MicrocontrollerPanel(DevicePanel):
                 lambda value, role_key=key: self.pins.__setitem__(role_key, value)
             )
             editor.textChanged.connect(self.mark_draft_changed)
-            self.output_remove[key] = button(
-                "×", "compact", hint="Remove this MCU role output"
-            )
+            self.output_remove[key] = remove_button("Remove this MCU role output")
             self.output_remove[key].setAccessibleName(f"Remove {name} output")
             self.output_remove[key].clicked.connect(
                 lambda _checked=False, role_key=key: (
@@ -147,7 +153,7 @@ class MicrocontrollerPanel(DevicePanel):
                 )
             )
             self.output_table.set_control(row, 4, self.output_remove[key])
-        self.io = Card("Inputs")
+        self.io = EditingCard("Inputs")
         self.input_table = self.pin_table("Input")
         self.flip_pin = self.add_pin_row(
             self.input_table, 0, "projector-flip", "Projector flip"

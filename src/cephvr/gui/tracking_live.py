@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.acquisition.camera.native_formats import pylon_pixel_format
+from cephvr.gui.theme import colors_for
 from cephvr.shared.pixels.preparer import PixelPreparer
 from cephvr.shared.pixels.types import PixelLayout
 from cephvr.tracking.v1 import services_pb2 as tracking
@@ -74,7 +75,12 @@ class TrackingDiagnosticViewer(QDialog):
         canvas = presentation.image.copy()
         painter = QPainter(canvas)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        colors = (QColor("#38bdf8"), QColor("#fbbf24"), QColor("#fb7185"))
+        palette = colors_for(self)
+        colors = (
+            QColor(palette.accent),
+            QColor(palette.projection),
+            QColor(palette.coral),
+        )
         for _stage, name, x, y in presentation.points:
             painter.setPen(QPen(colors[0], max(1, canvas.width() / 400)))
             radius = max(3.0, canvas.width() / 160)

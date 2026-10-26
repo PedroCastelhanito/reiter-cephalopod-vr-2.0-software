@@ -6,7 +6,9 @@ from collections.abc import Callable
 from typing import Any
 
 from cephvr.control.v1 import services_pb2 as rpc
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.preview_placement import valid_stimulus_tiles
+from cephvr.shared.preview_rates import PreviewPacer
 from cephvr.visual_stimulus.config.models.artifact_models import ReviewLayout
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.rendering.capture_sync import (
@@ -15,6 +17,10 @@ from cephvr.visual_stimulus.rendering.capture_sync import (
 )
 from cephvr.visual_stimulus.rendering.preview import StimulusPreview
 from cephvr.visual_stimulus.rendering.preview_rig import RigStimulusPreview
+
+
+def _rgb(color: int) -> tuple[float, float, float]:
+    return ((color >> 16) & 255) / 255, ((color >> 8) & 255) / 255, (color & 255) / 255
 
 
 class StimulusPreviewGroup:
@@ -39,6 +45,7 @@ class StimulusPreviewGroup:
         self.pending: list[Any] = []
         self.readers: dict[str, StimulusPreview] = {}
         self.mutating = False
+        self.pacer = PreviewPacer()
         self.on_rates: Callable[[float | None, float, int], None] = lambda *_: None
 
     @property
@@ -87,6 +94,7 @@ class StimulusPreviewGroup:
         self.readers.clear()
 
     def set_visible(self, visible: bool, placement: rpc.PreviewWindowPlacement) -> None:
+        was_visible = self.visible
         if not valid_stimulus_tiles(placement):
             raise ValueError("Invalid projector preview placement")
         if placement.update_existing_only and not self.visible:
@@ -94,6 +102,15 @@ class StimulusPreviewGroup:
         requested = {item.surface: item for item in placement.stimulus_tiles}
         if any(self.tile(name) is None for name in requested):
             raise ValueError("Preview projector is not in the prepared output layout")
+        self.combined.hidden_surfaces = {
+            name.lower() for name in placement.hidden_stimulus_surfaces
+        }
+        if placement.HasField("stimulus_background_rgb"):
+            self.combined.background = _rgb(placement.stimulus_background_rgb)
+        self.combined.surface_colors = {
+            name.lower(): _rgb(color)
+            for name, color in placement.stimulus_surface_colors.items()
+        }
         self.mutating = True
         try:
             for name in requested:
@@ -110,6 +127,8 @@ class StimulusPreviewGroup:
                 hint.CopyFrom(placement)
                 hint.ClearField("stimulus_tiles")
                 show = visible and (name in requested if requested else not name)
+                if not name and len(self.combined.hidden_surfaces) == 4:
+                    show = False
                 # A layout-mode switch may open its alternate windows; ordinary polling cannot reopen an X-closed group.
                 hint.update_existing_only = (
                     placement.update_existing_only and window.visible
@@ -122,6 +141,8 @@ class StimulusPreviewGroup:
             for window in self.windows.values():
                 window.on_rates = lambda *_: None
             if active:
+                if not was_visible:
+                    self.pacer = PreviewPacer()
                 active[0].on_rates = lambda *args: self.on_rates(*args)
         finally:
             self.mutating = False
@@ -140,9 +161,11 @@ class StimulusPreviewGroup:
                 break
 
     def frame_due(self) -> bool:
+        # Every visible consumer is drawn together, so they share one cadence.
         return any(
-            [window.frame_due() for window in self.windows.values() if window.visible]
-        )
+            window.visible and not (window.owner is not None and window.owner.minimized)
+            for window in self.windows.values()
+        ) and self.pacer.ready(host_time_ns())
 
     def draw(self, texture: Any, width: int, height: int) -> None:
         for name, window in self.windows.items():

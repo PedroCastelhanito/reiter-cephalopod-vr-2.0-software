@@ -1448,3 +1448,51 @@ def test_adopted_video_handle_still_rejects_path_change_at_final_observation(
             clock_ns=lambda: 20,
         )
     assert len(observed) == 1 and not native.closed
+
+
+@pytest.mark.parametrize(
+    "finished,released,has_encoder",
+    [
+        (True, True, True),
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_recycle_retains_exact_encoder_release_independent_of_output_success(
+    finished,
+    released,
+    has_encoder,
+):
+    session = object.__new__(RecordingSession)
+    session._finished = finished
+    session._encoder = (
+        SimpleNamespace(launch_id="recording-helper", cleanup_complete=released)
+        if has_encoder
+        else None
+    )
+    events = []
+    removed = Future()
+    removed.set_result(None)
+    runtime = object.__new__(WorkerRecordingRuntime)
+    runtime._run_future = Future()
+    runtime._run_future.set_result(
+        [
+            control.OutputResult(
+                output_key="video",
+                closure=control.OUTPUT_CLOSURE_UNCONFIRMED,
+            )
+        ]
+    )
+    runtime._queue = runtime._pool = None
+    runtime._pending_session = session
+    runtime.writer = SimpleNamespace(remove_finished=lambda: removed)
+    runtime._wait = lambda future, deadline: future.result()
+    runtime._resource_released = lambda *args: events.append(args)
+    runtime.recycle_finished(100)
+    assert events == (
+        [("ffmpeg:recording-helper", True)]
+        if finished and released and has_encoder
+        else []
+    )
+    assert runtime._pending_session is None

@@ -4,11 +4,13 @@ import math
 from dataclasses import dataclass
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QHeaderView, QLineEdit, QTableWidgetItem
+from PyQt6.QtGui import QResizeEvent
+from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QVBoxLayout, QWidget
 
-from cephvr.gui.components import Card, field
+from cephvr.gui.components import Card, field, label
 from cephvr.gui.device_panel import entry
-from cephvr.gui.tables import DataTable
+from cephvr.gui.editing_card import EditingCard, EditingSurface
+from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.configuration import load_projection_settings
 
 FACES = ("Front", "Left", "Right", "Bottom")
@@ -92,8 +94,12 @@ class RigGeometryEditor(Card):
 
     def __init__(self) -> None:
         super().__init__("Rig geometry")
+        self.body.setSpacing(SIZES.group_gap)
+        self.tank_group = EditingCard("Tank")
+        self.subject_group = EditingCard("Subject position")
+        self.distance_group = EditingCard("Subject to screens")
         self.fields: dict[str, QLineEdit] = {}
-        grid = QGridLayout()
+        grids = (QGridLayout(), QGridLayout())
         for i, (key, title) in enumerate(
             (
                 ("width", "TANK WIDTH (mm)"),
@@ -108,9 +114,14 @@ class RigGeometryEditor(Card):
             edit.setAccessibleName(title)
             edit.textChanged.connect(self.changed)
             self.fields[key] = edit
-            grid.addWidget(field(title, edit), i // 3, i % 3)
+            grid = grids[i // 3]
+            grid.addWidget(field(title, edit), 0, i % 3)
             grid.setColumnStretch(i % 3, 1)
-        self.body.addLayout(grid)
+        for group, grid in zip(
+            (self.tank_group, self.subject_group), grids, strict=True
+        ):
+            group.body.addLayout(grid)
+            self.body.addWidget(group)
         self.screen_distances: dict[str, QLineEdit] = {}
         distances = QGridLayout()
         for i, face in enumerate(("Left", "Front", "Bottom")):
@@ -127,7 +138,8 @@ class RigGeometryEditor(Card):
                 i,
             )
             distances.setColumnStretch(i, 1)
-        self.body.addLayout(distances)
+        self.distance_group.body.addLayout(distances)
+        self.body.addWidget(self.distance_group)
 
     def dimensions(self) -> RigDimensions | None:
         try:
@@ -188,18 +200,35 @@ class ScreenGeometryEditor(Card):
         super().__init__("Screen dimensions")
         self.fields: dict[tuple[str, str], QLineEdit] = {}
         self.drafts: dict[str, dict[str, str]] = {face: {} for face in FACES}
-        self.table = DataTable(len(FACES), 4)
+        self.rows: dict[str, EditingSurface] = {}
         entries = (
             ("width", "WIDTH\n(mm)"),
             ("height", "HEIGHT\n(mm)"),
             ("distance", "DERIVED DIST.\n(mm)"),
         )
-        self.table.setHorizontalHeaderLabels(["", *(title for _, title in entries)])
-        header = self.table.horizontalHeader()
-        assert header is not None
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        for row, face in enumerate(FACES):
-            self.table.setItem(row, 0, QTableWidgetItem(face))
+        self.headings = [label(title, "label", wrap=True) for _, title in entries]
+        self.column_header = QWidget()
+        header_grid = self.row_grid(self.column_header)
+        header_grid.addWidget(label("Screen", "label"), 0, 0)
+        for col, heading in enumerate(self.headings, 1):
+            policy = heading.sizePolicy()
+            policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+            heading.setSizePolicy(policy)
+            header_grid.addWidget(heading, 0, col)
+        self.body.addWidget(self.column_header)
+        self.body.setSpacing(12)
+        for face in FACES:
+            row = EditingSurface()
+            self.rows[face] = row
+            grid = self.row_grid(row)
+            identity = QWidget()
+            identity.setFixedWidth(84)
+            identity_body = QVBoxLayout(identity)
+            identity_body.setContentsMargins(0, 0, 0, 0)
+            identity_body.setSpacing(0)
+            identity_body.addWidget(label(face, "projector-title"))
+            identity_body.addWidget(row.editing_label)
+            grid.addWidget(identity, 0, 0)
             for col, (key, title) in enumerate(entries, 1):
                 edit = entry("—")
                 edit.setMinimumWidth(0)
@@ -221,7 +250,8 @@ class ScreenGeometryEditor(Card):
                     lambda value, f=face, k=key: self.save_value(f, k, value)
                 )
                 self.fields[face, key] = edit
-                self.table.set_control(row, col, edit)
+                grid.addWidget(edit, 0, col)
+            self.body.addWidget(row)
         for face in FACES:
             edit = QLineEdit(self)
             edit.setReadOnly(True)
@@ -230,9 +260,25 @@ class ScreenGeometryEditor(Card):
                 lambda value, f=face: self.save_value(f, "throw", value)
             )
             self.fields[face, "throw"] = edit
-        self.table.fit_rows()
-        self.body.addWidget(self.table)
+
+    @staticmethod
+    def row_grid(host: QWidget) -> QGridLayout:
+        grid = QGridLayout(host)
+        grid.setContentsMargins(12, 10, 12, 10)
+        grid.setHorizontalSpacing(12)
+        grid.setColumnMinimumWidth(0, 84)
+        for col in range(1, 4):
+            grid.setColumnStretch(col, 1)
+        return grid
 
     def save_value(self, face: str, key: str, value: str) -> None:
         self.drafts[face][key] = value
         self.changed.emit()
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        grid = self.column_header.layout()
+        assert grid is not None
+        self.column_header.setMinimumHeight(
+            grid.heightForWidth(self.column_header.width())
+        )

@@ -16,13 +16,14 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.batch_insertion import Insertion
 from cephvr.gui.batch_values import materialize_values
 from cephvr.gui.batch_variation import BatchVariationRow
-from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
+from cephvr.gui.components import button, combo, equal_row_height, field, label
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.notices import FormNotice, passive_validation
 from cephvr.gui.projector_layers import detach_layer, layer_title, layers_for
 from cephvr.gui.protocol_groups import make_group
 from cephvr.gui.stimulus_scope import surfaces
-from cephvr.gui.variation_table import VariationTable
+from cephvr.gui.variation_cards import VariationCards
 from cephvr.visual_stimulus.compiler.expansion import expand_program
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -52,25 +53,19 @@ class BatchCreate(QWidget):
         self.destination = "trial"
         self.composer = composer if composer is not None else EpochComposer()
         body.addWidget(self.composer)
-        self.variation_host = Card("Variation rules", compact=True)
-        self.variation_content = QWidget()
-        self.variation_body = QVBoxLayout(self.variation_content)
-        self.variation_body.setContentsMargins(0, 0, 0, 0)
-        self.variation_host.body.addWidget(self.variation_content)
-        self.variation_table = VariationTable()
-        self.variation_body.addWidget(self.variation_table)
+        # Each rule is its own editing card beside Epoch settings; no wrapper card.
+        self.variation_cards = VariationCards()
+        body.addWidget(self.variation_cards)
         self.rows: list[BatchVariationRow] = []
         self.rule_ids: dict[BatchVariationRow, list[str]] = {}
         self.add_rule = button("+ Add variation rule")
         self.add_rule.clicked.connect(self.add_variation)
-        self.variation_body.addWidget(self.add_rule)
-        body.addWidget(self.variation_host)
-        self.generation_controls = QWidget()
+        body.addWidget(self.add_rule)
+        self.generation_controls = EditingCard("Epoch settings")
         self.generation_controls.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
         )
-        generation = QVBoxLayout(self.generation_controls)
-        generation.setContentsMargins(0, 0, 0, 0)
+        generation = self.generation_controls.body
         self.generation_grid = QGridLayout()
         self.generation_grid.setContentsMargins(0, 0, 0, 0)
         self.generation_grid.setHorizontalSpacing(12)
@@ -261,20 +256,19 @@ class BatchCreate(QWidget):
             targets,
             projectors,
             node.settings,
-            table_mode=True,
             presentation=reference.category == "media_presentation",
         )
         self.rule_ids[row] = [s.instance_id for s in node.settings]
         row.remove.clicked.connect(lambda: self.remove_variation(row))
         row.changed.connect(self.queue_preview)
         self.rows.append(row)
-        self.variation_table.append_rule(row)
+        self.variation_cards.append_rule(row)
         self.queue_preview()
 
     def remove_variation(self, row: BatchVariationRow) -> None:
         self.rows.remove(row)
         self.rule_ids.pop(row)
-        self.variation_table.remove_rule(row)
+        self.variation_cards.remove_rule(row)
         self.queue_preview()
 
     def random_factor(self) -> int:

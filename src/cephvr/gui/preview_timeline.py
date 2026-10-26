@@ -1,6 +1,7 @@
 """Read-only stimulus epoch timeline with optional advanced motion instruments."""
 
 from collections.abc import Callable
+from dataclasses import replace
 from time import monotonic
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
@@ -93,6 +94,7 @@ class StimulusTimeline(QWidget):
         super().__init__()
         # Operator-hidden projector sections; names survive card rebuilds.
         self.hidden_projectors: set[str] = set()
+        self.available_projectors: set[str] | None = None
         self.projector_cards: dict[str, QWidget] = {}
         self.active_sources: set[str] = set()
         self.body = QVBoxLayout(self)
@@ -352,11 +354,15 @@ class StimulusTimeline(QWidget):
         shown = [
             card
             for name, card in self.projector_cards.items()
-            if name not in self.hidden_projectors and name not in self.shared_faces
+            if self.projector_available(name)
+            and name not in self.hidden_projectors
+            and name not in self.shared_faces
         ]
         for name, card in self.projector_cards.items():
             card.setVisible(
-                name not in self.hidden_projectors and name not in self.shared_faces
+                self.projector_available(name)
+                and name not in self.hidden_projectors
+                and name not in self.shared_faces
             )
         self.instrument_host.instruments = [*self.shared_dials.values(), *shown] or [
             self.notice
@@ -382,6 +388,13 @@ class StimulusTimeline(QWidget):
 
     def projector_visible(self, name: str) -> bool:
         return name not in self.hidden_projectors
+
+    def projector_available(self, name: str) -> bool:
+        return (
+            self.available_projectors is None
+            or name == "Arena"
+            or name in self.available_projectors
+        )
 
     def set_projector_visible(self, name: str, visible: bool) -> None:
         if visible:
@@ -424,7 +437,8 @@ class StimulusTimeline(QWidget):
             else ""
         )
         self.refresh_size(index is not None)
-        self.refresh_instruments(index, time)
+        # Before playback, lay out the draft's initial planned state without a clock.
+        self.refresh_instruments(current_epoch(epochs, time), time)
         self.epoch_timeline.right_margin = (
             self.size_lane.lane_margin if self.size_lane.isVisibleTo(self) else 24
         )
@@ -438,6 +452,10 @@ class StimulusTimeline(QWidget):
         elapsed = self.elapsed or 0.0
         start, end = time_window(elapsed)
         for panel in self.panels:
+            if not self.projector_available(
+                panel.source.key[0]
+            ) or not self.projector_visible(panel.source.key[0]):
+                continue
             unit = "mm" if panel.source.unit == "mm/s" else "deg"
             for axis in (0, 1):
                 if not panel.size[axis]:
@@ -479,17 +497,33 @@ class StimulusTimeline(QWidget):
             if panel.arena:
                 world = next(maps)
                 map_sample = self.plan.map_sample(panel, index, time)
+                if self.elapsed is None:
+                    map_sample = replace(
+                        map_sample,
+                        path=(),
+                        pose=None,
+                        message=map_sample.message or "Waiting for trial",
+                    )
                 world.set_sample(map_sample)
                 widgets.append(world)
                 self.map_samples.append(map_sample)
             for driving in (False, True)[: 2 if panel.driving else 1]:
                 dial = next(dials)
                 dial_sample = self.plan.dial_sample(panel, index, time, driving)
+                if self.elapsed is None:
+                    dial_sample = replace(
+                        dial_sample,
+                        vector=None,
+                        angular_speed=None,
+                        orientation_deg=None,
+                        message=dial_sample.message or "Waiting for trial",
+                    )
                 dial.set_sample(dial_sample)
                 widgets.append(dial)
                 self.dial_samples.append(dial_sample)
                 if (
                     panel.source.key[0] in self.shared_faces
+                    and self.projector_available(panel.source.key[0])
                     and panel.source.key[0] not in self.hidden_projectors
                     and index is not None
                     and panel.source.settings[index] is not None

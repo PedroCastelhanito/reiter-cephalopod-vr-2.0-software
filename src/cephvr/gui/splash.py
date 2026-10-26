@@ -47,9 +47,7 @@ class StartupSplash(QSplashScreen):
             if self.style_name in RETRO_PALETTES
             else COLORS
         )
-        self.crt = self.style_name != "standard" and settings.value(
-            "review/crt", True, type=bool
-        )
+        self.crt = self.style_name in RETRO_PALETTES
         super().__init__()
         load_terminal_font()
         self.setWindowTitle("CephVR2.0 — Initializing")

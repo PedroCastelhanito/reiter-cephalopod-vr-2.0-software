@@ -1,0 +1,132 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+______ test_grouped_timeline_large_repeat_and_visible_paint_are_bounded _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000164DD6BEF80>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000164DB0205E0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000164DD7497D0>
+
+    def test_grouped_timeline_large_repeat_and_visible_paint_are_bounded(
+        window, app, monkeypatch
+    ):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.compiler import expansion
+    
+        program, _ = make_group(review_program(), (), 0, 1, 50_000, False)
+        editor = window.protocol.editor
+        editor.set_program(program)
+        monkeypatch.setattr(
+            expansion,
+            "expand_program",
+            lambda *a, **k: pytest.fail("Timeline expanded repetitions"),
+        )
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert len(editor.timeline.nodes) == len(editor.hierarchy.contents.nodes) == 2
+        assert "100,001 epochs" in editor.timeline.summary()
+        source = review_program()
+        many = source.model_copy(
+            update={
+                "sequence": tuple(
+                    source.sequence[0].model_copy(update={"epoch_id": f"Epoch_{i}"})
+                    for i in range(5000)
+                )
+            }
+        )
+        # No backend preparation, image loading or occurrence expansion is needed to paint.
+        timeline = editor.timeline
+        timeline.set_program(many, 4999)
+        timeline.resize(400, timeline.height())
+        timeline.reveal_selection()
+        timeline.grab()
+>       assert len(timeline.hits) <= 4
+E       AssertionError: assert 5 <= 4
+E        +  where 5 = len([(PyQt6.QtCore.QRectF(-134.0, 5.0, 142.0, 60.0), 4995, '', -1), (PyQt6.QtCore.QRectF(16.0, 5.0, 142.0, 60.0), 4996, ''...t6.QtCore.QRectF(316.0, 5.0, 142.0, 60.0), 4998, '', -1), (PyQt6.QtCore.QRectF(466.0, 5.0, 142.0, 60.0), 4999, '', -1)])
+E        +    where [(PyQt6.QtCore.QRectF(-134.0, 5.0, 142.0, 60.0), 4995, '', -1), (PyQt6.QtCore.QRectF(16.0, 5.0, 142.0, 60.0), 4996, ''...t6.QtCore.QRectF(316.0, 5.0, 142.0, 60.0), 4998, '', -1), (PyQt6.QtCore.QRectF(466.0, 5.0, 142.0, 60.0), 4999, '', -1)] = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x00000164DEBA4C10>.hits
+
+tests\gui\test_dashboard.py:16963: AssertionError
+_______ test_arena_xyz_orientation_default_subject_height_and_alignment _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000164DEC2D120>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000164DB0205E0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/cephvr-review-gui-last-two-20261026/test_arena_xyz_orientation_def0')
+
+    def test_arena_xyz_orientation_default_subject_height_and_alignment(
+        window, app, tmp_path
+    ):
+        from cephvr.gui.initial_pose import ArenaPose
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(grouped_program(blank_program()))
+        composer = editor.subgroup.composer
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "arena.glb"
+        path.write_bytes(b"arena")
+        height = window.devices.projectors.rig_editor.fields["subject_z"]
+        height.setText("67.5")
+        composer.mode.setCurrentIndex(1)
+        setting = composer.program.sequence[0].settings[0]
+        assert setting.initial.position_mm == (0, 0)
+        assert setting.fixed_height_mm == 67.5
+        assert (
+            setting.initial.yaw_deg,
+            setting.fixed_pitch_deg,
+            setting.fixed_roll_deg,
+        ) == (0, 0, 0)
+        height.setText("88")
+        assert composer.program.sequence[0].settings[0].fixed_height_mm == 67.5
+        row = composer.rows[""]
+        row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+        row.actions_button.setChecked(True)
+        parameters = row.parameters
+        pose = next(form for form in parameters.forms if isinstance(form, ArenaPose))
+        from PyQt6.QtWidgets import QComboBox
+    
+        assert not pose.findChildren(QComboBox)
+        from cephvr.gui.initial_pose import PoseNumber
+    
+        saved = {"column_id": "height"}
+        referenced = PoseNumber({"type": "number"}, saved, {})
+        assert referenced.control.isReadOnly()
+        assert referenced.read() == saved
+        assert not referenced.findChildren(QComboBox)
+        referenced.deleteLater()
+        for width in (1280, 720):
+            window.resize(width, 1100)
+            app.processEvents()
+            assert (
+                parameters.arena_limits.mapTo(parameters, QPoint()).y()
+                < pose.mapTo(parameters, QPoint()).y()
+            )
+            limits = parameters.arena_limits
+            left = pose.position_fields[0]
+            right = pose.orientation_fields[0]
+            assert (
+                limits.mode_field.mapTo(parameters, QPoint()).x()
+                == left.mapTo(parameters, QPoint()).x()
+            )
+>           assert (
+                limits.margin_field.mapTo(parameters, QPoint()).x()
+                == right.mapTo(parameters, QPoint()).x()
+            )
+E           assert 163 == 179
+E            +  where 163 = <built-in method x of QPoint object at 0x00000164E0937BC0>()
+E            +    where <built-in method x of QPoint object at 0x00000164E0937BC0> = PyQt6.QtCore.QPoint(163, 64).x
+E            +      where PyQt6.QtCore.QPoint(163, 64) = <built-in method mapTo of QWidget object at 0x00000164E0B40F70>(<cephvr.gui.stimulus_parameters.StimulusParameters object at 0x00000164E0BDC160>, PyQt6.QtCore.QPoint())
+E            +        where <built-in method mapTo of QWidget object at 0x00000164E0B40F70> = <PyQt6.QtWidgets.QWidget object at 0x00000164E0B40F70>.mapTo
+E            +          where <PyQt6.QtWidgets.QWidget object at 0x00000164E0B40F70> = <cephvr.gui.arena_limits.ArenaLimits object at 0x00000164E0BB8E50>.margin_field
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+E            +  and   179 = <built-in method x of QPoint object at 0x00000164E09378B0>()
+E            +    where <built-in method x of QPoint object at 0x00000164E09378B0> = PyQt6.QtCore.QPoint(179, 167).x
+E            +      where PyQt6.QtCore.QPoint(179, 167) = <built-in method mapTo of QWidget object at 0x00000164E0B41990>(<cephvr.gui.stimulus_parameters.StimulusParameters object at 0x00000164E0BDC160>, PyQt6.QtCore.QPoint())
+E            +        where <built-in method mapTo of QWidget object at 0x00000164E0B41990> = <PyQt6.QtWidgets.QWidget object at 0x00000164E0B41990>.mapTo
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:19515: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_grouped_timeline_large_repeat_and_visible_paint_are_bounded
+FAILED tests/gui/test_dashboard.py::test_arena_xyz_orientation_default_subject_height_and_alignment
+2 failed, 956 deselected in 3.17s

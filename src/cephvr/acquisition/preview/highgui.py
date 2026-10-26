@@ -16,6 +16,7 @@ from cephvr.acquisition.preview.viewport import SquareViewport
 from cephvr.acquisition.preview.window_thread import window_thread
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
+from cephvr.platform.windows.preview_caption import HoverPreviewCaption
 from cephvr.platform.windows.preview_creation import StagedPreviewWindow
 from cephvr.platform.windows.preview_owner import WindowsPreviewOwner
 from cephvr.platform.windows.window_coordinates import (
@@ -135,6 +136,7 @@ class HighGuiPreview:
         window = False
         closed = True
         owner: WindowsPreviewOwner | None = None
+        caption: HoverPreviewCaption | None = None
         geometry = PreviewGeometryGuard()
         try:
             if self.output_bits != 8:
@@ -167,6 +169,13 @@ class HighGuiPreview:
             viewport = SquareViewport(layout.width, layout.height, side)
 
             def mouse(event: int, x: int, y: int, flags: int, _param: object) -> None:
+                if (
+                    event == cv.EVENT_LBUTTONDOWN
+                    and caption is not None
+                    and caption.press(x, y, viewport.side)
+                ):
+                    viewport.end_pan()
+                    return
                 if event == cv.EVENT_MOUSEWHEEL:
                     viewport.wheel(x, y, flags)
                 elif event == cv.EVENT_LBUTTONDBLCLK:
@@ -204,6 +213,14 @@ class HighGuiPreview:
                 if sys.platform == "win32":
                     native = self.native_handle = preview_window_handle(self.title)
                     blank_preview_caption(native)
+                    caption = HoverPreviewCaption(native)
+                    # Refit after removing chrome so the client fills the square slot.
+                    cv.resizeWindow(self.title, side, side)
+                    cv.waitKey(1)
+                    if self.placement is not None:
+                        position_preview_frame(
+                            native, self.placement.x, self.placement.y
+                        )
                 owner_minimized = owner.sync() if owner is not None else False
                 staged.show(not owner_minimized)
             if (
@@ -214,6 +231,11 @@ class HighGuiPreview:
             if owner is not None:
                 geometry.arranged(owner.geometry(), owner.placement_revision())
             self.visible = True
+
+            def render() -> Any:
+                image = viewport.render(latest, cv, numpy)
+                return caption.draw(image, cv) if caption is not None else image
+
             last = -1
             meter = PreviewRateMeter()
             pacer = PreviewPacer()
@@ -284,7 +306,10 @@ class HighGuiPreview:
                             getattr(placement, field) == getattr(self.placement, field)
                             for field in identity
                         ):
-                            cv.resizeWindow(self.title, placement.side, placement.side)
+                            if placement.side != self.placement.side:
+                                cv.resizeWindow(
+                                    self.title, placement.side, placement.side
+                                )
                             cv.waitKey(1)
                             position_preview_frame(
                                 native, placement.x, placement.y, topmost=False
@@ -296,8 +321,10 @@ class HighGuiPreview:
                             )
                             self.placement = placement
                             self.placement.snap_to_grid = False
+                if caption is not None and not owner_minimized:
+                    viewport.dirty |= caption.sync()
                 if not owner_minimized and viewport.dirty and latest is not None:
-                    cv.imshow(self.title, viewport.render(latest, cv, numpy))
+                    cv.imshow(self.title, render())
                 if scope == "session":
                     current_run = ring.run_id
                     if current_run != run_id:
@@ -320,7 +347,7 @@ class HighGuiPreview:
                         prepared = preparer.prepare_preview(pixels, self.output_bits)
                         latest = display_array(prepared, numpy)
                         if not owner_minimized:
-                            cv.imshow(self.title, viewport.render(latest, cv, numpy))
+                            cv.imshow(self.title, render())
                             meter.presented += 1
                         if not self.ready.done():
                             cv.waitKey(1)

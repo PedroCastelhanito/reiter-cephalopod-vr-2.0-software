@@ -24,6 +24,7 @@ from cephvr.gui.components import (
 )
 from cephvr.gui.devices_rail import DeviceRail
 from cephvr.gui.dialogs import StopDialog, SubjectReuseDialog
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.formatting import duration, hud_grid
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import DirectoryField
@@ -163,6 +164,9 @@ class Dashboard(QWidget):
 
     def build_subject(self, sample: bool) -> Card:
         card = Card("Session config")
+        card.body.setSpacing(SIZES.group_gap)
+        self.session_group = EditingCard("Session")
+        self.subject_group = EditingCard("Subject")
         grid = QGridLayout()
         grid.setHorizontalSpacing(SIZES.field_x_gap)
         grid.setVerticalSpacing(SIZES.field_y_gap)
@@ -176,7 +180,7 @@ class Dashboard(QWidget):
         self.species.setCurrentIndex(0 if sample else -1)
         self.sex = combo(("Not specified", "Female", "Male"))
         self.age = QLineEdit()
-        self.age.setPlaceholderText("Age (dph)")
+        self.age.setPlaceholderText("e.g. 30")
         self.subject_size = QLineEdit()
         self.subject_size.setPlaceholderText("Size (mm)")
         self.experiment = QLineEdit("Optic flow" if sample else "")
@@ -198,8 +202,8 @@ class Dashboard(QWidget):
         grid.addWidget(field("OUTPUT DIRECTORY", self.output_field), 1, 0, 1, 2)
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
-        card.body.addLayout(grid)
-        card.body.addSpacing(SIZES.card_padding)
+        self.session_group.body.addLayout(grid)
+        card.body.addWidget(self.session_group)
         details = QGridLayout()
         details.setHorizontalSpacing(SIZES.field_x_gap)
         details.setVerticalSpacing(SIZES.field_y_gap)
@@ -214,7 +218,8 @@ class Dashboard(QWidget):
         details.addWidget(field("CONDITION", self.condition), 2, 0, 1, 2)
         details.setColumnStretch(0, 1)
         details.setColumnStretch(1, 1)
-        card.body.addLayout(details)
+        self.subject_group.body.addLayout(details)
+        card.body.addWidget(self.subject_group)
         return card
 
     def install_subject_helpers(self, settings: QSettings | None) -> None:
@@ -367,7 +372,10 @@ class Dashboard(QWidget):
         if self.reuse_dialog is not None and not self.can_request("Setup"):
             self.reuse_dialog.reject()
         self.preview_workspace.apply_views(
-            view.previews, allowed=view.has_control and (view.connected or view.sample)
+            view.previews,
+            allowed=view.has_control and (view.connected or view.sample),
+            reserve_configured=view.phase
+            in {Phase.CONFIGURATION, Phase.SETTING_UP, Phase.READY},
         )
         setup_mode = view.phase in {Phase.CONFIGURATION, Phase.SETTING_UP, Phase.ENDED}
         primary_action = (

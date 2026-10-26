@@ -41,11 +41,13 @@ class StimulusPreview:
         self.pacer = PreviewPacer()
         self.source_count = 0
         self.crop = (0.0, 0.0, 1.0, 1.0)
+        self.background = (0.0, 0.0, 0.0)
 
     def prepare(self, shared_window: Any) -> None:
         glfw = self.glfw
         glfw.default_window_hints()
         glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+        glfw.window_hint(glfw.DECORATED, glfw.FALSE)
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
@@ -94,7 +96,13 @@ class StimulusPreview:
             ):
                 return
             if placement.side:
-                self.glfw.set_window_size(self.window, placement.side, placement.side)
+                if self.glfw.get_window_size(self.window) != (
+                    placement.side,
+                    placement.side,
+                ):
+                    self.glfw.set_window_size(
+                        self.window, placement.side, placement.side
+                    )
                 if sys.platform != "win32":
                     self.glfw.set_window_pos(self.window, placement.x, placement.y)
             if sys.platform == "win32" and placement.side:
@@ -122,9 +130,10 @@ class StimulusPreview:
                     self.owner_identity = identity
                     self.geometry.last = None
                     self.geometry.revision = None
-            self.glfw.set_window_should_close(self.window, False)
-            self.glfw.show_window(self.window)
-        else:
+            if not self.visible:
+                self.glfw.set_window_should_close(self.window, False)
+                self.glfw.show_window(self.window)
+        elif self.visible:
             self.glfw.hide_window(self.window)
         if self.owner is not None and visible:
             self.geometry.arranged(
@@ -191,7 +200,7 @@ class StimulusPreview:
         if self.context is not None:
             self.glfw.make_context_current(self.window)
             self.context.screen.use()
-            self.context.clear(0, 0, 0)
+            self.context.clear(*self.background)
             self.glfw.swap_buffers(self.window)
 
     def release(self) -> None:

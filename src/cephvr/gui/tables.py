@@ -24,7 +24,7 @@ def refresh_button(hint: str) -> QPushButton:
     # The appearance recolours named icons to the active palette.
     control.setProperty("iconName", "refresh")
     control.setIconSize(QSize(16, 16))
-    control.setFixedSize(26, 26)
+    control.setFixedSize(SIZES.icon_button, SIZES.icon_button)
     return control
 
 

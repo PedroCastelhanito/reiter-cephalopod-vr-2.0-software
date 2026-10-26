@@ -113,6 +113,7 @@ class ProjectorCard(QFrame):
     ) -> None:
         super().__init__()
         self.setObjectName("ProjectorCard")
+        self.header = header
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 6, 8, 8)
@@ -128,6 +129,13 @@ class ProjectorCard(QFrame):
         if instruments:
             self.grid = InstrumentGrid(instruments)
             layout.addWidget(self.grid, 1)
+
+    def set_heading_visible(self, visible: bool) -> None:
+        self.header.setVisible(visible)
+        layout = self.layout()
+        assert layout is not None
+        layout.setContentsMargins(*((8, 6, 8, 8) if visible else (0, 0, 0, 0)))
+        layout.setSpacing(4 if visible else 0)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)

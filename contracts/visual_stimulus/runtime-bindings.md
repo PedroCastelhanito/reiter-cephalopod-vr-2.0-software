@@ -135,6 +135,21 @@ observed ten-bit RGB channels before Idle or Ready.
 
 ## Native review preview control
 
+`PreviewWindowPlacement.hidden_stimulus_surfaces` contains at most four unique
+Left/Front/Right/Bottom names. It excludes those surfaces and outlines from Combined
+and must not overlap individual `stimulus_tiles`. Empty preserves the existing
+all-surface behavior; all four excluded hides every native preview. Both authenticated
+stimulus boundaries validate names, count, uniqueness and disjointness. Camera
+placement rejects this stimulus-only field. These are display preferences, never
+projector-output or recording masks. G01 owns available-projector and content choices.
+
+`stimulus_background_rgb` is an optional packed `0xRRGGBB` GUI surround color;
+`stimulus_surface_colors` maps at most four Left/Front/Right/Bottom names to packed
+outline colors. Both stimulus boundaries reject unknown names and values above
+`0xFFFFFF`; camera placement rejects these stimulus-only hints. Absent hints retain
+legacy preview colors. The GL owner applies them only to the Combined inspection
+background and surface outlines, never to stimulus textures or recorded pixels.
+
 `ExperimentControllerService.SetStimulusPreview` authenticates the current GUI lease,
 session and configuration. The controller sends `StimulusPreviewRequest` through
 `VisualStimulusConfigurationService.SetStimulusPreview`; the coordinator binds the

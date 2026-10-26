@@ -6,16 +6,16 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIntValidator, QKeyEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QGridLayout,
     QHBoxLayout,
-    QHeaderView,
     QLineEdit,
-    QTableWidgetItem,
     QWidget,
 )
 
-from cephvr.gui.components import Card, button
+from cephvr.gui.components import Card, button, field
+from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.projector_geometry import FACES
-from cephvr.gui.tables import DataTable
+from cephvr.gui.theme import SIZES
 
 
 class AdjustmentEntry(QLineEdit):
@@ -72,7 +72,7 @@ class AdjustmentEntry(QLineEdit):
             super().keyPressEvent(event)
 
 
-class CalibrationTable(Card):
+class CalibrationCards(Card):
     adjustments_changed = pyqtSignal(str, str)
     launch_requested = pyqtSignal()
     measurement_requested = pyqtSignal()
@@ -82,21 +82,15 @@ class CalibrationTable(Card):
         super().__init__("Projection calibration")
         self.drafts = drafts
         self.controls: dict[tuple[str, str], QWidget] = {}
-        self.table = DataTable(len(FACES), 4)
-        self.table.setHorizontalHeaderLabels(
-            [
-                "Screen",
-                "Inverse",
-                "Width / Height (px)",
-                "Offset X / Y (px)",
-            ]
-        )
-        header = self.table.horizontalHeader()
-        assert header is not None
-        for col in (0, 1):
-            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
-        for row, face in enumerate(FACES):
-            self.table.setItem(row, 0, QTableWidgetItem(face))
+        self.cards: dict[str, EditingCard] = {}
+        self.body.setSpacing(SIZES.group_gap)
+        for face in FACES:
+            card = EditingCard(face)
+            self.cards[face] = card
+            grid = QGridLayout()
+            grid.setHorizontalSpacing(12)
+            card.body.addLayout(grid)
+            self.body.addWidget(card)
             for col, keys in enumerate(
                 (
                     ("flip_x", "flip_y"),
@@ -136,9 +130,9 @@ class CalibrationTable(Card):
                     control.setAccessibleName(f"{face} {key}")
                     self.controls[face, key] = control
                     layout.addWidget(control)
-                self.table.set_control(row, col, cell)
-        self.table.fit_rows()
-        self.body.addWidget(self.table)
+                title = ("Inverse", "Width / Height (px)", "Offset X / Y (px)")[col - 1]
+                grid.addWidget(field(title, cell), 0, col - 1)
+                grid.setColumnStretch(col - 1, 1)
         self.presentation_button = button("Launch projection calibration")
         self.presentation_button.setToolTip(
             "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"

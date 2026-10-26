@@ -2,7 +2,6 @@
 
 from PyQt6.QtCore import QSettings, QSignalBlocker, QSize, Qt
 from PyQt6.QtWidgets import (
-    QHBoxLayout,
     QStackedWidget,
     QTabBar,
     QVBoxLayout,
@@ -10,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.cameras import CamerasPanel
-from cephvr.gui.components import Card
+from cephvr.gui.components import Card, configuration_file_card
 from cephvr.gui.devices_rail import DeviceRail
 from cephvr.gui.icons import device_icon
 from cephvr.gui.layouts import column
@@ -101,21 +100,18 @@ class DevicesPage(QWidget):
             self.panels,
             strict=True,
         ):
-            config_card = Card("Configuration file")
-            self.config_cards.append(config_card)
             if isinstance(panel, ProjectorsPanel):
+                config_card = Card("Configuration file")
                 config_card.body.addWidget(panel.calibration_files)
             else:
                 assert isinstance(
                     panel, (CamerasPanel, MicrocontrollerPanel, SpikeGLXPanel)
                 )
                 files = panel.config_files
-                row = QHBoxLayout()
-                row.setContentsMargins(0, 0, 0, 0)
-                row.setSpacing(SIZES.field_x_gap)
-                row.addWidget(files.load_button, 1)
-                row.addWidget(files.save_button, 1)
-                config_card.body.addLayout(row)
+                config_card = configuration_file_card(
+                    files.load_button, files.save_button
+                )
+            self.config_cards.append(config_card)
             left = panel.columns[0].layout()
             assert isinstance(left, QVBoxLayout)
             left.insertWidget(0, config_card)

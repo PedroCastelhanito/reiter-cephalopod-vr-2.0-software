@@ -1,4 +1,4 @@
-"""Compact reference row; advanced controls and layer actions stay out of the grid."""
+"""Projector cards reuse the owning stimulus controls and validation."""
 
 from PyQt6.QtCore import QPoint, QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent, QStandardItemModel
@@ -12,11 +12,14 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import SelectionBox, button, combo, equal_row_height, label
+from cephvr.gui.editing_card import EditingSurface
+from cephvr.gui.icons import device_icon
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.reference_fields import reference_fields
 from cephvr.gui.reference_layers import ReferenceLayers
 from cephvr.gui.stimulus_parameters import StimulusParameters
 from cephvr.gui.stimulus_presets import FILE_TYPES
+from cephvr.gui.theme import colors_for
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 
 
@@ -49,13 +52,12 @@ class LayerSelector(SelectionBox):
         super().hidePopup()
 
 
-class ProjectorReference(QWidget):
+class ProjectorReference(EditingSurface):
     add_requested = pyqtSignal()
     type_requested = pyqtSignal(str)
     remove_requested = pyqtSignal()
     forward_requested = pyqtSignal()
     backward_requested = pyqtSignal()
-    layout_changed = pyqtSignal()
 
     def __init__(self, face: str) -> None:
         super().__init__()
@@ -65,11 +67,10 @@ class ProjectorReference(QWidget):
         self.slots = ReferenceLayers()
         self.columns: list[tuple[str, QWidget]] = []
         self.headings: list[QLabel] = []
-        self.show_header = True
-        self.identity_header = True
         self.narrow = False
+        self.compact = False
         body = QVBoxLayout(self)
-        body.setContentsMargins(0, 0, 0, 0)
+        body.setContentsMargins(16, 16, 16, 16)
         body.setSpacing(0)
         body.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.grid = QGridLayout()
@@ -77,7 +78,7 @@ class ProjectorReference(QWidget):
         self.grid.setHorizontalSpacing(8)
         self.grid.setVerticalSpacing(6)
         body.addLayout(self.grid)
-        self.caption = label(face or "Rig-wide", "label")
+        self.caption = label(face or "Rig-wide", "projector-title")
         self.caption.setWordWrap(True)
         self.layer = LayerSelector()
         self.layer.setFixedWidth(64)
@@ -86,12 +87,21 @@ class ProjectorReference(QWidget):
         self.layer.currentIndexChanged.connect(
             lambda: self.select_layer(self.layer.currentData())
         )
+        self.side = QWidget()
+        self.side.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
+        self.side_grid = QGridLayout(self.side)
+        self.side_grid.setContentsMargins(0, 0, 0, 0)
+        self.side_grid.setVerticalSpacing(6)
+        self.identity_label = label("Projector" if face else "Space", "label")
+        self.layer_label = label("Layer", "label")
+        self.editing_label.hide()
         self.stimulus = combo(())
         self.stimulus.setMinimumWidth(0)
         for kind in ("3D arena",) if not face else ("None", *FILE_TYPES[:-1]):
             self.stimulus.addItem(kind.replace("Looming image", "Looming"), kind)
         self.stimulus.currentIndexChanged.connect(self.change_type)
-        self.actions_button = button("…", "icon", hint="Advanced settings")
+        self.actions_button = button("", "icon", hint="Advanced settings")
+        self.actions_button.setProperty("iconName", "configure")
         self.actions_button.setAccessibleName(f"{face or 'Rig-wide'} advanced settings")
         self.actions_button.setCheckable(True)
         menu = self.layer.operations
@@ -144,11 +154,9 @@ class ProjectorReference(QWidget):
                 self.motion_source_changed
             )
         self.arrange()
-        self.layout_changed.emit()
 
     def motion_source_changed(self) -> None:
         self.arrange()
-        self.layout_changed.emit()
 
     def visible_columns(self) -> list[tuple[str, QWidget]]:
         source = self.parameters.motion_source
@@ -173,98 +181,98 @@ class ProjectorReference(QWidget):
         if not self.columns:
             return
         self.narrow = self.width() < 900
+        self.compact = self.width() < 650
         columns = self.visible_columns()
-        headings = []
-        for column, heading in zip(self.columns, self.headings, strict=True):
-            visible = column in columns
-            if visible:
-                headings.append(heading)
-            else:
+        # One grid owns both rows so their columns cannot drift independently.
+        for layout in (self.grid, self.side_grid):
+            while layout.count():
+                layout.takeAt(0)
+            for col in range(12):
+                layout.setColumnMinimumWidth(col, 0)
+                layout.setColumnStretch(col, 0)
+            for row in range(16):
+                layout.setRowMinimumHeight(row, 0)
+        self.actions_button.setIcon(device_icon("configure", colors_for(self).muted))
+        heading_height = max(heading.sizeHint().height() for heading in self.headings)
+        controls = [control for _, control in columns if control is not self.caption]
+        equal_row_height(*controls)
+        control_height = self.stimulus.height()
+        self.caption.setFixedHeight(control_height)
+        first = 0 if self.compact else 1
+        top = 1 if self.compact else 0
+        action_col = first + 4
+        if self.compact:
+            self.side_grid.addWidget(self.identity_label, 0, 0)
+            self.side_grid.addWidget(self.caption, 1, 0)
+            self.side_grid.addWidget(self.layer_label, 0, 1)
+            self.side_grid.addWidget(self.layer, 1, 1)
+            self.side_grid.setColumnStretch(0, 1)
+            self.side_grid.setColumnMinimumWidth(1, 64)
+            self.grid.addWidget(self.side, 0, first, 1, 5)
+            self.side.show()
+        else:
+            self.side.hide()
+            self.grid.addWidget(self.identity_label, 0, 0)
+            self.grid.addWidget(self.caption, 1, 0)
+            self.grid.addWidget(self.layer_label, 3, 0)
+            self.grid.addWidget(self.layer, 4, 0)
+            self.grid.setColumnMinimumWidth(0, 84)
+        self.identity_label.show()
+        self.caption.show()
+        self.layer_label.setVisible(bool(self.face))
+        self.layer.setVisible(bool(self.face))
+        self.grid.setColumnMinimumWidth(action_col, self.actions_button.width())
+        for col in range(first, action_col):
+            self.grid.setColumnStretch(col, 1)
+        if not self.narrow:
+            self.grid.setColumnMinimumWidth(first, 246)
+            self.grid.setColumnStretch(first, 0)
+        self.grid.setRowMinimumHeight(top + 2, 6)
+        parameters = [
+            column
+            for column in columns
+            if column[0] and column[0] not in {"Layer", "Stimulus", "Asset"}
+        ]
+        count = 2 if self.narrow else 4
+        for (title, control), heading in zip(self.columns, self.headings, strict=True):
+            if control in (self.caption, self.layer):
                 heading.hide()
-                column[1].hide()
-        while self.grid.count():
-            self.grid.takeAt(0)
-        for col in range(max(10, len(self.columns))):
-            self.grid.setColumnMinimumWidth(col, 0)
-            self.grid.setColumnStretch(col, 0)
-        for row in range(10):
-            self.grid.setRowMinimumHeight(row, 0)
-        header_height = max(h.sizeHint().height() for h in self.headings)
-        self.grid.setRowMinimumHeight(0, header_height)
-        for index, ((_, control), heading) in enumerate(
-            zip(columns, headings, strict=True)
-        ):
-            slot = index if self.face or index == 0 else index + 2
-            if self.narrow and self.parameters.layer_index < 0 and 3 <= slot < 7:
+                continue
+            if (title, control) not in columns:
                 heading.hide()
                 control.hide()
                 continue
-            visible = self.identity_header if slot < 4 else self.show_header
-            heading.setText(columns[index][0] if visible or self.narrow else "")
-            heading.setFixedHeight(header_height)
-            if self.narrow:
-                # Identity and source above three numeric fields on small windows.
-                positions = (
-                    (0, 0, 1),
-                    (0, 1, 1),
-                    (0, 2, 1),
-                    (2, 0, 4),
-                    (4, 0, 1),
-                    (4, 1, 1),
-                    (4, 2, 1),
-                    (6, 0, 1),
-                    (6, 1, 1),
-                    (0, 3, 1),
-                )
-                if index == len(columns) - 1:
-                    row, col, span = 0, 3, 1
-                elif self.parameters.motion_source is not None and slot >= 4:
-                    if slot == 4:
-                        row, col, span = 4, 0, 4
-                    elif self.parameters.motion_source.currentText() == "Linked":
-                        row, col, span = 6, 0, 4
-                    else:
-                        parameter = slot - 5
-                        row, col, span = (
-                            6 + 2 * (parameter // 2),
-                            2 * (parameter % 2),
-                            2,
-                        )
-                else:
-                    row, col, span = positions[slot]
-                self.grid.setRowMinimumHeight(row, header_height)
+            heading.setText(title)
+            if control is self.stimulus:
+                row, col, span = top, first, 2 if self.narrow else 1
+            elif title == "Asset":
+                span = 2 if self.narrow and self.face else 3 if self.face else 4
+                row, col = top, action_col - span
+            elif control is self.actions_button:
+                row, col, span = top, action_col, 1
+            elif not title or self.parameters.layer_index < 0:
+                heading.hide()
+                control.hide()
+                continue
             else:
-                row, col, span = 0, index, 1
+                parameter = parameters.index((title, control))
+                batch, slot = divmod(parameter, count)
+                in_batch = min(count, len(parameters) - batch * count)
+                unit = 4 // count
+                row, col = top + 3 + 2 * batch, first + slot * unit
+                span = unit if slot < in_batch - 1 else 4 - slot * unit
+                if title == "Motion source":
+                    control.setMinimumWidth(0 if self.narrow else 246)
+                    control.setMaximumWidth(16777215 if self.narrow else 246)
+            self.grid.setRowMinimumHeight(row, heading_height)
             self.grid.addWidget(heading, row, col, 1, span)
             self.grid.addWidget(control, row + 1, col, 1, span)
-            heading.show()
+            heading.setVisible(bool(title))
             control.show()
-        if self.narrow:
-            for col in range(3):
-                self.grid.setColumnStretch(col, 1)
-        else:
-            asset_column = 3 if self.face else 1
-            for col, width in (
-                (0, 74),
-                (len(columns) - 1, self.actions_button.width()),
-            ):
-                self.grid.setColumnMinimumWidth(col, width)
-            if self.face:
-                self.grid.setColumnMinimumWidth(1, 64)
-                self.grid.setColumnMinimumWidth(2, 115)
-            self.grid.setColumnMinimumWidth(asset_column, 160)
-            self.grid.setColumnStretch(asset_column, 1)
-            for col in range(asset_column + 1, len(columns) - 1):
-                self.grid.setColumnMinimumWidth(col, 95)
-                self.grid.setColumnStretch(col, 1)
         empty = self.parameters.layer_index < 0
-
         self.actions_button.setEnabled(not empty)
         self.actions_button.setVisible(bool(self.face) or not empty)
         self.parameters.more.hide()
-        if not self.narrow:
-            controls = [control for _, control in self.columns[1:]]
-            equal_row_height(*controls)
         self.grid.setAlignment(Qt.AlignmentFlag.AlignTop)
         QTimer.singleShot(0, self.align_advanced)
 
@@ -275,20 +283,29 @@ class ProjectorReference(QWidget):
         if body is not None:
             body.activate()
         self.grid.activate()
-        anchor = self.layer if self.face else self.columns[1][1]
+        self.side_grid.activate()
+        anchor = self.stimulus if self.face else self.columns[1][1]
         inset = max(
             0,
             anchor.mapTo(self, QPoint()).x()
             - self.parameters.mapTo(self, QPoint()).x(),
         )
         margins = self.parameters.advanced_layout.contentsMargins()
+        asset = next(control for title, control in self.columns if title == "Asset")
+        right = max(
+            0,
+            self.parameters.width()
+            + self.parameters.mapTo(self, QPoint()).x()
+            - asset.mapTo(self, QPoint()).x()
+            - asset.width(),
+        )
         self.parameters.advanced_layout.setContentsMargins(
-            inset, margins.top(), margins.right(), margins.bottom()
+            inset, margins.top(), right, margins.bottom()
         )
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
-        if (self.width() < 900) != self.narrow:
+        if (self.width() < 900) != self.narrow or (self.width() < 650) != self.compact:
             self.arrange()
         QTimer.singleShot(0, self.align_advanced)
 

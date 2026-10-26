@@ -3,7 +3,7 @@
 import json
 
 from PyQt6.QtCore import QEvent, QSettings, QSize, Qt
-from PyQt6.QtGui import QAction, QCloseEvent
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.appearance import DashboardAppearance
 from cephvr.gui.components import StatusColumn, button, label
-from cephvr.gui.dashboard import Dashboard
+from cephvr.gui.dashboard import RUNTIME_PHASES, Dashboard
 from cephvr.gui.devices import DevicesPage
 from cephvr.gui.gui_snapshot import GuiSnapshot, SnapshotPages
 from cephvr.gui.notices import StatusEvent
@@ -109,7 +109,7 @@ class DashboardWindow(QMainWindow):
                 alignment=Qt.AlignmentFlag.AlignRight,
             )
             section.rail.chosen.connect(
-                lambda _device, _section, page=index: self.page_buttons[page].click()
+                lambda _device, _section, page=index: self.select_page(page)
             )
         self.recordings = RecordingsCard(
             self.devices.cameras, self.devices.spikeglx.pairing
@@ -167,40 +167,14 @@ class DashboardWindow(QMainWindow):
         self.devices.tabs.currentChanged.connect(self.update_preview_slot)
         self.update_preview_slot()
         layout.addWidget(page, 1)
-        self.navigation.idClicked.connect(self.select_page)
+        self.navigation.idClicked.connect(self.navigate_page)
         self.apply_view(DashboardView())
         self.appearance = DashboardAppearance(
             self, self.dashboard, self.page_header, settings
         )
-        self.install_view_menu(settings)
-
-    def install_view_menu(self, settings: QSettings | None) -> None:
-        """Layout trials live in View; Style stays about appearance only."""
-        menu_bar = self.menuBar()
-        assert menu_bar is not None
-        menu = menu_bar.addMenu("View")
-        assert menu is not None
-        self.side_rail_action = QAction("Side navigation", menu)
-        self.side_rail_action.setCheckable(True)
-        self.side_rail_action.setToolTip(
-            "Show Dashboard views and Devices in side navigation."
-        )
-        self.side_rail_action.setChecked(
-            settings.value("devices/side_rail", True, type=bool) if settings else True
-        )
-        self.side_rail_action.toggled.connect(
-            lambda enabled: self.set_side_rail(enabled, settings)
-        )
-        menu.addAction(self.side_rail_action)
-        self.set_side_rail(self.side_rail_action.isChecked(), None)
-
-    def set_side_rail(self, enabled: bool, settings: QSettings | None) -> None:
-        self.devices.set_side_rail(enabled)
-        self.dashboard.set_side_rail(enabled)
+        self.devices.set_side_rail(True)
+        self.dashboard.set_side_rail(True)
         self.refresh_side_navigation()
-        if settings is not None:
-            settings.setValue("devices/side_rail", enabled)
-            settings.sync()
 
     def refresh_side_navigation(self) -> None:
         for index, section in ((0, self.dashboard), (2, self.devices)):
@@ -218,10 +192,22 @@ class DashboardWindow(QMainWindow):
             super().customEvent(event)
 
     def select_page(self, index: int) -> None:
+        if index != 0 and self.dashboard.view.phase in RUNTIME_PHASES:
+            self.page_buttons[self.stack.currentIndex()].setChecked(True)
+            return
         self.stack.setCurrentIndex(index)
+        self.page_buttons[index].setChecked(True)
         self.page_title.setText(PAGES[index].upper())
         self.refresh_side_navigation()
         self.update_preview_slot()
+
+    def navigate_page(self, index: int) -> None:
+        if index == 0:
+            self.dashboard.preview_workspace.close_viewers()
+            self.dashboard.set_runtime_layout(False)
+            if self.trial_preview is not None:
+                self.trial_preview.close()
+        self.select_page(index)
 
     def update_backend_indicators(self) -> None:
         indicators = self.dashboard.backend_indicators
@@ -275,7 +261,11 @@ class DashboardWindow(QMainWindow):
                 camera.key for camera in self.devices.cameras.drafts if camera.enabled
             }
             sources = tuple(source for source in sources if source.key in enabled)
-        self.preview_slot.set_sources(sources, reserve_active=embedded)
+        self.preview_slot.set_sources(
+            sources,
+            reserve_active=embedded,
+            reserve_configured=embedded and workspace.reserve_configured,
+        )
         self.preview_slot.attach_controls(workspace, external=embedded)
         for key, frame in self.preview_slot.frames.items():
             frame.snap_button.setEnabled(bool(key) and self.dashboard.view.has_control)
@@ -331,7 +321,11 @@ class DashboardWindow(QMainWindow):
             editor.timeline.screens
         )
         timeline.set_playback(
-            view.elapsed_s if view.connected or view.sample else None,
+            view.elapsed_s
+            if (view.connected or view.sample)
+            and view.phase
+            in {Phase.RUNNING, Phase.STOPPING, Phase.FINALIZING, Phase.ENDED}
+            else None,
             running=(view.connected or view.sample)
             and view.phase in {Phase.RUNNING, Phase.STOPPING},
         )
@@ -342,6 +336,17 @@ class DashboardWindow(QMainWindow):
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
         self.tracking.apply_view(view)
+        running = view.phase in RUNTIME_PHASES
+        for control in (
+            *self.page_buttons[1:],
+            self.devices.rail,
+            self.devices.tabs,
+            self.devices.projectors.setup_tabs,
+            self.tracking.tabs,
+        ):
+            control.setEnabled(not running)
+        if running and self.stack.currentIndex() != 0:
+            self.select_page(0)
         self.update_backend_indicators()
         self.update_preview_slot()
         if self.dashboard.runtime_layout:

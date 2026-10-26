@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QCheckBox, QLineEdit, QPushButton
 
-from cephvr.gui.components import button, equal_row_height
+from cephvr.gui.components import button, equal_row_height, remove_button
 from cephvr.gui.pin_numbers import PinNumber
 
 if TYPE_CHECKING:
@@ -61,9 +61,8 @@ class MicrocontrollerInputs(QObject):
             QLineEdit(),
             PinNumber(),
             button("Test", "compact"),
-            button("×", "icon", hint="Remove input"),
+            remove_button("Remove input"),
         )
-        row.remove.setFixedSize(26, 26)
         row.name.setPlaceholderText("Input name")
         row.name.setAccessibleName("Input name")
         row.name.setMinimumWidth(70)

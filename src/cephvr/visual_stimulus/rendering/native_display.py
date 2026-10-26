@@ -30,9 +30,8 @@ class DisplayUnavailableError(ValueError):
 
     code = "DISPLAY_OUTPUT_UNAVAILABLE"
     remedy = (
-        "Turn on the projectors, check their display cables and enable them in "
-        "Windows display settings. Refresh Devices > Projectors, check the "
-        "assignments, then run Setup."
+        "\nCheck power/cables and Windows Display settings, then Refresh in "
+        "Devices > Projectors, check its assignment and run Setup."
     )
 
 
@@ -45,6 +44,30 @@ class DisplayGpuUnavailableError(DisplayUnavailableError):
         "then shut down and restart all of CephVR. Reopening the dashboard alone "
         "will not apply the change."
     )
+
+
+def resolve_output_monitors(
+    display: DisplayProfile,
+    glfw: Any,
+    resolve_monitor: Callable[[str, Any], object],
+) -> list[tuple[Output, object]]:
+    """Preflight all active assignments, identifying an unavailable projector."""
+    monitors = []
+    for output in display.active_outputs:
+        try:
+            monitor = resolve_monitor(output.device_identity, glfw)
+        except DisplayUnavailableError as exc:
+            faces = ", ".join(
+                mapping.surface_id.capitalize()
+                for mapping in display.mappings
+                if mapping.output_id == output.output_id
+            )
+            raise type(exc)(
+                f"{faces or output.output_id} projector: {exc}\n"
+                f"Saved display: {output.device_identity} (output {output.output_id})"
+            ) from exc
+        monitors.append((output, monitor))
+    return monitors
 
 
 def attach_window_context(moderngl: Any) -> Any:

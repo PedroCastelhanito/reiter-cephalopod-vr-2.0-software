@@ -1,0 +1,24 @@
+CephVR launcher controller channel lost: eof
+CephVR supervisor shutdown: JOB_INSPECTION_FAILED: planned job membership could not be verified: QueryFullProcessImageNameW for PID 52720 failed: WinError 5
+Task exception was never retrieved
+future: <Task finished name='Task-1486' coro=<GrpcOutbound.report_interruption() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py:74> exception=<AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py", line 75, in report_interruption
+    receipt = await self.controller.ReportInterruption(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>
+CephVR launcher supervisor channel lost: eof

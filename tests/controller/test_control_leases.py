@@ -237,7 +237,7 @@ async def test_owner_loss_subscriptions_are_shared_and_delivered_once(path):
 
 
 def test_setup_progress_reaches_participant_snapshot_only_during_setup(tmp_path):
-    from .test_lifecycle_reports import _fixture
+    from tests.controller.support_components import _fixture
 
     fixture = _fixture(tmp_path)
     _, lifecycle, _, publisher, _, _ = _components()

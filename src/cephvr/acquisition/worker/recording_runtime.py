@@ -80,6 +80,7 @@ class WorkerRecordingRuntime:
         self._install_future: Future[None] | None = None
         self._prepare_future: Future[None] | None = None
         self._pending_session: RecordingSession | None = None
+        self._resource_released: Callable[[str, bool], None] = lambda *_: None
 
     @property
     def enabled(self) -> bool:
@@ -125,6 +126,7 @@ class WorkerRecordingRuntime:
         if self._settings is not None:
             raise RuntimeError("recording capabilities are already prepared")
         _validate_recording_settings(settings)
+        self._resource_released = capability_resource_released
         if (
             work.WhichOneof("work") != "session"
             or work.session.session_id != session_id
@@ -336,6 +338,10 @@ class WorkerRecordingRuntime:
         if self._pool is not None:
             self._pool.close()
         self._wait(self.writer.remove_finished(), deadline_ns)
+        if self._pending_session is not None:
+            resource = self._pending_session.released_encoder_resource
+            if resource is not None:
+                self._resource_released(resource, True)
         self._installed = False
         self._queue = None
         self._pool = None

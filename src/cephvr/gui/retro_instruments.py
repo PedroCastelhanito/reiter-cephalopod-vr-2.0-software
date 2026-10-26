@@ -296,7 +296,8 @@ class TabMarkers(QWidget):
         left = rect.center().x() - width / 2
         right = rect.center().x() + width / 2
         if not option.icon.isNull():
-            left -= option.iconSize.width() + 4
+            # Qt anchors the icon at the text rectangle's edge, not its center.
+            left = rect.left() - option.iconSize.width() - 4
         left = right + 6 if trailing else left - 6 - 12
         return QRectF(left, rect.top(), 12, rect.height())
 

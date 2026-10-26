@@ -4,8 +4,8 @@ from decimal import Decimal, InvalidOperation
 from random import Random
 from typing import Literal
 
-from PyQt6.QtCore import QEvent, pyqtSignal
-from PyQt6.QtGui import QEnterEvent, QShowEvent
+from PyQt6.QtCore import QEvent, QTimer, pyqtSignal
+from PyQt6.QtGui import QEnterEvent, QResizeEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGridLayout,
@@ -18,13 +18,14 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.batch_random import random_values
 from cephvr.gui.batch_values import ValueRule
 from cephvr.gui.components import button, combo, equal_row_height, label
+from cephvr.gui.editing_card import EditingSurface
 from cephvr.gui.epoch_batch import END_BEHAVIORS
 from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.visual_stimulus.config.models.authoring import VariationDraft
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
 
-class BatchVariationRow(QWidget):
+class BatchVariationRow(EditingSurface):
     changed = pyqtSignal()
 
     def __init__(
@@ -33,20 +34,20 @@ class BatchVariationRow(QWidget):
         projectors: dict[str, list[int]] | None = None,
         settings: tuple[Settings, ...] = (),
         *,
-        table_mode: bool = False,
         presentation: bool = False,
     ) -> None:
         super().__init__()
-        self.table_mode = table_mode
         self.presentation = presentation
         self.targets = targets
         self.settings = settings
         self.projectors = projectors or {"Rig-wide": list(range(len(targets)))}
+        self.stacked: bool | None = None
         body = QVBoxLayout(self)
-        body.setContentsMargins(0, 0, 0, 0)
+        body.setContentsMargins(16, 16, 16, 16)
         body.setSpacing(8)
         target_host = QWidget()
-        row = QGridLayout(target_host)
+        self.target_grid = QGridLayout(target_host)
+        row = self.target_grid
         row.setHorizontalSpacing(8)
         body.addWidget(target_host)
         self.random_cache: tuple[tuple[str, ...], tuple[str, ...]] | None = None
@@ -57,6 +58,7 @@ class BatchVariationRow(QWidget):
         self.rig_angle_version: Literal[1, 2] = 2
         row.setContentsMargins(0, 0, 0, 0)
         self.target = combo(())
+        self.target_captions = []
         if "Rig-wide" not in self.projectors:
             self.target.addItem("All projectors", "")
         for face in self.projectors:
@@ -82,6 +84,7 @@ class BatchVariationRow(QWidget):
             control.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
             caption_widget = label(caption, "label")
             caption_widget.setBuddy(control)
+            self.target_captions.append(caption_widget)
             row.addWidget(caption_widget, 0, column)
             row.addWidget(control, 1, column)
             row.setColumnStretch(column, 0 if column == 1 else 1)
@@ -92,7 +95,11 @@ class BatchVariationRow(QWidget):
         policy = self.remove.sizePolicy()
         policy.setRetainSizeWhenHidden(True)
         self.remove.setSizePolicy(policy)
+        row.addWidget(self.editing_label, 0, 3)
         self.remove.hide()
+        self.hover_timer = QTimer(self)
+        self.hover_timer.setSingleShot(True)
+        self.hover_timer.timeout.connect(self.refresh_remove)
         row.addWidget(self.remove, 1, 3)
         value_host = QWidget()
         self.value_grid = QGridLayout(value_host)
@@ -108,6 +115,8 @@ class BatchVariationRow(QWidget):
             )
             text = label(caption, "label")
             text.setBuddy(value_control)
+            if caption == "Method":
+                self.method_caption = text
             self.value_grid.addWidget(text, 0, column)
             self.value_grid.addWidget(value_control, 1, column)
             if caption == "Values":
@@ -141,15 +150,6 @@ class BatchVariationRow(QWidget):
         self.shared = QCheckBox("Share random values across projectors")
         self.shared.toggled.connect(self.changed)
         self.value_grid.addWidget(self.shared, 2, 0, 1, 4)
-        if table_mode:
-            target_host.hide()
-            self.value_grid.removeWidget(self.method)
-            method_item = self.value_grid.itemAtPosition(0, 0)
-            assert method_item is not None
-            method_caption = method_item.widget()
-            if method_caption is not None:
-                method_caption.hide()
-            self.value_grid.setColumnStretch(0, 0)
         self.fit_control_heights()
         self.target.currentIndexChanged.connect(self.refresh_layers)
         self.layer.currentIndexChanged.connect(self.refresh)
@@ -159,16 +159,98 @@ class BatchVariationRow(QWidget):
             control.currentIndexChanged.connect(self.changed)
         self.values.textChanged.connect(self.changed)
         self.refresh_layers()
+        self.arrange(self.width())
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        self.arrange(self.width())
+
+    def arrange(self, width: int) -> None:
+        stacked = width < 460
+        if stacked == self.stacked:
+            return
+        self.stacked = stacked
+        for widget in (
+            *self.target_captions,
+            self.target,
+            self.layer,
+            self.parameter,
+            self.editing_label,
+            self.remove,
+        ):
+            self.target_grid.removeWidget(widget)
+        value_widgets = (
+            self.method_caption,
+            self.method,
+            self.values_caption,
+            self.values,
+            *self.random_captions,
+            *self.random_fields.values(),
+            self.shared,
+        )
+        for widget in value_widgets:
+            self.value_grid.removeWidget(widget)
+        if stacked:
+            self.target_grid.addWidget(self.target_captions[0], 0, 0, 1, 2)
+            self.target_grid.addWidget(self.target_captions[1], 0, 2)
+            self.target_grid.addWidget(self.editing_label, 0, 3)
+            self.target_grid.addWidget(self.target, 1, 0, 1, 2)
+            self.target_grid.addWidget(self.layer, 1, 2)
+            self.target_grid.addWidget(self.remove, 1, 3)
+            self.target_grid.addWidget(self.target_captions[2], 2, 0, 1, 4)
+            self.target_grid.addWidget(self.parameter, 3, 0, 1, 4)
+            self.target_grid.setColumnStretch(0, 1)
+            self.target_grid.setColumnStretch(1, 0)
+            self.target_grid.setColumnStretch(2, 0)
+            self.target_grid.setColumnStretch(3, 0)
+            self.value_grid.addWidget(self.method_caption, 0, 0, 1, 4)
+            self.value_grid.addWidget(self.method, 1, 0, 1, 4)
+            self.value_grid.addWidget(self.values_caption, 2, 0, 1, 4)
+            self.value_grid.addWidget(self.values, 3, 0, 1, 4)
+            for index, (caption, edit) in enumerate(
+                zip(self.random_captions, self.random_fields.values(), strict=True)
+            ):
+                self.value_grid.addWidget(caption, 4 + index * 2, 0, 1, 4)
+                self.value_grid.addWidget(edit, 5 + index * 2, 0, 1, 4)
+            self.value_grid.addWidget(self.shared, 10, 0, 1, 4)
+        else:
+            for column, caption in enumerate(self.target_captions):
+                self.target_grid.addWidget(caption, 0, column)
+            for column, control in enumerate((self.target, self.layer, self.parameter)):
+                self.target_grid.addWidget(control, 1, column)
+            self.target_grid.addWidget(self.editing_label, 0, 3)
+            self.target_grid.addWidget(self.remove, 1, 3)
+            self.target_grid.setColumnStretch(0, 1)
+            self.target_grid.setColumnStretch(1, 0)
+            self.target_grid.setColumnStretch(2, 1)
+            self.target_grid.setColumnStretch(3, 0)
+            self.value_grid.addWidget(self.method_caption, 0, 0)
+            self.value_grid.addWidget(self.method, 1, 0)
+            self.value_grid.addWidget(self.values_caption, 0, 1, 1, 3)
+            self.value_grid.addWidget(self.values, 1, 1, 1, 3)
+            for column, (caption, edit) in enumerate(
+                zip(self.random_captions, self.random_fields.values(), strict=True),
+                start=1,
+            ):
+                self.value_grid.addWidget(caption, 0, column)
+                self.value_grid.addWidget(edit, 1, column)
+            self.value_grid.addWidget(self.shared, 2, 0, 1, 4)
+
+    def refresh_remove(self) -> None:
+        self.remove.setVisible(self.underMouse() or self.editing)
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
-        if not self.table_mode:
-            self.remove.show()
         super().enterEvent(event)
+        self.hover_timer.start()
 
     def leaveEvent(self, event: QEvent | None) -> None:
-        if not self.table_mode:
-            self.remove.hide()
         super().leaveEvent(event)
+        self.hover_timer.start()
+
+    def focus_changed(self, old: QWidget | None, new: QWidget | None) -> None:
+        super().focus_changed(old, new)
+        if hasattr(self, "hover_timer"):
+            self.hover_timer.start()
 
     def fit_control_heights(self) -> None:
         equal_row_height(
@@ -222,7 +304,16 @@ class BatchVariationRow(QWidget):
         )
 
     def refresh(self) -> None:
-        self.setEnabled(bool(self.targets))
+        # Empty rules must remain removable; only their value editors are unavailable.
+        for control in (
+            self.target,
+            self.layer,
+            self.parameter,
+            self.values,
+            self.shared,
+            *self.random_fields.values(),
+        ):
+            control.setEnabled(bool(self.targets))
         try:
             indices = self.target_indices()
         except ValueError:
@@ -277,19 +368,13 @@ class BatchVariationRow(QWidget):
 
     def update_hint(self) -> None:
         categorical = self.parameter.currentData() == "At end"
-        self.method.setEnabled(not categorical)
+        self.method.setEnabled(bool(self.targets) and not categorical)
         if categorical:
             self.method.setCurrentIndex(0)
         random_method = self.method.currentIndex() == 2
         self.shared.setVisible(random_method and len(self.selected_projectors()) > 1)
         for control in (*self.random_fields.values(), *self.random_captions):
             control.setVisible(random_method)
-        if random_method:
-            self.value_grid.removeWidget(self.values)
-            self.value_grid.removeWidget(self.values_caption)
-        else:
-            self.value_grid.addWidget(self.values, 1, 1, 1, 3)
-            self.value_grid.addWidget(self.values_caption, 0, 1, 1, 3)
         self.values.setVisible(not random_method)
         self.values_caption.setVisible(not random_method)
         if categorical:

@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import json
+import struct
+from copy import deepcopy
 from pathlib import Path
 
 from cephvr.visual_stimulus.compiler import CompileContext, compile_trial
 from cephvr.visual_stimulus.config.models.artifact_models import (
+    GeometricProfile,
     PreparedTrial,
     ResourceManifest,
 )
-from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+from cephvr.visual_stimulus.config.models.display_profile import (
+    DisplayProfile,
+    parse_display_json,
+)
 from cephvr.visual_stimulus.config.models.evidence_model import Identity, State
 from cephvr.visual_stimulus.config.models.program_model import (
     Program,
@@ -30,6 +36,147 @@ _ROOT = Path(__file__).resolve().parents[2]
 _PROGRAM_FIXTURE = (
     _ROOT / "contracts" / "visual_stimulus" / "examples" / "drift-hold.json"
 )
+
+
+def glb_fixture(*, texture=False, external=False):
+    """Return a compact GLB document and binary payload for resource tests."""
+    binary = struct.pack("<9f3H", 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 2)
+    document = {
+        "asset": {"version": "2.0"},
+        "buffers": [{"byteLength": len(binary)}],
+        "bufferViews": [
+            {"buffer": 0, "byteOffset": 0, "byteLength": 36},
+            {"buffer": 0, "byteOffset": 36, "byteLength": 6},
+        ],
+        "accessors": [
+            {"bufferView": 0, "componentType": 5126, "type": "VEC3", "count": 3},
+            {"bufferView": 1, "componentType": 5123, "type": "SCALAR", "count": 3},
+        ],
+        "meshes": [
+            {
+                "primitives": [
+                    {"attributes": {"POSITION": 0}, "indices": 1, "material": 0}
+                ]
+            }
+        ],
+        "nodes": [{"mesh": 0}],
+        "scenes": [{"nodes": [0]}],
+        "scene": 0,
+        "extensionsRequired": ["KHR_materials_unlit"],
+        "materials": [
+            {
+                "extensions": {"KHR_materials_unlit": {}},
+                "pbrMetallicRoughness": {"baseColorFactor": [0.5, 0.25, 1, 1]},
+            }
+        ],
+    }
+    if texture:
+        document["images"] = [{"uri": "textures/fish.png"}]
+        document["textures"] = [{"source": 0, "sampler": 0}]
+        document["samplers"] = [{"wrapS": 33648, "minFilter": 9987}]
+    if external:
+        document["buffers"][0]["uri"] = "mesh.bin"
+    return document, binary
+
+
+def pack_glb(document, binary):
+    """Pack the fixture JSON and binary chunks into a GLB 2.0 byte string."""
+    data = json.dumps(document).encode()
+    data += b" " * (-len(data) % 4)
+    binary += b"\x00" * (-len(binary) % 4)
+    chunks = struct.pack("<II", len(data), 0x4E4F534A) + data
+    chunks += struct.pack("<II", len(binary), 0x004E4942) + binary
+    return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
+
+
+def _linked_texture_fixture():
+    """Unequal observer distances and inward-facing rectangular screen axes."""
+    from cephvr.visual_stimulus.config.models.display_profile import Geometry
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    geometry = Geometry.model_validate_json(
+        json.dumps(
+            {
+                "frame_id": "rig-mm",
+                "observer_mm": [0, 0, 0],
+                "near_mm": 1,
+                "far_mm": 1000,
+                "positional_tolerance_mm": 0.01,
+                "orthogonality_tolerance": 0.001,
+                "surfaces": [
+                    {
+                        "surface_id": face,
+                        "bottom_left_mm": bl,
+                        "bottom_right_mm": br,
+                        "top_right_mm": tr,
+                        "top_left_mm": tl,
+                    }
+                    for face, bl, br, tr, tl in (
+                        (
+                            "bottom",
+                            [-100, -100, -30],
+                            [100, -100, -30],
+                            [100, 100, -30],
+                            [-100, 100, -30],
+                        ),
+                        (
+                            "front",
+                            [100, -100, -30],
+                            [-100, -100, -30],
+                            [-100, -100, 100],
+                            [100, -100, 100],
+                        ),
+                        (
+                            "left",
+                            [-40, -100, -30],
+                            [-40, 100, -30],
+                            [-40, 100, 100],
+                            [-40, -100, 100],
+                        ),
+                        (
+                            "right",
+                            [60, 100, -30],
+                            [60, -100, -30],
+                            [60, -100, 100],
+                            [60, 100, 100],
+                        ),
+                    )
+                ],
+            }
+        )
+    )
+    base = make_program().sequence[0].settings[0].model_dump(mode="json")
+    settings = []
+    for face, period in (("bottom", 100), ("front", 50), ("left", 80), ("right", 120)):
+        data = deepcopy(base)
+        data.update(
+            instance_id=face,
+            linked_to=None if face == "bottom" else "bottom",
+            pattern={
+                "kind": "image_tile",
+                "asset_id": face,
+                "period_x": {"kind": "constant", "value": period},
+                "period_y": {"kind": "constant", "value": period},
+                "sampling": "nearest",
+            },
+            space={
+                "kind": "physical_surface",
+                "frame_id": "rig-mm",
+                "mappings": [{"surface_id": face, "matrix": [[1, 0, 0], [0, 1, 0]]}],
+            },
+            motion={k: {"kind": "hold"} for k in ("x", "y", "rotation")},
+            phase_x={"kind": "hold"},
+            phase_y={"kind": "hold"},
+            reset=False,
+        )
+        settings.append(TextureSettings.model_validate_json(json.dumps(data)))
+    return geometry, settings
+
+
+def _texture_rate(value):
+    from cephvr.visual_stimulus.config.models.program_model import Constant, Rate
+
+    return Rate(kind="rate", function=Constant(kind="constant", value=float(value)))
 
 
 def valid_display_json() -> str:
@@ -85,6 +232,45 @@ def valid_display_json() -> str:
         },
     }
     return json.dumps(profile)
+
+
+def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
+    profiles = {}
+    for mapping in display.active_mappings:
+        output = next(
+            item
+            for item in display.active_outputs
+            if item.output_id == mapping.output_id
+        )
+        profiles[mapping.mapping_id] = GeometricProfile.model_validate(
+            {
+                "format_version": 1,
+                "calibration_id": "diagnostic_test",
+                "mapping_id": mapping.mapping_id,
+                "surface_id": mapping.surface_id,
+                "output_id": output.output_id,
+                "output_width": output.width_px,
+                "output_height": output.height_px,
+                "viewport": mapping.viewport,
+                "rows": 2,
+                "columns": 2,
+                "vertices": (
+                    {"uv": (0, 0), "xy": (0, 0)},
+                    {"uv": (1, 0), "xy": (1, 0)},
+                    {"uv": (0, 1), "xy": (0, 1)},
+                    {"uv": (1, 1), "xy": (1, 1)},
+                ),
+                "orientation": "preserving",
+                "diagonal": "bottom_left_to_top_right",
+                "mask": None,
+                "weight": None,
+                "overlap_group": None,
+                "intended_coverage": ((0, 0), (1, 0), (1, 1), (0, 1)),
+                "coverage_tolerance": 0.01,
+                "triangle_area_tolerance": 0.0001,
+            }
+        )
+    return profiles
 
 
 def fixture_source() -> str:

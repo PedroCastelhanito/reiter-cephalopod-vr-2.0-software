@@ -9,8 +9,12 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import pytest
-from tests.visual_stimulus.support import valid_display_json
-from tests.visual_stimulus.test_resources import glb_fixture, pack_glb
+from tests.visual_stimulus.support import (
+    _geometric_profiles,
+    glb_fixture,
+    pack_glb,
+    valid_display_json,
+)
 
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import (
@@ -534,45 +538,6 @@ def _two_output_display() -> DisplayProfile:
         }
         raw["mappings"].append(duplicate)
     return parse_display_json(json.dumps(raw), max_bytes=1_000_000)
-
-
-def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
-    profiles = {}
-    for mapping in display.active_mappings:
-        output = next(
-            item
-            for item in display.active_outputs
-            if item.output_id == mapping.output_id
-        )
-        profiles[mapping.mapping_id] = GeometricProfile.model_validate(
-            {
-                "format_version": 1,
-                "calibration_id": "diagnostic_test",
-                "mapping_id": mapping.mapping_id,
-                "surface_id": mapping.surface_id,
-                "output_id": output.output_id,
-                "output_width": output.width_px,
-                "output_height": output.height_px,
-                "viewport": mapping.viewport,
-                "rows": 2,
-                "columns": 2,
-                "vertices": (
-                    {"uv": (0, 0), "xy": (0, 0)},
-                    {"uv": (1, 0), "xy": (1, 0)},
-                    {"uv": (0, 1), "xy": (0, 1)},
-                    {"uv": (1, 1), "xy": (1, 1)},
-                ),
-                "orientation": "preserving",
-                "diagonal": "bottom_left_to_top_right",
-                "mask": None,
-                "weight": None,
-                "overlap_group": None,
-                "intended_coverage": ((0, 0), (1, 0), (1, 1), (0, 1)),
-                "coverage_tolerance": 0.01,
-                "triangle_area_tolerance": 0.0001,
-            }
-        )
-    return profiles
 
 
 def _native_calibration_inputs(gl: _FakeGL, display: DisplayProfile | None = None):

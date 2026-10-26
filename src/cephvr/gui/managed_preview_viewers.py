@@ -28,6 +28,7 @@ class ManagedPreviewViewers:
         self.placement = placement
         self._reported: dict[int, int] = {}
         self._layouts: dict[str, tuple[str, bytes]] = {}
+        self._pending_hides: dict[str, int] = {}
         self.layout_timer = QTimer(cameras)
         self.layout_timer.setInterval(200)
         self.layout_timer.timeout.connect(self.relayout)
@@ -52,16 +53,15 @@ class ManagedPreviewViewers:
         )
         if role is None:
             return
-        kind = (
-            rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
-            if visible
-            else rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
-        )
+        if not visible:
+            self._pending_hides[key] = role
+            self._hide_next()
+            return
+        self._pending_hides.pop(key, None)
+        kind = rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
         try:
             options = (
-                {"placement": self.placement(key)}
-                if visible and self.placement is not None
-                else {}
+                {"placement": self.placement(key)} if self.placement is not None else {}
             )
         except Exception as exc:
             self.cameras.console.appendPlainText(
@@ -105,6 +105,9 @@ class ManagedPreviewViewers:
 
     def relayout(self) -> None:
         """Submit changed display hints serially through ordinary command authority."""
+        if self._pending_hides:
+            self._hide_next()
+            return
         state = self.snapshot()
         if state is None or self.placement is None or not self.can_operate:
             return
@@ -136,6 +139,14 @@ class ManagedPreviewViewers:
                 self._layouts[camera.key] = identity
             return
 
+    def _hide_next(self) -> None:
+        """Close requests take priority over layout; cameras share one command slot."""
+        if not self.can_operate or not self._pending_hides:
+            return
+        key, role = next(iter(self._pending_hides.items()))
+        if self.queue_camera(role, rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW):
+            del self._pending_hides[key]
+
     def viewer_state(self, role: int, running: bool, run_id: str) -> bool:
         state = self.snapshot()
         if state is None:
@@ -154,3 +165,4 @@ class ManagedPreviewViewers:
     def disconnected(self) -> None:
         self._reported.clear()
         self._layouts.clear()
+        self._pending_hides.clear()

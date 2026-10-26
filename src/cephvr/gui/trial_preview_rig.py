@@ -15,7 +15,7 @@ from PyQt6.QtGui import (
 
 from cephvr.gui.projector_optics import Point3, ProjectionFootprint
 from cephvr.gui.tank_diagram import TankDiagram
-from cephvr.gui.theme import COLORS
+from cephvr.gui.theme import colors_for
 from cephvr.gui.trial_preview_canvas import PreviewCanvas
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 
@@ -68,7 +68,12 @@ class PreviewRig(TankDiagram):
         enabled = face in self.canvases
         painter.save()
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QColor(COLORS.accent if enabled else COLORS.muted), 1.5))
+        painter.setPen(
+            QPen(
+                QColor(colors_for(self).accent if enabled else colors_for(self).muted),
+                1.5,
+            )
+        )
         if enabled:
             image = self.frames[face]
             correction = self.snapshot.surfaces[face].correction
@@ -110,7 +115,7 @@ class PreviewRig(TankDiagram):
                 self.frames[face] = canvas.frame_image()
         if self.rig is None or not self.screen_planes():
             painter = QPainter(self)
-            painter.setPen(QColor(COLORS.muted))
+            painter.setPen(QColor(colors_for(self).muted))
             painter.drawText(
                 self.rect(),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
@@ -123,8 +128,8 @@ class PreviewRig(TankDiagram):
         for title, center in self.face_labels.items():
             width = painter.fontMetrics().horizontalAdvance(title) + 16
             rect = QRectF(center.x() - width / 2, center.y() - 13, width, 26)
-            painter.setBrush(QColor("#090f15"))
+            painter.setBrush(QColor(colors_for(self).window))
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawRoundedRect(rect, 5, 5)
-            painter.setPen(QColor(COLORS.text))
+            painter.setPen(QColor(colors_for(self).text))
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, title)

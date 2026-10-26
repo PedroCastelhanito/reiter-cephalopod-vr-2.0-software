@@ -51,6 +51,8 @@ class PixelBufferPool(Protocol):
 
 
 class EncoderProcess(Protocol):
+    launch_id: str
+
     @property
     def cleanup_complete(self) -> bool: ...
 

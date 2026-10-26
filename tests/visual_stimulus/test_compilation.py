@@ -8,6 +8,8 @@ from copy import deepcopy
 from unittest.mock import patch
 
 from tests.visual_stimulus.support import (
+    _linked_texture_fixture,
+    _texture_rate,
     fixture_source,
     make_prepared_trial,
     make_program,
@@ -438,96 +440,6 @@ class ExpansionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-def _linked_texture_fixture():
-    """Unequal observer distances and inward-facing rectangular screen axes."""
-    from cephvr.visual_stimulus.config.models.display_profile import Geometry
-    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
-
-    geometry = Geometry.model_validate_json(
-        json.dumps(
-            {
-                "frame_id": "rig-mm",
-                "observer_mm": [0, 0, 0],
-                "near_mm": 1,
-                "far_mm": 1000,
-                "positional_tolerance_mm": 0.01,
-                "orthogonality_tolerance": 0.001,
-                "surfaces": [
-                    {
-                        "surface_id": face,
-                        "bottom_left_mm": bl,
-                        "bottom_right_mm": br,
-                        "top_right_mm": tr,
-                        "top_left_mm": tl,
-                    }
-                    for face, bl, br, tr, tl in (
-                        (
-                            "bottom",
-                            [-100, -100, -30],
-                            [100, -100, -30],
-                            [100, 100, -30],
-                            [-100, 100, -30],
-                        ),
-                        (
-                            "front",
-                            [100, -100, -30],
-                            [-100, -100, -30],
-                            [-100, -100, 100],
-                            [100, -100, 100],
-                        ),
-                        (
-                            "left",
-                            [-40, -100, -30],
-                            [-40, 100, -30],
-                            [-40, 100, 100],
-                            [-40, -100, 100],
-                        ),
-                        (
-                            "right",
-                            [60, 100, -30],
-                            [60, -100, -30],
-                            [60, -100, 100],
-                            [60, 100, 100],
-                        ),
-                    )
-                ],
-            }
-        )
-    )
-    base = make_program().sequence[0].settings[0].model_dump(mode="json")
-    settings = []
-    for face, period in (("bottom", 100), ("front", 50), ("left", 80), ("right", 120)):
-        data = deepcopy(base)
-        data.update(
-            instance_id=face,
-            linked_to=None if face == "bottom" else "bottom",
-            pattern={
-                "kind": "image_tile",
-                "asset_id": face,
-                "period_x": {"kind": "constant", "value": period},
-                "period_y": {"kind": "constant", "value": period},
-                "sampling": "nearest",
-            },
-            space={
-                "kind": "physical_surface",
-                "frame_id": "rig-mm",
-                "mappings": [{"surface_id": face, "matrix": [[1, 0, 0], [0, 1, 0]]}],
-            },
-            motion={k: {"kind": "hold"} for k in ("x", "y", "rotation")},
-            phase_x={"kind": "hold"},
-            phase_y={"kind": "hold"},
-            reset=False,
-        )
-        settings.append(TextureSettings.model_validate_json(json.dumps(data)))
-    return geometry, settings
-
-
-def _texture_rate(value):
-    from cephvr.visual_stimulus.config.models.program_model import Constant, Rate
-
-    return Rate(kind="rate", function=Constant(kind="constant", value=float(value)))
 
 
 def test_linked_translation_unfolds_without_losing_speed_and_keeps_independent_tiles():

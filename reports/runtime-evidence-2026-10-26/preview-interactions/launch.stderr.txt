@@ -1,0 +1,9 @@
+A fresh GUI was launched in the existing application generation.
+CephVR supervisor shutdown: PROCESS_INSPECTION_FAILED: planned job membership could not be verified: QueryFullProcessImageNameW for PID 43792 failed: WinError 5
+Fatal Python error: bool_dealloc: deallocating True or False: bug likely caused by a refcount error in a C extension
+Python runtime state: finalizing (tstate=0x00007ff9ef182960)
+
+Current thread 0x0000bfac (most recent call first):
+  <no Python frame>
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

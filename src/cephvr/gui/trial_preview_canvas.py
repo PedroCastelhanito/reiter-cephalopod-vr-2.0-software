@@ -15,6 +15,7 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import QWidget
 
 from cephvr.gui.stimulus_scope import surfaces
+from cephvr.gui.theme import colors_for
 from cephvr.gui.trial_preview_media import PreviewMedia
 from cephvr.gui.trial_preview_plan import PreviewLayer
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
@@ -92,7 +93,7 @@ class PreviewCanvas(QWidget):
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#090f15"))
+        painter.fillRect(self.rect(), QColor(colors_for(self).window))
         surface = self.rig_geometry.surfaces.get(self.face)
         aspect = surface.width / surface.height if surface else 4 / 3
         target = QRectF(self.rect()).adjusted(4, 4, -4, -4)
@@ -160,7 +161,7 @@ class PreviewCanvas(QWidget):
         output.fill(QColor("black"))
         painter = QPainter(output)
         if correction.error:
-            painter.setPen(QColor("#d6dfe7"))
+            painter.setPen(QColor(colors_for(self).text))
             painter.drawText(
                 QRectF(output.rect()).adjusted(8, 8, -8, -8),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
@@ -222,7 +223,7 @@ class PreviewCanvas(QWidget):
                 errors.append(str(error))
             painter.restore()
         if errors:
-            painter.setPen(QColor("#d6dfe7"))
+            painter.setPen(QColor(colors_for(self).text))
             painter.drawText(
                 rect.adjusted(12, 12, -12, -12),
                 Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,

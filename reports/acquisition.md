@@ -1,5 +1,67 @@
 # Acquisition status
 
+Oct26 `repo-cleanup-and-code-review`: Astra/Luna source review found no additional
+safe runtime dead-code removal or ownership simplification. Two unchanged recording
+fixtures now live in the owning test support module instead of being imported from
+another test module ([ARCH-002](../architecture.md#arch-002)); scenarios are retained.
+The final local non-rig suite passes819 acquisition cases. Two additional synthetic
+native preview checks pass across acquisition/platform; this does not close device
+or full-workload acceptance. [Review evidence](runtime-evidence-2026-10-26/repo-review/).
+
+## MCU release during shutdown — 2026-10-26
+
+The post-session MCU-release warning is fixed under [A11](../docs/architecture/acquisition.md#a11)
+and [E08](../docs/architecture/system-contracts.md#e08). Session cleanup already
+acknowledged Close and cleared the logical claim; process teardown redundantly
+sent another Close after controller exit. ControllerMicrocontrollerClient.close
+now returns when no claim remains. Failed/uncertain Close still retains the exact
+claim and original deadlines; controller exit is never treated as release proof.
+ARCH-002: two-line guard in the existing client, no new state/dependency/order rule.
+156 acquisition teardown/coordinator/cleanup checks pass, including absent and
+acknowledged claims and retained failure evidence. Ruff/format, Win32 mypy and
+boundaries760/zero pass.
+
+Fresh native dummy session ran45seconds with Behavioral30Hz and Tracking60Hz
+trigger streams. Stop returned Configuration with cleanup_confirmed/no errors;
+normal ShutdownApplication succeeded, all managed processes exited, and final
+stderr contains no MCU warning. Both config files restored byte-for-byte. This
+bounded reproduction verifies the warning fix, not full-duration/optical timing
+or recording-decode acceptance. Earlier process-inspection/bool_dealloc findings
+remain separate. [Evidence](runtime-evidence-2026-10-26/mcu-release-fix/context.md).
+
+Oct26 `camera-preview-hover-caption`: revised under [G01](../docs/architecture/gui.md#g01)
+revision332 after owner screenshots showed image shrinkage and unused frame space.
+Camera windows stay borderless; a28px drag/close strip is painted onto the private
+preview output only. Hover changes no window/client geometry or viewport transform.
+Native move/close is dispatched from the strip; image wheel/pan/reset remains below.
+Initial chrome removal is followed by client sizing/placement before reveal; GUI
+camera slots reserve no caption space. No recording/source pixels change.
+ARCH-002: replace the existing caption helper behavior and reuse viewport rendering;
+no new dependencies, callback subclassing or process ownership.
+171 platform/acquisition tests pass, including actual native HighGUI client/outer
+bounds invariant across hover, overlay-X closure without stopping producers, and
+wheel/pan/reset.16 GUI frame/placement checks pass. Ruff/format, Win32 mypy three
+owners and boundaries760/zero pass. Current running trial not restarted; live-session
+pointer dragging, alternate DPI and full-load acceptance remain pending.
+[Checks and limitations](runtime-evidence-2026-10-26/overlay-caption/context.md).
+
+
+Oct26 `preview-run-encoder-closure-warning`: fixed missing recording-helper resource
+proof under [A08](../docs/architecture/acquisition.md#a08) and
+[E08](../docs/architecture/system-contracts.md#e08). Worker recycling retains the
+exact encoder launch ID only after terminal session and confirmed encoder cleanup;
+output durability remains independent. Existing supervisor proof checks remain
+unchanged.817 acquisition tests and201 focused acquisition/rendering/recovery tests
+pass, including unconfirmed-output versus released-process regression cases.
+Native81.87s behavior recording stops with confirmed cleanup; warning does not
+recur after GUI reconnect. Full ffprobe decode2456/2456 frames matches frame-log
+completion with no failed/missed buffers. Final44.47s rerun also confirms cleanup/no retained errors and fully decodes
+1334/1334 frames matching its frame log. User-approved authenticated takeover
+resolved UI-input timeouts; normal shutdown succeeds, zero runtime processes
+remain and original settings are restored byte-for-byte. Previous warning
+evidence remains historical.
+[Evidence, checks and limits](runtime-evidence-2026-10-26/recorder-fps-fix/context.md).
+
 Oct23 `no-recording-dummy-session`: implements the owner-requested
 [E04](../docs/architecture/supervisor.md#e04) all-recording-Off exception.
 [Current validation and limits](runtime.md#no-recording-dummy-session--2026-10-23).

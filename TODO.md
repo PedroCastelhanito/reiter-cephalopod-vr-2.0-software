@@ -10,8 +10,38 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
+- [ ] `repo-cleanup-and-code-review` [repo] Complete commit and sync of the reviewed cleanup/fixes. Owner: Codex cleanup/review chat. Status: hierarchical Astra/Luna review complete; 1,071 GUI, 2,643 backend and two synthetic native tests pass; lint/format/type/boundary/schema checks pass. Final disposable cache/fixture cleanup complete; commit and sync pending. Preserve GOV-001 evidence and existing rig deferrals. — [Review evidence](reports/runtime-evidence-2026-10-26/repo-review/context.md)
 
-- [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and separate Preview controls card natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Actual native stream viewer reflow/follow and projector toggle behavior remain unverified. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
+
+
+
+- [ ] `preview-interaction-transitions` [gui] [acquisition] Verify live overlay-header dragging/Snap; blank-title camera windows unavailable to automation and manual result pending. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and compact Preview toolbar natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Oct26 bounded native run verifies settled Video/card/splitter and Combined/Per-projector/projector toggles; compact plots/FPS clipping fixed and137-second native retest passes Retro/Amber at1442x972; DPI/Snap/full-load follow acceptance pending. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
 
 - [ ] `stimulus-physical-speed-mismatch` [visual_stimulus] [gui] Investigate owner-observed Front faster than Bottom on physical screens. Owner confirms reference measurements; saved 16:10 uniforms and final video pixels agree with50 mm/s. Await same-distance physical travel comparison/current session binding. Owner: this chat. Done when cause is established and corrected/verified. See [report](reports/visual_stimulus.md).
 
@@ -21,6 +51,13 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 ## Next
 
+- [ ] `gui-style-consistency` [gui] Confirm the remaining Retro card-title preference (current 14px vs title_font 15px) and native/DPI appearance. Done when: owner preference and native acceptance are recorded. Status: Standard/Retro/Amber Configuration, Protocol, Tracking and Variation renders inspected; narrow Protocol/Variation clipping and camera selector sizing repaired. Claude's 18 stale assertions and the later layout failures belong to repo-cleanup-and-code-review. Further blanket spacing/font tokenization has no demonstrated behavior benefit; preserve current shared tokens. — [Review evidence](reports/runtime-evidence-2026-10-26/repo-review/context.md), [G02](docs/architecture/gui.md#g02)
+
+- [ ] `preview-verification-exit-diagnostic` [supervisor] [launcher] Diagnose Oct26 verification exit PROCESS_INSPECTION_FAILED WinError5 and bool_dealloc finalization failure. MCU warning separately resolved: duplicate Close skipped only for absent/already released claim;156 checks and45-second native stop/shutdown pass with no warning and empty process inventory. Earlier process-inspection/bool_dealloc cause still unresolved. — [Evidence](reports/runtime.md#preview-interaction-transitions--2026-10-26)
+
+
+
+
 
 - [ ] `dummy-session-no-output` [controller] [acquisition] [visual_stimulus] Verify all-saving-Off Setup/normal/Abort/fresh-session execution creates no output and enabling one recording restores saved files after restart. Status: Oct23 native Setup failed INVALID_CATALOGUE; empty-revision source fix passes102 coordinator/supervisor tests. Failed-session recovery and corrected native retry pending; prior2051 backend/168 supervisor evidence retained. - [Rig check](reports/rig-verification.md#dummy-session-no-output)
 
@@ -29,7 +66,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 - [ ] `gui-relaunch-event-unavailable` [gui] [launcher] [supervisor] Verify integrated launcher diagnostics on a later owner-planned native launch/exit and capture the historical failure cause if it recurs. Status: E08rev181 sparse private lifecycle/exception/fault logging implemented;63 launcher tests and isolated native smoke pass; all11 current runtime identities unchanged, no restart/signals. Current process predates the change; forced kills may leave only an unfinished log and the historical exact cause remains unknown. — [Evidence](reports/runtime.md#startup-splash-preview)
 
 
-- [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Complete alternate monitor/DPI, CRT-off and controller-unavailable startup variants. Status: Oct23 first-paint repair passes8 offscreen/3 native tests and three-style foreground capture; later full native startup and GUI-only save/close/reopen preserve all non-GUI identities/generation and remain connected. Saved projectors are undetected; no Setup/trial/device acceptance claimed. — [Runtime](reports/runtime.md#startup-splash-preview), [Rig checklist](reports/rig-verification.md)
+- [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Complete alternate monitor/DPI, Standard (without CRT) and controller-unavailable startup variants. Status: Oct23 first-paint repair passes8 offscreen/3 native tests and three-style foreground capture; later full native startup and GUI-only save/close/reopen preserve all non-GUI identities/generation and remain connected. Saved projectors are undetected; no Setup/trial/device acceptance claimed. — [Runtime](reports/runtime.md#startup-splash-preview), [Rig checklist](reports/rig-verification.md)
 
 
 - [ ] `mcu-setup-ping-latency` [controller] [acquisition] Diagnose intermittent pre-Start MCU PING admission latency under unchanged200ms policy. Oct22 first final-validation Setup fails at200.495ms with native timeout/query/read calls delayed and near-zero thread CPU; normal Cancel/cleanup/exact restoration pass, one fresh retry completes full protocol. Preserve serial-call evidence and avoid blind retries or deadline relaxation. — [Evidence](reports/runtime.md#rig-checks-oct22)

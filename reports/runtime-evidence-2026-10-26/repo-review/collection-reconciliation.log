@@ -1,0 +1,14 @@
+2026-10-26 GUI collection reconciliation
+Method: parse original collection lines and unique (classname, name) JUnit testcase identities; no test execution.
+gui-collection.log: 953 original dashboard nodes
+gui-final.xml: 958 dashboard nodes, 1071 unique GUI nodes total
+Dashboard removed: 0; added: 5
+gui-review.xml: 1066 unique GUI testcase identities; reported aggregate 1082 includes worker-crash accounting.
+All GUI unique identities removed: 0; added: 5
+Added node IDs:
+tests/gui/test_dashboard.py::test_advanced_hide_defers_stimulus_close_until_pending_finishes[False-False]
+tests/gui/test_dashboard.py::test_advanced_hide_defers_stimulus_close_until_pending_finishes[False-True]
+tests/gui/test_dashboard.py::test_advanced_hide_defers_stimulus_close_until_pending_finishes[True-False]
+tests/gui/test_dashboard.py::test_advanced_hide_defers_stimulus_close_until_pending_finishes[True-True]
+tests/gui/test_dashboard.py::test_review_simulation_steps_are_cancelled_with_their_owner
+The historical Claude 1087 aggregate has not been reconciled to a preserved unique-node listing; it is not used as a collection baseline.

@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QWidget
 
-from cephvr.gui.components import button, combo, equal_row_height, field
+from cephvr.gui.components import combo, equal_row_height, field, remove_button
 from cephvr.gui.feedback_signals import NAMES, targets
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
@@ -33,8 +33,7 @@ class FeedbackEntry(QWidget):
         self.gain = QLineEdit()
         self.offset = QLineEdit()
         self.sideways = QLineEdit()
-        self.remove = button("×", "icon", hint="Remove control")
-        self.remove.setAccessibleName("Remove control")
+        self.remove = remove_button("Remove control")
         self.remove.clicked.connect(self.removed)
         self.controls = [
             field("Input signal", self.signal),

@@ -1,0 +1,6 @@
+before window 720 parameters 354 limits 284 pose 284 margin_x 163 orientation_x 179
+header Initial position (mm) width 149 minimum 164 wrap False
+header Orientation (�) width 117 minimum 117 wrap False
+wrapped window 720 parameters 354 limits 284 pose 284 margin_x 163 orientation_x 163
+header Initial position (mm) width 133 minimum 63 wrap True
+header Orientation (�) width 133 minimum 86 wrap True
