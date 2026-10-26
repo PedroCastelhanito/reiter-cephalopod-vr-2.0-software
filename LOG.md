@@ -11020,3 +11020,180 @@ commit and sync are the remaining task steps. Detailed provenance is in the
 HEAD/origin comparison is0ahead/0behind. Removed the completed queue entry after
 recording this verified outcome. This tracking-only closure changes no tested
 source; existing rig, historical-diagnostic and owner-preference TODOs remain open.
+
+### 2026-10-26 - [repo] [controller] [supervisor] [acquisition] [visual_stimulus] Start lifecycle follow-up
+
+Owner authorized recommended queue reconciliation, lifecycle repairs, shutdown-crash
+investigation, validation, commit and sync; clarified rig testing is included while
+explicit deferrals remain. Clean baseline819f30e6. Astra adjudicates two Luna workers;
+root owns queue/reports, integration and bounded rig execution. Existing tasks
+failed-setup-retired-report, shutdown-resource-registration and
+post-session-calibration-retirement are first, then exit diagnostics. No runtime
+mutation yet. Firmware, Tracking processing, paired mappings and instrument-dependent
+scientific acceptance remain deferred.
+
+`historical-stimulus-evidence-images` resolved by inspection: both exact historical
+PNG paths exist locally, decode successfully and match their surrounding historical
+summary/geometry context. Recorded sizes/SHA256 in lifecycle-followup/historical-images.json.
+No image was regenerated, no optical validation inferred; media remains locally
+retained/ignored. The Oct16 missing-file report remains historical evidence.
+
+### 2026-10-26 - [gui] [acquisition] Reconcile stale queue entries
+
+`hud-live-total-timing` is superseded by current G02's accepted planned-schedule
+progress semantics, implemented in managed_status.session_timeline and covered by
+the passing full GUI suite. This is not a session wall-clock duration claim; native
+gap/interruption confirmation remains under post-stop-session-editing and the rig
+checklist. `manual-camera-repeat-admission` is consolidated into
+camera-preview-sdk-discard-reuse, preserving remaining repeated real-cycle and
+failed-Close checks; no unresolved hardware finding is marked fixed. Refreshed stale
+style/overflow assertions from the completed Oct26 review and removed excess blank
+lines. All explicit deferrals and native acceptance requirements remain open.
+Rig preflight finds no50051 listener, no managed CephVR child processes and a free
+application guard. The retained launcher descriptor is stale; no existing process
+was killed and no experiment/device state was changed.
+
+### 2026-10-26 - [controller] [supervisor] [launcher] [visual_stimulus] Reproduce lifecycle defects
+
+`failed-setup-retired-report`: reviewed controller increment acknowledges only exact
+retained cancelled-Setup Ready evidence under the original deadline and frozen
+configuration revision, without restoring readiness or publishing/waking execution.
+Changed duplicates and identity/check/deadline mismatches still reject. Full owning
+lifecycle-report module36 passes; historical rejected report kind was not captured,
+so the reproduced race does not by itself establish historical native attribution.
+`shutdown-resource-registration`: real driver regression reproduces the exact
+unregistered-resource error after Cleanup and repeated sessionless Shutdown.
+Confirmed-only catalogue/receipt retirement and calibration-context fixes are still
+under review, including unresolved-output and failed-acknowledgement negative cases.
+Windows job/launcher checks78 pass, including the native job-handle case. No new
+cause established for historical WinError5/bool_dealloc; guards remain fail-closed.
+Raw evidence: reports/runtime-evidence-2026-10-26/lifecycle-followup/.
+
+### 2026-10-26 - [visual_stimulus] [controller] Review retirement and prepare bounded rig checks
+
+`shutdown-resource-registration` owning lifecycle/recording/rendering checks260 pass;
+additional unresolved-output and repeated-cleanup checks6 pass. Worker transport12
+pass, including rejected acknowledgement then exact retry, immutable replay after
+new diagnostic state, stale-session fencing and Ended-session global Shutdown.
+Coordinator regression review remains in progress. Interim full Win32 mypy871 and
+boundaries760/zero pass; Ruff identifies only the concurrently edited coordinator
+test formatting, to be checked again after freeze. Reports/worker owners retain
+cohesive evidence/command ownership; no general retry framework or runtime back-reference.
+Exact small session tombstones remain for generation lifetime; report payloads retain
+existing ledger budgets/pruning. Vulture high-confidence results are generated
+bindings/native callback arguments; sampled lower-confidence functions have real
+contract/test callers, so no speculative deletion is made.
+Astra reviewed bounded native harnesses for one GPU-budget rejection/fresh Setup and
+normal trial/NewSession/calibration/Shutdown, with original deadlines and exact
+settings restoration. Harness import/argument checks pass outside the sandbox;
+restricted native imports stalled and were interrupted. No managed rig run yet.
+
+### 2026-10-26 - [controller] [acquisition] [visual_stimulus] Bounded rig rejection exposes remaining recovery defects
+
+Frozen local validation passes2651 backend tests (5 skipped,48 deselected,3 subtests),
+Ruff/format1021, Win32 mypy871 and boundaries760/zero. Normal no-Tracking launch
+uses controller72beb1a9-69b8-4585-97d9-4772bf52b229. Native calibration Open/Close
+passes. First harness attempt stops before Setup due to an invalid display-field
+check; corrected to the declared issues field and original in-memory configuration
+restored before another reviewed attempt. No production workaround was applied.
+Second attempt enables only the saved Behavioral camera and Visual Stimulus, lowers
+operator GPU ceiling temporarily to1 byte, and correctly rejects Setup on GPU88/1.
+Recovery fails: acquisition late Ready has no live work; Visual Stimulus cleanup
+proof is rejected and retained calibration-arena release remains unconfirmed.
+No trial starts and no fresh Setup retry occurs. Astra/Luna investigation continues
+under failed-setup-retired-report and shutdown-resource-registration; local passes
+are not native acceptance. Emergency evidence is preserved at
+reports/emergency-1017652947560800-939ab641-92b0-42f6-bf24-fff8cd4a2604.json.
+The exact supervisor exit receipt confirms all owned processes absent; independent
+inventory is empty and application guard is free. GPU TOML and all four original
+settings files are restored byte-for-byte, with SHA256 evidence. Raw attempt,
+failed cached snapshot and exit/restoration proofs are in lifecycle-followup/.
+
+### 2026-10-26 - [acquisition] [visual_stimulus] Repair native recovery causes and verify bounded Setup recovery
+
+Astra reviewed Luna's exact reproductions and focused fixes. Acquisition now retains
+cancelled Setup Ready as factual attachment/cleanup ownership without advancing
+session readiness; immutable replay after Cleanup does not reattach released transfers.
+Native rendering preserves unrelated release receipts across calibration Close's
+previous-display restoration; each new allocation invalidates only its own old proof.
+The reallocated-resource failed-release negative case stays unconfirmed. No deadline,
+proof validator, dispatcher, prior-Idle behavior or explicit deferral changes.
+Final local backend2674 passes (5 skipped,48 deselected,3 subtests); Ruff/format1021,
+Win32 mypy871 and boundaries760/zero pass. Final acquisition owning143 tests include
+Ready->Cleanup->exact replay; diagnostic rendering28 and lifecycle63 pass.
+Fresh controller8a709bc4-0116-4167-a4b8-dd1a57fc6689 correctly blocks Setup on the
+previous failed probe's unfinished record. Normal file-preserving recovery succeeds,
+with no deletion or remote pairing action. After original in-memory restoration,
+budget-run4 verifies native calibration Open/Close, correct GPU88/1 rejection,
+confirmed cleanup, exact GPU-limit restoration, distinct fresh Setup Ready and
+CancelSetup cleanup, then original configuration restoration. No trial starts in
+this probe. The admitted cancelled camera Setup command remains conservatively
+COMMAND_UNCONFIRMED; independent terminal cleanup and fresh-session success establish
+recovery, not retroactive command success. No source warning suppression.
+The separate normal-trial harness initially stops before mutation on a duplicate
+Configuration participant check; it is corrected to use the already reviewed scoped
+preflight. The bounded normal trial/calibration/Shutdown verification is now running.
+Source hashes, raw results and corrections remain in lifecycle-followup/.
+
+### 2026-10-26 - [controller] [acquisition] [visual_stimulus] Close failed-Setup recovery task; investigate post-session native exit
+
+`failed-setup-retired-report` is complete for the bounded acceptance condition:
+budget-run4 verifies the deliberate rejection settles without late-report shutdown,
+then distinct fresh Setup Ready and CancelSetup cleanup succeed. Removed from TODO
+after the preceding validation record; raw rejected-command evidence is preserved.
+Clarification: the remaining acquisition COMMAND_UNCONFIRMED stderr line is consistent
+with admitted Setup fencing, but lacks a saved child-command-to-session mapping;
+its exact attribution was not independently audited and it is not suppressed.
+The60-second normal Visual Stimulus trial3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06 completes
+with confirmed cleanup; NewSession succeeds. Subsequent calibration Openb32057bb
+is admitted but renderer PID19736 exits without a retained Python error. Emergency
+1018812939131900-0fa45dae-e6ea-4168-b664-b9c34dfc5481 records CHILD_EXITED/errors[].
+No second trial or normal final Shutdown occurs. `post-session-calibration-retirement`
+and `shutdown-resource-registration` remain open while Astra/Luna inspect native
+lifetime and command-state paths. Windows Application1000/1001 query finds no matching
+fault event; no process exit code was captured, so a native access violation is not
+asserted. Exact supervisor exit receipt, empty inventory/free guard and all four
+byte-exact restored settings are retained. Source remains frozen during investigation.
+
+### 2026-10-26 - [visual_stimulus] [controller] [supervisor] Complete bounded lifecycle validation
+
+Instrumented repetition captures renderer20820 exit0, without native fault output.
+Astra/Luna reproduce the exact cause locally: confirmed cleanup leaves the finished
+DriverState.trial, so Open's correct active-trial guard rejects it and orderly recovery
+exits. Confirmed-only cleanup now retires finished trial state; active/unconfirmed
+state remains fenced. A separate red regression finds stale NativePreparation display
+profile after calibration/budget release; successful cleanup now clears all three,
+while failed source closure preserves ownership. Recovery emits one bounded best-effort
+local cause message without changing cleanup/deadline behavior.
+Final backend2676 passes (5 skipped,48 deselected,3 subtests); Ruff/format1021,
+Win32 mypy871 and boundaries760/zero pass. Owning lifecycle64, renderer29 and resources56
+pass. Both Luna final readers and Astra accept the frozen source with no actionable
+finding. The older empty emergency ErrorReport lists remain a reporting limitation;
+no cause for that delivery gap is claimed. Historical WinError5/bool_dealloc remains
+unexplained and did not recur; explicit hardware/scientific deferrals remain.
+Final fresh controller7951e9db-8b30-4cda-a8d2-06fa67b20ea8 passes two60-second normal
+Visual Stimulus trials, normal cleanup, NewSession, post-session diagnostic OpenACTIVE
+and CloseIDLE/resources_closed, then a second Ended-session normal Shutdown command.
+Renderer60768 exits0; exact supervisor receipt confirms all owned processes absent,
+independent inventory is empty and application guard is free. No new emergency is
+written. EOF/controller-loss stopping notices are retained without claiming a fault.
+All four original settings files are restored and SHA256 verified. Completed
+post-session-calibration-retirement and shutdown-resource-registration are removed
+from TODO. Historical renderer-failed-setup-cleanup-link is covered by the already
+recorded complete budget-rejection cancellation and distinct fresh Setup/Cancel;
+remove that duplicate bounded acceptance task, without closing general fault/load tests.
+All commands, failures, corrections, source hashes, final output and restoration
+proofs are retained in reports/runtime-evidence-2026-10-26/lifecycle-followup/.
+
+### 2026-10-26 - [repo] [controller] [acquisition] [visual_stimulus] Finish lifecycle evidence and hygiene
+
+Reconciled backend reports and rig checklist with final2676-pass local and successful
+bounded native lifecycle/Shutdown evidence. Recorded source hashes match the final
+native-loaded source. Removed72 verified untracked cache/backup directories
+(58,430,367 bytes) and six exact task-owned external test directories
+(255,876,901 bytes), after verifying settings restoration and path containment/no
+reparse or tracked targets. Native evidence, recovery/emergency reports and experiment
+output remain preserved. Concurrent preview-comparison architecture/tool/evidence
+and shared-document entries are preserved outside the lifecycle commit scope.
+Historical exit causes, remote error-detail delivery and explicit rig deferrals remain
+accurately limited; no extra dead-code deletion was justified by sampled caller review.

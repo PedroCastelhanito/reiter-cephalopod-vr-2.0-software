@@ -1,0 +1,7 @@
+{"host_ns": 1017613344339000, "kind": "command_attempt", "value": {"method": "UpdateConfiguration", "command_id": "875af28c-568d-4893-84ec-a90f2d5c075a"}}
+{"host_ns": 1017613365103300, "kind": "UpdateConfiguration", "value": {"command_id": "875af28c-568d-4893-84ec-a90f2d5c075a", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1017613375506500, "kind": "command_attempt", "value": {"method": "OpenDisplayCalibration", "command_id": "4310861b-0113-4561-a7b6-4fca2e601a23"}}
+{"host_ns": 1017613920141200, "kind": "OpenDisplayCalibration", "value": {"command_id": "4310861b-0113-4561-a7b6-4fca2e601a23", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1017613922586200, "kind": "command_attempt", "value": {"method": "CloseDisplayCalibration", "command_id": "56cc43c7-1384-4713-97cb-e94ccbf0ee19"}}
+{"host_ns": 1017614433810500, "kind": "CloseDisplayCalibration", "value": {"command_id": "56cc43c7-1384-4713-97cb-e94ccbf0ee19", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1017614443028100, "kind": "stopped", "value": {"error": "ValueError('Protocol message VisualStimulusDisplayView has no \"failure\" field.')", "automatic_retry": false}}

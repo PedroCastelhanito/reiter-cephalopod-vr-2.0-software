@@ -1,0 +1,31 @@
+command_attempt {"method": "UpdateConfiguration", "command_id": "875af28c-568d-4893-84ec-a90f2d5c075a"}
+UpdateConfiguration {"command_id": "875af28c-568d-4893-84ec-a90f2d5c075a", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "OpenDisplayCalibration", "command_id": "4310861b-0113-4561-a7b6-4fca2e601a23"}
+OpenDisplayCalibration {"command_id": "4310861b-0113-4561-a7b6-4fca2e601a23", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "CloseDisplayCalibration", "command_id": "56cc43c7-1384-4713-97cb-e94ccbf0ee19"}
+CloseDisplayCalibration {"command_id": "56cc43c7-1384-4713-97cb-e94ccbf0ee19", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+stopped {"error": "ValueError('Protocol message VisualStimulusDisplayView has no \"failure\" field.')", "automatic_retry": false}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\budget_setup.py", line 258, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\budget_setup.py", line 189, in main
+    await asyncio.wait_for(client._wait(ready_for_setup), 30)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 143, in _wait
+    if self.views.current is not None and predicate(self.snapshot):
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\budget_setup.py", line 91, in ready_for_setup
+    and not state.visual_stimulus_display.HasField("failure")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Protocol message VisualStimulusDisplayView has no "failure" field.

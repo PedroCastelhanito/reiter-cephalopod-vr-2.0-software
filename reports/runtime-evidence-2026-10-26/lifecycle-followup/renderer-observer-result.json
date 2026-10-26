@@ -1,0 +1,11 @@
+{
+  "identity": {
+    "pid": 20820,
+    "start_time": "2026-10-26T15:37:05.3770697+09:00",
+    "name": "cephvr-renderer",
+    "handle_opened": true
+  },
+  "exited": true,
+  "observed": "2026-10-26T15:38:44.9398086+09:00",
+  "exit_code": 0
+}

@@ -33,6 +33,7 @@ from cephvr.visual_stimulus.rendering.types import (
     DiagnosticSnapshot,
     EvidenceStateSnapshot,
     FeedbackEvidenceSnapshot,
+    ResourceReleaseReport,
     SubmissionSnapshot,
 )
 
@@ -1370,6 +1371,8 @@ def test_recording_cleanup_retains_pending_capture_and_prior_releases(native_rec
     assert set(final.released) == {"probe", "child", "capture", "previous-child"}
     assert recording._capture_runtime is None
     assert recording.cleanup(123) == final
+    recording.retire_released_resources()
+    assert recording.cleanup(123) == ResourceReleaseReport(())
 
 
 def test_setup_declares_each_encoder_child_before_ready(native_recording, tmp_path):

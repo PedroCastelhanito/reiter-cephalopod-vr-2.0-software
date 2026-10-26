@@ -1,0 +1,8 @@
+PRE-FIX FOCUSED FAILURE EXCERPT (captured from pytest output before the source increment; not a rerun)
+COMMAND (elevated, external TEMP): .venv\Scripts\python.exe -u -m pytest tests/acquisition/test_coordinator.py -q --timeout=60 -k "cancelled_setup_late_ready_is_retained_without_ready_promotion and exact" --basetemp (Join-Path $testTemp 'pytest')
+F                                                                        [100%]
+FAILED tests/acquisition/test_coordinator.py::test_cancelled_setup_late_ready_is_retained_without_ready_promotion[exact]
+Assertion: receipt.result == COMMAND_RESULT_ACCEPTED
+Observed: COMMAND_RESULT_REJECTED
+Exact failure: INVALID_EVIDENCE: Ready evidence has no live acquisition work
+1 failed, 126 deselected in 0.19s

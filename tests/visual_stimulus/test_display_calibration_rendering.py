@@ -130,6 +130,79 @@ def test_native_preparation_supports_first_use_with_temporary_profile(
     assert preparation._resource_keys == []
 
 
+def test_calibration_after_display_cleanup_has_no_previous_renderer_owner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.visual_stimulus.resources import display_calibration
+    from cephvr.visual_stimulus.resources import session as session_resources
+
+    arena = _arena_bytes()
+    target = tmp_path / "calibration" / "arena.glb"
+    target.parent.mkdir()
+    target.write_bytes(arena)
+    monkeypatch.setattr(
+        display_calibration,
+        "prepare_calibration",
+        lambda *_args, **_kwargs: PreparedCalibration(
+            assets=(), resources=(), content={}
+        ),
+    )
+    monkeypatch.setattr(
+        session_resources,
+        "prepare_calibration",
+        lambda *_args, **_kwargs: PreparedCalibration(
+            assets=(), resources=(), content={}
+        ),
+    )
+    port = _RendererPort()
+    preparation = NativePreparation(
+        port,
+        renderer_generation="renderer-generation",
+        source_factory=_ProtectedFile,
+    )
+    display_request = messages_pb2.InitializeDisplay(asset_root=str(tmp_path))
+    display_request.display.profile_json = valid_display_json()
+    display_request.limits.max_document_bytes = 1_000_000
+    display_request.limits.max_asset_cpu_bytes = 2_000_000
+    display_request.limits.max_asset_gpu_bytes = 2_000_000
+    display, initial_calibration = preparation.prepare_display(
+        display_request, lambda *_args: None, time.perf_counter_ns() + 5_000_000_000
+    )
+    preparation.initialize_display(display, initial_calibration)
+
+    retained_source = _ProtectedFile(target, fail_close=True)
+    preparation._protected_sources.append(
+        (retained_source, "visual_stimulus:display:calibration:front")
+    )
+    failed_cleanup = preparation.cleanup()
+    assert failed_cleanup.outstanding
+    assert preparation._display_profile is display
+    assert preparation._display_calibration is initial_calibration
+    assert preparation._display_budget is not None
+
+    retained_source.fail_close = False
+    assert not preparation.cleanup().outstanding
+    preparation.engine.cleanup()
+
+    request = _request(tmp_path, arena)
+    prepared = preparation.prepare_display_calibration(
+        request, lambda *_args: None, time.perf_counter_ns() + 5_000_000_000
+    )
+    has_previous_owner = (
+        prepared.previous_display is None and prepared.previous_calibration is None
+    )
+    preparation.engine.present_display_calibration(prepared.display, prepared)
+    activities, closed = preparation.engine.close_display_calibration(
+        prepared.display, prepared
+    )
+    assert preparation.release_display_calibration(prepared)
+
+    assert has_previous_owner and closed, (
+        "confirmed display cleanup must retire both previous profile and calibration"
+    )
+    assert activities
+
+
 @pytest.mark.parametrize("pattern", ["matching_bars", "wrong_pixel_length", "grid"])
 def test_reference_file_controls_pixel_lengths_and_rejects_other_patterns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pattern: str
@@ -580,6 +653,136 @@ def _install_fake_gl_binding(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "OpenGL", opengl)
 
 
+def test_replacing_display_preserves_only_unreused_native_release_receipts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import threading
+
+    from cephvr.visual_stimulus.rendering import native as native_module
+
+    gl = _FakeGL()
+    original = _two_output_display()
+    raw_temporary = original.model_dump(mode="json")
+    raw_temporary["outputs"][0]["width_px"] += 8
+    temporary = parse_display_json(json.dumps(raw_temporary), max_bytes=1_000_000)
+    outputs_by_id = {
+        item.output_id: SimpleNamespace(
+            context=_FakeContext(gl, item.output_id),
+            width=item.width_px,
+            height=item.height_px,
+            bits=item.rgb_bits_per_channel,
+            activate=lambda: None,
+        )
+        for item in temporary.active_outputs
+    }
+    registrations: list[tuple[str, str | None]] = []
+    port = ModernGLPort(
+        Path("."), announce=lambda key, path: registrations.append((key, path))
+    )
+    port._owner = threading.get_ident()
+    port._glfw = _FakeGLFW(gl)
+    port._glfw.destroy_window = lambda _window: None
+    port._glfw.swap_interval = lambda _interval: None
+    port._glfw.create_window = lambda _w, _h, title, _monitor, _share: title
+    port._moderngl = SimpleNamespace(DEPTH_TEST=1, BLEND=2)
+    port._display = temporary
+    port._display_calibration = None
+    port._outputs = {
+        output_id: _OutputContext(
+            output_id,
+            output_id,
+            item.context,
+            item.width,
+            item.height,
+            item.bits,
+            1,
+            item.context.screen,
+            item.activate,
+        )
+        for output_id, item in outputs_by_id.items()
+    }
+    port._window_obligations = set(outputs_by_id)
+    port._orphan_windows = {}
+    port._calibration_owner = SimpleNamespace(release=lambda: ())
+    port.preview = None
+    unrelated_key = "visual_stimulus:gpu:previous-session-resource"
+    port._released = [unrelated_key]
+    port.clock_ns = lambda: 10
+    port._idle_device_color = lambda *_args: (0.0, 0.0, 0.0)
+    port._release_partial = lambda _created: port._outputs.clear() or []
+
+    def glfw_factory() -> _FakeGLFW:
+        return _FakeGLFW(gl)
+
+    def install_fake_graphics() -> None:
+        port._glfw = glfw_factory()
+        port._glfw.destroy_window = lambda _window: None
+        port._glfw.swap_interval = lambda _interval: None
+        port._glfw.create_window = lambda _w, _h, title, _monitor, _share: title
+        port._moderngl = SimpleNamespace(DEPTH_TEST=1, BLEND=2)
+
+    port._load_graphics = install_fake_graphics
+    monkeypatch.setattr(
+        native_module,
+        "resolve_output_monitors",
+        lambda display, _glfw, _resolver: [
+            (output, object()) for output in display.active_outputs
+        ],
+    )
+    monkeypatch.setattr(native_module, "configure_window", lambda *_args: None)
+    contexts = iter(
+        _FakeContext(gl, item.output_id) for item in original.active_outputs
+    )
+    monkeypatch.setattr(
+        native_module, "attach_window_context", lambda _gl: next(contexts)
+    )
+    monkeypatch.setattr(native_module, "verify_framebuffer", lambda *_args: None)
+    monkeypatch.setattr(native_module, "clear_valid_background", lambda *_args: None)
+
+    engine = RendererEngine(port, clock_ns=lambda: 10)
+    engine._display = temporary
+    engine._display_observation = _initialization(temporary)
+    prepared = _prepared(
+        temporary,
+        previous=original,
+        previous_calibration=PreparedCalibration(assets=(), resources=(), content={}),
+    )
+    activities, closed = engine.close_display_calibration(temporary, prepared)
+
+    assert closed and activities
+    arena_key = "visual_stimulus:gpu:display-calibration:arena"
+    assert arena_key in port._released
+    assert unrelated_key in port._released
+    assert {key for key, _path in registrations} == {
+        f"visual_stimulus:window:{item.output_id}" for item in original.active_outputs
+    }
+
+    class FailedCalibrationOwner:
+        def __init__(self, _outputs, _moderngl, announce, _upload):
+            self.announce = announce
+
+        def present(self, _display, _prepared):
+            self.announce(arena_key, None)
+            raise RuntimeError("arena upload failed")
+
+        def release(self):
+            return ("display-calibration arena release remains unconfirmed",)
+
+    from cephvr.visual_stimulus.rendering import display_calibration
+
+    monkeypatch.setattr(
+        display_calibration, "DisplayCalibrationRenderer", FailedCalibrationOwner
+    )
+    with pytest.raises(RuntimeError, match="arena upload failed"):
+        port.present_display_calibration(original, _prepared(original))
+    failed_release = port.release()
+    assert arena_key not in failed_release.released
+    assert any(
+        "arena release remains unconfirmed" in item
+        for item in failed_release.outstanding
+    )
+
+
 @pytest.mark.parametrize("quarter_turn", [False, True])
 @pytest.mark.parametrize("configured_bars", [False, True])
 @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
@@ -886,7 +1089,7 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
     port._orphan_windows = {}
     port._window_obligations = set()
     port._released = []
-    port.announce = lambda *_args: None
+    port._announce = lambda *_args: None
     ticks = iter(range(10, 10000))
     port.clock_ns = lambda: next(ticks)
 
@@ -955,7 +1158,7 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
         assert released
         assert port._calibration_owner is None
 
-    assert port._released.count("visual_stimulus:gpu:display-calibration:arena") == 2
+    assert port._released.count("visual_stimulus:gpu:display-calibration:arena") == 1
 
 
 def test_native_generic_release_clears_calibration_owner_before_reinitialize(
@@ -1001,7 +1204,7 @@ def test_native_generic_release_clears_calibration_owner_before_reinitialize(
     port._orphan_windows = {}
     port._window_obligations = set()
     port._released = []
-    port.announce = lambda *_args: None
+    port._announce = lambda *_args: None
     ticks = iter(range(10, 10000))
     port.clock_ns = lambda: next(ticks)
     port._release_partial = lambda _created: port._outputs.clear() or []

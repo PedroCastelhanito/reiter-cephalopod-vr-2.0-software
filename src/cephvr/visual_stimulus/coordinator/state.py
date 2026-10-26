@@ -44,6 +44,7 @@ class CommandLink:
     diagnostic_id: str = ""
     output_ids: frozenset[str] = frozenset()
     adjustment_sequence: int = 0
+    cleanup_finalization_scopes: frozenset[str] | None = None
 
 
 @dataclass
@@ -52,6 +53,10 @@ class State:
     prepared: dict[str, Prepared] = field(default_factory=dict)
     links: dict[str, CommandLink] = field(default_factory=dict)
     reports: dict[tuple[str, str], pb.LifecycleReport] = field(default_factory=dict)
+    worker_reports: dict[tuple[str, str], visual_stimulus.WorkerLifecycle] = field(
+        default_factory=dict
+    )
+    retired_sessions: dict[bytes, int] = field(default_factory=dict)
     display: pb.VisualStimulusDisplayView | None = None
     interrupted: bool = False
     sealed: bool = False

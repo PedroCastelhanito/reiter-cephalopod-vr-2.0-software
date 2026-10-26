@@ -825,6 +825,18 @@ class NativeRecording:
             outstanding=tuple(sorted(outstanding)),
         )
 
+    def retire_released_resources(self) -> None:
+        """Retire resource identities after worker cleanup is confirmed."""
+        self._announced_keys.clear()
+        self._probe_aggregate_key = None
+        self._probe_released.clear()
+        self._probe_failed = False
+        self._released_keys.clear()
+        self._owner_key = self._capture_key = self._child_key = None
+        self._setup_work = None
+        self._setup_parent_operation = None
+        self._announce = None
+
     def _finalize(self, counts: RecordingCounts) -> tuple[bytes, ...]:
         encoder = None
         if self.saving:

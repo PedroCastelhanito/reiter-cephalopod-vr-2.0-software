@@ -83,6 +83,15 @@ async def run(bootstrap: WorkerBootstrap) -> None:
 
     async def recover(error: BaseException) -> None:
         nonlocal recovery_deadline
+        try:
+            message = " ".join(str(error).splitlines())[:2048]
+            print(
+                f"CephVR Visual Stimulus recovery: {type(error).__name__}: {message}",
+                file=sys.stderr,
+                flush=True,
+            )
+        except Exception:
+            pass
         recovery_deadline = (
             recovery_deadline or host_time_ns() + bootstrap.policies.recovery_ns
         )
@@ -163,6 +172,7 @@ async def run(bootstrap: WorkerBootstrap) -> None:
         coordinator,
         ledger,
         delivery_failed=failed,
+        retire_catalogue=bridge.retire_session,
     )
     bridge.retain_lifecycle = runtime.retain_and_report
     bridge.observe_display = runtime.display.CopyFrom

@@ -1,0 +1,91 @@
+launcher_generation {"expected": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "observed": "8a709bc4-0116-4167-a4b8-dd1a57fc6689"}
+state {"cleanup_confirmed": true, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "", "session_phase": "SESSION_PHASE_CONFIGURATION", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+calibration_asset_preflight {"arena_path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\assets\\calibration\\frame_grid.glb", "arena_sha256": "cded3e858dfd3df5e2bed0bdb4df9261819897bcd842f1fa3905c721c9dab4ba", "profile_sha256": "35f1152a898fa806dd63203cd15037cf667ca984585aa7158de1d3c836a1af3b"}
+baseline {"client_generation": "72ebba05-4286-4bc8-8ab5-67179b42d695", "configuration_revision": 5, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "saved_history_sha256": "6162e95823854d7486365305f8f48a4f3059e8a30070d9ff278a584d5b3f3762"}
+candidate_recording_root "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\cephvr-data\\lf26"
+command_attempt {"command_id": "152ea8f0-8fe7-4817-b698-edfd32408e5d", "method": "UpdateConfiguration"}
+command_result {"command_id": "152ea8f0-8fe7-4817-b698-edfd32408e5d", "complete": true, "failure": "", "method": "UpdateConfiguration", "needs_input": false, "succeeded": true}
+command_attempt {"command_id": "9b77499e-494e-440c-a561-41a7031c853a", "method": "Setup"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_SETTING_UP", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_READY", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+command_result {"command_id": "9b77499e-494e-440c-a561-41a7031c853a", "complete": true, "failure": "", "method": "Setup", "needs_input": false, "succeeded": true}
+command_attempt {"command_id": "34ae16c5-0d76-43e1-8b04-6f14b7f9fd12", "method": "StartSession"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_STARTING", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_RUNNING", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+command_result {"command_id": "34ae16c5-0d76-43e1-8b04-6f14b7f9fd12", "complete": true, "failure": "", "method": "StartSession", "needs_input": false, "succeeded": true}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_RUNNING", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_PREPARING"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_RUNNING", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_STARTING"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_RUNNING", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_RUNNING"}
+command_attempt {"command_id": "25b8b331-6216-4d00-9d0e-7b4cb1b50cc6", "method": "StopAfterTrial"}
+command_result {"command_id": "25b8b331-6216-4d00-9d0e-7b4cb1b50cc6", "complete": true, "failure": "", "method": "StopAfterTrial", "needs_input": false, "succeeded": true}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_RUNNING", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_FINALIZING"}
+state {"cleanup_confirmed": false, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_FINALIZING", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_ENDED"}
+state {"cleanup_confirmed": true, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "3bf189bc-e4f2-443a-8b7a-ea4b4f614d67", "session_phase": "SESSION_PHASE_ENDED", "trial_id": "3bcfad11-dbcc-47a4-a7fe-92bcc8fefd06", "trial_phase": "TRIAL_PHASE_ENDED"}
+command_attempt {"command_id": "e43f8768-99fa-4368-b2ac-f097239230e6", "method": "NewSession"}
+state {"cleanup_confirmed": true, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "", "session_phase": "SESSION_PHASE_CONFIGURATION", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+command_result {"command_id": "e43f8768-99fa-4368-b2ac-f097239230e6", "complete": true, "failure": "", "method": "NewSession", "needs_input": false, "succeeded": true}
+command_attempt {"command_id": "b32057bb-2fd3-4316-8322-8a6341913140", "method": "OpenDisplayCalibration"}
+command_uncertain_or_failed {"command_id": "b32057bb-2fd3-4316-8322-8a6341913140", "error": "ClientError('State synchronization failed: <AioRpcError of RPC that terminated with:\\n\\tstatus = StatusCode.UNAVAILABLE\\n\\tdetails = \"Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n\\tdebug_error_string = \"UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n>')", "method": "OpenDisplayCalibration"}
+harness_stopped {"automatic_retry": false, "error": "<AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n\tdebug_error_string = \"UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n>"}
+control_release {"release_failure": null}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 307, in command
+    result = await asyncio.wait_for(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 287, in execute
+    return await self.wait_result(admission.command_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 290, in wait_result
+    state = await self._wait(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 594, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 576, in main
+    await run_client()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 433, in run_client
+    opened = await command(
+             ^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 312, in command
+    save("failure-snapshot.json", await client.get_snapshot())
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 105, in get_snapshot
+    result = await self.stub.GetSnapshot(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+
+ -- 10061)"
+>

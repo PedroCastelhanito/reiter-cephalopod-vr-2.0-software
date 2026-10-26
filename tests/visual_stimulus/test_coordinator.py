@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from uuid import uuid4
 
 import pytest
@@ -24,11 +25,12 @@ from cephvr.visual_stimulus.coordinator.state import (
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.main import command_ledger
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
+from cephvr.visual_stimulus.runtime import VisualStimulusCoordinatorRuntime
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 from cephvr.visual_stimulus.worker.reporting import ReportBridge
 
-from .support import Clock, make_prepared_trial
+from .support import Clock, make_prepared_trial, valid_display_json
 
 
 @pytest.mark.parametrize("scope", ("session", "trial", "none"))
@@ -452,6 +454,300 @@ async def recipe_fixture(tmp_path):
         normal_end_monotonic_ns=clock() + plan.resolved_duration_ns,
     )
     return recipe, state, clock, release, worker, supervisor, ledger
+
+
+def _cleanup_evidence(recipe, state, clock):
+    identity = recipe.identity
+    session = state.setup.plan.context
+    work = pb.WorkContext(session=session)
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker, owner=identity.process, work=work
+        ),
+    )
+    parent = wire.BackendCommand(
+        command_id=str(uuid4()),
+        issuer=identity.supervisor,
+        target=identity.backend,
+        work=work,
+    )
+    link = CommandLink("Cleanup", parent, child, clock() + 10**9)
+    state.links[child.command_id] = link
+    report = pb.LifecycleReport(
+        cleanup=pb.CleanupReport(
+            source=identity.worker,
+            work=work,
+            operation=pb.OperationContext(command_id=child.command_id),
+            trial_activity_stopped=True,
+        )
+    )
+    return visual_stimulus.WorkerLifecycle(source=identity.worker, report=report), link
+
+
+def _open_calibration_request(identity, diagnostic_id):
+    profile_json = valid_display_json()
+    policies = vp.VisualStimulusFilePolicies(contract_version=CONTRACT_VERSION)
+    policies.limits.max_document_bytes = 1_000_000
+    return wire.VisualStimulusDisplayCalibrationOpenRequest(
+        command_id=str(uuid4()),
+        issuer=identity.controller,
+        target=identity.backend,
+        configuration_revision=1,
+        diagnostic_id=diagnostic_id,
+        profile_json=profile_json,
+        profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+        policies=policies,
+    )
+
+
+def _fresh_setup_request(identity, previous):
+    request = wire.SetupSessionRequest.FromString(previous.SerializeToString())
+    request.command.command_id = str(uuid4())
+    request.plan.context.session_id = str(uuid4())
+    request.command.work.session.CopyFrom(request.plan.context)
+    request.settings.backend_name = "visual_stimulus"
+    request.settings.visual_stimulus.SetInParent()
+    request.visual_stimulus_policies.contract_version = CONTRACT_VERSION
+    return request
+
+
+def _same_session_setup_request(previous):
+    request = wire.SetupSessionRequest.FromString(previous.SerializeToString())
+    request.command.command_id = str(uuid4())
+    return request
+
+
+def _confirm_recipe_outputs(recipe, state):
+    for trial_id, plan in recipe.plans.items():
+        state.recipe_results[trial_id] = pb.OutputResult(
+            output_key=plan.output_key,
+            path=plan.path,
+            closure=pb.OUTPUT_CLOSURE_CLOSED,
+            artifact_present=True,
+        )
+    assert recipe.cleanup_results()
+
+
+def _retained_display_scope(identity, state, ledger, clock, diagnostic_id):
+    command_id = str(uuid4())
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker, owner=identity.process
+        ),
+    )
+    parent = wire.BackendCommand(
+        command_id=command_id,
+        issuer=identity.controller,
+        target=identity.backend,
+    )
+    state.links[child.command_id] = CommandLink(
+        "OpenDisplayCalibration",
+        parent,
+        child,
+        clock() + 10**9,
+        diagnostic_id=diagnostic_id,
+        output_ids=frozenset({"projector/main"}),
+    )
+    ledger.admit(command_id, b"open-calibration", clock(), work_key=diagnostic_id)
+    ledger.complete(command_id, b"accepted", clock())
+    return command_id
+
+
+@pytest.mark.asyncio
+async def test_cleanup_retry_gates_new_setup_until_both_receipts_accept(tmp_path):
+    class ControllerPeer(Peer):
+        accept_cleanup = False
+
+        async def receipt(self, method, request, *, deadline_ns):
+            self.reports.append((method, request, deadline_ns))
+            return pb.ReportReceipt(
+                result=(
+                    pb.COMMAND_RESULT_ACCEPTED
+                    if self.accept_cleanup
+                    else pb.COMMAND_RESULT_REJECTED
+                )
+            )
+
+    recipe, state, clock, _, _, supervisor, ledger = await recipe_fixture(tmp_path)
+    identity = recipe.identity
+    controller = ControllerPeer()
+    reports = Reports(identity, state, ledger, controller, supervisor, clock)
+    old_setup = wire.SetupSessionRequest.FromString(state.setup.SerializeToString())
+    _confirm_recipe_outputs(recipe, state)
+    evidence, cleanup_link = _cleanup_evidence(recipe, state, clock)
+    old_diagnostic = str(uuid4())
+    old_scope_command = _retained_display_scope(
+        identity, state, ledger, clock, old_diagnostic
+    )
+
+    with pytest.raises(ValueError, match="was not accepted"):
+        await reports.lifecycle(evidence)
+    assert state.setup is not None
+    assert ("cleanup", cleanup_link.parent.command_id) in state.worker_reports
+    fresh_setup = _fresh_setup_request(identity, old_setup)
+    with pytest.raises(ValueError, match="previous Visual Stimulus session"):
+        validate(identity, state, "SetupSession", fresh_setup)
+    blocked_open = _open_calibration_request(identity, str(uuid4()))
+    with pytest.raises(ValueError, match="unavailable during a session"):
+        validate(identity, state, "OpenDisplayCalibration", blocked_open)
+
+    controller.accept_cleanup = True
+    await reports.lifecycle(evidence)
+    assert state.setup is None
+    old_session = cleanup_link.parent.work.session
+    assert old_session.SerializeToString(deterministic=True) in state.retired_sessions
+    with pytest.raises(ValueError, match="retired Visual Stimulus session"):
+        validate(
+            identity, state, "SetupSession", _same_session_setup_request(old_setup)
+        )
+    assert ledger.get(old_scope_command).completed_ns > 0
+    assert ledger.get(old_scope_command).finalized_ns is not None
+    clock.value += ledger.retention_ns + 1
+    ledger.prune(clock())
+    assert ledger.get(old_scope_command) is None
+
+    validate(identity, state, "SetupSession", fresh_setup)
+    fresh_diagnostic = _open_calibration_request(identity, str(uuid4()))
+    validate(identity, state, "OpenDisplayCalibration", fresh_diagnostic)
+    _, fresh_link = bind_command(
+        identity, state, "OpenDisplayCalibration", fresh_diagnostic, clock() + 10**9
+    )
+    assert fresh_link.output_ids
+    ledger.admit(
+        fresh_diagnostic.command_id,
+        fresh_diagnostic.SerializeToString(deterministic=True),
+        clock(),
+        work_key=fresh_diagnostic.diagnostic_id,
+    )
+    assert ledger.get(fresh_diagnostic.command_id).finalized_ns is None
+
+
+@pytest.mark.asyncio
+async def test_retired_cleanup_replay_preserves_fresh_state_and_ignores_old_heartbeat(
+    tmp_path,
+):
+    recipe, state, clock, _, worker, supervisor, ledger = await recipe_fixture(tmp_path)
+    identity = recipe.identity
+    old_setup = wire.SetupSessionRequest.FromString(state.setup.SerializeToString())
+    _confirm_recipe_outputs(recipe, state)
+    cleanup_evidence, cleanup_link = _cleanup_evidence(recipe, state, clock)
+    controller = Peer()
+    reports = Reports(identity, state, ledger, controller, supervisor, clock)
+    await reports.lifecycle(cleanup_evidence)
+    assert state.setup is None
+
+    fresh_diagnostic = _open_calibration_request(identity, str(uuid4()))
+    runtime = VisualStimulusCoordinatorRuntime(
+        identity=identity,
+        worker=worker,
+        controller=controller,
+        supervisor=supervisor,
+        ledger=ledger,
+        clock=clock,
+    )
+    runtime.state = state
+    runtime.reports = reports
+    runtime.recipes = recipe
+
+    async def unexpected_drain(*_args, **_kwargs):
+        raise AssertionError("retained Cleanup replay must not drain new recipe work")
+
+    def unexpected_cleanup_results():
+        raise AssertionError("retained Cleanup replay must not clear recipe results")
+
+    recipe.drain = unexpected_drain
+    recipe.cleanup_results = unexpected_cleanup_results
+    runtime.recovery_deadline_ns = clock() + 10**9
+    opened = await runtime.execute(
+        "OpenDisplayCalibration", fresh_diagnostic, deadline_ns=clock() + 10**9
+    )
+    assert opened.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.recovery_deadline_ns is None
+    ledger.admit(
+        fresh_diagnostic.command_id,
+        fresh_diagnostic.SerializeToString(deterministic=True),
+        clock(),
+        work_key=fresh_diagnostic.diagnostic_id,
+    )
+    fresh_scope = ledger.get(fresh_diagnostic.command_id)
+    assert fresh_scope is not None and fresh_scope.finalized_ns is None
+    assert fresh_scope.completed_ns is None
+
+    state.display = pb.VisualStimulusDisplayView(
+        command_id=fresh_diagnostic.command_id,
+        source=identity.worker,
+        backend=identity.backend,
+        complete=True,
+    )
+    state.display.calibration.diagnostic_id = fresh_diagnostic.diagnostic_id
+    state.display.calibration.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    display_before = pb.VisualStimulusDisplayView.FromString(
+        state.display.SerializeToString()
+    )
+    runtime.recovery_deadline_ns = clock() + 10**9
+    close_request = wire.VisualStimulusDisplayCalibrationCloseRequest(
+        command_id=str(uuid4()),
+        issuer=identity.controller,
+        target=identity.backend,
+        diagnostic_id=fresh_diagnostic.diagnostic_id,
+    )
+    await runtime.execute(
+        "CloseDisplayCalibration", close_request, deadline_ns=clock() + 10**9
+    )
+    assert runtime.recovery_deadline_ns == clock() + 10**9
+    state.display.calibration.state = vp.DISPLAY_CALIBRATION_STATE_IDLE
+    display_before = pb.VisualStimulusDisplayView.FromString(
+        state.display.SerializeToString()
+    )
+
+    state.setup = _fresh_setup_request(identity, old_setup)
+    fresh_context = pb.SessionContext.FromString(
+        state.setup.plan.context.SerializeToString()
+    )
+    state.cleanup = None
+    fresh_trial_id = str(uuid4())
+    state.recipe_results[fresh_trial_id] = pb.OutputResult(
+        output_key="fresh-output",
+        closure=pb.OUTPUT_CLOSURE_CLOSED,
+        artifact_present=True,
+    )
+    state.active_trial = fresh_trial_id
+    fresh_result = pb.OutputResult.FromString(
+        state.recipe_results[fresh_trial_id].SerializeToString()
+    )
+
+    await runtime.report("ReportWorkerLifecycle", cleanup_evidence, ingress_ns=clock())
+    assert state.setup.plan.context == fresh_context
+    assert state.display == display_before
+    assert state.recipe_results[fresh_trial_id] == fresh_result
+    assert state.active_trial == fresh_trial_id
+    assert ledger.get(fresh_diagnostic.command_id).finalized_ns is None
+    assert runtime.recovery_deadline_ns == clock() + 10**9
+
+    old_session = cleanup_link.parent.work.session
+    prior_heartbeat = pb.HeartbeatReport(
+        source=identity.worker,
+        work=pb.WorkContext(session=old_session),
+        sent_monotonic_ns=clock(),
+        session_phase=pb.SESSION_PHASE_CONFIGURATION,
+        cleanup_resources_revision=state.retired_sessions[
+            old_session.SerializeToString(deterministic=True)
+        ],
+    )
+    state.worker_heartbeat = prior_heartbeat
+    stale_empty = pb.HeartbeatReport(
+        source=identity.worker,
+        sent_monotonic_ns=clock(),
+        session_phase=pb.SESSION_PHASE_CONFIGURATION,
+        cleanup_resources_revision=prior_heartbeat.cleanup_resources_revision,
+    )
+    supervisor_count = len(supervisor.reports)
+    await reports.heartbeat(stale_empty, clock() + 1)
+    assert state.worker_heartbeat == prior_heartbeat
+    assert state.worker_ingress_ns == clock() + 1
+    assert len(supervisor.reports) == supervisor_count
 
 
 @pytest.mark.asyncio

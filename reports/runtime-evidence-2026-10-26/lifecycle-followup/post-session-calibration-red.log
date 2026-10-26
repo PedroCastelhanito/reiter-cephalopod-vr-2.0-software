@@ -1,0 +1,106 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___ test_session_cleanup_retires_finished_trial_before_display_calibration ____
+
+    def test_session_cleanup_retires_finished_trial_before_display_calibration():
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import OutputActivity
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+    
+        driver, clock, _, _, _, command, _ = prepared_driver()
+        retired_trial = driver.state.trial
+        assert retired_trial is not None
+        retired_trial.finished = True
+        driver.execute("Cleanup", command(), clock() + 100_000_000)
+        assert driver.state.cleaned
+        assert driver.state.setup is None
+    
+        profile_json = valid_display_json()
+        profile = parse_display_json(profile_json, max_bytes=1_000_000)
+        prepared = SimpleNamespace(display=profile, previous_display=None)
+        driver.preparation.prepare_display_calibration = (
+            lambda *_args, **_kwargs: prepared
+        )
+        driver.preparation.release_display_calibration = lambda _prepared: True
+        driver.engine.present_display_calibration = lambda *_args: (
+            OutputActivity("projector/main", clock(), clock() + 1, 1),
+        )
+        calibration_command = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=driver.owner,
+            target=visual_stimulus.WorkerContext(
+                worker=driver.worker,
+                owner=driver.owner,
+                configuration_revision=1,
+            ),
+            parent_operation=pb.OperationContext(command_id=str(uuid4())),
+            deadline_monotonic_ns=clock() + 100_000_000,
+        )
+        request = visual_stimulus.OpenDisplayCalibrationCommand(
+            command=calibration_command,
+            diagnostic_id=str(uuid4()),
+            profile_json=profile_json,
+            profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+            asset_root="/accepted",
+            arena_relative_path="calibration/arena.glb",
+            arena_size_bytes=64,
+            arena_sha256="a" * 64,
+            policies=vp.VisualStimulusFilePolicies(
+                limits=vp.ResourceLimits(max_document_bytes=1_000_000)
+            ),
+        )
+>       completion = driver.execute(
+            "OpenDisplayCalibration", request, calibration_command.deadline_monotonic_ns
+        )
+
+tests\visual_stimulus\test_lifecycle.py:1797: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.visual_stimulus.worker.lifecycle.LifecycleDriver object at 0x000001B1B13ED650>
+method = 'OpenDisplayCalibration'
+request = command {
+  command_id: "44c88085-4df4-440b-befc-bfb50002341d"
+  issuer {
+    role: "visual_stimulus"
+    generation: ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+policies {
+  limits {
+    max_document_bytes: 1000000
+  }
+}
+
+deadline_ns = 1100000000
+
+    def execute(
+        self, method: str, request: Message, deadline_ns: int
+    ) -> Future[None] | None:
+        from cephvr.visual_stimulus.transport.messages import worker_command
+    
+        self.command = worker_command(request)
+        self.deadline_ns = deadline_ns
+        if isinstance(request, visual_stimulus.StimulusPreviewCommand):
+            if (
+                self.state.setup is None
+                or self.state.interrupted
+                or not self.state.ready
+            ):
+                raise ValueError("Visual Stimulus preview requires a prepared session")
+            operation = getattr(self.engine, "set_stimulus_preview", None)
+            if operation is None:
+                raise ValueError("Visual Stimulus preview unavailable")
+            operation(request.visible, request.placement)
+            return None
+        if isinstance(request, visual_stimulus.InitializeDisplay):
+            return self.initialize(request)
+        elif isinstance(request, visual_stimulus.OpenDisplayCalibrationCommand):
+            if self.state.setup is not None or self.state.trial is not None:
+>               raise RuntimeError("display calibration cannot overlap a trial")
+E               RuntimeError: display calibration cannot overlap a trial
+
+src\cephvr\visual_stimulus\worker\lifecycle.py:214: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_lifecycle.py::test_session_cleanup_retires_finished_trial_before_display_calibration
+1 failed, 63 deselected in 0.40s

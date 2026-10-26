@@ -1,0 +1,4 @@
+SetupSession 70ddbd90-3218-4dd6-914f-a0f52c166aab failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: Setup was fenced or expired before the next stage
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 19736 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

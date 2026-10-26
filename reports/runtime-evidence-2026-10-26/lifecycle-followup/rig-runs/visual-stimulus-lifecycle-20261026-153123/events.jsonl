@@ -1,0 +1,4 @@
+{"host_ns": 1018725800840800, "kind": "launcher_generation", "value": {"expected": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "observed": "8a709bc4-0116-4167-a4b8-dd1a57fc6689"}}
+{"host_ns": 1018725817660500, "kind": "state", "value": {"cleanup_confirmed": true, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "", "session_phase": "SESSION_PHASE_CONFIGURATION", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}}
+{"host_ns": 1018725828461600, "kind": "harness_stopped", "value": {"automatic_retry": false, "error": "RuntimeError('Visual Stimulus process is not operational')"}}
+{"host_ns": 1018725831759900, "kind": "control_release", "value": {"release_failure": null}}

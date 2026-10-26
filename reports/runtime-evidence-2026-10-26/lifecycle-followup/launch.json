@@ -1,0 +1,5 @@
+{
+  "pid": 40328,
+  "start_time": "2026-10-26T15:11:39.3790427+09:00",
+  "script": "scripts/start_runtime_gui.py --no-tracking"
+}

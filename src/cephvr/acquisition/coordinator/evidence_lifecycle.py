@@ -78,6 +78,7 @@ class WorkerLifecycleReports:
         child_deadline_ns: int,
         session_for_deadline: SessionRecord | None,
         trial_for_deadline: TrialRecord | None,
+        exact_retained_setup_ready: bool,
     ) -> tuple[SessionRecord | None, bool, bool, bool]:
         """Validate evidence against retained work before mutating lifecycle state."""
         trial_ready_session: SessionRecord | None = None
@@ -231,7 +232,25 @@ class WorkerLifecycleReports:
                 self.ready_reports.confirm_attachments(record, evidence.ready)
                 manual_preview_event = True
             elif session.setup_cancelled or session.interrupted:
-                raise ValueError("Ready evidence has no live acquisition work")
+                if (
+                    child.kind != "setup_session"
+                    or record.setup_operation is None
+                    or evidence.operation != record.setup_operation
+                    or child.parent_operation != session.operation
+                    or evidence.source.work != session.work
+                    or ingress_ns > (session.setup_deadline_ns or 0)
+                    or session.confirmed_revision is None
+                    or child.configuration_revision != session.confirmed_revision
+                    or evidence.ready.configuration_revision
+                    != session.confirmed_revision
+                    or (
+                        not exact_retained_setup_ready
+                        and not self.ready_reports.attachments_match(
+                            record, evidence.ready, require_attached=False
+                        )
+                    )
+                ):
+                    raise ValueError("Ready evidence has no live acquisition work")
             elif evidence.ready.configuration_revision != session.confirmed_revision:
                 raise ValueError("Ready evidence differs from confirmed settings")
             elif child.kind == "setup_session":
@@ -313,6 +332,24 @@ class WorkerLifecycleReports:
                     if session_for_deadline is not None
                     else None
                 )
+                exact_retained_setup_ready = False
+                if (
+                    kind == "ready"
+                    and session_for_deadline is not None
+                    and evidence.source.work == session_for_deadline.work
+                ):
+                    prior_ready = record.lifecycle_evidence.get(
+                        (
+                            session_for_deadline.work.session.session_id,
+                            evidence.operation.command_id,
+                            "ready",
+                        )
+                    )
+                    exact_retained_setup_ready = (
+                        prior_ready is not None
+                        and prior_ready.SerializeToString(deterministic=True)
+                        == evidence.SerializeToString(deterministic=True)
+                    )
                 (
                     trial_ready_session,
                     manual_preview_event,
@@ -327,8 +364,25 @@ class WorkerLifecycleReports:
                     child_deadline_ns,
                     session_for_deadline,
                     trial_for_deadline,
+                    exact_retained_setup_ready,
                 )
                 retained = record.retain_lifecycle(evidence, commands=self.commands)
+                cancelled_setup_ready = (
+                    kind == "ready"
+                    and child.kind == "setup_session"
+                    and session_for_deadline is not None
+                    and (
+                        session_for_deadline.setup_cancelled
+                        or session_for_deadline.interrupted
+                    )
+                )
+                if cancelled_setup_ready:
+                    if not exact_retained_setup_ready:
+                        self.ready_reports.confirm_attachments(record, evidence.ready)
+                        ready_copy = acq.WorkerReadyEvidence()
+                        ready_copy.CopyFrom(evidence.ready)
+                        record.setup_ready = ready_copy
+                    return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
                 if retained and manual_preview_started and record.preview is not None:
                     record.preview.started = True
                     record.preview.started_event.set()

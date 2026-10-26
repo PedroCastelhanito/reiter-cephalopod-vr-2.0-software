@@ -1,5 +1,20 @@
 # Acquisition status
 
+Oct26 `failed-setup-retired-report` is resolved under
+[E06/E08](../docs/architecture/system-contracts.md#e06). Exact cancelled Setup Ready
+retains factual attachment ownership for Cleanup without advancing readiness.
+Identical replay after cleanup cannot reattach released resources; changed identity,
+revision, attachments or original-deadline mismatch still reject. Owning143 tests
+and full backend2676 pass. Native GPU88/1 rejection with the saved Behavioral camera
+settles cleanly; after exact limit restoration, a distinct fresh Setup reaches Ready
+and CancelSetup confirms cleanup. No trial or codec/trigger changes occur in that
+probe. One conservative admitted-Setup fencing notice remains in stderr; its exact
+child-to-session mapping was not captured, and it is not suppressed. The prior failed
+probe is recovered through the normal file-preserving action. Subsequent Visual
+Stimulus-only retirement repairs and successful native lifecycle verification are
+recorded in that backend's report.
+[Current evidence](runtime-evidence-2026-10-26/lifecycle-followup/).
+
 Oct26 `repo-cleanup-and-code-review`: Astra/Luna source review found no additional
 safe runtime dead-code removal or ownership simplification. Two unchanged recording
 fixtures now live in the owning test support module instead of being imported from

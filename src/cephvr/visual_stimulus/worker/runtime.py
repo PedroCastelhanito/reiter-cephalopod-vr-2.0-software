@@ -30,6 +30,7 @@ class VisualStimulusWorkerRuntime:
         *,
         clock: Callable[[], int] = host_time_ns,
         delivery_failed: Callable[[BaseException], None] | None = None,
+        retire_catalogue: Callable[[pb.SessionContext, int, bool], None] | None = None,
     ) -> None:
         self.context = visual_stimulus.WorkerContext.FromString(
             context.SerializeToString()
@@ -43,12 +44,15 @@ class VisualStimulusWorkerRuntime:
         )
         self.interrupted = False
         self.retained: dict[tuple[str, str], visual_stimulus.WorkerLifecycle] = {}
+        self.retired_sessions: set[bytes] = set()
         self.display = pb.VisualStimulusDisplayView()
         self.shutdown_deadline_ns: int | None = None
-        self.command_ids: set[str] = set()
+        self.command_ids: dict[str, tuple[str, pb.WorkContext]] = {}
+        self.cleanup_finalization_scopes: dict[str, frozenset[str]] = {}
         self.supervisor_command_ids: set[str] = set()
         self.local_recovery_command_ids: set[str] = set()
         self.delivery_failed = delivery_failed
+        self.retire_catalogue = retire_catalogue
 
     def validate_command(self, method: str, request: Message) -> None:
         command = worker_command(request)
@@ -58,6 +62,15 @@ class VisualStimulusWorkerRuntime:
             or command.target.owner != self.context.owner
         ):
             raise ValueError("wrong renderer/owner generation")
+        work_kind = command.target.work.WhichOneof("work")
+        if method != "Shutdown" and work_kind in {"session", "trial"}:
+            session = (
+                command.target.work.session
+                if work_kind == "session"
+                else command.target.work.trial.session
+            )
+            if session.SerializeToString(deterministic=True) in self.retired_sessions:
+                raise ValueError("renderer command targets a retired session")
         from cephvr.visual_stimulus.transport.boundary import SAFETY
 
         if command.issuer not in (
@@ -135,13 +148,31 @@ class VisualStimulusWorkerRuntime:
     ) -> pb.CommandAdmission:
         self.validate_command(method, request)
         command = worker_command(request)
-        self.command_ids.add(command.command_id)
+        self.command_ids[command.command_id] = (
+            method,
+            pb.WorkContext.FromString(command.target.work.SerializeToString()),
+        )
         if command.issuer == self.supervisor:
             self.supervisor_command_ids.add(command.command_id)
         if method == "Shutdown":
             self.shutdown_deadline_ns = min(
                 self.shutdown_deadline_ns or deadline_ns, deadline_ns
             )
+        executor_request = request
+        if method == "Shutdown" and command.target.work.WhichOneof("work") in {
+            "session",
+            "trial",
+        }:
+            session = (
+                command.target.work.session
+                if command.target.work.WhichOneof("work") == "session"
+                else command.target.work.trial.session
+            )
+            if session.SerializeToString(deterministic=True) in self.retired_sessions:
+                executor_request = visual_stimulus.WorkerCommand.FromString(
+                    request.SerializeToString()
+                )
+                executor_request.target.ClearField("work")
         if method in {"InterruptSession", "CancelSetup", "Cleanup", "Shutdown"}:
             self.interrupted = True
         if method in {"InitializeDisplay", "SetupSession"}:
@@ -154,7 +185,7 @@ class VisualStimulusWorkerRuntime:
             self.interrupted = False
             self.owner.cancelled.clear()
         try:
-            await self.owner.submit(method, request, deadline_ns)
+            await self.owner.submit(method, executor_request, deadline_ns)
             outcome = pb.OperationState(
                 context=pb.OperationContext(command_id=command.command_id),
                 command=method,
@@ -241,7 +272,10 @@ class VisualStimulusWorkerRuntime:
             deadline_ns=deadline_ns,
             priority=True,
         )
-        self.command_ids.add(command.command_id)
+        self.command_ids[command.command_id] = (
+            "Shutdown",
+            pb.WorkContext.FromString(command.target.work.SerializeToString()),
+        )
         self.local_recovery_command_ids.add(command.command_id)
         if admission.replayed:
             if not admission.record.executor_result:
@@ -341,8 +375,12 @@ class VisualStimulusWorkerRuntime:
             priority=kind == "cleanup",
         )
         self.retained[key] = report
-        if (
+        cleanup_complete = (
             kind == "cleanup"
+            and report.report.cleanup.work.WhichOneof("work") == "session"
+            and report.report.cleanup.source == self.context.worker
+            and report.report.cleanup.operation.command_id == command
+            and report.report.cleanup.trial_activity_stopped
             and all(item.released for item in report.report.cleanup.resources)
             and all(
                 item.closure
@@ -354,28 +392,51 @@ class VisualStimulusWorkerRuntime:
                 and item.HasField("artifact_present")
                 for item in report.report.cleanup.outputs
             )
-        ):
-            scopes = {
-                record.work_key
-                for command_id in self.command_ids
-                if (record := self.ledger.get(command_id)) is not None
-            }
-            for scope in scopes:
-                self.ledger.finalize_work(scope, self.clock())
+        )
+        if cleanup_complete and command not in self.cleanup_finalization_scopes:
+            self.cleanup_finalization_scopes[command] = self._cleanup_scopes(
+                report.report.cleanup.work.session
+            )
         if (
             command in self.supervisor_command_ids
             or command in self.local_recovery_command_ids
         ):
+            if cleanup_complete:
+                for scope in self.cleanup_finalization_scopes[command]:
+                    self.ledger.finalize_work(scope, self.clock())
             return
-        await self.reports.receipt(
+        receipt = await self.reports.receipt(
             "ReportWorkerLifecycle", report, deadline_ns=deadline_ns
         )
+        if kind == "cleanup" and receipt.result != pb.COMMAND_RESULT_ACCEPTED:
+            raise ValueError("cleanup lifecycle report was not accepted")
+        if cleanup_complete:
+            cleanup = report.report.cleanup
+            session_key = cleanup.work.session.SerializeToString(deterministic=True)
+            if session_key not in self.retired_sessions:
+                self.retired_sessions.add(session_key)
+                for scope in self.cleanup_finalization_scopes[command]:
+                    self.ledger.finalize_work(scope, self.clock())
+                if self.retire_catalogue is not None:
+                    self.retire_catalogue(
+                        cleanup.work.session,
+                        cleanup.cleanup_resources_revision,
+                        bool(cleanup.resources),
+                    )
+            context_work = self.context.work
+            work_kind = cleanup.work.WhichOneof("work")
+            if (
+                work_kind == "session"
+                and context_work.WhichOneof("work") == "session"
+                and cleanup.work.session == context_work.session
+            ):
+                self.context.ClearField("work")
 
     def prune_retained(self) -> None:
         self.ledger.prune(self.clock())
         self.command_ids = {
-            command_id
-            for command_id in self.command_ids
+            command_id: owned
+            for command_id, owned in self.command_ids.items()
             if self.ledger.get(command_id) is not None
         }
         self.supervisor_command_ids.intersection_update(self.command_ids)
@@ -385,6 +446,33 @@ class VisualStimulusWorkerRuntime:
             for key, value in self.retained.items()
             if self.ledger.get(key[1]) is not None
         }
+        self.cleanup_finalization_scopes = {
+            key: value
+            for key, value in self.cleanup_finalization_scopes.items()
+            if self.ledger.get(key) is not None
+        }
+
+    def _cleanup_scopes(self, session: pb.SessionContext) -> frozenset[str]:
+        display_methods = {
+            "InitializeDisplay",
+            "OpenDisplayCalibration",
+            "UpdateDisplayCalibration",
+            "CloseDisplayCalibration",
+        }
+        scopes: set[str] = set()
+        for command_id, (method, work) in self.command_ids.items():
+            work_kind = work.WhichOneof("work")
+            command_session = (
+                work.session if work_kind == "session" else work.trial.session
+            )
+            matches_session = (
+                work_kind in {"session", "trial"} and command_session == session
+            )
+            prior_display = work_kind is None and method in display_methods
+            record = self.ledger.get(command_id)
+            if record is not None and (matches_session or prior_display):
+                scopes.add(record.work_key)
+        return frozenset(scopes)
 
     async def failed_command(
         self,

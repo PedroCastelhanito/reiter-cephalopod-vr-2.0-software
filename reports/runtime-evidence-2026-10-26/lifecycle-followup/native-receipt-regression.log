@@ -1,0 +1,45 @@
+Date: 2026-10-26
+Scope: Native Visual Stimulus release-receipt regression; evidence capture only.
+Source revision before this working-tree change: 819f30e6e5e5bf4b840438c3ef3a7538d45ad192
+Source revision after this working-tree change: 819f30e6e5e5bf4b840438c3ef3a7538d45ad192 (uncommitted)
+Scoped working-tree status:
+  M src/cephvr/visual_stimulus/rendering/native.py
+  M tests/visual_stimulus/test_display_calibration_rendering.py
+Scoped diff stat: 2 files changed, 144 insertions(+), 5 deletions(-)
+Temporary-directory method: pytest commands below ran through exec_command with sandbox_permissions=require_escalated and the repository .venv Python. No --basetemp override was passed; Python TEMP and TMP were both C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{4960dc64-2095-4d87-bdb1-01d4dd78ceb4}\AC\Temp, outside the repository.
+
+Diagnosis:
+  RendererEngine.close_display_calibration() closed a temporary calibration owner, then restored a differing previous display using replace_display(). That path calls ModernGLPort.initialize_display(), whose blanket _released.clear() erased the still-registered calibration-arena release receipt. A later cleanup therefore had an outstanding catalogue key despite native close having succeeded.
+
+Source diff summary:
+  ModernGLPort stores the registration callback as _announce and routes native allocations through announce(key, path). The wrapper forwards registration first, then removes only release receipts for that exact key. initialize_display() no longer clears unrelated receipts. Existing retire_released_resources() remains the explicit post-confirmation clear boundary.
+  The owning renderer test covers changed-profile close/restore, retains an unrelated receipt, and verifies failed reallocation of the same key invalidates stale proof and remains outstanding.
+
+Red, before source fix:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q -k replacing_display_preserves_only_unreused_native_release_receipts --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 1 failed, 27 deselected in 0.34s
+  Failure: test_replacing_display_preserves_only_unreused_native_release_receipts; assertion `arena_key in port._released`; actual `port._released` was `[]` after the close/restore path.
+
+Green, focused regression:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q -k replacing_display_preserves_only_unreused_native_release_receipts --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 1 passed, 27 deselected in 0.28s
+
+Green, full owning modules:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 28 passed in 0.37s
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_lifecycle.py -q --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 63 passed in 1.25s
+
+Static/whitespace checks after final formatting:
+  Command: .\.venv\Scripts\python.exe -m ruff check src/cephvr/visual_stimulus/rendering/native.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; All checks passed!
+  Command: .\.venv\Scripts\python.exe -m ruff format --check src/cephvr/visual_stimulus/rendering/native.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; 2 files already formatted
+  Command: .\.venv\Scripts\python.exe -m mypy --platform win32 src/cephvr/visual_stimulus/rendering/native.py
+  Result: exit 0; Success: no issues found in 1 source file
+  Command: git diff --check -- src/cephvr/visual_stimulus/rendering/native.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; no output

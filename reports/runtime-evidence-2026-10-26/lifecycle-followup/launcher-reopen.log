@@ -1,0 +1,9 @@
+{"utc": "2026-10-26T06:29:44.951112+00:00", "monotonic_ns": 1018627065289000, "event": "launcher_started", "pid": 54888, "parent_pid": 29664, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "supervisor_generation": "25b659ef-ffd2-49a4-96c0-d7efb32b211a", "native_faults_to_log": true}
+{"utc": "2026-10-26T06:29:45.002246+00:00", "monotonic_ns": 1018627109557900, "event": "supervisor_launched", "pid": 51220, "creation_time_100ns": 134374697849981149}
+{"utc": "2026-10-26T06:32:50.833033+00:00", "monotonic_ns": 1018812939652700, "event": "shutdown_requested", "channel": "supervisor", "deadline_ns": 1018902932172200}
+{"utc": "2026-10-26T06:33:03.022471+00:00", "monotonic_ns": 1018825129117600, "event": "channel_lost", "channel": "controller", "reason": "eof"}
+{"utc": "2026-10-26T06:33:03.125389+00:00", "monotonic_ns": 1018825232051300, "event": "channel_lost", "channel": "supervisor", "reason": "eof"}
+{"utc": "2026-10-26T06:33:03.128100+00:00", "monotonic_ns": 1018825234857000, "event": "application_job_empty"}
+{"utc": "2026-10-26T06:33:03.128100+00:00", "monotonic_ns": 1018825234898200, "event": "cleanup_started", "exception_type": null, "error": null, "deadline_ns": 1018902932172200}
+{"utc": "2026-10-26T06:33:03.135099+00:00", "monotonic_ns": 1018825241759700, "event": "exit_receipt_written"}
+{"utc": "2026-10-26T06:33:03.135099+00:00", "monotonic_ns": 1018825242076100, "event": "launcher_exit", "outcome": "returned"}

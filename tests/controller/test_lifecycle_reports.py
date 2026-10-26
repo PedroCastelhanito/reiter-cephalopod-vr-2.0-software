@@ -144,6 +144,7 @@ async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
 ) -> None:
     fixture = _fixture(tmp_path)
     reports, attempt, backend = fixture.reports, fixture.attempt, fixture.backend
+    attempt.prepared.configuration_revision = reports.configuration.revision
     context = pb.ReportContext(
         backend=backend,
         work=pb.WorkContext(session=attempt.context),
@@ -169,6 +170,12 @@ async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
     changed.ready.asset_filenames.append("new-file.ext")
     rejected = await reports.receive(changed, 100)
     assert rejected.failure.code == "CONFLICT"
+    assert fixture.publications[0] == 1
+    attempt.cancel_requested = True
+    assert (await reports.receive(report, 100)).result == pb.COMMAND_RESULT_ACCEPTED
+    rejected = await reports.receive(changed, 100)
+    assert rejected.failure.code == "CONFLICT"
+    assert attempt.ready == {"visual_stimulus": report.ready}
     assert fixture.publications[0] == 1
 
 
@@ -715,3 +722,97 @@ async def test_setup_progress_is_nonterminal_and_rejects_stale_or_invalid_report
         await fixture.reports.receive(report, 50)
     ).result == pb.COMMAND_RESULT_REJECTED
     assert fixture.publications == [1]
+
+
+@pytest.mark.parametrize(
+    ("phase", "interrupted"),
+    (
+        (pb.SESSION_PHASE_SETTING_UP, False),
+        (pb.SESSION_PHASE_FINALIZING, True),
+    ),
+)
+async def test_retired_setup_accepts_exact_late_ready_without_mutating_readiness(
+    tmp_path: Path,
+    phase: int,
+    interrupted: bool,
+) -> None:
+    fixture = _fixture(tmp_path)
+    reports, attempt, backend = fixture.reports, fixture.attempt, fixture.backend
+    attempt.prepared.configuration_revision = reports.configuration.revision
+    context = pb.ReportContext(
+        backend=backend,
+        work=pb.WorkContext(session=attempt.context),
+        operation=pb.OperationContext(
+            command_id=attempt.setup_operations["visual_stimulus"]
+        ),
+    )
+    report = pb.LifecycleReport(
+        ready=pb.ReadyReport(
+            context=context,
+            configuration_revision=reports.configuration.revision,
+            required_checks_passed=True,
+        )
+    )
+    reports.configuration.revision += 1
+    attempt.cancel_requested = True
+    fixture.lifecycle.session.phase = phase
+    attempt.interrupted = interrupted
+    original_deadlines = (
+        attempt.setup_deadline_ns,
+        attempt.recovery_deadline_ns,
+        attempt.finalization_deadline_ns,
+    )
+
+    for mutation in (
+        lambda changed: setattr(
+            changed.ready.context.work.session, "session_id", str(uuid4())
+        ),
+        lambda changed: setattr(changed.ready.context.operation, "command_id", "wrong"),
+        lambda changed: setattr(changed.ready, "configuration_revision", 99),
+        lambda changed: setattr(changed.ready, "required_checks_passed", False),
+        lambda changed: setattr(
+            changed.ready.context.backend, "backend_generation", str(uuid4())
+        ),
+    ):
+        invalid = pb.LifecycleReport.FromString(report.SerializeToString())
+        mutation(invalid)
+        rejected = await reports.receive(invalid, attempt.setup_deadline_ns)
+        assert rejected.result == pb.COMMAND_RESULT_REJECTED
+    expired = await reports.receive(report, attempt.setup_deadline_ns + 1)
+    assert expired.result == pb.COMMAND_RESULT_REJECTED
+    assert expired.failure.code == "EVIDENCE"
+    assert not attempt.ready and not attempt.retired_setup_ready
+    assert fixture.publications == [0]
+    assert not attempt.changed.is_set()
+
+    receipt = await reports.receive(report, attempt.setup_deadline_ns)
+
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert not attempt.ready
+    assert attempt.retired_setup_ready == {"visual_stimulus": report.ready}
+    assert fixture.publications == [0]
+    assert not attempt.changed.is_set()
+
+    duplicate = await reports.receive(report, attempt.setup_deadline_ns)
+    assert duplicate.result == pb.COMMAND_RESULT_ACCEPTED
+    changed = pb.LifecycleReport.FromString(report.SerializeToString())
+    changed.ready.asset_filenames.append("changed-file.ext")
+    rejected = await reports.receive(changed, attempt.setup_deadline_ns)
+    assert rejected.result == pb.COMMAND_RESULT_REJECTED
+    assert rejected.failure.code == "CONFLICT"
+    assert fixture.publications == [0]
+    assert not attempt.changed.is_set()
+    assert attempt.cancel_requested and attempt.interrupted is interrupted
+    assert original_deadlines == (
+        attempt.setup_deadline_ns,
+        attempt.recovery_deadline_ns,
+        attempt.finalization_deadline_ns,
+    )
+
+    wrong_generation = pb.LifecycleReport.FromString(report.SerializeToString())
+    wrong_generation.ready.context.backend.backend_generation = str(uuid4())
+    wrong_generation_receipt = await reports.receive(
+        wrong_generation, attempt.setup_deadline_ns
+    )
+    assert wrong_generation_receipt.result == pb.COMMAND_RESULT_REJECTED
+    assert wrong_generation_receipt.failure.code == "IDENTITY"

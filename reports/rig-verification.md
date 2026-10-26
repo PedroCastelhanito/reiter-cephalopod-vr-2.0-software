@@ -1,5 +1,12 @@
 # Rig verification — outstanding checks
 
+Oct26 bounded lifecycle checks complete: deliberate GPU-budget rejection with the
+saved Behavioral camera confirms cleanup and fresh Setup/Cancel; two60-second Visual
+Stimulus-only trials, NewSession, post-session calibration Open/Close and normal
+Ended-session Shutdown pass. Exact process-absence/rendererexit0 and settings
+restoration proofs are retained in [lifecycle evidence](runtime-evidence-2026-10-26/lifecycle-followup/).
+This does not close the remaining fault, physical or full-workload checks below.
+
 <a id="dummy-session-no-output"></a>
 - [ ] `dummy-session-no-output` [controller] [acquisition] [visual_stimulus] After
   a safe normal restart, disable every active saving selection and check Setup,

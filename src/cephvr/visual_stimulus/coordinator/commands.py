@@ -299,6 +299,17 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
     require_uuid4(command.command_id)
     if command.target != identity.backend:
         raise ValueError("wrong Visual Stimulus backend generation")
+    if method != "Shutdown" and command.work.WhichOneof("work") in {
+        "session",
+        "trial",
+    }:
+        session = (
+            command.work.session
+            if command.work.WhichOneof("work") == "session"
+            else command.work.trial.session
+        )
+        if session.SerializeToString(deterministic=True) in state.retired_sessions:
+            raise ValueError("command targets a retired Visual Stimulus session")
     expected = (
         (identity.controller, identity.supervisor)
         if method
@@ -339,22 +350,8 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
     ):
         raise ValueError("interrupted Visual Stimulus session is permanently fenced")
     if isinstance(request, wire.SetupSessionRequest):
-        if state.setup is not None and (
-            state.cleanup is None
-            or not state.cleanup.trial_activity_stopped
-            or any(not item.released for item in state.cleanup.resources)
-            or any(
-                item.closure
-                not in {
-                    pb.OUTPUT_CLOSURE_CLOSED,
-                    pb.OUTPUT_CLOSURE_FAILED,
-                    pb.OUTPUT_CLOSURE_NOT_STARTED,
-                }
-                or not item.HasField("artifact_present")
-                for item in state.cleanup.outputs
-            )
-        ):
-            raise ValueError("previous Visual Stimulus session has unresolved cleanup")
+        if state.setup is not None:
+            raise ValueError("previous Visual Stimulus session is not retired")
         if (
             command.work.WhichOneof("work") != "session"
             or command.work.session != request.plan.context
@@ -373,7 +370,7 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
         if closed != request.HasField("feedback_attachment"):
             raise ValueError("feedback attachment must match session mode")
     elif isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
-        if state.setup is not None and state.cleanup is None:
+        if state.setup is not None:
             raise ValueError(
                 "display initialization forbidden during session preparation"
             )

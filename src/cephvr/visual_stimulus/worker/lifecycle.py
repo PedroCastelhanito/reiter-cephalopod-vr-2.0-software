@@ -625,9 +625,6 @@ class LifecycleDriver:
                 engine=self.engine,
                 feedback=self.feedback,
             )
-            self.state.resources.clear()
-            self.state.pending_resources.clear()
-            self.preparation.retire_released_resources()
             if command.target.work.WhichOneof("work") == "session":
                 # No Setup adopted these resources; prove native release before
                 # confirming the registered session's empty resource catalogue.
@@ -646,6 +643,9 @@ class LifecycleDriver:
                     ),
                     self.deadline_ns,
                 )
+            self._retire_released_resources()
+            self.state.resources.clear()
+            self.state.pending_resources.clear()
             return
         cleanup_resources(
             self.state,
@@ -659,6 +659,18 @@ class LifecycleDriver:
             feedback=self.feedback,
             emit=self.confirm_cleanup,
         )
+        self._retire_released_resources()
+        self.state.resources.clear()
+        self.state.pending_resources.clear()
+
+    def _retire_released_resources(self) -> None:
+        catalogue_changed = bool(self.state.resources or self.state.pending_resources)
+        self.engine.retire_released_resources()
+        self.recording.retire_released_resources()
+        self.preparation.retire_released_resources()
+        self.state.released_threads.clear()
+        if catalogue_changed:
+            self.state.catalogue_revision += 1
 
     def _promote_pending_resources(
         self, command: visual_stimulus.WorkerCommand, deadline_ns: int

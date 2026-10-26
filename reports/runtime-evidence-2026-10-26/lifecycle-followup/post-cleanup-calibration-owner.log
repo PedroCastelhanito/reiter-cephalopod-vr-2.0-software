@@ -1,0 +1,47 @@
+Date: 2026-10-26
+Scope: Post-session display-calibration owner retirement; test-only red/green and source validation evidence.
+Source revision: 819f30e6e5e5bf4b840438c3ef3a7538d45ad192 (working tree uncommitted)
+Scoped working-tree status:
+  M src/cephvr/visual_stimulus/resources/session.py
+  M tests/visual_stimulus/test_display_calibration_rendering.py
+Scoped diff stat: 2 files changed, 209 insertions(+), 6 deletions(-). The test file also contains the previously frozen native receipt regression; this evidence concerns the additional post-cleanup owner test.
+Pytest method: commands below ran with exec_command sandbox_permissions=require_escalated, repository .venv Python, and --timeout=60. No --basetemp override. Pytest's reported tmp_path was under C:\Users\ReiterU_PC\AppData\Local\Temp\pytest-of-ReiterU_PC\..., outside the repository.
+
+Observed distinct state defect:
+  After successful display cleanup, NativePreparation.cleanup() cleared _display_budget and _display_calibration but left _display_profile. A later fresh diagnostic therefore carried a previous_display with previous_calibration=None. RendererEngine.close_display_calibration() cannot confirm closure for that owner because it requires a previous calibration whenever previous_display is non-None. A failed source cleanup correctly retains all prior fields.
+  The separate rig run ended with renderer exit code 0 and no faulthandler error. This cleanup-state defect is not claimed to cause that process exit during OpenDisplayCalibration.
+
+Regression before production fix:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q -k calibration_after_display_cleanup_has_no_previous_renderer_owner --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 1 failed, 28 deselected in 0.37s
+  Failure: the test prepared and closed a diagnostic after a simulated successful full cleanup; `has_previous_owner and closed` was false. Its preceding failed-cleanup phase verified that the old profile, calibration and budget remain retained while a source close is unconfirmed.
+
+Change:
+  In the successful NativePreparation.cleanup() branch, clear _display_profile together with _display_budget and _display_calibration. Failed source/consumer cleanup returns through the outstanding path and retains those owner fields.
+
+Green focused regression:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q -k calibration_after_display_cleanup_has_no_previous_renderer_owner --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 1 passed, 28 deselected in 0.26s
+
+Green full owner modules:
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_display_calibration_rendering.py -q --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 29 passed in 0.39s
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_resources.py -q --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 56 passed in 0.99s
+  Command: .\.venv\Scripts\python.exe -u -m pytest tests/visual_stimulus/test_lifecycle.py -q --timeout=60
+  Tool permissions: sandbox_permissions=require_escalated
+  Result: 63 passed in 1.32s
+
+Static/whitespace checks:
+  Command: .\.venv\Scripts\python.exe -m ruff check src/cephvr/visual_stimulus/resources/session.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; All checks passed!
+  Command: .\.venv\Scripts\python.exe -m ruff format --check src/cephvr/visual_stimulus/resources/session.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; 2 files already formatted
+  Command: .\.venv\Scripts\python.exe -m mypy --platform win32 src/cephvr/visual_stimulus/resources/session.py
+  Result: exit 0; Success: no issues found in 1 source file
+  Command: git diff --check -- src/cephvr/visual_stimulus/resources/session.py tests/visual_stimulus/test_display_calibration_rendering.py
+  Result: exit 0; no output

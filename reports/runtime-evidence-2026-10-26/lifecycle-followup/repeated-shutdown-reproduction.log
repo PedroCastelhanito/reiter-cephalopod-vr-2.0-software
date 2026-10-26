@@ -1,0 +1,119 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_repeated_sessionless_shutdown_retires_release_receipts _________
+
+    def test_repeated_sessionless_shutdown_retires_release_receipts():
+        driver, clock, reports, _, _, command, _ = prepared_driver()
+        driver.state.trial.finished = True
+        registered_resources = set(driver.state.resources)
+        assert registered_resources
+    
+        driver.execute("Cleanup", command(), clock() + 100_000_000)
+        cleanup = reports.lifecycle("cleanup")[-1][0]
+        assert {item.resource for item in cleanup.resources} == registered_resources
+        assert all(item.released for item in cleanup.resources)
+        assert driver.state.setup is None
+        assert driver.state.resources.keys() == registered_resources
+    
+        shutdown = command()
+        shutdown.target.ClearField("work")
+        driver.execute("Shutdown", shutdown, clock() + 100_000_000)
+        assert not driver.state.resources
+        assert not driver.state.pending_resources
+    
+        repeated_shutdown = command()
+        repeated_shutdown.target.ClearField("work")
+>       driver.execute("Shutdown", repeated_shutdown, clock() + 100_000_000)
+
+tests\visual_stimulus\test_lifecycle.py:1762: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\worker\lifecycle.py:253: in execute
+    self.cleanup(self.command)
+src\cephvr\visual_stimulus\worker\lifecycle.py:617: in cleanup
+    cleanup_unregistered_resources(
+src\cephvr\visual_stimulus\worker\cleanup.py:123: in cleanup_unregistered_resources
+    result = cleanup_resources(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+state = DriverState(setup=None, artifacts={'228a314a-b206-40ae-b3aa-a34d399862cd': TrialArtifact(artifact=PreparedTrial(format...-40ae-b3aa-a34d399862cd:visual_stimulus:stimulus_frames"
+closure: OUTPUT_CLOSURE_NOT_STARTED
+artifact_present: false
+})
+command = command_id: "4510eae7-6c99-4f67-b7a1-68d23b6a8e75"
+issuer {
+  role: "visual_stimulus"
+  generation: "55347b9b-1a3f-477...generation: "55347b9b-1a3f-477c-9f58-29de04d269fc"
+  }
+  configuration_revision: 1
+}
+deadline_monotonic_ns: 1100000000
+
+worker = role: "visual_stimulus_renderer"
+generation: "f2085427-650d-46ca-b86a-86f65a98b603"
+
+deadline_ns = 1100000000
+clock = <tests.visual_stimulus.support.Clock object at 0x000002BA12C621D0>
+recording = <tests.visual_stimulus.support.Recorder object at 0x000002BA12C62290>
+preparation = <tests.visual_stimulus.support.Preparation object at 0x000002BA134709D0>
+engine = <tests.visual_stimulus.support.Graphics object at 0x000002BA10635610>
+feedback = None, emit = None
+
+    def cleanup_resources(
+        state: DriverState,
+        command: visual_stimulus.WorkerCommand,
+        *,
+        worker: pb.ProcessIdentity,
+        deadline_ns: int,
+        clock: Callable[[], int],
+        recording: RecordingPort,
+        preparation: PreparationPort,
+        engine: EnginePort,
+        feedback: FeedbackPort | None,
+        emit: Callable[[pb.LifecycleReport, int], None] | None,
+    ) -> pb.CleanupReport:
+        keys: set[str] = set(state.released_threads)
+        failures: list[str] = []
+        recording_released = False
+        try:
+            recorded = recording.cleanup(deadline_ns)
+            keys.update(recorded.released)
+            failures.extend(recorded.outstanding)
+            recording_released = not recorded.outstanding
+        except Exception as exc:
+            failures.append(str(exc))
+        operations: tuple[Callable[[], ResourceReleaseReport], ...] = (
+            lambda: (
+                feedback.close(deadline_ns)
+                if feedback is not None
+                else ResourceReleaseReport((), ())
+            ),
+            lambda: preparation.cleanup(deadline_ns),
+        )
+        for operation in operations:
+            try:
+                result = operation()
+                keys.update(result.released)
+                failures.extend(result.outstanding)
+            except Exception as exc:
+                failures.append(str(exc))
+        # Pending capture tokens still need their GL objects/context to establish a
+        # confirmed cancellation. Destroying them here would erase that ownership.
+        if recording_released:
+            try:
+                graphics = engine.cleanup(deadline_ns=deadline_ns)
+                keys.update(graphics.released)
+                failures.extend(graphics.outstanding)
+                if not graphics.outstanding:
+                    keys.update(
+                        key for key in state.resources if key.startswith("display:")
+                    )
+            except Exception as exc:
+                failures.append(str(exc))
+        if not keys <= state.resources.keys():
+>           raise RuntimeError("cleanup returned an unregistered resource")
+E           RuntimeError: cleanup returned an unregistered resource
+
+src\cephvr\visual_stimulus\worker\cleanup.py:65: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_lifecycle.py::test_repeated_sessionless_shutdown_retires_release_receipts
+1 failed, 60 deselected in 0.53s

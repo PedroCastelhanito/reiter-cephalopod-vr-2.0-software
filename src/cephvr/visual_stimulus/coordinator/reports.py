@@ -22,7 +22,7 @@ from .display import (
 )
 from .ports import PeerPort
 from .ready import validate_ready
-from .state import Identity, Prepared, State
+from .state import CommandLink, Identity, Prepared, State
 
 
 class Reports:
@@ -50,13 +50,53 @@ class Reports:
             "cleanup_resources_revision"
         ):
             raise ValueError("worker heartbeat source/catalogue missing")
+        previous_report = state.worker_heartbeat
+        previous_kind = (
+            previous_report.work.WhichOneof("work")
+            if previous_report is not None
+            else None
+        )
+        if (
+            state.setup is None
+            and previous_report is not None
+            and previous_kind in {"session", "trial"}
+            and report.work == previous_report.work
+            and report.cleanup_resources == previous_report.cleanup_resources
+            and report.cleanup_resources_revision
+            == previous_report.cleanup_resources_revision
+        ):
+            # An in-flight prior-scope heartbeat proves responsiveness only.
+            state.worker_ingress_ns = ingress_ns
+            return
         if state.setup is not None:
             kind = report.work.WhichOneof("work")
             session = (
                 report.work.trial.session if kind == "trial" else report.work.session
             )
             if session != state.setup.plan.context:
-                previous_report = state.worker_heartbeat
+                retired_session = (
+                    previous_report.work.session
+                    if previous_report is not None
+                    and previous_report.work.WhichOneof("work") == "session"
+                    else previous_report.work.trial.session
+                    if previous_report is not None
+                    and previous_report.work.WhichOneof("work") == "trial"
+                    else None
+                )
+                retired_revision = (
+                    state.retired_sessions.get(
+                        retired_session.SerializeToString(deterministic=True)
+                    )
+                    if retired_session is not None
+                    else None
+                )
+                if (
+                    kind is None
+                    and not report.cleanup_resources
+                    and retired_revision == report.cleanup_resources_revision
+                ):
+                    state.worker_ingress_ns = ingress_ns
+                    return
                 initial = (
                     previous_report is None
                     and kind is None
@@ -74,6 +114,18 @@ class Reports:
                     state.worker_ingress_ns = ingress_ns
                     return
                 raise ValueError("worker heartbeat has wrong session")
+            if state.cleanup is not None:
+                if previous_report is not None and (
+                    report.work == previous_report.work
+                    and report.cleanup_resources == previous_report.cleanup_resources
+                    and report.cleanup_resources_revision
+                    == previous_report.cleanup_resources_revision
+                ):
+                    state.worker_ingress_ns = ingress_ns
+                    return
+                raise ValueError(
+                    "worker heartbeat changed during cleanup report delivery"
+                )
         previous = {
             x.resource: x for x in state.resources if x.owner == self.identity.worker
         }
@@ -294,6 +346,13 @@ class Reports:
                     raise outcome
 
     async def lifecycle(self, evidence: visual_stimulus.WorkerLifecycle) -> None:
+        if evidence.report.WhichOneof("report") == "cleanup":
+            async with self.catalogue_lock:
+                await self._lifecycle(evidence)
+            return
+        await self._lifecycle(evidence)
+
+    async def _lifecycle(self, evidence: visual_stimulus.WorkerLifecycle) -> None:
         if evidence.source != self.identity.worker:
             raise ValueError("wrong worker lifecycle source")
         report = pb.LifecycleReport.FromString(evidence.report.SerializeToString())
@@ -323,6 +382,27 @@ class Reports:
             if prepared_link is None:
                 raise ValueError("trial lifecycle lacks retained PrepareTrial identity")
             parent_id = prepared_link.parent.command_id
+        key = (kind, parent_id)
+        if kind == "cleanup":
+            prior = self.state.worker_reports.get(key)
+            if prior is not None:
+                if prior != evidence:
+                    raise ValueError("immutable worker cleanup evidence changed")
+                retained = self.state.reports.get(key)
+                if retained is None:
+                    raise RuntimeError("retained worker cleanup report is missing")
+                await self._deliver_cleanup(retained, link)
+                return
+            if link.cleanup_finalization_scopes is None:
+                work_kind = work.WhichOneof("work")
+                session = (
+                    work.session
+                    if work_kind == "session"
+                    else work.trial.session
+                    if work_kind == "trial"
+                    else None
+                )
+                link.cleanup_finalization_scopes = self._cleanup_scopes(session)
         if kind == "cleanup":
             if (
                 payload.source != self.identity.worker
@@ -399,7 +479,6 @@ class Reports:
             if recipe is None:
                 raise ValueError("stimulus log closure not yet established")
             payload.outputs.add().CopyFrom(recipe)
-        key = (kind, parent_id)
         old = self.state.reports.get(key)
         if old is not None and old != report:
             raise ValueError("retained lifecycle evidence changed")
@@ -415,10 +494,118 @@ class Reports:
         )
         self.state.reports[key] = report
         if kind == "cleanup":
+            self.ledger.reserve_payload(
+                "worker-cleanup:" + parent_id,
+                evidence.ByteSize(),
+                work_key=(
+                    work.trial.session.session_id
+                    if work.WhichOneof("work") == "trial"
+                    else work.session.session_id
+                ),
+                priority=True,
+            )
+            self.state.worker_reports[key] = visual_stimulus.WorkerLifecycle.FromString(
+                evidence.SerializeToString()
+            )
             self.state.cleanup = pb.CleanupReport.FromString(
                 payload.SerializeToString()
             )
-            if all(item.released for item in payload.resources) and all(
+            await self._deliver_cleanup(report, link)
+        else:
+            await self.controller.receipt(
+                "ReportLifecycle",
+                report,
+                deadline_ns=self.lifecycle_deadline(kind, payload, link.deadline_ns),
+            )
+
+    async def _deliver_cleanup(
+        self, report: pb.LifecycleReport, link: CommandLink
+    ) -> None:
+        import asyncio
+
+        outcomes = await asyncio.gather(
+            self.controller.receipt(
+                "ReportLifecycle", report, deadline_ns=link.deadline_ns
+            ),
+            self.supervisor.receipt(
+                "ReportLifecycle", report, deadline_ns=link.deadline_ns
+            ),
+            return_exceptions=True,
+        )
+        for outcome in outcomes:
+            if isinstance(outcome, BaseException):
+                raise outcome
+            if outcome.result != pb.COMMAND_RESULT_ACCEPTED:
+                raise ValueError("lifecycle cleanup report was not accepted")
+        self._retire_cleanup(report, link)
+
+    def _retire_cleanup(self, report: pb.LifecycleReport, link: CommandLink) -> None:
+        cleanup = report.cleanup
+        work = cleanup.work
+        if work.WhichOneof("work") != "session" or not self._cleanup_complete(cleanup):
+            return
+        session_key = work.session.SerializeToString(deterministic=True)
+        if session_key in self.state.retired_sessions:
+            return
+        worker_report = self.state.worker_reports.get(
+            ("cleanup", link.parent.command_id)
+        )
+        empty_revision = cleanup.cleanup_resources_revision
+        if worker_report is not None:
+            raw_cleanup = worker_report.report.cleanup
+            empty_revision = raw_cleanup.cleanup_resources_revision + int(
+                bool(raw_cleanup.resources)
+            )
+        self.state.retired_sessions[session_key] = empty_revision
+        for scope in link.cleanup_finalization_scopes or ():
+            self.ledger.finalize_work(scope, self.clock())
+        if self.state.setup is None or work.session != self.state.setup.plan.context:
+            return
+        self.state.setup = None
+        self.state.prepared.clear()
+        self.state.recipe_results.clear()
+        self.state.incident_revisions.clear()
+        self.state.schedule = None
+        self.state.release = None
+        self.state.active_trial = None
+        self.state.resources.clear()
+        self.state.sealed = False
+
+    @staticmethod
+    def _link_session(link: CommandLink) -> pb.SessionContext | None:
+        work = link.parent.work
+        kind = work.WhichOneof("work")
+        if kind == "session":
+            return work.session
+        if kind == "trial":
+            return work.trial.session
+        return None
+
+    def _cleanup_scopes(self, session: pb.SessionContext | None) -> frozenset[str]:
+        display_methods = {
+            "InitializeDisplay",
+            "OpenDisplayCalibration",
+            "UpdateDisplayCalibration",
+            "CloseDisplayCalibration",
+        }
+        scopes: set[str] = set()
+        for link in self.state.links.values():
+            work_kind = link.parent.work.WhichOneof("work")
+            matches_session = (
+                session is not None and self._link_session(link) == session
+            )
+            prior_display = work_kind is None and link.method in display_methods
+            record = self.ledger.get(link.parent.command_id)
+            if record is not None and (matches_session or prior_display):
+                scopes.add(record.work_key)
+        return frozenset(scopes)
+
+    @staticmethod
+    def _cleanup_complete(payload: pb.CleanupReport) -> bool:
+        return (
+            payload.trial_activity_stopped
+            and all(item.released for item in payload.resources)
+            and all(
                 item.closure
                 in {
                     pb.OUTPUT_CLOSURE_CLOSED,
@@ -427,35 +614,8 @@ class Reports:
                 }
                 and item.HasField("artifact_present")
                 for item in payload.outputs
-            ):
-                scopes = {
-                    record.work_key
-                    for item in self.state.links.values()
-                    if (record := self.ledger.get(item.parent.command_id)) is not None
-                }
-                for scope in scopes:
-                    self.ledger.finalize_work(scope, self.clock())
-            # Delivery copies are independent: supervisor failure cannot suppress controller delivery.
-            import asyncio
-
-            results = await asyncio.gather(
-                self.controller.receipt(
-                    "ReportLifecycle", report, deadline_ns=link.deadline_ns
-                ),
-                self.supervisor.receipt(
-                    "ReportLifecycle", report, deadline_ns=link.deadline_ns
-                ),
-                return_exceptions=True,
             )
-            for result in results:
-                if isinstance(result, BaseException):
-                    raise result
-        else:
-            await self.controller.receipt(
-                "ReportLifecycle",
-                report,
-                deadline_ns=self.lifecycle_deadline(kind, payload, link.deadline_ns),
-            )
+        )
 
     async def display(self, report: pb.VisualStimulusDisplayView) -> None:
         await accept_display_report(self.identity, self.state, self.controller, report)

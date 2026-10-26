@@ -1,0 +1,23 @@
+launcher_generation {"expected": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "observed": "8a709bc4-0116-4167-a4b8-dd1a57fc6689"}
+state {"cleanup_confirmed": true, "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689", "display_calibration": {"diagnostic_id": "311ecb93-cf07-4f16-af56-9bbcc3b1ca9c", "resources_closed": true, "state": "DISPLAY_CALIBRATION_STATE_IDLE"}, "session_id": "", "session_phase": "SESSION_PHASE_CONFIGURATION", "trial_id": "", "trial_phase": "TRIAL_PHASE_PENDING"}
+harness_stopped {"automatic_retry": false, "error": "RuntimeError('Visual Stimulus process is not operational')"}
+control_release {"release_failure": null}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 604, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 586, in main
+    await run_client()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 256, in run_client
+    require(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\bounded_lifecycle.py", line 34, in require
+    raise RuntimeError(message)
+RuntimeError: Visual Stimulus process is not operational

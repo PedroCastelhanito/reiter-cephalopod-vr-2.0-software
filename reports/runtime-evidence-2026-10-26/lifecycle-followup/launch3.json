@@ -1,0 +1,6 @@
+{
+  "pid": 57552,
+  "start_time": "2026-10-26T15:37:04.2304268+09:00",
+  "script": "scripts/start_runtime_gui.py --no-tracking",
+  "fault_handler": "1 inherited"
+}

@@ -382,6 +382,8 @@ class Attempt:
     setup_operations: dict[str, str]
     visual_stimulus_setup_dispatched: bool = False
     ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
+    # Exact delayed Setup receipts stay separate from execution readiness.
+    retired_setup_ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     trial_ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     trial_results: dict[str, pb.OperationState] = field(default_factory=dict)
     started: dict[str, pb.StartedReport] = field(default_factory=dict)

@@ -566,6 +566,9 @@ def test_pre_setup_display_cleanup_retains_resources_when_release_is_unknown():
     assert driver.state.resources["display:projector/main"].resource
     assert "display:projector/main" in driver.state.pending_resources
     assert not driver.state.cleaned
+    assert graphics.retired_resource_catalogues == 0
+    assert recorder.retired_resource_catalogues == 0
+    assert driver.preparation.retired_resource_catalogues == 0
 
 
 def test_failed_setup_cleanup_waits_for_terminal_report_acceptance():
@@ -776,6 +779,9 @@ def test_preparation_rejection_stays_setup_failure_and_allows_reuse():
 
 def test_session_cleanup_delivery_failure_keeps_setup_unresolved():
     driver, clock, reports, _, _, command, _ = prepared_driver()
+    retired_trial = driver.state.trial
+    assert retired_trial is not None
+    retired_trial.finished = True
 
     def reject(_method, _message, _deadline_ns):
         raise TimeoutError("cleanup report was not accepted")
@@ -786,6 +792,7 @@ def test_session_cleanup_delivery_failure_keeps_setup_unresolved():
 
     assert driver.state.setup is not None
     assert not driver.state.cleaned
+    assert driver.state.trial is retired_trial
 
 
 @pytest.mark.parametrize(
@@ -1363,6 +1370,9 @@ def test_failed_native_calibration_source_close_is_retried_by_lifecycle_cleanup(
         def cleanup(self, deadline_ns=None):
             return ResourceReleaseReport(())
 
+        def retire_released_resources(self):
+            pass
+
     arena_doc, binary = glb_fixture()
     arena = pack_glb(arena_doc, binary)
     arena_path = tmp_path / "calibration" / "arena.glb"
@@ -1736,6 +1746,146 @@ def test_cleanup_retains_prior_trial_results_and_unscheduled_output_absence():
     assert outputs["previous"].artifact_present
     assert outputs["unscheduled"].closure == pb.OUTPUT_CLOSURE_NOT_STARTED
     assert not outputs["unscheduled"].artifact_present
+
+
+def test_session_cleanup_retires_finished_trial_before_display_calibration():
+    import hashlib
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+    from cephvr.visual_stimulus.rendering.types import OutputActivity
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    driver, clock, _, _, _, command, _ = prepared_driver()
+    retired_trial = driver.state.trial
+    assert retired_trial is not None
+    with pytest.raises(RuntimeError, match="cannot overlap a trial"):
+        driver.execute(
+            "OpenDisplayCalibration",
+            visual_stimulus.OpenDisplayCalibrationCommand(command=command()),
+            clock() + 100_000_000,
+        )
+    retired_trial.finished = True
+    driver.execute("Cleanup", command(), clock() + 100_000_000)
+    assert driver.state.cleaned
+    assert driver.state.setup is None
+
+    profile_json = valid_display_json()
+    profile = parse_display_json(profile_json, max_bytes=1_000_000)
+    prepared = SimpleNamespace(display=profile, previous_display=None)
+    driver.preparation.prepare_display_calibration = lambda *_args, **_kwargs: prepared
+    driver.preparation.release_display_calibration = lambda _prepared: True
+    driver.engine.present_display_calibration = lambda *_args: (
+        OutputActivity("projector/main", clock(), clock() + 1, 1),
+    )
+    calibration_command = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=driver.owner,
+        target=visual_stimulus.WorkerContext(
+            worker=driver.worker,
+            owner=driver.owner,
+            configuration_revision=1,
+        ),
+        parent_operation=pb.OperationContext(command_id=str(uuid4())),
+        deadline_monotonic_ns=clock() + 100_000_000,
+    )
+    request = visual_stimulus.OpenDisplayCalibrationCommand(
+        command=calibration_command,
+        diagnostic_id=str(uuid4()),
+        profile_json=profile_json,
+        profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+        asset_root="/accepted",
+        arena_relative_path="calibration/arena.glb",
+        arena_size_bytes=64,
+        arena_sha256="a" * 64,
+        policies=vp.VisualStimulusFilePolicies(
+            limits=vp.ResourceLimits(max_document_bytes=1_000_000)
+        ),
+    )
+    completion = driver.execute(
+        "OpenDisplayCalibration", request, calibration_command.deadline_monotonic_ns
+    )
+    assert completion is not None
+    for _ in range(100):
+        driver.advance(clock())
+        if completion.done():
+            break
+        threading.Event().wait(0.001)
+    completion.result(timeout=1)
+    assert driver.display_calibration.evidence.state == (
+        vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    )
+
+
+def test_repeated_sessionless_shutdown_retires_release_receipts():
+    driver, clock, reports, recorder, graphics, command, _ = prepared_driver()
+    driver.state.trial.finished = True
+    retired_trial = driver.state.trial
+    registered_resources = set(driver.state.resources)
+    assert registered_resources
+
+    driver.execute("Cleanup", command(), clock() + 100_000_000)
+    cleanup = reports.lifecycle("cleanup")[-1][0]
+    assert {item.resource for item in cleanup.resources} == registered_resources
+    assert all(item.released for item in cleanup.resources)
+    assert driver.state.setup is None
+    assert not driver.state.resources
+    assert driver.state.trial is None
+    assert retired_trial.finished
+    assert driver.state.catalogue_revision == cleanup.cleanup_resources_revision + 1
+    assert graphics.retired_resource_catalogues == 1
+    assert recorder.retired_resource_catalogues == 1
+
+    shutdown = command()
+    shutdown.target.ClearField("work")
+    driver.execute("Shutdown", shutdown, clock() + 100_000_000)
+    assert not driver.state.resources
+    assert not driver.state.pending_resources
+
+    repeated_shutdown = command()
+    repeated_shutdown.target.ClearField("work")
+    driver.execute("Shutdown", repeated_shutdown, clock() + 100_000_000)
+    assert not driver.state.resources
+
+
+@pytest.mark.parametrize(
+    ("closure", "artifact_present"),
+    [
+        (pb.OUTPUT_CLOSURE_UNCONFIRMED, True),
+        (pb.OUTPUT_CLOSURE_CLOSED, None),
+    ],
+)
+def test_cleanup_keeps_catalogue_when_output_closure_is_unknown(
+    closure, artifact_present
+):
+    driver, clock, reports, recorder, graphics, command, _ = prepared_driver()
+    driver.state.trial.finished = True
+    driver.state.outputs["unknown-output"] = pb.OutputResult(
+        output_key="unknown-output", closure=closure
+    )
+    if artifact_present is not None:
+        driver.state.outputs["unknown-output"].artifact_present = artifact_present
+    registered_resources = set(driver.state.resources)
+
+    with pytest.raises(
+        RuntimeError, match="output closure unconfirmed: unknown-output"
+    ):
+        driver.execute("Cleanup", command(), clock() + 100_000_000)
+
+    cleanup = reports.lifecycle("cleanup")[-1][0]
+    assert {item.resource for item in cleanup.resources} == registered_resources
+    unknown = next(
+        item for item in cleanup.outputs if item.output_key == "unknown-output"
+    )
+    assert unknown.closure == closure
+    assert unknown.HasField("artifact_present") == (artifact_present is not None)
+    assert driver.state.setup is not None
+    assert driver.state.resources.keys() == registered_resources
+    assert not driver.state.cleaned
+    assert graphics.retired_resource_catalogues == 0
+    assert recorder.retired_resource_catalogues == 0
+    assert driver.preparation.retired_resource_catalogues == 0
+    assert driver.state.trial is not None
 
 
 @pytest.mark.asyncio

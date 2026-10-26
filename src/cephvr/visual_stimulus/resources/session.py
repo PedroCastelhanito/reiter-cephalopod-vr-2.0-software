@@ -754,9 +754,9 @@ class NativePreparation:
             self._announced_paths.clear()
             self._bundles.clear()
             self._budget = None
-            if self._display_budget is not None:
-                self._display_budget = None
-                self._display_calibration = None
+            self._display_budget = None
+            self._display_calibration = None
+            self._display_profile = None
         self._protected_sources = [
             item for item in self._protected_sources if id(item[0]) in failed_sources
         ]

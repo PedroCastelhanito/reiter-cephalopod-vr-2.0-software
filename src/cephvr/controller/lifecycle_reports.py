@@ -99,13 +99,19 @@ class LifecycleReports:
                     else:
                         self._warn_unconfirmed("no finalization deadline")
                 return receipt
-            if attempt.cancel_requested or context is None:
+            if context is None:
                 return rejected_receipt("STALE", "attempt retired")
             name = context.backend.backend_name
             backend = attempt.required.get(name)
             if backend is None or context.backend != backend.context:
                 return rejected_receipt("IDENTITY", "unregistered backend generation")
             work_kind = context.work.WhichOneof("work")
+            if attempt.cancel_requested:
+                if kind == "ready":
+                    return self._retired_setup_ready(
+                        attempt, payload, context, name, work_kind, ingress_ns
+                    )
+                return rejected_receipt("STALE", "attempt retired")
             if (
                 kind == "ready"
                 and self.lifecycle.session.phase == pb.SESSION_PHASE_SETTING_UP
@@ -277,24 +283,83 @@ class LifecycleReports:
         work_kind: str | None,
         ingress_ns: int,
     ) -> pb.ReportReceipt | None:
+        failure = self._setup_ready_failure(
+            attempt,
+            payload,
+            context,
+            name,
+            work_kind,
+            ingress_ns,
+            configuration_revision=self.configuration.revision,
+        )
+        if failure is not None:
+            return failure
+        return retain_or_conflict(
+            attempt.ready, name, payload, "changed duplicate Setup Ready"
+        )
+
+    def _setup_ready_failure(
+        self,
+        attempt: Attempt,
+        payload: pb.ReadyReport,
+        context: pb.ReportContext,
+        name: str,
+        work_kind: str | None,
+        ingress_ns: int,
+        *,
+        configuration_revision: int,
+        allow_interrupted: bool = False,
+    ) -> pb.ReportReceipt | None:
         within_ready_gate = (
             ingress_ns <= attempt.setup_deadline_ns
             or attempt.recovering_evidence == "setup_ready"
             and ingress_ns <= attempt.recovery_deadline_ns
         )
         if (
-            attempt.interrupted
+            (attempt.interrupted and not allow_interrupted)
             or not within_ready_gate
             or work_kind != "session"
             or context.work.session != attempt.context
             or context.operation.command_id != attempt.setup_operations.get(name)
-            or payload.configuration_revision != self.configuration.revision
+            or payload.configuration_revision != configuration_revision
             or not payload.required_checks_passed
         ):
             return rejected_receipt("EVIDENCE", "Setup Ready identity/check mismatch")
-        return retain_or_conflict(
-            attempt.ready, name, payload, "changed duplicate Setup Ready"
+        return None
+
+    def _retired_setup_ready(
+        self,
+        attempt: Attempt,
+        payload: pb.ReadyReport,
+        context: pb.ReportContext,
+        name: str,
+        work_kind: str | None,
+        ingress_ns: int,
+    ) -> pb.ReportReceipt:
+        failure = self._setup_ready_failure(
+            attempt,
+            payload,
+            context,
+            name,
+            work_kind,
+            ingress_ns,
+            configuration_revision=attempt.prepared.configuration_revision,
+            allow_interrupted=True,
         )
+        if failure is not None:
+            return failure
+        if name in attempt.ready:
+            conflict = retain_or_conflict(
+                attempt.ready, name, payload, "changed duplicate Setup Ready"
+            )
+        else:
+            conflict = retain_or_conflict(
+                attempt.retired_setup_ready,
+                name,
+                payload,
+                "changed duplicate retired Setup Ready",
+            )
+        return conflict or pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
 
     def _trial(
         self,

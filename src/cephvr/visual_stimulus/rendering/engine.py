@@ -699,3 +699,8 @@ class RendererEngine:
         self._display = None
         self._display_observation = None
         return self._port.release(deadline_ns=deadline_ns)
+
+    def retire_released_resources(self) -> None:
+        """Retire native release receipts after worker cleanup is confirmed."""
+        self._assert_owner()
+        self._port.retire_released_resources()

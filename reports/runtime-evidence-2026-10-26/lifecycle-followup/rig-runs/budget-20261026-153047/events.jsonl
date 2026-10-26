@@ -1,0 +1,19 @@
+{"host_ns": 1018689852544100, "kind": "command_attempt", "value": {"method": "UpdateConfiguration", "command_id": "dec2eafd-ca73-4f85-b723-3c825458a33e"}}
+{"host_ns": 1018689868120000, "kind": "UpdateConfiguration", "value": {"command_id": "dec2eafd-ca73-4f85-b723-3c825458a33e", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018689874659600, "kind": "command_attempt", "value": {"method": "OpenDisplayCalibration", "command_id": "f4e686df-cb4c-427c-8b32-9309978ee8a4"}}
+{"host_ns": 1018690350282300, "kind": "OpenDisplayCalibration", "value": {"command_id": "f4e686df-cb4c-427c-8b32-9309978ee8a4", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018690353277300, "kind": "command_attempt", "value": {"method": "CloseDisplayCalibration", "command_id": "890f91cd-4681-4508-9aca-2d177f898adc"}}
+{"host_ns": 1018690908595500, "kind": "CloseDisplayCalibration", "value": {"command_id": "890f91cd-4681-4508-9aca-2d177f898adc", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018690911066900, "kind": "gpu_limit", "value": {"bytes": 1, "behavioral_camera": true}}
+{"host_ns": 1018690911383700, "kind": "command_attempt", "value": {"method": "Setup", "command_id": "e3edc4e6-6b3f-453c-a77b-e4bc73580b2d"}}
+{"host_ns": 1018690954656000, "kind": "session", "value": {"id": "ddb613f9-1d4c-4699-93a2-4a6472cd6152", "phase": 2}}
+{"host_ns": 1018694025079100, "kind": "Setup", "value": {"command_id": "e3edc4e6-6b3f-453c-a77b-e4bc73580b2d", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: resource budget exceeded for visual_stimulus:de6e70d0-793f-4df7-9695-03fead27de4c:calibration:diagnostic_front: CPU 1013/1073741824, GPU 88/1"}}
+{"host_ns": 1018694137982000, "kind": "gpu_limit_restored", "value": {"sha256": "8f742be3b71749a8f6834889c49fba032d7a61d39fc88398e4b9aa79817f5419"}}
+{"host_ns": 1018694140326200, "kind": "command_attempt", "value": {"method": "Setup", "command_id": "74b216a1-8151-43f8-a8b1-f307084e371e"}}
+{"host_ns": 1018694171527800, "kind": "session", "value": {"id": "0f0cf111-774b-4d77-8511-b1e020ef6c39", "phase": 2}}
+{"host_ns": 1018697640534900, "kind": "Setup", "value": {"command_id": "74b216a1-8151-43f8-a8b1-f307084e371e", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018697644460500, "kind": "command_attempt", "value": {"method": "CancelSetup", "command_id": "a5566d21-3257-48cc-9ff8-056c8ac0c610"}}
+{"host_ns": 1018697770904400, "kind": "CancelSetup", "value": {"command_id": "a5566d21-3257-48cc-9ff8-056c8ac0c610", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018697773775200, "kind": "command_attempt", "value": {"method": "UpdateConfiguration", "command_id": "8e6890a4-d0ed-46c8-9fb2-1c135b9fd65d"}}
+{"host_ns": 1018697875395000, "kind": "UpdateConfiguration", "value": {"command_id": "8e6890a4-d0ed-46c8-9fb2-1c135b9fd65d", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1018697882656700, "kind": "complete", "value": {"sessions": ["ddb613f9-1d4c-4699-93a2-4a6472cd6152", "0f0cf111-774b-4d77-8511-b1e020ef6c39"], "settings_restored": true, "trial_started": false}}

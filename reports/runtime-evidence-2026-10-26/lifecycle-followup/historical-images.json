@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-26",
+  "method": "Exact linked paths exist, decoded/viewed; compared with neighboring historical summary/geometry/method. No regenerated replacement.",
+  "images": [
+    {
+      "path": "reports/runtime-evidence-2026-10-15/bottom-grid/fix-verification/after/bottom-offscreen.png",
+      "bytes": 5462,
+      "sha256": "3f48f242d8714f12d2af7b509877338e40657cdbbfb188fab9e8994d7285f01e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-14/tank-screen-plot/tank-screens.png",
+      "bytes": 225550,
+      "sha256": "210bf3aed17ee80fb71db1dad3ab1fd05e2126f9bf5d7aefce49d2c322df27b6"
+    }
+  ],
+  "limit": "Images remain local/ignored under repository media policy; not physical calibration acceptance."
+}

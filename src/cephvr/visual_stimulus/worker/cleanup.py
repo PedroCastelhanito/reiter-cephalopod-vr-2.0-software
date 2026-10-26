@@ -87,14 +87,31 @@ def cleanup_resources(
         emit(pb.LifecycleReport(cleanup=cleanup), deadline_ns)
     elif state.setup is not None:
         raise RuntimeError("registered renderer cleanup requires lifecycle evidence")
-    if keys == set(state.resources) and not failures:
+    unconfirmed_outputs = sorted(
+        key
+        for key, output in state.outputs.items()
+        if output.closure
+        not in {
+            pb.OUTPUT_CLOSURE_CLOSED,
+            pb.OUTPUT_CLOSURE_FAILED,
+            pb.OUTPUT_CLOSURE_NOT_STARTED,
+        }
+        or not output.HasField("artifact_present")
+    )
+    if keys == set(state.resources) and not failures and not unconfirmed_outputs:
         state.setup = None
         state.ready = False
         state.cleaned = True
+        if state.trial is not None and state.trial.finished:
+            state.trial = None
     else:
         missing = sorted(set(state.resources).difference(keys))
         details = "; ".join(
-            [*failures, *(f"release unconfirmed: {key}" for key in missing)]
+            [
+                *failures,
+                *(f"release unconfirmed: {key}" for key in missing),
+                *(f"output closure unconfirmed: {key}" for key in unconfirmed_outputs),
+            ]
         )
         raise RuntimeError(f"renderer native cleanup remains unconfirmed: {details}")
     return cleanup

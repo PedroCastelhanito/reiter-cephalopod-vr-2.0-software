@@ -1,0 +1,41 @@
+command_attempt {"method": "UpdateConfiguration", "command_id": "358b214b-bd5b-4ba9-8979-d799d167fba6"}
+UpdateConfiguration {"command_id": "358b214b-bd5b-4ba9-8979-d799d167fba6", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "OpenDisplayCalibration", "command_id": "4f475607-e2a8-4533-ade0-8cecc8eb9e80"}
+OpenDisplayCalibration {"command_id": "4f475607-e2a8-4533-ade0-8cecc8eb9e80", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "CloseDisplayCalibration", "command_id": "3e3d0056-fc5c-43f0-9214-4fedd995e50c"}
+CloseDisplayCalibration {"command_id": "3e3d0056-fc5c-43f0-9214-4fedd995e50c", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+gpu_limit {"bytes": 1, "behavioral_camera": true}
+command_attempt {"method": "Setup", "command_id": "35239616-74ea-4e12-b091-042afd1d6970"}
+session {"id": "bd73e8e7-34b7-4ee1-a963-48aa9b2806bd", "phase": 2}
+Setup {"command_id": "35239616-74ea-4e12-b091-042afd1d6970", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: resource budget exceeded for visual_stimulus:4e9053de-02ce-4bc7-9b2b-1ba292107b2d:calibration:diagnostic_front: CPU 1013/1073741824, GPU 88/1"}
+gpu_limit_restored {"sha256": "8f742be3b71749a8f6834889c49fba032d7a61d39fc88398e4b9aa79817f5419"}
+stopped {"error": "TimeoutError()", "automatic_retry": false}
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 145, in _wait
+    await self._changed.wait()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 267, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\budget_setup.py", line 258, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\lifecycle-followup\budget_setup.py", line 204, in main
+    await asyncio.wait_for(
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError

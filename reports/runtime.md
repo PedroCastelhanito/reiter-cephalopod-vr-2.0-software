@@ -6401,6 +6401,31 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 
 ## Current scope and review
 
+Oct26 lifecycle follow-up from `819f30e6` uses Astra decisions/review and Luna
+implementation under [E06/E08](../docs/architecture/system-contracts.md#e06) and
+[ARCH-002](../architecture.md#arch-002). Exact cancelled-Setup Ready evidence retains
+cleanup ownership without restoring readiness. Confirmed-only retirement preserves
+immutable old-session replay while releasing completed diagnostic/trial state.
+Native tests reproduced and repaired calibration release receipts discarded during
+display restoration, finished trial state blocking post-session Open, and stale
+previous-display ownership preventing Close. Reallocation invalidates only its own
+old release proof; active/unconfirmed state remains fenced. Recovery adds bounded,
+best-effort local cause output without changing deadlines or remote proof requirements.
+Final validation:2676 backend tests (5 skipped,48 deselected,3 subtests), Ruff/format1021,
+Win32 mypy871 and boundaries760/zero pass; final hierarchy reviews find no actionable
+issue. Native GPU88/1 rejection with saved Behavioral camera settings now confirms
+cleanup and fresh Setup/Cancel. Two60-second Visual Stimulus-only trials, NewSession,
+post-session calibration Open/Close and normal Ended-session Shutdown pass. Exact
+renderer exit0 and supervisor process-absence receipt, empty inventory/free guard and
+four byte-exact restored settings are retained. No final-run emergency is created.
+Earlier probe failures and normal file-preserving recovery remain recorded.
+Historical WinError5/bool_dealloc causes remain unproven and did not recur. Why earlier
+failed-Open emergency records lacked ErrorReport details remains an unverified delivery
+limitation, covered by the outstanding general fault acceptance; no rejected receipt
+was captured. These bounded runs do not close optical/electrical, encoding throughput,
+Tracking, paired SpikeGLX or full-scientific-workload deferrals. Methods, source hashes,
+all failed attempts and final proofs: [lifecycle follow-up](runtime-evidence-2026-10-26/lifecycle-followup/).
+
 Oct26 `repo-cleanup-and-code-review` preserves the owner's working tree based on
 `f82be21f28d3c1141adeabe2558c29808062727a`. Astra adjudicated Luna's source/caller
 audit and focused fixes under [ARCH-002](../architecture.md#arch-002):

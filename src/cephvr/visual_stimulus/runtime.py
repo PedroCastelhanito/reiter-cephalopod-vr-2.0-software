@@ -98,6 +98,8 @@ class VisualStimulusCoordinatorRuntime:
                     )
                 self.state.interrupted = False
                 self.cancelled.clear()
+                if method == "OpenDisplayCalibration":
+                    self.recovery_deadline_ns = None
             if method in {"InterruptSession", "CancelSetup", "Cleanup", "Shutdown"}:
                 self.state.interrupted = True
                 self.cancelled.set()
@@ -215,8 +217,12 @@ class VisualStimulusCoordinatorRuntime:
                 link = self.state.links.get(request.report.cleanup.operation.command_id)
                 if link is None:
                     raise ValueError("cleanup command unknown")
-                await self.recipes.drain(link.deadline_ns)
-                self.recipes.cleanup_results()
+                retained_input = self.state.worker_reports.get(
+                    ("cleanup", link.parent.command_id)
+                )
+                if retained_input is None:
+                    await self.recipes.drain(link.deadline_ns)
+                    self.recipes.cleanup_results()
             await self.reports.lifecycle(request)
         else:
             raise ValueError("unsupported Visual Stimulus report")
@@ -376,5 +382,10 @@ class VisualStimulusCoordinatorRuntime:
         self.state.reports = {
             key: value
             for key, value in self.state.reports.items()
+            if self.ledger.get(key[1]) is not None
+        }
+        self.state.worker_reports = {
+            key: value
+            for key, value in self.state.worker_reports.items()
             if self.ledger.get(key[1]) is not None
         }

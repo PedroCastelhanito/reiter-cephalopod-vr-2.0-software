@@ -1,0 +1,24 @@
+{
+  "base_revision": "819f30e6e5e5bf4b840438c3ef3a7538d45ad192",
+  "source_hashes": {
+    "src/cephvr/acquisition/coordinator/evidence_lifecycle.py": "a7c4ec6b3bb7b909c7f8ed9536c8b3ac40f40bc32cc6e9f793d9698e973d5bc6",
+    "src/cephvr/controller/lifecycle_reports.py": "83aa00352135a7510525248d064d02283de32fccdf9155f338762d7d7811a863",
+    "src/cephvr/controller/state.py": "7900053633486d8e05f6538734e7596a0ba65e4131c83b0bef12828d77efcc89",
+    "src/cephvr/visual_stimulus/coordinator/commands.py": "01bd790d8554338076f74cbadcc2474cfb23c68aab39d1346767016c862fcd62",
+    "src/cephvr/visual_stimulus/coordinator/reports.py": "d753b9402eb75bdd26c1c13d7181ea5c6857886716409b8c282ab1e3aae7eed5",
+    "src/cephvr/visual_stimulus/coordinator/state.py": "3b3bc5472fe28cf7c47721ff29d224e35733a98c0997e7c6a6e668cec93b51bc",
+    "src/cephvr/visual_stimulus/recording/native.py": "f14b90ddeb888060a311dec5bd8b86c9d79c05b1041cebc22aab5be96f212048",
+    "src/cephvr/visual_stimulus/rendering/engine.py": "23546b1c5743757d3a952f72c04304df42f397c1c46b4c43338b1de1ac9405b8",
+    "src/cephvr/visual_stimulus/rendering/native.py": "5d582c05589231b4305eb64dd1f14d5043f981f45b1e33d572ce30383d4dee6f",
+    "src/cephvr/visual_stimulus/rendering/types.py": "089a84ac78f29516a41d1ce2e4a3571b8b32a25f46a0f05ab51e228e945ae1d4",
+    "src/cephvr/visual_stimulus/resources/session.py": "1c8b6544b13ebaa0dd50b4ea6da861553cc7d451599c97a68c449d6db6894084",
+    "src/cephvr/visual_stimulus/runtime.py": "c83e18dfda707da65296d73bfb8cb9685c566503f5ccccabe17004178d2cd6de",
+    "src/cephvr/visual_stimulus/worker/cleanup.py": "d3fbcc684df56ed76498b1d0a83b603d7cfc33f82dfddad0386efae0d68eb769",
+    "src/cephvr/visual_stimulus/worker/lifecycle.py": "28e5cca11f32f1574c8c5beaf550b798abb85f82614700b56d568195694b56be",
+    "src/cephvr/visual_stimulus/worker/main.py": "d6bd33e28f68acab20dc05504f34d27a8082f1fba397a2589be22dcae5b76d7e",
+    "src/cephvr/visual_stimulus/worker/ports.py": "c833f731866fac52f04261771789bb88ba100359d48888b9185570a65014a216",
+    "src/cephvr/visual_stimulus/worker/reporting.py": "c78de2156aedb07bed03dd6de495209a80de3c7fbd5b3ebfbc29462659402b58",
+    "src/cephvr/visual_stimulus/worker/runtime.py": "23f1875814ff96c0eb5c23374f3391605d3d47f6492d3bf9c9fc7c936cb2331c"
+  },
+  "validation": "backend-retirement.log:2676pass; retirement Ruff/format1021/mypy871/boundaries760"
+}

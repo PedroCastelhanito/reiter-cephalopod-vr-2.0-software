@@ -10,35 +10,7 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-
-
-
-
 - [ ] `preview-interaction-transitions` [gui] [acquisition] Verify live overlay-header dragging/Snap; blank-title camera windows unavailable to automation and manual result pending. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 - [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and compact Preview toolbar natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Oct26 bounded native run verifies settled Video/card/splitter and Combined/Per-projector/projector toggles; compact plots/FPS clipping fixed and137-second native retest passes Retro/Amber at1442x972; DPI/Snap/full-load follow acceptance pending. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
 
@@ -50,13 +22,9 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 ## Next
 
-- [ ] `gui-style-consistency` [gui] Confirm the remaining Retro card-title preference (current 14px vs title_font 15px) and native/DPI appearance. Done when: owner preference and native acceptance are recorded. Status: Standard/Retro/Amber Configuration, Protocol, Tracking and Variation renders inspected; narrow Protocol/Variation clipping and camera selector sizing repaired. Claude's 18 stale assertions and the later layout failures belong to repo-cleanup-and-code-review. Further blanket spacing/font tokenization has no demonstrated behavior benefit; preserve current shared tokens. — [Review evidence](reports/runtime-evidence-2026-10-26/repo-review/context.md), [G02](docs/architecture/gui.md#g02)
+- [ ] `gui-style-consistency` [gui] Confirm the remaining Retro card-title preference (current 14px vs title_font 15px) and native/DPI appearance. Done when: owner preference and native acceptance are recorded. Status: Standard/Retro/Amber Configuration, Protocol, Tracking and Variation renders inspected; narrow Protocol/Variation clipping and camera selector sizing repaired. Claude's stale assertions and later layout failures are resolved; Oct26 full GUI validation passes1,071 cases. Further blanket spacing/font tokenization has no demonstrated behavior benefit; preserve current shared tokens. — [Review evidence](reports/runtime-evidence-2026-10-26/repo-review/context.md), [G02](docs/architecture/gui.md#g02)
 
 - [ ] `preview-verification-exit-diagnostic` [supervisor] [launcher] Diagnose Oct26 verification exit PROCESS_INSPECTION_FAILED WinError5 and bool_dealloc finalization failure. MCU warning separately resolved: duplicate Close skipped only for absent/already released claim;156 checks and45-second native stop/shutdown pass with no warning and empty process inventory. Earlier process-inspection/bool_dealloc cause still unresolved. — [Evidence](reports/runtime.md#preview-interaction-transitions--2026-10-26)
-
-
-
-
 
 - [ ] `dummy-session-no-output` [controller] [acquisition] [visual_stimulus] Verify all-saving-Off Setup/normal/Abort/fresh-session execution creates no output and enabling one recording restores saved files after restart. Status: Oct23 native Setup failed INVALID_CATALOGUE; empty-revision source fix passes102 coordinator/supervisor tests. Failed-session recovery and corrected native retry pending; prior2051 backend/168 supervisor evidence retained. - [Rig check](reports/rig-verification.md#dummy-session-no-output)
 
@@ -64,9 +32,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `gui-relaunch-event-unavailable` [gui] [launcher] [supervisor] Verify integrated launcher diagnostics on a later owner-planned native launch/exit and capture the historical failure cause if it recurs. Status: E08rev181 sparse private lifecycle/exception/fault logging implemented;63 launcher tests and isolated native smoke pass; all11 current runtime identities unchanged, no restart/signals. Current process predates the change; forced kills may leave only an unfinished log and the historical exact cause remains unknown. — [Evidence](reports/runtime.md#startup-splash-preview)
 
-
 - [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Complete alternate monitor/DPI, Standard (without CRT) and controller-unavailable startup variants. Status: Oct23 first-paint repair passes8 offscreen/3 native tests and three-style foreground capture; later full native startup and GUI-only save/close/reopen preserve all non-GUI identities/generation and remain connected. Saved projectors are undetected; no Setup/trial/device acceptance claimed. — [Runtime](reports/runtime.md#startup-splash-preview), [Rig checklist](reports/rig-verification.md)
-
 
 - [ ] `mcu-setup-ping-latency` [controller] [acquisition] Diagnose intermittent pre-Start MCU PING admission latency under unchanged200ms policy. Oct22 first final-validation Setup fails at200.495ms with native timeout/query/read calls delayed and near-zero thread CPU; normal Cancel/cleanup/exact restoration pass, one fresh retry completes full protocol. Preserve serial-call evidence and avoid blind retries or deadline relaxation. — [Evidence](reports/runtime.md#rig-checks-oct22)
 
@@ -88,7 +54,7 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `preview-resize-feedback` [gui] Confirm stable preview sizing after the next application restart. Source fix and 8 focused tests pass; running dummy trial left untouched. Done when idle placement polling no longer resizes the native preview. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
 
-- [ ] `post-stop-session-editing` [gui] Verify all configuration drafts after confirmed terminal cleanup and failed/cancelled Setup, retention through New session/Setup, repeated stimulus Show/Hide and preview HUD/timeline. G01rev261/G02rev89 implementation passes73 focused checks plus21 final clock/layout checks; native check pending. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md)
+- [ ] `post-stop-session-editing` [gui] Verify all configuration drafts after confirmed terminal cleanup and failed/cancelled Setup, retention through New session/Setup, repeated stimulus Show/Hide and preview HUD/timeline. G01rev261/G02rev89 implementation passes73 focused checks plus21 final clock/layout checks; native check pending. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md) Includes native total planned-progress/gap/interruption confirmation under current G02; software timing implementation is complete and excludes preparation/finalization overhead.
 
 - [ ] `camera-demand-native-verification` [controller] [acquisition] Verify unused-camera pulses stay off, Tracking-required metadata persists, and USB stops omit unsupported-counter warnings while SDK failures still warn; include all-camera-Off Trial state normal/Abort behavior after compatible firmware deployment. Local1499 tests pass; native acceptance pending. - [Rig checklist](reports/rig-verification.md), [Acquisition](reports/acquisition.md)
 
@@ -122,21 +88,11 @@ remains open, including confirmation of the running revision and camera timing m
 
 - [ ] `pixel-exact-current-source-validation` [acquisition] [shared] Measure final sync-owner/hot-path source with prepared-pixel-exact encoding as a secondary objective, preserving full source retention, deadlines and durability. Done when: a bounded concurrent native run retains every received usable frame exactly once and independently verifies its prepared-pixel recipe and closure. Status: primary saved-quality 120 s criterion passes; prior pixel-exact omissions predate the final hot-path guard, so current-source capacity remains unvalidated. No quality/default change adopted. — [Current assessment](reports/acquisition.md), [evidence](reports/runtime-evidence-2026-10-17/file-sync-fix/README.md)
 
-- [ ] `failed-setup-retired-report` [acquisition] [visual_stimulus] [controller] [supervisor] Reconcile late worker evidence after failed Setup while retaining exact retired-attempt fences. Done when: bounded native resource-budget rejection settles without a later STALE report causing application shutdown. Status: observed after an audit fixture omitted unused-arena pruning; the budget rejection was correct, late-report shutdown is a separate lifecycle finding. No stale guard relaxation. — [Assessment](reports/runtime.md), [raw Setup attempt](reports/runtime-evidence-2026-10-16/encoding-overload-audit/managed-rgb-gray-lossless60-r1/) Oct20 owner reports scene-surface GPU-budget rejection followed by INCOMPLETE_CLEANUP/COMMAND_ADMISSION/IDENTITY; GPU ceiling raised to requested1GiB, recovery and fresh Setup remain unverified. See current Visual Stimulus report.
-
 - [ ] `camera-timestamp-yellow-preview` [acquisition] [shared] Confirm expected optical scene/focus and select suitable exposure, with the repaired runtime now restarted; optical confirmation remains. Status: exact-model 1ns fallback passes165 local checks and real-camera metadata probe; seven native frames match SDK conversion exactly.25ms saturates99.885% of red pixels;5ms removes clipping but leaves a near-uniform scene. Original PFS restored byte-exact/camera closed; awaiting owner scene confirmation, no scientific settings adopted. — [Assessment/evidence](reports/acquisition.md)
-
-- [ ] `shutdown-resource-registration` [visual_stimulus] [supervisor] Reproduce and repair final Shutdown resource-report rejection after completed trial/NewSession/configuration restoration. Done when: exact registered cleanup identities settle without emergency while process absence remains truthful. Status: final isolated trial completes/counts decode and restored cameras/settings match exactly; Shutdown command succeeds and all owned processes are absent, but emits cleanup returned an unregistered resource. No trial-output failure is inferred. — [Assessment](reports/runtime.md), [Emergency](reports/emergency-80538644376400-cf134742-126d-4fc6-aa22-c7ed8d33f493.json)
-
-- [ ] `post-session-calibration-retirement` [visual_stimulus] [controller] Safely retire completed worker/coordinator setup context before sessionless diagnostic reopening. Done when: native post-session Open works while old-session replay/cleanup fencing remains exact. Status: observed fresh audit rejection after successful NewSession because retained interrupted/setup state fences calibration; fresh application Open works. No guard-only relaxation. — [Assessment](reports/visual_stimulus.md)
 
 - [ ] `variation-open-crash` [gui] Confirm Add variation rule in the owner’s session after the hover repair; retain Python stderr if it recurs. Status: implicated nested visibility path removed;25 local cases and21 native Mac cycles pass, including saved draft. Exact original abort not reproduced, so owner-session confirmation remains pending. — [Assessment/evidence](reports/runtime.md), [G02](docs/architecture/gui.md#g02)
 
 - [ ] `camera-acquisition-rate-readback` [gui] [controller] [acquisition] Supply measured backend receive rate in Camera HUD; current CameraDeviceView has no rate/count-window telemetry. Done when: authoritative bounded readback survives disconnect/run changes without substituting configured trigger rate. — [Current HUD assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02)
-
-- [ ] `historical-stimulus-evidence-images` [visual_stimulus] Restore or correct the two pre-existing missing historical PNG references in the Visual Stimulus report (Oct15 bottom-grid and Oct14 tank-screen plot). Done when: original evidence locations/provenance are verified and links resolve. Status: local path check only; both references already exist in HEAD. — [Assessment](reports/visual_stimulus.md), [Paths](reports/runtime-evidence-2026-10-16/stimulus-sequential-recording/document-links.json)
-
-- [ ] `hud-live-total-timing` [gui] [controller] Supply authoritative total elapsed/planned duration for the new HUD pair when promoting the Review timing display. Done when: live session start/end and resolved-plan total survive reconnect and early stop without estimates; current Snapshot lacks these totals and GUI displays unknown. — [Timing assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02)
 
 - [ ] `review-device-layout-promotion` [gui] [controller] [visual_stimulus] Promote the remaining inline input/output draft authoring and multi-screen pulse placement to runtime with the required backend contracts. Shared appearance and camera action layout are merged. Physical/serial input support retains A11's deferral. Done when: compatible profile/live-placement/rendering/evidence contracts preserve the file-owned pacing target and apply VSync to additional pulse outputs, with owning local checks; physical acceptance remains separate. Status: Review prototype merged; shared appearance and camera action layout promoted, while controller-backed input/output and multi-screen behavior remains separate work. — [Review implementation and limits](reports/runtime.md), [G01](docs/architecture/gui.md#g01)
 
@@ -144,7 +100,7 @@ remains open, including confirmation of the running revision and camera timing m
 
 - [ ] `rapid-abort-setup-heartbeat` [acquisition] [controller] [supervisor] [visual_stimulus] Verify rapid post-Abort restart across the retired trial boundary. Done when: a native recording crosses that boundary without stale-worker or cleanup faults. Status: Oct16 local fresh-session pulse-owner reuse, old-evidence rejection and overlapping finalization checks pass; earlier publication-order/retired-boundary repairs remain covered. Native rapid boundary crossing is still unaccepted; fresh-generation 900-second recording is not a substitute. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
 
-- [ ] `camera-preview-sdk-discard-reuse` [acquisition] [controller] [gui] Verify native preview reuse after retiring the closed-device purge guard. Done when: repeated real preview cycles retain truthful discard/release evidence and later Start succeeds. Status: Oct16 local reproduction/fix passes six close/reopen cycles across both timing modes and failed-Close variants; same-device/failed-Close guards remain enforced and unknown counts unchanged. Oct19 concurrent real preview/Disconnect then Start and post-trial Setup reuse pass; original incomplete-drain cause and failed-Close injection remain open. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
+- [ ] `camera-preview-sdk-discard-reuse` [acquisition] [controller] [gui] Verify native preview reuse after retiring the closed-device purge guard. Done when: repeated real preview cycles retain truthful discard/release evidence and later Start succeeds. Status: Oct16 local reproduction/fix passes six close/reopen cycles across both timing modes and failed-Close variants; same-device/failed-Close guards remain enforced and unknown counts unchanged. Oct19 concurrent real preview/Disconnect then Start and post-trial Setup reuse pass; original incomplete-drain cause and failed-Close injection remain open. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md) Includes superseded manual-camera-repeat-admission: retain same-generation repeated real-cycle and failed-Close acceptance; no renewed reservation-capacity defect is established.
 
 - [ ] `gui-empty-variation-group` [gui] Diagnose reported GUI exit after Add group with an untouched empty variation row and a displayed error. Done when: failing runtime callback is identified and covered. Status: Oct15 native blank/sample button-click cases preserve the draft, warn and recover; four focused cases pass. Reported crash remains unreproduced; error text/traceback is missing. — [Runtime](reports/runtime.md#unresolved-findings-and-limitations)
 
@@ -153,8 +109,6 @@ remains open, including confirmation of the running revision and camera timing m
 - [ ] `native-picker-pytest-exception-hook` [gui] Complete ordinary-plugin full native suite after historical native picker exit 0xC0000409. Done when: full native execution finishes without the exception-hook fault. Status: latest comprehensive native selection-roundtrip7 fixtures remain blocked because Windows helper ignores synthetic Qt selection; bounded failure is a harness limit, not proven operator picker defect. Remaining native run finishes510pass/twofail/sevenexcluded; focused row fixture correction subsequently passes. One hover-input failure and seven selection-roundtrip fixtures remain; historical22pass result is not fresh complete acceptance. — [Assessment](reports/runtime.md)
 
 - [ ] `native-protocol-hover-tests` [gui] Diagnose native Protocol card geometry/input. Done when: native input/geometry versus fixture timing is established and owning regressions pass. Status: fresh bounded native run reproduces missing inline MouseMove despite active/unobscured target. The326px row equals native content hint and all controls fit; unsupported320px cap replaced by containment/equal-height assertions, then full native row interaction passes. Only hover delivery remains unresolved; no observed clipping. — [Assessment](reports/runtime.md)
-
-- [ ] `manual-camera-repeat-admission` [controller] [acquisition] [gui] [shared] Complete repeat preview reuse acceptance after terminal-result compaction. Status: Oct15 four cycles each Behavior/Tracking pass start/stop/release; extra Behavior cycle completes, following Start is blocked by unknown SDK-buffer discard accounting. Oct16 closed-device purge-guard repair passes local reuse coverage; native repetition remains under camera-preview-sdk-discard-reuse. No confirmed renewed reservation-capacity failure. — [Assessment](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
 
 Remaining entries require native/physical execution or missing reproduction evidence; establish causes before changing implementation.
 
@@ -194,7 +148,7 @@ The Oct15 powered open-loop tests are complete: three cameras plus linked Gaussi
 
 - [ ] `projector-calibration-launch` [gui] [visual_stimulus] Complete powered reference-bar/grid/photodiode-placement/blackout-placement live editing, scaled binding, late-Open cleanup and optical/fault acceptance. Status: grid missing-line fix and native offscreen checks pass; live regenerated projection/physical scale inspection remain open. Reason: owner measurements and dedicated calibration/fault execution are still needed, not projector power availability. Coordinate with bottom-calibration-grid-distortion placement software now passes GUI/backend/native offscreen checks, while actual projector placement/closure remains unverified. — [Assessment](reports/visual_stimulus.md), [Rig checks](reports/rig-verification.md)
 
-- [ ] `devices-narrow-overflow` [gui] Camera action-row minimum width, wrapped projector timing caption and deferred table cell geometry fixed; nine focused native layout cases pass Oct14. Complete physical alternate-DPI/narrow inspection and MCU dropdown/add/remove checks; the app capture approval timed out, so no new visual inspection is claimed. — [Current assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02) Oct15 native device reflow at720/1175px and tab/variation layout tests pass; alternate-DPI and physical inspection remain open. Oct17 offscreen merge validation: camera-trigger reflow fails at298px after107 Dashboard passes; concurrent layout edits prevent isolated committed-tree attribution. See runtime merge assessment.
+- [ ] `devices-narrow-overflow` [gui] Camera action-row minimum width, wrapped projector timing caption and deferred table cell geometry fixed; nine focused native layout cases pass Oct14. Complete physical alternate-DPI/narrow inspection and MCU dropdown/add/remove checks; the app capture approval timed out, so no new visual inspection is claimed. — [Current assessment](reports/runtime.md), [G02](docs/architecture/gui.md#g02) Oct15 native device reflow at720/1175px and tab/variation layout tests pass; alternate-DPI and physical inspection remain open. Oct26 camera-trigger reflow/selector sizing repaired and covered in the full1,071-pass GUI suite; historical298px failure is not current. Physical/DPI inspection remains open.
 
 - [ ] `mcu-optional-io-and-all-vsync` [gui] [controller] [acquisition] [visual_stimulus] Complete disconnected/reconnected V19 startup and native MCU Apply acceptance. Status: combined all-three-camera/stimulus 900-second recording, normal closure/reuse and intended GPU placement pass; measured CFR substitutions and the single startup stimulus drop are retained. Reason: reconnect/fault and optical/electrical timing checks were not covered by normal recording. — [Current evidence](reports/acquisition.md), [Rig checks](reports/rig-verification.md)
 
@@ -205,8 +159,6 @@ The Oct15 powered open-loop tests are complete: three cameras plus linked Gaussi
 - [ ] `rig-acceptance` [gui] [launcher] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] [shared] Complete outstanding managed-device/fault/full-scientific-workload acceptance in the single rig checklist. Status: Oct15 native/contract/build checks, 31-case synthetic encoder matrix, linked-motion/arena gates, 900-second three-camera recording, bounded camera-lossless checks, restoration and cleanup are recorded. Reason: focused preview/restart/GUI faults, physical calibration/timing, Tracking/paired operation and realistic-scene zero-loss/headroom remain open. Historical interrupted/failed runs are not upgraded to passes. — [Rig worklist](reports/rig-verification.md), [Recording assessment](reports/acquisition.md)
 
 - [ ] `rig-timing-buffer-audit` [controller] [supervisor] [acquisition] [visual_stimulus] [spikeglx] [shared] [gui] Complete forced finalization-race, lifecycle receipt-margin and instrumented full-workload/burst acceptance. Oct21 bounded Abort166ms/reuse and326.259s same-generation idle Setup/cancel pass; prior normal/endurance evidence retained. Full-texture Setup now reproduces PING/cleanup failure. Historical render gaps/startup drops and physical timing remain unresolved; Tracking/photodiode/paired mappings stay deferred. — [Current assessment](reports/runtime.md#current-rig-validation--2026-10-21), [Rig checks](reports/rig-verification.md)
-
-- [ ] `renderer-failed-setup-cleanup-link` [visual_stimulus] [controller] [supervisor] [acquisition] Verify complete failed-Setup cancellation and fresh reuse with exact release evidence. Status: normal 900-second/60-second completion and shutdown pass; rapid-reuse failure still exposed cleanup errors. Local cleanup repairs and historical Fault6 backend proofs do not establish aggregate native failure-path acceptance. Reason: dedicated fault/cancellation retest remains outside completed normal trials. — [Current assessment](reports/acquisition.md), [Historical findings](reports/runtime-evidence-2026-10-14/rig-timing-audit/lifecycle-findings.json)
 
 - [ ] `projector-flip-input` [gui] [controller] [acquisition] Owner-deferred Oct14: no Projector flip input, diagnostics or camera-trigger phase-offset implementation until explicitly requested. — [A11](docs/architecture/acquisition.md#a11)
 

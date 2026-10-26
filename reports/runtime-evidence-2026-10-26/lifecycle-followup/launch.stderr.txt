@@ -1,0 +1,6 @@
+SetupSession 148a3d1b-7e4b-48d4-ac4b-b23866a9e349 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: Setup was fenced or expired before the next stage
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 63644 exited; cleanup evidence remains required
+InterruptSession cd3f10d8-7e1d-4080-aa06-f244b5ec6844 failed: SESSION_IDENTITY: no exact live session
+CancelSetup d8efde3e-4f63-4dc5-8a22-cc1b89af146e failed: CLEANUP_UNCONFIRMED: acquisition_behavioral_worker cleanup evidence is incomplete
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-26",
+  "base_revision": "819f30e6e5e5bf4b840438c3ef3a7538d45ad192",
+  "authorization": "Queue reconciliation, demonstrated lifecycle/exit fixes, local and bounded rig validation, commit/sync; explicit firmware/Tracking/paired/instrument deferrals preserved.",
+  "hierarchy": "Astra decisions/review; Luna source readers/implementers; root integration, records and rig execution.",
+  "phase": "Completed: hierarchical review, demonstrated fixes, final local/backend and bounded native lifecycle/shutdown validation, exact settings restoration. Repository hygiene and commit/sync follow.",
+  "preflight": {
+    "controller_listener": false,
+    "application_guard": "free; acquired and immediately released",
+    "stale_launcher_endpoint": "84571a54-bf3e-411d-99d6-3494c7bac833",
+    "display_inventory": "displays-before.json",
+    "settings_preservation": "settings-before.json"
+  },
+  "reproductions": [
+    {
+      "case": "session Cleanup followed by repeated sessionless Shutdown",
+      "outcome": "RuntimeError: cleanup returned an unregistered resource",
+      "evidence": "repeated-shutdown-reproduction.log"
+    }
+  ],
+  "queue_reconciliation": [
+    "historical image references exist locally; hashes and visual inspection retained",
+    "HUD total timing task superseded by accepted planned-schedule semantics; native verification stays open",
+    "duplicate manual-camera admission merged into SDK reuse acceptance"
+  ],
+  "limitations": [
+    "No optical/scientific timing acceptance",
+    "Historical bool_dealloc and CalibrationCards failures are not attributed to the prior timer repair",
+    "Generated bindings/native callback and sampled low-confidence Vulture candidates retained",
+    "Earlier empty remote ErrorReport lists remain an unverified delivery limitation; no rejected receipt captured.",
+    "One cancelled acquired Setup fencing stderr notice lacks exact child-command/session mapping; preserved without suppression.",
+    "No newGUI suite run this increment; prior1071 baseline and unchangedGUI source.",
+    "Concurrent embedded-preview-comparison edits are preserved and excluded from this lifecycle commit."
+  ],
+  "validation": [
+    {
+      "command": "pytest tests/controller/test_lifecycle_reports.py -q",
+      "result": "36 passed",
+      "evidence": "controller-lifecycle.log"
+    },
+    {
+      "command": "pytest tests/platform/test_windows_jobs.py tests/launcher -q -m \"not rig\" --timeout=60",
+      "result": "78 passed in 0.69s",
+      "evidence": "native-launcher.log/xml",
+      "scope": "Includes native Windows job-handle test; not managed-app or device acceptance."
+    },
+    {
+      "command": "pytest tests --ignore=tests/gui -q -m \"not windows and not rig\" --timeout=60",
+      "result": "2651 passed, 5 skipped, 48 deselected, 3 subtests in34.60s",
+      "evidence": "backend.log/xml"
+    },
+    {
+      "command": "ruff check .; ruff format --check .; mypy --platform win32 src/cephvr; check_backend_boundaries.py",
+      "result": "lint pass;1021 formatted;871 sources pass;760 modules/zero violations",
+      "evidence": "ruff.log, format.log, mypy.log, boundaries.log"
+    },
+    {
+      "command": "pytest tests --ignore=tests/gui -q -m \"not windows and not rig\" --timeout=60",
+      "result": "2676 passed,5 skipped,48 deselected,3 subtests in28.32s",
+      "evidence": "backend-retirement.log/xml"
+    },
+    {
+      "command": "ruff check .; ruff format --check .; mypy --platform win32 src/cephvr; check_backend_boundaries.py",
+      "result": "lint pass;1021 formatted;871 sources pass;760 modules/zero violations",
+      "evidence": "*-retirement.log"
+    }
+  ],
+  "rig_attempts": [
+    {
+      "controller_generation": "72beb1a9-69b8-4585-97d9-4772bf52b229",
+      "scope": "calibration Open/Close, GPU1-byte Setup rejection, saved Behavioral camera only; no trial",
+      "outcome": "Calibration Open/Close pass; GPU rejection correct; recovery fails with late acquisition Ready and VS calibration arena release uncertainty. No fresh Setup attempted.",
+      "emergency": "../../emergency-1017652947560800-939ab641-92b0-42f6-bf24-fff8cd4a2604.json",
+      "exit": "exit-after-budget.json",
+      "restoration": "settings-after-budget.json",
+      "harness_correction": "First attempt stopped before Setup on nonexistent display.failure field; fixed to issues and restored original config before second attempt."
+    },
+    {
+      "controller_generation": "8a709bc4-0116-4167-a4b8-dd1a57fc6689",
+      "result": "File-preserving recovery of prior failed probe succeeded. Native GPU rejection/cleanup/freshSetupReady/Cancel passed; normal60s trial/NewSession passed; subsequent Open caused orderly renderer exit.",
+      "evidence": "budget-run3.log,budget-run4.log,lifecycle-run2.log,recovery-result.json,exit-after-reopen.json,settings-after-reopen.json"
+    },
+    {
+      "controller_generation": "d5592b2b-9e4f-4e95-b588-e224e34b2f7c",
+      "result": "Instrumented same Open sequence reproduced exactrenderer20820 exit0; no native fault report. This led to actualdriver finishedtrial retention fix.",
+      "evidence": "lifecycle-run3.log,renderer-observer-result.json,exit-after-instrumented-reopen.json,settings-after-instrumented-reopen.json"
+    },
+    {
+      "controller_generation": "7951e9db-8b30-4cda-a8d2-06fa67b20ea8",
+      "result": "PASS: two60s trials; NewSession; post-session calibration OpenACTIVE/CloseIDLE resourcesclosed; normal Ended-sessionShutdown; exactrenderer60768 exit0; ownedabsence and restoredsettings.",
+      "evidence": "lifecycle-run4.log,shutdown-final.json,exit-final.json,renderer-final-exit.json,processes-final.json,settings-final.json,launcher-final.log",
+      "source_manifest": "source-before-rig4.json"
+    }
+  ],
+  "closed_tasks": [
+    "failed-setup-retired-report",
+    "renderer-failed-setup-cleanup-link",
+    "post-session-calibration-retirement",
+    "shutdown-resource-registration",
+    "historical-stimulus-evidence-images"
+  ],
+  "superseded_tasks": [
+    "hud-live-total-timing",
+    "manual-camera-repeat-admission"
+  ],
+  "final_source_hashes_match_native_run": true,
+  "cleanup": {
+    "repository_directories": 72,
+    "repository_bytes": 58430367,
+    "task_temp_directories": 6,
+    "task_temp_bytes": 255876901,
+    "preserved": "Native raw evidence, recovery/emergency reports, experiment outputs, dependencies and concurrent preview work"
+  }
+}

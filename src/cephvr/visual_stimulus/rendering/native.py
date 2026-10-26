@@ -88,7 +88,7 @@ class ModernGLPort:
         calibration_loader: Callable[[object, Path], object] | None = None,
     ) -> None:
         self.software_root = Path(software_root)
-        self.announce = announce
+        self._announce = announce
         self.clock_ns = clock_ns
         self.monitor_resolver = monitor_resolver or self._resolve_monitor
         self.gpu_identity_provider = gpu_identity_provider or self._verify_render_gpu
@@ -131,6 +131,11 @@ class ModernGLPort:
             raise NativeRenderingError(
                 "GLFW and ModernGL calls must stay on the owner thread"
             )
+
+    def announce(self, key: str, path: str | None) -> None:
+        """Register an allocation, then invalidate only its old release receipt."""
+        self._announce(key, path)
+        self._released[:] = [item for item in self._released if item != key]
 
     @staticmethod
     def _resolve_monitor(device_identity: str, glfw: Any) -> object:
@@ -181,7 +186,6 @@ class ModernGLPort:
                     "display cannot change without releasing its contexts"
                 )
             return self._display_report
-        self._released.clear()
         self._idle_activities.clear()
         self._load_graphics()
         glfw = self._glfw
@@ -849,6 +853,11 @@ class ModernGLPort:
             self._display = None
             self._display_calibration = None
         return ResourceReleaseReport(tuple(self._released), tuple(outstanding))
+
+    def retire_released_resources(self) -> None:
+        """Forget release receipts only after worker cleanup is confirmed."""
+        self._assert_owner()
+        self._released.clear()
 
     @classmethod
     def _release_resource(cls, resource: object) -> None:

@@ -1,0 +1,4 @@
+Attempt: release-retirement-focused.pytest
+Command: .venv\Scripts\python.exe -m pytest tests/visual_stimulus/test_lifecycle.py tests/visual_stimulus/test_recording.py tests/visual_stimulus/test_rendering.py -q --basetemp C:\Users\ReiterU_PC\AppData\Local\Temp\cephvr-lifecycle-release-retirement-20261026
+Execution: default sandbox
+Outcome: no pytest output after about 100 seconds; terminated with Ctrl+C at parent request. No test result was produced. Temporary basetemp retained.

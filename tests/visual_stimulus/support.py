@@ -349,6 +349,9 @@ class Graphics:
         self.groups = 0
         self.fail_idle = False
         self.diagnostic_queue = []
+        self.display_active = False
+        self.released_resources = []
+        self.retired_resource_catalogues = 0
 
     @property
     def diagnostics_pending(self):
@@ -363,6 +366,7 @@ class Graphics:
         return (OutputActivity("projector/main", self.clock(), self.clock() + 1, 1),)
 
     def initialize_display(self, display):
+        self.display_active = True
         return DisplayInitialization(
             ("projector/main",),
             (("projector/main", 8, 8, 8),),
@@ -417,7 +421,15 @@ class Graphics:
         return () if self.fail_idle else self.activity()
 
     def cleanup(self, deadline_ns=None):
-        return ResourceReleaseReport(("display:projector/main",))
+        if self.display_active:
+            self.released_resources.append("display:projector/main")
+            self.display_active = False
+        return ResourceReleaseReport(tuple(self.released_resources))
+
+    def retire_released_resources(self):
+        """Forget release proofs after the worker catalogue retires them."""
+        self.released_resources.clear()
+        self.retired_resource_catalogues += 1
 
 
 class Preparation:
@@ -457,12 +469,16 @@ class Recorder:
         self.calls = []
         self.results = None
         self.diagnostic_records = []
+        self.retired_resource_catalogues = 0
 
     def diagnostics(self, records):
         self.diagnostic_records.extend(records)
 
     def cleanup(self, deadline_ns):
         return ResourceReleaseReport(())
+
+    def retire_released_resources(self):
+        self.retired_resource_catalogues += 1
 
     def configure(self, request, announce, deadline_ns):
         self.calls.append("configure")

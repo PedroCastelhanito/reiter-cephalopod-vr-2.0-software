@@ -44,6 +44,38 @@ class ReportBridge:
             session_phase=pb.SESSION_PHASE_CONFIGURATION,
         )
 
+    def retire_session(
+        self,
+        session: pb.SessionContext,
+        cleanup_revision: int,
+        released_resources: bool,
+    ) -> None:
+        """Clear only the acknowledged session's cached heartbeat catalogue."""
+        with self.lock:
+            work = self.catalogue.work
+            kind = work.WhichOneof("work")
+            cached_session = (
+                work.session
+                if kind == "session"
+                else work.trial.session
+                if kind == "trial"
+                else None
+            )
+            if cached_session != session:
+                return
+            changed = bool(self.catalogue.cleanup_resources) or released_resources
+            revision = cleanup_revision + int(released_resources)
+            if changed:
+                revision = max(revision, self.catalogue.cleanup_resources_revision + 1)
+            else:
+                revision = max(revision, self.catalogue.cleanup_resources_revision)
+            self.catalogue.cleanup_resources.clear()
+            self.catalogue.cleanup_resources_revision = revision
+            self.catalogue.ClearField("work")
+            self.catalogue.ClearField("trial_phase")
+            self.catalogue.session_phase = pb.SESSION_PHASE_CONFIGURATION
+            self.catalogue.continuing_functions.clear()
+
     async def _deliver(self, method: str, message: Message, deadline_ns: int) -> None:
         if (
             method == "ReportWorkerLifecycle"

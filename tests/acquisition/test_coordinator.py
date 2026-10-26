@@ -28,6 +28,7 @@ from cephvr.acquisition.state import (
     ChildOperation,
     CoordinatorIdentity,
     LaunchRecord,
+    ResourceRecord,
     SessionRecord,
     SessionSlot,
     TrialRecord,
@@ -1368,6 +1369,268 @@ async def test_retained_late_ready_is_skipped_but_prepare_terminal_is_retained()
     assert repeated
     assert owner.child.report is not None
     assert owner.resolution._pending is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("terminal_state", ["cancelled", "interrupted"])
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "exact",
+        "exact_attachment",
+        "worker",
+        "work",
+        "operation",
+        "parent",
+        "setup_operation",
+        "revision",
+        "attachment",
+        "deadline",
+        "setup_deadline",
+    ],
+)
+async def test_cancelled_setup_late_ready_is_retained_without_ready_promotion(
+    terminal_state: str, mutation: str
+) -> None:
+    from cephvr.acquisition.coordinator.evidence import WorkerEvidenceCoordinator
+    from cephvr.platform.windows.resource_ledger import (
+        NativeResourceLedger,
+        ResourceKey,
+    )
+
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=_id()
+    )
+    owner = control.ProcessIdentity(
+        role="acquisition", generation=backend.backend_generation
+    )
+    controller_identity = control.ProcessIdentity(role="controller", generation=_id())
+    session_work = control.WorkContext(
+        session=control.SessionContext(
+            controller_generation=controller_identity.generation,
+            session_id=_id(),
+        )
+    )
+    setup_operation = control.OperationContext(command_id=_id())
+    session = SessionRecord(
+        work=session_work,
+        operation=setup_operation,
+        configuration_revision=4,
+        required_cameras={camera_pb2.CAMERA_ROLE_BEHAVIORAL},
+        setup_cancelled=terminal_state == "cancelled",
+        interrupted=terminal_state == "interrupted",
+        confirmed_revision=4,
+        confirmed_settings=control.AcquisitionSettings(),
+        setup_deadline_ns=1000,
+    )
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=_id()
+    )
+    context = acq.WorkerContext(
+        worker=worker,
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=session_work,
+    )
+    child_id = _id()
+    child = ChildOperation(
+        command_id=child_id,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=session_work,
+        parent_operation=setup_operation,
+        kind="setup_session",
+        configuration_revision=4,
+        deadline_ns=1000,
+    )
+    ledger = CommandLedger(
+        backend.backend_generation,
+        300_000_000_000,
+        max_records=16,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    record = WorkerRecord(
+        context=context,
+        port=None,
+        launch=LaunchRecord(
+            command_id=_id(),
+            worker=worker,
+            owner=owner,
+            work=session_work,
+            camera=context.camera,
+            parent_operation=setup_operation,
+            planned_ns=1,
+        ),
+        commands=ledger,
+        setup_operation=control.OperationContext(command_id=child_id),
+        child_operations={child_id: child},
+    )
+
+    class Controller:
+        lifecycles = []
+
+        async def report_lifecycle(self, report, *, deadline_ns):
+            self.lifecycles.append((report, deadline_ns))
+            return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    controller = Controller()
+    lock = asyncio.Lock()
+    workers = {context.camera: record}
+    resource_ledger = NativeResourceLedger(
+        max_resources=8, max_transfers_per_resource=4
+    )
+    resources: dict[str, ResourceRecord] = {}
+    attachment_id = transfer_id = ""
+    if mutation == "exact_attachment":
+        attachment_id, transfer_id = _id(), _id()
+        attachment = acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                allocation_id=attachment_id,
+                owner=owner,
+                producer=worker,
+            ),
+            sync=acq.RingSyncNames(target=worker, transfer_id=transfer_id),
+        )
+        resource_key = ResourceKey(attachment_id, owner.generation)
+        resource_ledger.register(resource_key, kind="ring")
+        resource_ledger.expect_attachment(
+            resource_key,
+            peer_instance_id=worker.generation,
+            transfer_id=transfer_id,
+        )
+        resources[attachment_id] = ResourceRecord(attachment, None, resource_key)
+        session.expected_attachments[context.camera] = {attachment_id}
+    evidence_coordinator = WorkerEvidenceCoordinator(
+        backend=backend,
+        owner=owner,
+        settings=control.AcquisitionSettings(),
+        workers=workers,
+        resources=resources,
+        resource_ledger=resource_ledger,
+        commands=ledger,
+        current_session=lambda: session,
+        controller=controller,
+        lock=lock,
+    )
+    evidence = acq.WorkerLifecycleEvidence(
+        source=context,
+        operation=control.OperationContext(command_id=child_id),
+        state_revision=1,
+        ready=acq.WorkerReadyEvidence(
+            configuration_revision=4,
+            required_checks_passed=True,
+        ),
+    )
+    if mutation == "exact_attachment":
+        evidence.ready.attached_resources.add(
+            resource_id=attachment_id, transfer_id=transfer_id
+        )
+    ingress_ns = 500
+    if mutation == "worker":
+        evidence.source.worker.generation = _id()
+    elif mutation == "work":
+        evidence.source.work.session.session_id = _id()
+    elif mutation == "operation":
+        evidence.operation.command_id = _id()
+    elif mutation == "parent":
+        child.parent_operation = control.OperationContext(command_id=_id())
+    elif mutation == "setup_operation":
+        record.setup_operation.command_id = _id()
+    elif mutation == "revision":
+        evidence.ready.configuration_revision = 5
+    elif mutation == "attachment":
+        evidence.ready.attached_resources.add(
+            resource_id="unregistered", transfer_id=_id()
+        )
+    elif mutation == "deadline":
+        ingress_ns = 1001
+    elif mutation == "setup_deadline":
+        session.setup_deadline_ns = 400
+
+    receipt = await evidence_coordinator.lifecycle.report_lifecycle(
+        evidence,
+        deadline_ns=1000,
+        ingress_ns=ingress_ns,
+    )
+    if mutation not in {"exact", "exact_attachment"}:
+        assert receipt.result == control.COMMAND_RESULT_REJECTED
+        assert not record.lifecycle_evidence
+        return
+
+    assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+    assert (
+        record.lifecycle_evidence[(session_work.session.session_id, child_id, "ready")]
+        == evidence
+    )
+    assert record.setup_ready == evidence.ready
+    assert session.pending_ready_report is None
+    assert not session.ready_confirmed.is_set()
+    assert not child.updated.is_set()
+    assert controller.lifecycles == []
+    repeated = await evidence_coordinator.lifecycle.report_lifecycle(
+        evidence,
+        deadline_ns=1000,
+        ingress_ns=ingress_ns,
+    )
+    assert repeated.result == control.COMMAND_RESULT_ACCEPTED
+    changed = acq.WorkerLifecycleEvidence.FromString(evidence.SerializeToString())
+    changed.ready.configuration_revision = 5
+    rejected_change = await evidence_coordinator.lifecycle.report_lifecycle(
+        changed,
+        deadline_ns=1000,
+        ingress_ns=ingress_ns,
+    )
+    assert rejected_change.result == control.COMMAND_RESULT_REJECTED
+    assert (
+        record.lifecycle_evidence[(session_work.session.session_id, child_id, "ready")]
+        == evidence
+    )
+    assert record.setup_ready == evidence.ready
+    assert session.pending_ready_report is None
+    assert not session.ready_confirmed.is_set()
+    assert not child.updated.is_set()
+    assert controller.lifecycles == []
+    if mutation == "exact_attachment":
+        cleanup_id = _id()
+        cleanup_child = ChildOperation(
+            command_id=cleanup_id,
+            camera=context.camera,
+            work=session_work,
+            parent_operation=setup_operation,
+            kind="cleanup",
+            deadline_ns=1000,
+        )
+        record.child_operations[cleanup_id] = cleanup_child
+        cleanup_evidence = acq.WorkerLifecycleEvidence(
+            source=context,
+            operation=control.OperationContext(command_id=cleanup_id),
+            state_revision=1,
+        )
+        cleanup_evidence.cleanup.resources.add(resource=attachment_id, released=True)
+        cleanup_evidence.cleanup.resources.add(
+            resource=f"camera-device:{worker.generation}", released=True
+        )
+        cleanup_receipt = await evidence_coordinator.lifecycle.report_lifecycle(
+            cleanup_evidence,
+            deadline_ns=1000,
+            ingress_ns=600,
+        )
+        assert cleanup_receipt.result == control.COMMAND_RESULT_ACCEPTED
+        transfer = resource_ledger.snapshot(
+            resources[attachment_id].ledger_key
+        ).transfers[0]
+        assert transfer.attached and transfer.released
+        replay_after_cleanup = await evidence_coordinator.lifecycle.report_lifecycle(
+            evidence,
+            deadline_ns=1000,
+            ingress_ns=700,
+        )
+        assert replay_after_cleanup.result == control.COMMAND_RESULT_ACCEPTED
+        transfer_after_replay = resource_ledger.snapshot(
+            resources[attachment_id].ledger_key
+        ).transfers[0]
+        assert transfer_after_replay.attached and transfer_after_replay.released
+        assert record.setup_ready == evidence.ready
 
 
 @pytest.mark.parametrize("declaration", [False, True])

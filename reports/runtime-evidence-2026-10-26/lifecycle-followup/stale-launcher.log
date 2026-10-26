@@ -1,0 +1,2 @@
+{"utc": "2026-10-26T03:56:55.804595+00:00", "monotonic_ns": 1009457911180800, "event": "launcher_started", "pid": 19964, "parent_pid": 43780, "controller_generation": "84571a54-bf3e-411d-99d6-3494c7bac833", "supervisor_generation": "8675e04e-e4c0-45c1-a4be-6ba2d2d3f2f4", "native_faults_to_log": true}
+{"utc": "2026-10-26T03:56:55.816225+00:00", "monotonic_ns": 1009457923548300, "event": "supervisor_launched", "pid": 38092, "creation_time_100ns": 134374606158120278}

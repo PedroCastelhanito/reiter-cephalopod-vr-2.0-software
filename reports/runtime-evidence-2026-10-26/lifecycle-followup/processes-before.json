@@ -1,0 +1,37 @@
+[
+  {
+    "ProcessId": 28304,
+    "ParentProcessId": 10492,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-26T12:31:56.319176+09:00",
+    "CommandLine": "\"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe\" scripts/start_runtime_gui.py"
+  },
+  {
+    "ProcessId": 59160,
+    "ParentProcessId": 28304,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-26T12:31:56.351612+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" scripts/start_runtime_gui.py"
+  },
+  {
+    "ProcessId": 20260,
+    "ParentProcessId": 59160,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-26T12:31:56.394778+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 41332,
+    "ParentProcessId": 20260,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-26T12:31:56.40456+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 33004,
+    "ParentProcessId": 33624,
+    "Name": "python.exe",
+    "CreationDate": "2026-10-26T14:40:56.37596+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m pytest --basetemp=.pytest-tmp-lifecycle tests/controller/test_lifecycle_reports.py::test_retired_setup_accepts_exact_late_ready_without_mutating_readiness -q"
+  }
+]

@@ -1,5 +1,30 @@
 # Visual Stimulus status
 
+Oct26 lifecycle follow-up under [V01](../docs/architecture/visual_stimulus.md#v01)
+and [E06/E08](../docs/architecture/system-contracts.md#e06) is verified for the bounded
+cases. Confirmed-only catalogue/receipt retirement fixes repeated-Shutdown stale keys;
+immutable completed evidence and exact session tombstones preserve old-session fencing.
+Native regressions additionally repair lost arena release proof across calibration
+Close/display restoration, retained finished trial state blocking post-session Open,
+and stale previous-display ownership preventing Close. New allocations invalidate only
+their own old release receipts; failed release, unacknowledged cleanup and active trial
+state remain owned/fenced. No proof validator or original deadline is relaxed.
+Final backend2676 tests and all static checks pass; owning lifecycle64, renderer29
+and resources56 pass. Native GPU88/1 rejection confirms cleanup and fresh Setup/Cancel.
+The final fresh application completes two60-second Visual Stimulus-only trials,
+NewSession, calibration OpenACTIVE/CloseIDLE with resources_closed, then normal
+Ended-session Shutdown. Renderer exits0; exact supervisor receipt confirms all owned
+processes absent. Four saved settings files are restored byte-for-byte and no new
+emergency is created. Prior failed probes are preserved, including the orderly-exit0
+reproduction that led to the finished-trial fix. Missing remote ErrorReport details in
+those failed probes remain an unverified delivery limitation; bounded local recovery
+cause logging now survives channel teardown. No optical/full-load/encoder feasibility
+or deferred backend acceptance is inferred.
+Small exact session tombstones persist for generation lifetime; full report payloads
+retain ledger budgets/pruning. Cohesive evidence, native lifetime and worker command
+owners remain intact, with no whole-runtime back-reference or generic retry framework.
+[Methods, source hashes and evidence](runtime-evidence-2026-10-26/lifecycle-followup/).
+
 Oct26 `repo-cleanup-and-code-review`: Astra/Luna source/caller review found no
 additional safe runtime deletion or optimization. Shared GLB/geometry/texture test
 helpers moved unchanged to the existing support module under
@@ -1023,8 +1048,11 @@ and full-load throughput remain in the [single rig checklist](rig-verification.m
 local fake-input tests do not prove NVENC output or device equivalence.
 Local documentation checks resolve changed references/decision anchors but find two
 pre-existing missing historical PNG targets (Oct15 bottom-grid/fix-verification/after/
-bottom-offscreen.png and Oct14 tank-screen-plot/tank-screens.png). Their links already
-exist in HEAD; restoration/location verification is queued separately.
+bottom-offscreen.png and Oct14 tank-screen-plot/tank-screens.png). Oct26 recheck
+finds both exact linked files present, decodable and consistent with their retained
+historical context; no replacement image was generated. The old missing-path
+result is historical. [Current path/hash evidence](runtime-evidence-2026-10-26/lifecycle-followup/historical-images.json)
+records resolution; images remain local under the media-ignore policy.
 
 Oct16 `stimulus-capture-optimization` now implements the owner-authorized PBO reuse
 and GPU row orientation under [V12 revision15](../docs/architecture/visual_stimulus.md#v12).

@@ -305,6 +305,295 @@ async def test_worker_accepts_first_use_calibration_revision_and_recovers_after_
 
 
 @pytest.mark.asyncio
+async def test_confirmed_cleanup_retires_session_for_calibration_and_old_shutdown():
+    from cephvr.visual_stimulus.worker.reporting import ReportBridge
+
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    session = pb.SessionContext(
+        controller_generation=identity.controller.generation, session_id=str(uuid4())
+    )
+
+    class Peer:
+        def __init__(self):
+            self.reject_cleanup = True
+            self.messages = []
+
+        async def receipt(self, method, request, *, deadline_ns):
+            self.messages.append((method, request))
+            if method == "ReportWorkerLifecycle" and self.reject_cleanup:
+                return pb.ReportReceipt(
+                    result=pb.COMMAND_RESULT_REJECTED,
+                    failure=pb.Failure(code="EVIDENCE", message="not yet confirmed"),
+                )
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    class CapturedDevice(Device):
+        def __init__(self):
+            super().__init__()
+            self.requests = []
+
+        def execute(self, method, request, deadline_ns):
+            self.requests.append(
+                (method, type(request).FromString(request.SerializeToString()))
+            )
+            super().execute(method, request, deadline_ns)
+
+    peer = Peer()
+    bridge = ReportBridge(
+        asyncio.get_running_loop(),
+        peer,
+        peer,
+        failed=lambda _exc: None,
+        maximum_bytes=1_000_000,
+    )
+    context = visual_stimulus.WorkerContext(
+        worker=identity.worker, owner=identity.process, configuration_revision=8
+    )
+    context.work.session.CopyFrom(session)
+    bridge.catalogue.work.CopyFrom(context.work)
+    bridge.catalogue.cleanup_resources_revision = 4
+    bridge.catalogue.cleanup_resources.add(owner=identity.worker, resource="arena")
+    device = CapturedDevice()
+    owner = RenderOwner(lambda _: device)
+    worker = VisualStimulusWorkerRuntime(
+        context,
+        identity.supervisor,
+        owner,
+        peer,
+        ledger(identity.worker.generation),
+        retire_catalogue=bridge.retire_session,
+    )
+    deadline = host_time_ns() + 5_000_000_000
+
+    def retain_command(command_id: str, method: str, request, work_key: str) -> None:
+        canonical = (
+            method.encode() + b"\0" + request.SerializeToString(deterministic=True)
+        )
+        worker.ledger.admit(
+            command_id,
+            canonical,
+            host_time_ns(),
+            work_key=work_key,
+            deadline_ns=deadline,
+        )
+
+    cleanup_command = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=identity.process,
+        target=context,
+        deadline_monotonic_ns=deadline,
+    )
+    retain_command(
+        cleanup_command.command_id,
+        "Cleanup",
+        cleanup_command,
+        cleanup_command.command_id,
+    )
+    setup_scope = str(uuid4())
+    worker.command_ids[setup_scope] = (
+        "SetupSession",
+        pb.WorkContext(session=session),
+    )
+    display_scope = str(uuid4())
+    worker.command_ids[display_scope] = ("InitializeDisplay", pb.WorkContext())
+    for command_id, work_key in (
+        (setup_scope, session.session_id),
+        (display_scope, display_scope),
+    ):
+        worker.ledger.admit(
+            command_id,
+            ("prior:" + command_id).encode(),
+            host_time_ns(),
+            work_key=work_key,
+        )
+        worker.ledger.complete_executor(command_id, b"done", host_time_ns())
+        worker.ledger.complete(command_id, b"accepted", host_time_ns())
+    try:
+        await worker.execute("Cleanup", cleanup_command, deadline_ns=deadline)
+        worker.ledger.complete(
+            cleanup_command.command_id,
+            pb.CommandAdmission(
+                result=pb.COMMAND_RESULT_ACCEPTED,
+                command_id=cleanup_command.command_id,
+            ).SerializeToString(),
+            host_time_ns(),
+        )
+        evidence = visual_stimulus.WorkerLifecycle(
+            source=identity.worker,
+            report=pb.LifecycleReport(
+                cleanup=pb.CleanupReport(
+                    source=identity.worker,
+                    work=context.work,
+                    operation=pb.OperationContext(
+                        command_id=cleanup_command.command_id
+                    ),
+                    verified_monotonic_ns=host_time_ns(),
+                    trial_activity_stopped=True,
+                    cleanup_resources_revision=4,
+                    resources=[pb.ResourceRelease(resource="arena", released=True)],
+                )
+            ),
+        )
+        with pytest.raises(ValueError, match="not accepted"):
+            await worker.retain_and_report(evidence, deadline)
+        assert worker.context.work.WhichOneof("work") == "session"
+        assert not worker.retired_sessions
+        assert bridge.catalogue.cleanup_resources
+
+        peer.reject_cleanup = False
+        await worker.retain_and_report(evidence, deadline)
+        assert worker.context.work.WhichOneof("work") is None
+        assert worker.retired_sessions == {
+            session.SerializeToString(deterministic=True)
+        }
+        assert not bridge.catalogue.cleanup_resources
+        assert bridge.catalogue.cleanup_resources_revision == 5
+        assert bridge.catalogue.session_phase == pb.SESSION_PHASE_CONFIGURATION
+        heartbeat = pb.HeartbeatReport.FromString(bridge.catalogue.SerializeToString())
+        heartbeat.source.CopyFrom(identity.worker)
+        heartbeat.work.CopyFrom(worker.context.work)
+        assert heartbeat.work.WhichOneof("work") is None
+        assert not heartbeat.cleanup_resources
+        assert heartbeat.cleanup_resources_revision == 5
+        assert worker.ledger.get(setup_scope).finalized_ns is not None
+        assert worker.ledger.get(display_scope).finalized_ns is not None
+        assert worker.ledger.get(cleanup_command.command_id).finalized_ns is not None
+
+        from cephvr.shared.admission import CommandAdmissionTransport
+
+        admission = CommandAdmissionTransport(worker.ledger)
+        backend_cleanup = wire.BackendCommand(
+            command_id=cleanup_command.command_id,
+            issuer=identity.process,
+            target=pb.BackendContext(
+                backend_name=identity.worker.role,
+                backend_generation=identity.worker.generation,
+            ),
+            work=cleanup_command.target.work,
+        )
+        replay = await admission.dispatch(
+            "Cleanup",
+            cleanup_command,
+            backend_cleanup,
+            deadline,
+            lambda **_kwargs: pytest.fail("exact cleanup replay re-executed"),
+            priority=True,
+        )
+        assert replay.result == pb.COMMAND_RESULT_ACCEPTED
+
+        stale_cleanup = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=identity.process,
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, work=context.work
+            ),
+            deadline_monotonic_ns=deadline,
+        )
+        stale_cleanup.target.work.CopyFrom(context.work)
+        stale_cleanup.target.work.session.CopyFrom(session)
+        with pytest.raises(ValueError, match="retired session"):
+            worker.validate_command("Cleanup", stale_cleanup)
+
+        open_command = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=identity.process,
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker,
+                owner=identity.process,
+                configuration_revision=8,
+            ),
+            deadline_monotonic_ns=deadline,
+        )
+        opened = visual_stimulus.OpenDisplayCalibrationCommand(
+            command=open_command, diagnostic_id=str(uuid4())
+        )
+        retain_command(
+            open_command.command_id,
+            "OpenDisplayCalibration",
+            opened,
+            open_command.command_id,
+        )
+        await worker.execute("OpenDisplayCalibration", opened, deadline_ns=deadline)
+        worker.ledger.complete(
+            open_command.command_id,
+            pb.CommandAdmission(
+                result=pb.COMMAND_RESULT_ACCEPTED,
+                command_id=open_command.command_id,
+            ).SerializeToString(),
+            host_time_ns(),
+        )
+        diagnostic_scope = open_command.command_id
+        diagnostic_record = worker.ledger.get(diagnostic_scope)
+        assert diagnostic_record is not None and diagnostic_record.finalized_ns is None
+        await worker.retain_and_report(evidence, deadline)
+        assert worker.ledger.get(diagnostic_scope).finalized_ns is None
+        assert worker.context.work.WhichOneof("work") is None
+
+        shutdown_command = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            issuer=identity.process,
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker,
+                owner=identity.process,
+                work=context.work,
+            ),
+            deadline_monotonic_ns=deadline,
+        )
+        shutdown_command.target.work.CopyFrom(context.work)
+        shutdown_command.target.work.session.CopyFrom(session)
+        retain_command(
+            shutdown_command.command_id,
+            "Shutdown",
+            shutdown_command,
+            shutdown_command.command_id,
+        )
+        original_work = pb.WorkContext.FromString(
+            shutdown_command.target.work.SerializeToString()
+        )
+        await worker.execute("Shutdown", shutdown_command, deadline_ns=deadline)
+        worker.ledger.complete(
+            shutdown_command.command_id,
+            pb.CommandAdmission(
+                result=pb.COMMAND_RESULT_ACCEPTED,
+                command_id=shutdown_command.command_id,
+            ).SerializeToString(),
+            host_time_ns(),
+        )
+        assert shutdown_command.target.work == original_work
+        assert device.commands == ["Cleanup", "OpenDisplayCalibration", "Shutdown"]
+        shutdown_request = device.requests[-1][1]
+        assert shutdown_request.target.work.WhichOneof("work") is None
+        cleanup_reports = [
+            message.report.cleanup
+            for method, message in peer.messages
+            if method == "ReportWorkerLifecycle"
+        ]
+        assert len(cleanup_reports) == 3
+        assert {item.operation.command_id for item in cleanup_reports} == {
+            cleanup_command.command_id
+        }
+        operation = next(
+            message.operation
+            for method, message in reversed(peer.messages)
+            if method == "ReportWorkerOperation"
+            and message.operation.context.command_id == shutdown_command.command_id
+        )
+        assert operation.work.session == session
+    finally:
+        await owner.close(deadline)
+
+
+@pytest.mark.asyncio
 async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp_path):
     import hashlib
     from types import SimpleNamespace
