@@ -11729,3 +11729,16 @@ three fixture-error cases and test_second_preview_initial_placement_matches_sett
 rerun separately. Ruff check/format cover GUI, preview, Windows, shared, owning tests
 and both benchmark tools; mypy --platform win32 covers the four source owners.
 Commit/push completion follows after this validated snapshot is recorded.
+
+
+### 2026-10-26 - [repo] Commit complete; synchronization blocked
+
+`repo-commit-sync-oct26`: committed validated GUI/preview changes and retained
+evidence as c2d58130 (Polish GUI rows and native camera preview preparation).
+Post-commit git status is clean and git show --check reports no whitespace errors.
+Automatic approval review rejected git push origin main because this broad payload
+and default-branch destination require explicit owner approval. No push occurred;
+origin is https://github.com/PedroCastelhanito/reiter-cephalopod-vr-2.0-software.git.
+Task moved to Blocked pending that approval; this status-only follow-up records the
+actual outcome without marking synchronization complete. Hardware/native acceptance
+and historical missing screenshots remain unchanged.
