@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="61" time="50.194" timestamp="2026-10-26T16:39:30.188234+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_screen_dimension_cards_align_fields_and_keep_focus[amber_phosphor]" time="0.370" /><testcase classname="tests.gui.test_dashboard" name="test_mixed_projector_cards_keep_local_labels_and_focus[amber_phosphor]" time="0.272"><failure message="assert (False)&#10; +  where False = &lt;cephvr.gui.projector_reference.ProjectorReference object at 0x000001B41977BE20&gt;.editing">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001B417115630&gt;
+preset = 'amber_phosphor'
+
+    @pytest.mark.parametrize("preset", ["standard", "retro_console", "amber_phosphor"])
+    def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            RETRO_COLORS,
+            colors_for,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        if preset != "standard":
+            composer.setProperty("retroConsole", True)
+            composer.setProperty("retroPalette", preset)
+            colors = PHOSPHOR_COLORS if preset == "amber_phosphor" else RETRO_COLORS
+            composer.setStyleSheet(
+                retro_stylesheet(colors)
+                + (phosphor_stylesheet() if preset == "amber_phosphor" else "")
+            )
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        program = blank_program()
+        for face, kind in zip(
+            composer.screens, ("Image", "Texture", "Video", "Looming image"), strict=True
+        ):
+            program = add_stimulus(program, 0, kind, (face,))
+        composer.program = program
+        composer.refresh_rows()
+        composer.show()
+        try:
+            for width in (1400, 780, 520, 1400):
+                composer.resize(width, 1300)
+                app.processEvents()
+                for face in composer.screens:
+                    row = composer.rows[face]
+                    assert row.width() &lt;= width
+                    fields = [
+                        (title, control)
+                        for title, control in row.columns
+                        if control.isVisibleTo(row)
+                    ]
+                    for title, control in fields:
+                        point = control.mapTo(row, QPoint())
+                        assert point.x() &gt;= 0 and point.x() + control.width() &lt;= row.width()
+                        if title and title != "Layer":
+                            heading = row.headings[row.columns.index((title, control))]
+                            assert heading.text() == title and heading.isVisibleTo(row)
+                    controls = dict(fields)
+                    asset = controls["Asset"]
+                    if not row.narrow:
+                        values = [
+                            control
+                            for title, control in fields
+                            if title not in ("", "Layer", "Stimulus", "Asset")
+                        ]
+                        assert values[0].mapTo(row, QPoint()).x() == row.stimulus.x()
+                        assert (
+                            values[-1].mapTo(row, QPoint()).x() + values[-1].width()
+                            == asset.mapTo(row, QPoint()).x() + asset.width()
+                        )
+                        assert (
+                            values[1].mapTo(row, QPoint()).x()
+                            == asset.mapTo(row, QPoint()).x()
+                        )
+                        assert row.caption.mapTo(row, QPoint()).y() == row.stimulus.y()
+                        assert row.layer.mapTo(row, QPoint()).y() == values[0].y()
+                    assert asset.x() + asset.width() &lt; row.actions_button.x()
+                    assert colors_for(row).projector != colors_for(row).console
+                front, left = composer.rows["Front"], composer.rows["Left"]
+                front.stimulus.setFocus()
+                app.processEvents()
+&gt;               assert front.editing and not left.editing
+E               assert (False)
+E                +  where False = &lt;cephvr.gui.projector_reference.ProjectorReference object at 0x000001B41977BE20&gt;.editing
+
+tests\gui\test_dashboard.py:11458: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_trial_row_actions_scroll_target_and_align_cards[amber_phosphor]" time="1.654" /><testcase classname="tests.gui.test_dashboard" name="test_managed_appearance_restores_shared_or_legacy_preference[standard-amber_phosphor-amber_phosphor]" time="0.970" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_log_wraps_for_display_only" time="0.004" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_log_wraps_terminal_result_suffix_and_preserves_row" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_wrap_uses_fractional_font_metrics_without_soft_wrap" time="0.005" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_popups_and_owned_windows_get_scanline_film" time="1.969" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_tab_bars_elide_without_unthemed_scroll_buttons" time="1.544" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_combo_popup_and_dialog_icons_follow_amber" time="2.231" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_navigation_uses_chevron_markers_with_hover[1400]" time="1.802" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_navigation_uses_chevron_markers_with_hover[1920]" time="1.886" /><testcase classname="tests.gui.test_dashboard" name="test_amber_palette_keeps_readable_contrast" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_amber_disabled_fields_and_placeholders_are_unfilled_and_legible" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_amber_table_headers_share_the_caption_style" time="1.867" /><testcase classname="tests.gui.test_dashboard" name="test_amber_layout_details_align_and_shrink" time="1.446" /><testcase classname="tests.gui.test_dashboard" name="test_log_column_header_tracks_category_width" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_configuration_groups_share_cards_across_tabs[amber_phosphor]" time="4.022" /><testcase classname="tests.gui.test_dashboard" name="test_editing_card_keeps_highlight_for_owned_popup[combo-amber_phosphor]" time="0.695" /><testcase classname="tests.gui.test_dashboard" name="test_editing_card_keeps_highlight_for_owned_popup[menu-amber_phosphor]" time="0.063" /><testcase classname="tests.gui.test_dashboard" name="test_variation_cards_focus_and_remove_preserve_remaining_rules[amber_phosphor]" time="2.220" /><testcase classname="tests.gui.test_dashboard" name="test_retro_epoch_tints_are_stable_and_dim[amber_phosphor]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_pending_visible_update_preserves_placement[amber_phosphor-False]" time="0.069" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_pending_visible_update_preserves_placement[amber_phosphor-True]" time="0.065" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_frames_shown_streams_and_timeline[amber_phosphor]" time="1.395" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[standard]" time="0.870" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[retro_console]" time="1.582" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[amber_phosphor]" time="1.572" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toggle_selection_has_distinct_fill[amber_phosphor]" time="1.291" /><testcase classname="tests.gui.test_dashboard" name="test_log_categories_expand_to_longest_without_replacing_rows[standard]" time="0.859" /><testcase classname="tests.gui.test_dashboard" name="test_log_categories_expand_to_longest_without_replacing_rows[retro_console]" time="1.537" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[Plain message]" time="1.000" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[ \xb7 Missing subject]" time="1.023" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[[MCU] Already tagged]" time="1.069" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[standard]" time="2.015" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[retro_console]" time="2.868" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[amber_phosphor]" time="2.828" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[None-retro_console-retro_console]" time="0.024" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[amber_phosphor-standard-amber_phosphor]" time="0.023" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[bad-amber_phosphor-standard]" time="0.016" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[standard-amber_phosphor-standard]" time="0.015" /><testcase classname="tests.gui.test_dashboard" name="test_startup_bootstrap_closes_splash_on_failure" time="1.080" /><testcase classname="tests.gui.test_dashboard" name="test_splash_moves_during_construction_without_dispatching_callbacks" time="1.088" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Combined]" time="0.056"><failure message="assert &lt;PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70&gt; is &lt;PyQt6.QtWidgets.QPushButton object at 0x000001B4231A7AC0&gt;&#10; +  where &lt;PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70&gt; = &lt;built-in method widget of QWidgetItem object at 0x000001B4231A5EA0&gt;()&#10; +    where &lt;built-in method widget of QWidgetItem object at 0x000001B4231A5EA0&gt; = &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0&gt;.widget&#10; +      where &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0&gt; = &lt;built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0&gt;(1)&#10; +        where &lt;built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0&gt; = &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0&gt;.itemAt&#10; +          where &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0&gt; = &lt;cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BEC53F0&gt;.advanced_choices">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001B417115630&gt;
+mode = 'Combined', style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+        app.processEvents()
+        try:
+            assert list(workspace.projector_controls) == ["Left", "Right"]
+&gt;           assert (
+                workspace.advanced_choices.itemAt(1).widget()
+                is workspace.controls["stimulus"]
+            )
+E           assert &lt;PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70&gt; is &lt;PyQt6.QtWidgets.QPushButton object at 0x000001B4231A7AC0&gt;
+E            +  where &lt;PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70&gt; = &lt;built-in method widget of QWidgetItem object at 0x000001B4231A5EA0&gt;()
+E            +    where &lt;built-in method widget of QWidgetItem object at 0x000001B4231A5EA0&gt; = &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0&gt;.widget
+E            +      where &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0&gt; = &lt;built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0&gt;(1)
+E            +        where &lt;built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0&gt; = &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0&gt;.itemAt
+E            +          where &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0&gt; = &lt;cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BEC53F0&gt;.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Per-projector]" time="0.070"><failure message="assert &lt;PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520&gt; is &lt;PyQt6.QtWidgets.QPushButton object at 0x000001B43BE1EA70&gt;&#10; +  where &lt;PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520&gt; = &lt;built-in method widget of QWidgetItem object at 0x000001B43BE1D000&gt;()&#10; +    where &lt;built-in method widget of QWidgetItem object at 0x000001B43BE1D000&gt; = &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000&gt;.widget&#10; +      where &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000&gt; = &lt;built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0&gt;(1)&#10; +        where &lt;built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0&gt; = &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0&gt;.itemAt&#10; +          where &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0&gt; = &lt;cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BE1E170&gt;.advanced_choices">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001B417115630&gt;
+mode = 'Per-projector', style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+        app.processEvents()
+        try:
+            assert list(workspace.projector_controls) == ["Left", "Right"]
+&gt;           assert (
+                workspace.advanced_choices.itemAt(1).widget()
+                is workspace.controls["stimulus"]
+            )
+E           assert &lt;PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520&gt; is &lt;PyQt6.QtWidgets.QPushButton object at 0x000001B43BE1EA70&gt;
+E            +  where &lt;PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520&gt; = &lt;built-in method widget of QWidgetItem object at 0x000001B43BE1D000&gt;()
+E            +    where &lt;built-in method widget of QWidgetItem object at 0x000001B43BE1D000&gt; = &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000&gt;.widget
+E            +      where &lt;PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000&gt; = &lt;built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0&gt;(1)
+E            +        where &lt;built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0&gt; = &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0&gt;.itemAt
+E            +          where &lt;PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0&gt; = &lt;cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BE1E170&gt;.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-False-830]" time="0.155" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-False-1000]" time="0.148" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-True-830]" time="0.143" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-True-1000]" time="0.125" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-None]" time="0.109" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-amber_phosphor]" time="0.114" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-retro_console]" time="0.123" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-None]" time="0.105" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-amber_phosphor]" time="0.119" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-retro_console]" time="0.122" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-None]" time="0.117" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-amber_phosphor]" time="0.112" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-retro_console]" time="0.116" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-None]" time="0.124" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-amber_phosphor]" time="0.120" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-retro_console]" time="0.118" /></testsuite></testsuites>

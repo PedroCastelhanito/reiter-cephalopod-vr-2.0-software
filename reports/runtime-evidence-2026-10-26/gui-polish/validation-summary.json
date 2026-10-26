@@ -1,0 +1,14 @@
+{
+  "local_cases_with_passing_evidence": 1073,
+  "native_cases_with_passing_evidence": 71,
+  "method": "Latest result for exact (classname,name), full suite plus corrected-fixture replays. Not a claim of one clean final broad run.",
+  "local_runs": [
+    "gui-final2.xml",
+    "gui-replay.xml"
+  ],
+  "native_runs": [
+    "native-final.xml",
+    "native-replay.xml",
+    "native-active.xml"
+  ]
+}

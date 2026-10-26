@@ -1,10 +1,11 @@
 """Shared HUD and log widgets with fitted text and bounded entry details."""
 
-from math import ceil
+from math import ceil, floor
 
 from PyQt6.QtCore import QMimeData, QSize, Qt, QTimer
 from PyQt6.QtGui import (
     QContextMenuEvent,
+    QFontMetricsF,
     QPaintEvent,
     QResizeEvent,
     QTextBlock,
@@ -149,9 +150,10 @@ class LogConsole(Console):
         vertical = self.verticalScrollBar()
         assert document is not None and vertical is not None
         indent = STAMP_WIDTH + self._category_width + 1 if minimal_frames(self) else 0
-        advance = self.fontMetrics().horizontalAdvance(" ")
+        advance = QFontMetricsF(self.font(), self).horizontalAdvance(" ")
         viewport = self.viewport()
-        columns = viewport.width() // advance - 1 if viewport and advance else 0
+        available = viewport.width() - 2 * document.documentMargin() if viewport else 0
+        columns = floor(available / advance) if advance > 0 else 0
         following = vertical.value() >= vertical.maximum()
         anchor = self.firstVisibleBlock().blockNumber()
         previous, self._wrap_indent = self._wrap_indent, indent
@@ -307,10 +309,14 @@ class LogConsole(Console):
             preceding_lines += block.lineCount()
             block = block.next()
         line_offset = max(0, vertical.value() - preceding_lines)
-        last = document.lastBlock().blockNumber()
+        appended_blocks = text.count("\n") + 1
         super().appendPlainText(text)
         if self._wrap_indent:
-            self.rewrap(document.findBlockByNumber(last + 1))
+            self.rewrap(
+                document.findBlockByNumber(
+                    max(0, document.blockCount() - appended_blocks)
+                )
+            )
         position = 0
         if not following and anchor.isValid():
             block = document.begin()
@@ -390,9 +396,21 @@ class LogConsole(Console):
                         error=result in {"Failed", "Rejected", "Unconfirmed"},
                     )
                 return
+            vertical, horizontal = self.verticalScrollBar(), self.horizontalScrollBar()
+            assert vertical is not None and horizontal is not None
+            y, x = vertical.value(), horizontal.value()
+            following = y >= vertical.maximum()
+            before_anchor = block.blockNumber() < self.firstVisibleBlock().blockNumber()
+            old_lines = block.lineCount()
             cursor = QTextCursor(block)
             cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock)
             cursor.insertText(f" [{result}]")
+            if self._wrap_indent:
+                self.rewrap(block)
+            if before_anchor:
+                y += block.lineCount() - old_lines
+            vertical.setValue(vertical.maximum() if following else y)
+            horizontal.setValue(x)
             if details:
                 block.setUserData(
                     _LogDetails(

@@ -11206,3 +11206,110 @@ rejection/reuse/calibration/Shutdown and exact settings/process restoration are
 recorded above. Concurrent preview benchmark architecture/tool/evidence and shared
 LOG/TODO/report entries remain outside this commit scope, preserved in the workspace.
 No lifecycle source or runtime settings remain pending.
+
+### 2026-10-26 - [repo] [gui] [controller] [supervisor] [launcher] [acquisition] [visual_stimulus] Reconcile remaining TODOs
+
+Refreshed six existing tasks against the completed lifecycle evidence: exit diagnostics,
+all-saving-Off execution, launcher relaunch diagnostics, idle shutdown ordering,
+post-stop editing and startup recovery. Removed stale claims that no fresh launch or
+preserving recovery had occurred. Kept historical failure causes and untested variants
+open: normal Ended-session shutdown is not idle/Abort acceptance, and saving-disabled
+trials do not establish the full no-output filesystem/recording-reenable matrix.
+Prioritized `rapid-abort-setup-heartbeat`, `interrupt-trial-log-closure`, then
+`dummy-session-no-output` in Next. No task was closed or added; all 74 task IDs,
+explicit deferrals and concurrent preview-chat ownership/work remain preserved.
+Evidence: [completed lifecycle record](reports/runtime-evidence-2026-10-26/lifecycle-followup/context.json).
+Documentation-only reconciliation; no new runtime or rig tests were run.
+Validation: all 74 unique task IDs and section counts preserved; referenced local
+paths/anchors and `git diff --check -- TODO.md LOG.md` pass.
+
+### 2026-10-26 - [gui] [launcher] [controller] Begin requested GUI polish closure
+
+Owner authorized gui-style-consistency, gui-startup-splash (including rounded
+corners), amber-phosphor-style, preview-workspace-polish and
+runtime-log-terminal-format. Moved their existing tasks to In progress. Astra
+reviews requirements/acceptance; Luna implements the bounded splash change.
+Preserve concurrent preview-benchmark documents and explicit rig deferrals.
+Initial review separates already implemented presentation from remaining native
+verification; no blanket restyling or backend ownership changes are planned.
+
+### 2026-10-26 - [gui] Inspect native polish and repair demonstrated defects
+
+Initial Astra review reproduced skipped first-row and terminal-result wrapping in
+Amber LogConsole; Luna is repairing the existing owner. Rounded splash corners use
+native transparency and antialiased painting under G02 revision154, retaining
+animation/reveal ownership and deadlines. Keep the current 14px Retro card/15px
+page-title hierarchy; no blanket font-token change is justified.
+Native Windows targeted baseline: 53 pass, six fail (gui-polish/native.log).
+Failures include preview-button width and narrow Tracking overflow for investigation,
+plus a hover test targeting outside the visible viewport and popup exposure/focus
+assumptions. Preserve event-delivery assertions while correcting test targeting.
+The isolated native three-style page/dialog probe exits0 with all splashes closed,
+timers stopped, opaque maximized windows and controller-disconnected state truthful.
+No backend/device operation or managed controller-loss acceptance is claimed.
+
+### 2026-10-26 - [gui] Validate native layouts and find fractional-scale log wrapping
+
+`gui-style-consistency`, `preview-workspace-polish`: native Tracking overflow is
+resolved by wrapping the manual landmark-status label; all three style cases pass.
+The Advanced toolbar now spans the full row at900px; all six focused native layout
+cases pass. Additional720px inspection found its controls still compressed, so a
+second inner row for projector toggles is being implemented within the same owner.
+Native popup/hover fixtures now pass9/9 with visible hit targets and exposed popups.
+The four-worker GUI regression passes1,072 tests in206.25s before the final narrow
+layout/scaled-wrap refinements. Earlier slow serial run was interrupted at26% and
+retained; it is not reported as a completed suite.
+Native three-style captures at100%,125%,150% process-local Qt scales exit0, but
+150% visual inspection found an Amber continuation word soft-wrapping into the
+timestamp column. Record this as an observed defect, not a scaled appearance pass;
+Astra/Luna are reviewing the font-width calculation. These probes issue no backend
+commands and do not change Windows DPI or physical display configuration.
+
+### 2026-10-26 - [gui] [launcher] [controller] Finish requested GUI fixes and reconcile acceptance
+
+`gui-style-consistency` and `amber-phosphor-style`: current presentation fixes and
+review complete. Retain coherent 14px card/15px page-heading hierarchy; native
+three-style page/device/dialog captures and focused hover/focus/CRT/copy assertions
+support the current UI. Physical mixed-monitor/DPI acceptance stays in the existing
+rig checklist; this is not a claim of owner-supplied visual measurements.
+`gui-startup-splash`: rounded antialiased transparent corners complete (G02rev154),
+including native Standard without CRT and Retro/Amber handoff; remaining physical
+monitor transitions and managed controller-unavailable startup stay open.
+`preview-workspace-polish`: native narrow Tracking overflow fixed by wrapping the
+manual landmark-status label; independent Advanced/content and projector groups
+wrap at720px and restore on widening without changing controls, signals or preview
+ownership. Live native-viewer/recorded-trial acceptance remains open.
+`runtime-log-terminal-format`: first/multiline rows, result suffixes and fractional
+font/device metrics are corrected. Exact copied text, timestamps, diagnostics and
+block identity are preserved. Corrected native150% Tracking image has four explicit
+and four rendered lines, with no continuation in the timestamp column. Actual
+managed Setup/Start/Stop plus HUD Output verification remains open.
+
+Astra final source and test review accepted. Final production source is unchanged
+across validation. Full GUI run:1063 pass/10 stale layout-container assertions fail;
+all ten plus three focus variants pass exact replay (13/13). Native selection:
+58 pass/3 fixture failures; replay15 pass/1 inactive-window fixture failure, then
+explicit active-window precondition passes all three focus styles. Exact node-ID
+reconciliation establishes passing evidence for all1073 GUI cases and71 native
+cases, not one uninterrupted clean broad run. Earlier1072-pass run predates final
+refinements. Ruff/format205files, Win32mypy201sources and boundaries760/zero pass.
+Existing consoles504/previews644 size advisories remain cohesive presentation
+owners; no new dependency or runtime back-reference. Native-scale probes use
+isolated settings; all four original settings hashes remain exact. No backend,
+recording, firmware, Tracking-processing or paired-device operation was performed.
+Retain failed/timeout attempts and their limits alongside current results.
+
+Evidence and method: [GUI polish](reports/runtime-evidence-2026-10-26/gui-polish/context.json).
+Remove the two completed style tasks; return the three partially verified tasks to
+Next with only their remaining acceptance conditions. Preserve all other ownership,
+concurrent preview work and explicit deferrals.
+
+### 2026-10-26 - [repo] [gui] Finish GUI polish hygiene and documentation checks
+
+Validated43 added local references/anchors, unique TODO IDs and matching G02rev154
+register/record; whitespace checks pass. The named repository probe-temp directory
+was already absent. Removed five existing task-owned external test directories
+(17,437,990 bytes), after containment/reparse checks. Retain raw failed attempts,
+source hashes, settings proof and local images. Shared/concurrent caches and preview
+benchmark work are preserved. Only this chat's source, evidence and document hunks
+are included in the upcoming commit; three explicit rig acceptance tasks remain open.

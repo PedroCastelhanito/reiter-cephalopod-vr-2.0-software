@@ -40,19 +40,21 @@ This does not close the remaining fault, physical or full-workload checks below.
   not prove native resource behavior, optical timing or throughput.
   [Implementation/evidence](runtime.md#protocol-category-and-preview-design--2026-10-23).
 
-- [ ] `gui-startup-splash` [gui] [launcher] At the next safe normal launch and GUI
-  reopen, verify the saved Standard/Retro/Amber splash appears without transient Qt
-  windows or a white main window, then hands off to the populated maximized GUI.
-  Oct23: transparent native first-paint tests pass for all three themes; the
-  foreground native Dashboard probe has zero white frames in1627 captured frames
-  and clean Qt teardown. Managed same-generation GUI reopens connect successfully.
-  Oct23 later full-role native startup and GUI-only save/close/reopen pass: all
-  non-GUI native process identities and controller generation stay unchanged;
-  launcher event remains reachable and GUI reconnects in Configuration. Saved
-  projectors are undetected, so display readiness is not established. Still check
-  alternate monitor/DPI, CRT disabled and controller-unavailable diagnostics.
-  No Setup/trial/device actions were performed.
-  [Implementation/evidence](runtime.md#startup-splash-preview).
+- [ ] `gui-startup-splash` [gui] [launcher] Verify physical alternate-monitor and
+  mixed-DPI transitions plus managed controller-unavailable startup diagnostics.
+  Rounded transparent corners and three-style native handoff are validated;
+  Standard has no CRT, and isolated100/125/150% process-local Qt probes preserve
+  truthful disconnected presentation and stop the splash timer. These checks do
+  not change Windows display settings or close managed failure-injection acceptance.
+  [Current evidence](runtime-evidence-2026-10-26/gui-polish/context.json),
+  [Assessment](runtime.md#startup-splash-preview).
+
+- [ ] `runtime-log-terminal-format` [gui] [controller] During an authorized managed
+  Setup/Start/Stop run, verify action/results update in place, longer categories
+  realign retained rows and HUD Output shows the authoritative directory. Current
+  native presentation tests pass first/multiline/result/fractional-scale wrapping
+  with exact copied text and retained identity. No managed lifecycle was run in
+  this GUI polish increment. [Evidence](runtime-evidence-2026-10-26/gui-polish/context.json).
 
 Oct22 current result: the image-read ctypes lifetime defect and helper retirement
 proof mismatch are fixed. Final uninstrumented unchanged2×600s playback/recording

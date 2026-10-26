@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-26",
+  "base_revision": "2f3e073db9e7998ec48310315002a8140f394f21",
+  "tasks": [
+    "gui-style-consistency",
+    "gui-startup-splash",
+    "amber-phosphor-style",
+    "preview-workspace-polish",
+    "runtime-log-terminal-format"
+  ],
+  "hierarchy": "Astra decisions/review; Luna splash/log/layout implementation; parent integration/native verification",
+  "phase": "Reviewed implementation and bounded native presentation validated; two style tasks closed, three live-rig follow-ups retained; scoped commit prepared.",
+  "scope": "GUI polish; existing explicit backend/physical/full-workload deferrals preserved",
+  "settings_sha256": {
+    "config/last_configuration.json": "6162e95823854d7486365305f8f48a4f3059e8a30070d9ff278a584d5b3f3762",
+    "config/runtime_gui.json": "8572fb368cf35f51112a5ca85ab06f6409c89474a9ec14c85d3a89d0c09272d5",
+    "config/review_draft.json": "96632640d9d0b01550217cc592603e0fc8d1d4fd980dd4df4c09f10e91f05d82",
+    "config/backends/visual_stimulus_config.toml": "8f742be3b71749a8f6834889c49fba032d7a61d39fc88398e4b9aa79817f5419"
+  },
+  "validation": {
+    "local_cases_with_passing_evidence": 1073,
+    "native_cases_with_passing_evidence": 71,
+    "method": "Latest result for exact (classname,name), full suite plus corrected-fixture replays. Not a claim of one clean final broad run.",
+    "local_runs": [
+      "gui-final2.xml",
+      "gui-replay.xml"
+    ],
+    "native_runs": [
+      "native-final.xml",
+      "native-replay.xml",
+      "native-active.xml"
+    ]
+  },
+  "review": "Astra final source/test review accepted; Luna implementation, parent native/visual integration.",
+  "final_source": "final-source.json",
+  "limits": [
+    "No managed runtime launch or Setup/Start/Stop/recorded-trial run in this increment.",
+    "Process-local Qt scales 100/125/150 on operator display; no physical alternate-monitor/mixed-DPI transition acceptance.",
+    "No controller-unavailable managed bootstrap/failure injection; disconnected isolated frontend presentation only.",
+    "Existing physical/scientific/full-workload/firmware/Tracking/paired deferrals preserved.",
+    "native-layout.log is a timed-out show attempt and has no matching complete JUnit; native-layout.xml is earlier six-case evidence, not its result."
+  ],
+  "settings_unchanged": true,
+  "native_scale_repair": "native-150-fixed/results.json: 4 explicit / 4 rendered Tracking log lines; original native-150 image retained with the defect.",
+  "static": {
+    "ruff": "pass",
+    "format": "205 files pass",
+    "mypy_win32": "201 source files pass",
+    "boundaries": "760 modules, zero violations; cohesive console/preview size advisories reviewed"
+  },
+  "documentation": "43 added local references/anchors pass; G02 revision154 register/record match; unique task IDs and whitespace pass."
+}

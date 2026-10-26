@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="16" time="10.737" timestamp="2026-10-26T16:42:08.445573+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_mixed_projector_cards_keep_local_labels_and_focus[standard]" time="0.570"><failure message="assert (False)&#10; +  where False = &lt;cephvr.gui.projector_reference.ProjectorReference object at 0x00000231340BAC20&gt;.editing">app = &lt;PyQt6.QtWidgets.QApplication object at 0x00000231248E56C0&gt;
+preset = 'standard'
+
+    @pytest.mark.parametrize("preset", ["standard", "retro_console", "amber_phosphor"])
+    def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            RETRO_COLORS,
+            colors_for,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        if preset != "standard":
+            composer.setProperty("retroConsole", True)
+            composer.setProperty("retroPalette", preset)
+            colors = PHOSPHOR_COLORS if preset == "amber_phosphor" else RETRO_COLORS
+            composer.setStyleSheet(
+                retro_stylesheet(colors)
+                + (phosphor_stylesheet() if preset == "amber_phosphor" else "")
+            )
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        program = blank_program()
+        for face, kind in zip(
+            composer.screens, ("Image", "Texture", "Video", "Looming image"), strict=True
+        ):
+            program = add_stimulus(program, 0, kind, (face,))
+        composer.program = program
+        composer.refresh_rows()
+        composer.show()
+        composer.activateWindow()
+        assert QTest.qWaitForWindowExposed(composer)
+        try:
+            for width in (1400, 780, 520, 1400):
+                composer.resize(width, 1300)
+                app.processEvents()
+                for face in composer.screens:
+                    row = composer.rows[face]
+                    assert row.width() &lt;= width
+                    fields = [
+                        (title, control)
+                        for title, control in row.columns
+                        if control.isVisibleTo(row)
+                    ]
+                    for title, control in fields:
+                        point = control.mapTo(row, QPoint())
+                        assert point.x() &gt;= 0 and point.x() + control.width() &lt;= row.width()
+                        if title and title != "Layer":
+                            heading = row.headings[row.columns.index((title, control))]
+                            assert heading.text() == title and heading.isVisibleTo(row)
+                    controls = dict(fields)
+                    asset = controls["Asset"]
+                    if not row.narrow:
+                        values = [
+                            control
+                            for title, control in fields
+                            if title not in ("", "Layer", "Stimulus", "Asset")
+                        ]
+                        assert values[0].mapTo(row, QPoint()).x() == row.stimulus.x()
+                        assert (
+                            values[-1].mapTo(row, QPoint()).x() + values[-1].width()
+                            == asset.mapTo(row, QPoint()).x() + asset.width()
+                        )
+                        assert (
+                            values[1].mapTo(row, QPoint()).x()
+                            == asset.mapTo(row, QPoint()).x()
+                        )
+                        assert row.caption.mapTo(row, QPoint()).y() == row.stimulus.y()
+                        assert row.layer.mapTo(row, QPoint()).y() == values[0].y()
+                    assert asset.x() + asset.width() &lt; row.actions_button.x()
+                    assert colors_for(row).projector != colors_for(row).console
+                front, left = composer.rows["Front"], composer.rows["Left"]
+                front.stimulus.setFocus()
+                app.processEvents()
+&gt;               assert front.editing and not left.editing
+E               assert (False)
+E                +  where False = &lt;cephvr.gui.projector_reference.ProjectorReference object at 0x00000231340BAC20&gt;.editing
+
+tests\gui\test_dashboard.py:11460: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_mixed_projector_cards_keep_local_labels_and_focus[retro_console]" time="0.328" /><testcase classname="tests.gui.test_dashboard" name="test_mixed_projector_cards_keep_local_labels_and_focus[amber_phosphor]" time="0.311" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[standard]" time="0.959" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[retro_console]" time="1.625" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[amber_phosphor]" time="1.655" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-False]" time="0.068" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-True]" time="0.057" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-False]" time="0.116" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-True]" time="0.121" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[None-Combined]" time="0.069" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[None-Per-projector]" time="0.056" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Combined]" time="0.080" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Per-projector]" time="0.067" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[retro_console-Combined]" time="0.078" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[retro_console-Per-projector]" time="0.065" /></testsuite></testsuites>

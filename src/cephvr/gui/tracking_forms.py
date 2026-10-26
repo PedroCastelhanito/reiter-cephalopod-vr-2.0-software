@@ -79,7 +79,7 @@ class TrackingForms:
         self.method_pages.append(self.model)
         pose_layout.addWidget(self.model)
         manual, manual_layout = column()
-        self.manual_status = label("0 / 3 mantle landmarks")
+        self.manual_status = label("0 / 3 mantle landmarks", wrap=True)
         self.set_manual = button("Set landmarks")
         row = QHBoxLayout()
         row.addWidget(self.set_manual)

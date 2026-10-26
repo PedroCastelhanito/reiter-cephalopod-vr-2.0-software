@@ -100,17 +100,27 @@ class PreviewWorkspace(QWidget):
         self.video_choices.addWidget(self.video_toggle)
         self.video_choices.addStretch(1)
         self.advanced_row = QWidget()
-        self.advanced_choices = QHBoxLayout(self.advanced_row)
+        self.advanced_choices = QGridLayout(self.advanced_row)
         self.advanced_choices.setContentsMargins(0, 0, 0, 0)
-        self.advanced_choices.setSpacing(6)
-        self.advanced_choices.addWidget(self.advanced_toggle)
+        self.advanced_choices.setHorizontalSpacing(6)
+        self.advanced_choices.setVerticalSpacing(6)
+        self.advanced_controls = QWidget(self.advanced_row)
+        self.advanced_control_row = QHBoxLayout(self.advanced_controls)
+        self.advanced_control_row.setContentsMargins(0, 0, 0, 0)
+        self.advanced_control_row.setSpacing(6)
+        self.advanced_control_row.addWidget(self.advanced_toggle)
         self.plots_toggle = QPushButton("Plots")
         self.plots_toggle.setCheckable(True)
         self.plots_toggle.setChecked(True)
         self.plots_toggle.setProperty("role", "preview-choice")
         self.plots_toggle.setToolTip("Show plots for the selected projectors")
-        self.advanced_choices.addWidget(self.plots_toggle)
-        self.advanced_choices.addStretch(1)
+        self.advanced_control_row.addWidget(self.plots_toggle)
+        self.projector_row = QWidget(self.advanced_row)
+        self.projector_choices = QHBoxLayout(self.projector_row)
+        self.projector_choices.setContentsMargins(0, 0, 0, 0)
+        self.projector_choices.setSpacing(6)
+        self.advanced_choices.addWidget(self.advanced_controls, 0, 0)
+        self.advanced_choices.addWidget(self.projector_row, 0, 1)
         self.toolbar.addWidget(self.video_row, 0, 1)
         self.toolbar.addWidget(self.advanced_row, 0, 2)
         self.projector_controls: dict[str, QPushButton] = {}
@@ -199,17 +209,60 @@ class PreviewWorkspace(QWidget):
 
     def reflow_toolbar(self) -> None:
         """Wrap whole groups using their styled widths, without hiding switches."""
+        advanced_width = self.reflow_advanced_choices()
         required = (
             self.toolbar_title.sizeHint().width()
             + (0 if self.video_row.isHidden() else self.video_row.sizeHint().width())
-            + self.advanced_row.sizeHint().width()
+            + advanced_width
             + 3 * self.toolbar.horizontalSpacing()
         )
-        row, column = (1, 1) if self.width() < required else (0, 2)
+        wrapped = self.width() < required
+        row, column, column_span = (1, 0, 4) if wrapped else (0, 2, 1)
         index = self.toolbar.indexOf(self.advanced_row)
-        if self.toolbar.getItemPosition(index)[:2] != (row, column):
+        if self.toolbar.getItemPosition(index) != (row, column, 1, column_span):
             self.toolbar.removeWidget(self.advanced_row)
-            self.toolbar.addWidget(self.advanced_row, row, column)
+            self.toolbar.addWidget(self.advanced_row, row, column, 1, column_span)
+
+    def reflow_advanced_choices(self) -> int:
+        """Keep Advanced, Stimulus and Plots together; wrap projectors when needed."""
+        controls = (
+            self.advanced_toggle,
+            self.controls.get("stimulus"),
+            self.plots_toggle,
+            *self.projector_controls.values(),
+        )
+        for control in controls:
+            if control is None:
+                continue
+            control.ensurePolished()
+        projectors_visible = any(
+            not control.isHidden() for control in self.projector_controls.values()
+        )
+        natural_width = self.advanced_controls.sizeHint().width()
+        if projectors_visible:
+            natural_width += (
+                self.advanced_choices.horizontalSpacing()
+                + self.projector_row.sizeHint().width()
+            )
+        margins = self.advanced_choices.contentsMargins()
+        available = max(
+            1,
+            self.toggle_bar.width() - margins.left() - margins.right(),
+        )
+        wrapped = projectors_visible and natural_width > available
+        row, column, column_span = (1, 0, 2) if wrapped else (0, 1, 1)
+        index = self.advanced_choices.indexOf(self.projector_row)
+        if self.advanced_choices.getItemPosition(index) != (
+            row,
+            column,
+            1,
+            column_span,
+        ):
+            self.advanced_choices.removeWidget(self.projector_row)
+            self.advanced_choices.addWidget(
+                self.projector_row, row, column, 1, column_span
+            )
+        return natural_width
 
     def showEvent(self, event: QShowEvent | None) -> None:
         super().showEvent(event)
@@ -349,7 +402,7 @@ class PreviewWorkspace(QWidget):
                 row.addWidget(hint)
                 layout.addLayout(row)
                 if view.key == "stimulus":
-                    self.advanced_choices.insertWidget(1, control)
+                    self.advanced_control_row.insertWidget(1, control)
                 else:
                     self.video_choices.insertWidget(
                         self.video_choices.count() - 1, control
@@ -576,9 +629,7 @@ class PreviewWorkspace(QWidget):
             control.toggled.connect(
                 lambda visible, key=name: self.set_projector_visible(key, visible)
             )
-            self.advanced_choices.insertWidget(
-                self.advanced_choices.count() - 1, control
-            )
+            self.projector_choices.addWidget(control)
             control.setVisible(control.isEnabled())
             self.projector_controls[name] = control
         self.reflow_toolbar()

@@ -1,0 +1,7 @@
+{
+  "src/cephvr/gui/consoles.py": "c2d15430c5f25c4647c34068bb3353e1b6de7df746967698289946c46a37d4f7",
+  "src/cephvr/gui/previews.py": "40f251ca1db4d011a6c43ceadae9ec9f0ac03b03d8fd3d487f4af7ec6dcc199d",
+  "src/cephvr/gui/splash.py": "5139372836ab9f21ed1f573d3233e79d5d2cb2c41a124bc817d4821646b1b7df",
+  "src/cephvr/gui/tracking_forms.py": "8eb195e3738df2688ce01580ec2fc1d4937b7227fa230fe14063fa342b05640f",
+  "tests/gui/test_dashboard.py": "5a6c702269f11600db8060945c498034f83cf9b67dd099b594cd5e5bd6f9d2a5"
+}

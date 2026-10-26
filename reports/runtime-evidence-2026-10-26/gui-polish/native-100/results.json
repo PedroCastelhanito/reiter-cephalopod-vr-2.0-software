@@ -1,0 +1,88 @@
+{
+  "platform": "windows",
+  "scale_override": null,
+  "screens": [
+    {
+      "name": "DELL S2721HS",
+      "geometry": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "logical_dpi": 96.0,
+      "device_pixel_ratio": 1.0
+    },
+    {
+      "name": "ITE6801  (1)",
+      "geometry": [
+        -2560,
+        0,
+        1280,
+        720
+      ],
+      "logical_dpi": 96.0,
+      "device_pixel_ratio": 1.0
+    },
+    {
+      "name": "ITE6801  (2)",
+      "geometry": [
+        -2280,
+        720,
+        720,
+        1280
+      ],
+      "logical_dpi": 96.0,
+      "device_pixel_ratio": 1.0
+    },
+    {
+      "name": "ITE6801  (3)",
+      "geometry": [
+        -1280,
+        0,
+        1280,
+        720
+      ],
+      "logical_dpi": 96.0,
+      "device_pixel_ratio": 1.0
+    },
+    {
+      "name": "ITE6801  (4)",
+      "geometry": [
+        -3840,
+        0,
+        1280,
+        720
+      ],
+      "logical_dpi": 96.0,
+      "device_pixel_ratio": 1.0
+    }
+  ],
+  "results": [
+    {
+      "style": "standard",
+      "maximized": true,
+      "splash_closed": true,
+      "splash_timer_stopped": true,
+      "window_opacity": 1.0,
+      "controller_connected": false
+    },
+    {
+      "style": "retro_console",
+      "maximized": true,
+      "splash_closed": true,
+      "splash_timer_stopped": true,
+      "window_opacity": 1.0,
+      "controller_connected": false
+    },
+    {
+      "style": "amber_phosphor",
+      "maximized": true,
+      "splash_closed": true,
+      "splash_timer_stopped": true,
+      "window_opacity": 1.0,
+      "controller_connected": false
+    }
+  ],
+  "scope": "Native Qt presentation only; no managed launch, controller, device or experiment operations."
+}

@@ -1,0 +1,489 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 26%]
+........................................................................ [ 33%]
+........................................................................ [ 40%]
+........................................................................ [ 46%]
+........................................................................ [ 53%]
+........................................................................ [ 60%]
+........................................................................ [ 67%]
+...................................F.F..FF.............................. [ 73%]
+........................................................................ [ 80%]
+.......................F.F.F.F.F........................................ [ 87%]
+........................................................................ [ 93%]
+..............................................F..................        [100%]
+================================== FAILURES ===================================
+_ test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-False] _
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001830B673D90>, ready = False
+mode = 'Combined'
+
+    
+    
+    @pytest.mark.parametrize("ready", [False, True])
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready, mode):
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        workspace = PreviewWorkspace(None)
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in workspace.stimulus_area.projectors:
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        workspace.timeline.set_program(program, "", "Motion")
+        workspace.stimulus_area.mode.setCurrentText(mode)
+        workspace.show()
+        workspace.advanced_toggle.setChecked(True)
+        views = (
+            PreviewView("camera", "Behavior cam", active=True, available=ready),
+            PreviewView("stimulus", "Visual stimulus", active=True, available=ready),
+        )
+        workspace.apply_views(views, allowed=True)
+        assert all(f.isHidden() for f in workspace.stimulus_area.frames.values())
+        assert workspace.timeline.active_sources == {"Left", "Front", "Right", "Bottom"}
+        assert (
+            not workspace.timeline.motion_section.isHidden()
+            if mode == "Combined"
+            else all(not c.isHidden() for c in workspace.timeline.projector_cards.values())
+>       )
+E       assert <PyQt6.QtWidgets.QWidget object at 0x0000018312A7DA20> is <PyQt6.QtWidgets.QPushButton object at 0x0000018315F18040>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x0000018312A7DA20> = <built-in method widget of QWidgetItem object at 0x0000018315F1A0E0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x0000018315F1A0E0> = <PyQt6.QtWidgets.QWidgetItem object at 0x0000018315F1A0E0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x0000018315F1A0E0> = <built-in method itemAt of QGridLayout object at 0x0000018313CD4CA0>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x0000018313CD4CA0> = <PyQt6.QtWidgets.QGridLayout object at 0x0000018313CD4CA0>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x0000018313CD4CA0> = <cephvr.gui.previews.PreviewWorkspace object at 0x0000018313C50AF0>.advanced_choices
+
+tests\gui\test_dashboard.py:22412: AssertionError
+_ test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-True] _
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001830B673D90>, ready = True
+mode = 'Combined'
+
+    
+    
+    @pytest.mark.parametrize("ready", [False, True])
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready, mode):
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        workspace = PreviewWorkspace(None)
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in workspace.stimulus_area.projectors:
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        workspace.timeline.set_program(program, "", "Motion")
+        workspace.stimulus_area.mode.setCurrentText(mode)
+        workspace.show()
+        workspace.advanced_toggle.setChecked(True)
+        views = (
+            PreviewView("camera", "Behavior cam", active=True, available=ready),
+            PreviewView("stimulus", "Visual stimulus", active=True, available=ready),
+        )
+        workspace.apply_views(views, allowed=True)
+        assert all(f.isHidden() for f in workspace.stimulus_area.frames.values())
+        assert workspace.timeline.active_sources == {"Left", "Front", "Right", "Bottom"}
+        assert (
+            not workspace.timeline.motion_section.isHidden()
+            if mode == "Combined"
+            else all(not c.isHidden() for c in workspace.timeline.projector_cards.values())
+>       )
+E       assert <PyQt6.QtWidgets.QWidget object at 0x0000018315F12EF0> is <PyQt6.QtWidgets.QPushButton object at 0x0000018313C9A3B0>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x0000018315F12EF0> = <built-in method widget of QWidgetItem object at 0x0000018313C9A9E0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x0000018313C9A9E0> = <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313C9A9E0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313C9A9E0> = <built-in method itemAt of QGridLayout object at 0x0000018315F13370>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x0000018315F13370> = <PyQt6.QtWidgets.QGridLayout object at 0x0000018315F13370>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x0000018315F13370> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001831015BAC0>.advanced_choices
+
+tests\gui\test_dashboard.py:22412: AssertionError
+_ test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-False] _
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001830B673D90>, ready = False
+mode = 'Per-projector'
+
+    
+    
+    @pytest.mark.parametrize("ready", [False, True])
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready, mode):
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        workspace = PreviewWorkspace(None)
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in workspace.stimulus_area.projectors:
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        workspace.timeline.set_program(program, "", "Motion")
+        workspace.stimulus_area.mode.setCurrentText(mode)
+        workspace.show()
+        workspace.advanced_toggle.setChecked(True)
+        views = (
+            PreviewView("camera", "Behavior cam", active=True, available=ready),
+            PreviewView("stimulus", "Visual stimulus", active=True, available=ready),
+        )
+        workspace.apply_views(views, allowed=True)
+        assert all(f.isHidden() for f in workspace.stimulus_area.frames.values())
+        assert workspace.timeline.active_sources == {"Left", "Front", "Right", "Bottom"}
+        assert (
+            not workspace.timeline.motion_section.isHidden()
+            if mode == "Combined"
+            else all(not c.isHidden() for c in workspace.timeline.projector_cards.values())
+>       )
+E       assert <PyQt6.QtWidgets.QWidget object at 0x0000018313D27760> is <PyQt6.QtWidgets.QPushButton object at 0x0000018313C53130>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x0000018313D27760> = <built-in method widget of QWidgetItem object at 0x0000018313C525F0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x0000018313C525F0> = <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313C525F0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313C525F0> = <built-in method itemAt of QGridLayout object at 0x0000018313D27D90>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x0000018313D27D90> = <PyQt6.QtWidgets.QGridLayout object at 0x0000018313D27D90>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x0000018313D27D90> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001831015BB50>.advanced_choices
+
+tests\gui\test_dashboard.py:22412: AssertionError
+_ test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-True] _
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001830B673D90>, ready = True
+mode = 'Per-projector'
+
+    
+    
+    @pytest.mark.parametrize("ready", [False, True])
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready, mode):
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        workspace = PreviewWorkspace(None)
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        program = blank_program()
+        for face in workspace.stimulus_area.projectors:
+            program = add_stimulus(program, 0, "Sine grating", (face,))
+        workspace.timeline.set_program(program, "", "Motion")
+        workspace.stimulus_area.mode.setCurrentText(mode)
+        workspace.show()
+        workspace.advanced_toggle.setChecked(True)
+        views = (
+            PreviewView("camera", "Behavior cam", active=True, available=ready),
+            PreviewView("stimulus", "Visual stimulus", active=True, available=ready),
+        )
+        workspace.apply_views(views, allowed=True)
+        assert all(f.isHidden() for f in workspace.stimulus_area.frames.values())
+        assert workspace.timeline.active_sources == {"Left", "Front", "Right", "Bottom"}
+        assert (
+            not workspace.timeline.motion_section.isHidden()
+            if mode == "Combined"
+            else all(not c.isHidden() for c in workspace.timeline.projector_cards.values())
+>       )
+E       assert <PyQt6.QtWidgets.QWidget object at 0x0000018313C51240> is <PyQt6.QtWidgets.QPushButton object at 0x0000018313D06950>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x0000018313C51240> = <built-in method widget of QWidgetItem object at 0x0000018313D067A0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x0000018313D067A0> = <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313D067A0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x0000018313D067A0> = <built-in method itemAt of QGridLayout object at 0x0000018313C51D80>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x0000018313C51D80> = <PyQt6.QtWidgets.QGridLayout object at 0x0000018313C51D80>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x0000018313C51D80> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001830B68D480>.advanced_choices
+
+tests\gui\test_dashboard.py:22412: AssertionError
+_______ test_advanced_content_and_projector_filters[None-Per-projector] _______
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A5291D7BE0>
+mode = 'Per-projector', style = None
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001A5291C45E0> is <PyQt6.QtWidgets.QPushButton object at 0x000001A5324D0B80>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001A5291C45E0> = <built-in method widget of QWidgetItem object at 0x000001A53252B010>()
+E        +    where <built-in method widget of QWidgetItem object at 0x000001A53252B010> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001A53252B010>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001A53252B010> = <built-in method itemAt of QGridLayout object at 0x000001A5291C4AF0>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001A5291C4AF0> = <PyQt6.QtWidgets.QGridLayout object at 0x000001A5291C4AF0>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001A5291C4AF0> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001A532529A20>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+____ test_advanced_content_and_projector_filters[amber_phosphor-Combined] _____
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A5291D7BE0>
+mode = 'Combined', style = 'amber_phosphor'
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001A532B70A60> is <PyQt6.QtWidgets.QPushButton object at 0x000001A532B72440>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001A532B70A60> = <built-in method widget of QWidgetItem object at 0x000001A532B72320>()
+E        +    where <built-in method widget of QWidgetItem object at 0x000001A532B72320> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001A532B72320>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001A532B72320> = <built-in method itemAt of QGridLayout object at 0x000001A532B73E20>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001A532B73E20> = <PyQt6.QtWidgets.QGridLayout object at 0x000001A532B73E20>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001A532B73E20> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001A532AFF910>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+__ test_advanced_content_and_projector_filters[amber_phosphor-Per-projector] __
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A5291D7BE0>
+mode = 'Per-projector', style = 'amber_phosphor'
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001A532B21090> is <PyQt6.QtWidgets.QPushButton object at 0x000001A532B21D80>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001A532B21090> = <built-in method widget of QWidgetItem object at 0x000001A532B23370>()
+E        +    where <built-in method widget of QWidgetItem object at 0x000001A532B23370> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001A532B23370>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001A532B23370> = <built-in method itemAt of QGridLayout object at 0x000001A532B20040>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001A532B20040> = <PyQt6.QtWidgets.QGridLayout object at 0x000001A532B20040>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001A532B20040> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001A532B71B40>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+_____ test_advanced_content_and_projector_filters[retro_console-Combined] _____
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A5291D7BE0>
+mode = 'Combined', style = 'retro_console'
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001A53251E170> is <PyQt6.QtWidgets.QPushButton object at 0x000001A53251C670>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001A53251E170> = <built-in method widget of QWidgetItem object at 0x000001A53251C4C0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x000001A53251C4C0> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001A53251C4C0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001A53251C4C0> = <built-in method itemAt of QGridLayout object at 0x000001A53251C310>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001A53251C310> = <PyQt6.QtWidgets.QGridLayout object at 0x000001A53251C310>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001A53251C310> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001A532B22170>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+__ test_advanced_content_and_projector_filters[retro_console-Per-projector] ___
+[gw0] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001A5291D7BE0>
+mode = 'Per-projector', style = 'retro_console'
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001A532ABD240> is <PyQt6.QtWidgets.QPushButton object at 0x000001A5325A2710>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001A532ABD240> = <built-in method widget of QWidgetItem object at 0x000001A5325A3B50>()
+E        +    where <built-in method widget of QWidgetItem object at 0x000001A5325A3B50> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001A5325A3B50>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001A5325A3B50> = <built-in method itemAt of QGridLayout object at 0x000001A532ABCF70>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001A532ABCF70> = <PyQt6.QtWidgets.QGridLayout object at 0x000001A532ABCF70>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001A532ABCF70> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001A532B28A60>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+_________ test_advanced_content_and_projector_filters[None-Combined] __________
+[gw3] win32 -- Python 3.11.15 C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001830B673D90>
+mode = 'Combined', style = None
+
+        composer.close()
+    
+    
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+>       app.processEvents()
+E       assert <PyQt6.QtWidgets.QWidget object at 0x000001831549B520> is <PyQt6.QtWidgets.QPushButton object at 0x000001831549CA60>
+E        +  where <PyQt6.QtWidgets.QWidget object at 0x000001831549B520> = <built-in method widget of QWidgetItem object at 0x00000183082716C0>()
+E        +    where <built-in method widget of QWidgetItem object at 0x00000183082716C0> = <PyQt6.QtWidgets.QWidgetItem object at 0x00000183082716C0>.widget
+E        +      where <PyQt6.QtWidgets.QWidgetItem object at 0x00000183082716C0> = <built-in method itemAt of QGridLayout object at 0x000001831549AD40>(1)
+E        +        where <built-in method itemAt of QGridLayout object at 0x000001831549AD40> = <PyQt6.QtWidgets.QGridLayout object at 0x000001831549AD40>.itemAt
+E        +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001831549AD40> = <cephvr.gui.previews.PreviewWorkspace object at 0x0000018313CDF370>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-False]
+FAILED tests/gui/test_dashboard.py::test_stimulus_preview_belongs_to_advanced_independently_of_video[Combined-True]
+FAILED tests/gui/test_dashboard.py::test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-False]
+FAILED tests/gui/test_dashboard.py::test_stimulus_preview_belongs_to_advanced_independently_of_video[Per-projector-True]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[None-Per-projector]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[amber_phosphor-Combined]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[amber_phosphor-Per-projector]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[retro_console-Combined]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[retro_console-Per-projector]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[None-Combined]
+10 failed, 1063 passed in 261.63s (0:04:21)

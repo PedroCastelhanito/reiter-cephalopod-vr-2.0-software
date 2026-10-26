@@ -49,6 +49,7 @@ class StartupSplash(QSplashScreen):
         )
         self.crt = self.style_name in RETRO_PALETTES
         super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         load_terminal_font()
         self.setWindowTitle("CephVR2.0 — Initializing")
         self.setAccessibleName("CephVR2.0 Initializing")
@@ -65,11 +66,14 @@ class StartupSplash(QSplashScreen):
         ratio = self.devicePixelRatioF()
         pixmap = QPixmap(round(600 * ratio), round(340 * ratio))
         pixmap.setDevicePixelRatio(ratio)
-        pixmap.fill(QColor(self.colors.window))
+        pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        panel = QPainterPath()
+        panel.addRoundedRect(QRectF(0.5, 0.5, 599, 339), 14, 14)
+        painter.fillPath(panel, QColor(self.colors.window))
         painter.setPen(QColor(self.colors.border))
-        painter.drawRect(0, 0, 599, 339)
+        painter.drawPath(panel)
         ink = (
             self.colors.focus
             if self.style_name == "amber_phosphor"

@@ -11413,6 +11413,9 @@ def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
     composer.program = program
     composer.refresh_rows()
     composer.show()
+    composer.activateWindow()
+    assert QTest.qWaitForWindowExposed(composer)
+    assert QTest.qWaitForWindowActive(composer)
     try:
         for width in (1400, 780, 520, 1400):
             composer.resize(width, 1300)
@@ -17776,7 +17779,8 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
     editor.add_trial()
     assert editor.index == 2
     app.processEvents()
-    rect = trials.visualItemRect(trials.item(0))
+    rect = trials.visualItemRect(trials.item(0)).intersected(trials.viewport().rect())
+    assert not rect.isEmpty()
     _move_mouse_and_wait_for_native_event(trials.viewport(), rect.center(), app)
     remove = next(
         c for c in trials.removers if c.isVisible() and c.property("trial_row") == 0
@@ -18481,15 +18485,25 @@ def test_phosphor_log_wraps_for_display_only(app: QApplication) -> None:
     host.setProperty("retroPalette", "amber_phosphor")
     log = LogConsole()
     log.setParent(host)
-    log.resize(320, 200)
-    message = "Local review draft restored; no controller configuration applied."
-    log.appendPlainText(message)
+    log.resize(800, 200)
     log.set_entry_prompts(True)
+    advance = log.fontMetrics().horizontalAdvance(" ")
+    if log.viewport().width() // advance - 1 <= log._wrap_indent + 8:
+        log.resize((log._wrap_indent + 20) * advance, 200)
+    columns = log.viewport().width() // advance - 1
+    message = "Local review draft restored; no controller configuration applied."
+    while len(message) <= columns:
+        message += " no controller configuration applied."
+    log.appendPlainText(f"{message}\n{message}")
     text = log.document().firstBlock().text()
     assert LINE_SEPARATOR in text
+    assert LINE_SEPARATOR in log.document().lastBlock().text()
     indent = log._wrap_indent
     assert indent > 0
     assert all(line.startswith(" " * indent) for line in text.split(LINE_SEPARATOR)[1:])
+    log.appendPlainText(f"Another {message}\n{message}")
+    assert LINE_SEPARATOR in log.document().findBlockByNumber(2).text()
+    assert LINE_SEPARATOR in log.document().lastBlock().text()
     log.selectAll()
     copied = log.createMimeDataFromSelection()
     assert copied is not None and copied.text().endswith(message)
@@ -18497,6 +18511,119 @@ def test_phosphor_log_wraps_for_display_only(app: QApplication) -> None:
     host.setProperty("retroPalette", "retro_console")
     log.set_entry_prompts(True)
     assert LINE_SEPARATOR not in log.document().firstBlock().text()
+    host.deleteLater()
+
+
+def test_phosphor_log_wraps_terminal_result_suffix_and_preserves_row(
+    app: QApplication,
+) -> None:
+    from math import floor
+
+    from PyQt6.QtGui import QFontMetricsF
+
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.log_format import terminal_body, terminal_row
+    from cephvr.gui.log_wrap import LINE_SEPARATOR, unwrap_row
+
+    host = QWidget()
+    host.setProperty("retroConsole", True)
+    host.setProperty("retroPalette", "amber_phosphor")
+    log = LogConsole()
+    log.setParent(host)
+    log.resize(800, 200)
+    log.set_entry_prompts(True)
+    advance = QFontMetricsF(log.font(), log).horizontalAdvance(" ")
+    margin = log.document().documentMargin()
+    if floor((log.viewport().width() - 2 * margin) / advance) <= log._wrap_indent + 8:
+        log.resize((log._wrap_indent + 20) * int(advance), 200)
+    columns = floor((log.viewport().width() - 2 * margin) / advance)
+    message = "Setup · word"
+    while len(terminal_row(terminal_body(message))) + len(" [Unconfirmed]") <= columns:
+        message += " word"
+    assert len(terminal_row(terminal_body(message))) <= columns
+    assert len(terminal_row(terminal_body(message)) + " [Unconfirmed]") > columns
+
+    key = ("setup",)
+    log.action_entry(key, message)
+    block = log.document().lastBlock()
+    original = block.text()
+    assert LINE_SEPARATOR not in original
+    log.action_entry(key, "", "Unconfirmed", "completion not observed")
+
+    assert log.document().lastBlock() == block
+    assert LINE_SEPARATOR in block.text()
+    assert block.userData().details == "completion not observed"
+    indent = log._wrap_indent
+    assert all(
+        line.startswith(" " * indent) for line in block.text().split(LINE_SEPARATOR)[1:]
+    )
+    log.selectAll()
+    copied = log.createMimeDataFromSelection()
+    assert copied is not None
+    assert copied.text().endswith(unwrap_row(block.text(), indent))
+    assert LINE_SEPARATOR not in copied.text()
+    assert unwrap_row(block.text(), indent) == original + " [Unconfirmed]"
+    host.deleteLater()
+
+
+def test_phosphor_wrap_uses_fractional_font_metrics_without_soft_wrap(
+    app: QApplication,
+) -> None:
+    from math import floor
+
+    from PyQt6.QtGui import QFont, QFontMetricsF
+
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.log_format import terminal_body, terminal_row
+    from cephvr.gui.log_wrap import LINE_SEPARATOR, wrap_row
+    from cephvr.gui.theme import load_terminal_font
+
+    host = QWidget()
+    host.setProperty("retroConsole", True)
+    host.setProperty("retroPalette", "amber_phosphor")
+    log = LogConsole()
+    log.setParent(host)
+    load_terminal_font()
+    font = log.font()
+    font.setFamily("IBM Plex Mono")
+    font.setPointSizeF(10.5)
+    font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 0.4)
+    log.setFont(font)
+    log.set_entry_prompts(True)
+    advance = QFontMetricsF(log.font(), log).horizontalAdvance(" ")
+    assert advance != round(advance)
+
+    legacy_columns = actual_columns = 0
+    for width in range(350, 601):
+        log.resize(width, 200)
+        viewport = log.viewport()
+        document = log.document()
+        assert document is not None
+        available = viewport.width() - 2 * document.documentMargin()
+        actual_columns = floor(available / advance)
+        legacy_columns = (
+            viewport.width() // log.fontMetrics().horizontalAdvance(" ") - 1
+        )
+        if legacy_columns > actual_columns > log._wrap_indent + 8:
+            break
+    assert legacy_columns > actual_columns > log._wrap_indent + 8
+
+    message = "Setup · word"
+    legacy_overflows = False
+    for _ in range(100):
+        row = terminal_row(terminal_body(message))
+        legacy = wrap_row(row, legacy_columns, log._wrap_indent)
+        legacy_overflows = any(
+            len(line) * advance > available for line in legacy.split(LINE_SEPARATOR)
+        )
+        if legacy_overflows:
+            break
+        message += " word"
+    assert legacy_overflows
+    log.action_entry(("fractional",), message)
+    app.processEvents()
+    block = log.document().lastBlock()
+    assert block.layout().lineCount() == block.text().count(LINE_SEPARATOR) + 1
     host.deleteLater()
 
 
@@ -20598,6 +20725,8 @@ def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
     second.body.addWidget(outside)
     host.resize(640, 400)
     host.show()
+    host.activateWindow()
+    assert QTest.qWaitForWindowExposed(host)
     try:
         for cancel in (False, True):
             owner = choice if popup_kind == "combo" else menu_button
@@ -20610,6 +20739,7 @@ def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
             else:
                 menu.popup(menu_button.mapToGlobal(QPoint(0, menu_button.height())))
                 popup = menu
+            assert QTest.qWaitForWindowExposed(popup.window())
             app.processEvents()
             assert first.editing and not second.editing
             assert first.editing_label.text() == "Editing"
@@ -20643,6 +20773,8 @@ def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
                 == colors_for(first).projector
             )
     finally:
+        choice.hidePopup()
+        menu.close()
         host.close()
         host.deleteLater()
         app.processEvents()
@@ -22115,13 +22247,40 @@ def test_preview_toolbar_wraps_without_hiding_controls(window, app, style, monke
         workspace.plots_toggle,
         *workspace.projector_controls.values(),
     ]
-    for width, expected_row in ((1920, 0), (900, 1), (1920, 0)):
+    for width, expected_row in (
+        (1920, 0),
+        (900, 1),
+        (1920, 0),
+        (720, 1),
+        (1920, 0),
+    ):
         window.resize(width, 1032)
         for _ in range(3):
             app.processEvents()
         index = workspace.toolbar.indexOf(workspace.advanced_row)
         assert workspace.toolbar.getItemPosition(index)[0] == expected_row
-        assert workspace.toggle_bar.height() <= (48 if expected_row == 0 else 80)
+        max_height = 48 if expected_row == 0 else 112 if width == 720 else 80
+        assert workspace.toggle_bar.height() <= max_height
+        if width == 720:
+            assert (
+                workspace.advanced_control_row.indexOf(workspace.controls["stimulus"])
+                >= 0
+            )
+            assert workspace.advanced_control_row.indexOf(workspace.plots_toggle) >= 0
+            assert (
+                workspace.advanced_choices.getItemPosition(
+                    workspace.advanced_choices.indexOf(workspace.projector_row)
+                )[0]
+                == 1
+            )
+            assert workspace.projector_choices.count() == 4
+        else:
+            assert (
+                workspace.advanced_choices.getItemPosition(
+                    workspace.advanced_choices.indexOf(workspace.projector_row)
+                )[0]
+                == 0
+            )
         for control in controls:
             assert control.isVisible()
             assert control.width() >= control.sizeHint().width()
@@ -22151,6 +22310,12 @@ def test_preview_toolbar_wraps_without_hiding_controls(window, app, style, monke
     assert all(c.isHidden() for c in workspace.projector_controls.values())
     workspace.advanced_toggle.setChecked(True)
     assert all(not c.isHidden() for c in workspace.projector_controls.values())
+    assert (
+        workspace.advanced_choices.getItemPosition(
+            workspace.advanced_choices.indexOf(workspace.projector_row)
+        )[0]
+        == 0
+    )
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
@@ -22247,7 +22412,7 @@ def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready,
         else all(not c.isHidden() for c in workspace.timeline.projector_cards.values())
     )
     stimulus = workspace.controls["stimulus"]
-    assert workspace.advanced_choices.itemAt(1).widget() is stimulus
+    assert workspace.advanced_control_row.itemAt(1).widget() is stimulus
     assert workspace.advanced_row.isAncestorOf(stimulus)
     assert workspace.video_row.isAncestorOf(workspace.controls["camera"])
     requests = []
@@ -22291,11 +22456,12 @@ def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready,
     workspace.advanced_toggle.click()
     assert stimulus.isEnabled() and not workspace.video_toggle.isChecked()
     workspace.rebuild_projector_controls()
-    assert workspace.advanced_choices.itemAt(1).widget() is stimulus
+    assert workspace.advanced_control_row.itemAt(1).widget() is stimulus
     workspace.apply_views((views[0],), allowed=True)
     workspace.apply_views(views, allowed=True)
     assert (
-        workspace.advanced_choices.itemAt(1).widget() is workspace.controls["stimulus"]
+        workspace.advanced_control_row.itemAt(1).widget()
+        is workspace.controls["stimulus"]
     )
     workspace.close()
     workspace.deleteLater()
@@ -24380,9 +24546,21 @@ def test_startup_splash_hides_construction_and_reveals_ready_window(
         assert not target.isVisible()
         assert shows == [splash]
         assert target.appearance.name == splash.style_name == name
+        splash_image = splash.pixmap().toImage()
+        assert splash_image.pixelColor(0, 0).alpha() == 0
         assert (
-            splash.pixmap().toImage().pixelColor(10, 10).name() == splash.colors.window
+            splash_image.pixelColor(
+                splash_image.width() // 2, splash_image.height() // 2
+            ).alpha()
+            == 255
         )
+        corner_size = round(16 * splash_image.devicePixelRatio())
+        assert any(
+            0 < splash_image.pixelColor(x, y).alpha() < 255
+            for y in range(corner_size)
+            for x in range(corner_size)
+        )
+        assert splash_image.pixelColor(10, 10).name() == splash.colors.window
         splash.reveal(target)
         assert paints and paints[0] == (0, True)
         assert target.windowOpacity() == 1
@@ -24688,10 +24866,12 @@ def test_advanced_content_and_projector_filters(app, mode, style):
     try:
         assert list(workspace.projector_controls) == ["Left", "Right"]
         assert (
-            workspace.advanced_choices.itemAt(1).widget()
+            workspace.advanced_control_row.itemAt(1).widget()
             is workspace.controls["stimulus"]
         )
-        assert workspace.advanced_choices.itemAt(2).widget() is workspace.plots_toggle
+        assert (
+            workspace.advanced_control_row.itemAt(2).widget() is workspace.plots_toggle
+        )
         workspace.plots_toggle.click()
         assert not timeline.advanced
         assert all(not f.isHidden() for f in area.frames.values())

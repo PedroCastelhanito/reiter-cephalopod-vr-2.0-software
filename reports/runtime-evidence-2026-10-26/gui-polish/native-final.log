@@ -1,0 +1,188 @@
+.F.........................................FF................            [100%]
+================================== FAILURES ===================================
+___ test_mixed_projector_cards_keep_local_labels_and_focus[amber_phosphor] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B417115630>
+preset = 'amber_phosphor'
+
+    @pytest.mark.parametrize("preset", ["standard", "retro_console", "amber_phosphor"])
+    def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            RETRO_COLORS,
+            colors_for,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        if preset != "standard":
+            composer.setProperty("retroConsole", True)
+            composer.setProperty("retroPalette", preset)
+            colors = PHOSPHOR_COLORS if preset == "amber_phosphor" else RETRO_COLORS
+            composer.setStyleSheet(
+                retro_stylesheet(colors)
+                + (phosphor_stylesheet() if preset == "amber_phosphor" else "")
+            )
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        program = blank_program()
+        for face, kind in zip(
+            composer.screens, ("Image", "Texture", "Video", "Looming image"), strict=True
+        ):
+            program = add_stimulus(program, 0, kind, (face,))
+        composer.program = program
+        composer.refresh_rows()
+        composer.show()
+        try:
+            for width in (1400, 780, 520, 1400):
+                composer.resize(width, 1300)
+                app.processEvents()
+                for face in composer.screens:
+                    row = composer.rows[face]
+                    assert row.width() <= width
+                    fields = [
+                        (title, control)
+                        for title, control in row.columns
+                        if control.isVisibleTo(row)
+                    ]
+                    for title, control in fields:
+                        point = control.mapTo(row, QPoint())
+                        assert point.x() >= 0 and point.x() + control.width() <= row.width()
+                        if title and title != "Layer":
+                            heading = row.headings[row.columns.index((title, control))]
+                            assert heading.text() == title and heading.isVisibleTo(row)
+                    controls = dict(fields)
+                    asset = controls["Asset"]
+                    if not row.narrow:
+                        values = [
+                            control
+                            for title, control in fields
+                            if title not in ("", "Layer", "Stimulus", "Asset")
+                        ]
+                        assert values[0].mapTo(row, QPoint()).x() == row.stimulus.x()
+                        assert (
+                            values[-1].mapTo(row, QPoint()).x() + values[-1].width()
+                            == asset.mapTo(row, QPoint()).x() + asset.width()
+                        )
+                        assert (
+                            values[1].mapTo(row, QPoint()).x()
+                            == asset.mapTo(row, QPoint()).x()
+                        )
+                        assert row.caption.mapTo(row, QPoint()).y() == row.stimulus.y()
+                        assert row.layer.mapTo(row, QPoint()).y() == values[0].y()
+                    assert asset.x() + asset.width() < row.actions_button.x()
+                    assert colors_for(row).projector != colors_for(row).console
+                front, left = composer.rows["Front"], composer.rows["Left"]
+                front.stimulus.setFocus()
+                app.processEvents()
+>               assert front.editing and not left.editing
+E               assert (False)
+E                +  where False = <cephvr.gui.projector_reference.ProjectorReference object at 0x000001B41977BE20>.editing
+
+tests\gui\test_dashboard.py:11458: AssertionError
+____ test_advanced_content_and_projector_filters[amber_phosphor-Combined] _____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B417115630>
+mode = 'Combined', style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+        app.processEvents()
+        try:
+            assert list(workspace.projector_controls) == ["Left", "Right"]
+>           assert (
+                workspace.advanced_choices.itemAt(1).widget()
+                is workspace.controls["stimulus"]
+            )
+E           assert <PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70> is <PyQt6.QtWidgets.QPushButton object at 0x000001B4231A7AC0>
+E            +  where <PyQt6.QtWidgets.QWidget object at 0x000001B4231A7C70> = <built-in method widget of QWidgetItem object at 0x000001B4231A5EA0>()
+E            +    where <built-in method widget of QWidgetItem object at 0x000001B4231A5EA0> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0>.widget
+E            +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001B4231A5EA0> = <built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0>(1)
+E            +        where <built-in method itemAt of QGridLayout object at 0x000001B43BEC51B0> = <PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0>.itemAt
+E            +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001B43BEC51B0> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BEC53F0>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+__ test_advanced_content_and_projector_filters[amber_phosphor-Per-projector] __
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B417115630>
+mode = 'Per-projector', style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+    @pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+    def test_advanced_content_and_projector_filters(app, mode, style):
+        from PyQt6.QtWidgets import QVBoxLayout
+    
+        from cephvr.gui.preview_placement import preview_window_placement
+        from cephvr.gui.previews import PreviewWorkspace
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+    
+        host = QWidget()
+        workspace = PreviewWorkspace(host)
+        workspace.setProperty("retroConsole", style is not None)
+        workspace.setProperty("retroPalette", style)
+        if style is not None:
+            workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+        QVBoxLayout(host).addWidget(workspace)
+        area, timeline = workspace.stimulus_area, workspace.timeline
+        area.set_projectors(("Left", "Right"))
+        workspace.advanced_toggle.setChecked(True)
+        timeline.set_program(review_program(), "", "Preview")
+        timeline.set_elapsed(1)
+        area.mode.setCurrentText(mode)
+        view = PreviewView(
+            "stimulus", "Visual stimulus", active=True, available=True, visible=True
+        )
+        workspace.apply_views((view,), allowed=True)
+        host.resize(1400, 900)
+        host.show()
+        app.processEvents()
+        try:
+            assert list(workspace.projector_controls) == ["Left", "Right"]
+>           assert (
+                workspace.advanced_choices.itemAt(1).widget()
+                is workspace.controls["stimulus"]
+            )
+E           assert <PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520> is <PyQt6.QtWidgets.QPushButton object at 0x000001B43BE1EA70>
+E            +  where <PyQt6.QtWidgets.QWidget object at 0x000001B43BE1F520> = <built-in method widget of QWidgetItem object at 0x000001B43BE1D000>()
+E            +    where <built-in method widget of QWidgetItem object at 0x000001B43BE1D000> = <PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000>.widget
+E            +      where <PyQt6.QtWidgets.QWidgetItem object at 0x000001B43BE1D000> = <built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0>(1)
+E            +        where <built-in method itemAt of QGridLayout object at 0x000001B43BE1C1F0> = <PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0>.itemAt
+E            +          where <PyQt6.QtWidgets.QGridLayout object at 0x000001B43BE1C1F0> = <cephvr.gui.previews.PreviewWorkspace object at 0x000001B43BE1E170>.advanced_choices
+
+tests\gui\test_dashboard.py:24864: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_mixed_projector_cards_keep_local_labels_and_focus[amber_phosphor]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[amber_phosphor-Combined]
+FAILED tests/gui/test_dashboard.py::test_advanced_content_and_projector_filters[amber_phosphor-Per-projector]
+3 failed, 58 passed, 899 deselected in 50.22s

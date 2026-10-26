@@ -421,6 +421,14 @@ No running-app restart, native/DPI or hardware acceptance claimed.
 
 ## Compact preview toolbar — 2026-10-26
 
+Current `preview-workspace-polish` repairs native clipping: wrapped Advanced uses
+the full toolbar width, with independent content/projector groups stacking at720px.
+Existing controls, signals, selected values and viewer ownership remain unchanged;
+wide/narrow/visibility round trips retain full control containment. Final source is
+reviewed under ARCH-002; the cohesive preview layout owner needs no new dependency.
+[Validation and retained failures](runtime-evidence-2026-10-26/gui-polish/context.json).
+Actual native-viewer placement in a recorded trial remains in the rig checklist.
+
 `advanced-preview-content-projectors` implements [G01](../docs/architecture/gui.md#g01)
 revision322/[V01](../docs/architecture/visual_stimulus.md#v01) revision35: independent
 Stimulus/Plots toggles precede configured available projector buttons. Combined is
@@ -512,6 +520,15 @@ advisories) and whitespace pass. [Method/provenance](runtime-evidence-2026-10-26
 Concurrent work preserved. No running-app restart or native/hardware acceptance.
 
 ## Shared configuration card style
+
+Oct26 `gui-style-consistency` review keeps the existing 14px Retro-family card
+and 15px page-title hierarchy: smaller section headings remain readable and
+consistent, without enlarging dense controls. Native three-style page/device/dialog
+captures and independent Amber page inspection are retained in
+[GUI polish evidence](runtime-evidence-2026-10-26/gui-polish/context.json).
+A native narrow-window check exposed a hidden Pose panel whose unwrapped manual
+landmark-status row forced the Tracking tab stack to 447px inside a 429px viewport;
+the existing status label now wraps. No Tracking processing behavior changes.
 
 `shared-gui-group-cards` applies the owner's broader styling request under
 [G02 revision152](../docs/architecture/gui.md#g02). Existing EditingCard surfaces
@@ -1239,6 +1256,26 @@ no hardware actions or runtime/rig acceptance claimed.
 
 ## Amber phosphor style review — 2026-10-23
 
+Oct26 current-source review: the historical Preview-controls/card-frame overlap is
+superseded by the current bare responsive toolbar. Native page/device/dialog
+captures show themed surfaces; popup/focus and hover checks pass after correcting
+test exposure and an out-of-viewport hover target, without weakening assertions.
+Two real Amber LogConsole defects are repaired: first/multiline appended rows now
+receive hanging indentation, and terminal suffixes rewrap the same retained row.
+Copied text, timestamp, diagnostics, block identity and scroll position are retained.
+Native150% inspection also exposed secondary Qt wrapping from rounded glyph widths;
+QFontMetricsF on the widget paint device and actual document margins correct it.
+The fixed capture has four explicit/four rendered lines, aligned under MESSAGE.
+Final source validation covers1073 GUI and71 native cases through full selections
+plus corrected-fixture replays (not one clean broad run); Ruff/format205 files,
+Win32mypy201 sources and boundaries760/zero pass. Two completed style tasks are
+closed; splash physical transitions, live viewer/recorded-trial layout and actual
+Setup/Start/Stop log/HUD acceptance remain explicitly open. No backend operation
+was performed; four original settings hashes are unchanged. Consoles504/previews644
+remain cohesive presentation owners despite size advisories.
+The older review below is historical, not the current unresolved-finding list.
+[GUI polish evidence](runtime-evidence-2026-10-26/gui-polish/context.json).
+
 Offscreen Amber render (macOS, Review window, 1680px) of every page, Devices/Projectors
 section, Tracking tab and Dashboard phase plus hover/focus/popup/dialog states; native
 Windows appearance not inspected. G02rev129 fixed: unthemed white tab scroll buttons
@@ -1328,6 +1365,15 @@ retain native acceptance.
 
 <a id="startup-splash-preview"></a>
 ## GUI startup splash — 2026-10-22
+
+Oct26 owner-requested rounded corners follow [G02 revision154](../docs/architecture/gui.md#g02):
+the native splash uses a transparent backing and antialiased rounded panel.
+Existing animation, style selection and transparent first-paint handoff remain;
+no startup deadline or backend ownership changes. The owning three-theme test
+checks transparent outer pixels, opaque interior and antialiased edges.
+Native isolated presentation passes on the operator display for all three styles;
+this does not establish managed controller-unavailable or physical monitor/DPI acceptance.
+[Current evidence](runtime-evidence-2026-10-26/gui-polish/context.json).
 
 Oct23 white-frame repair under [G02rev135](../docs/architecture/gui.md#g02):
 `StartupSplash.reveal` now maximizes with zero opacity, delivers native

@@ -1,0 +1,11 @@
+{
+  "source_sha256": {
+    "src/cephvr/gui/consoles.py": "4e60a47064b4e7032783f5cadc1db011ab791f13add463957b5f684ae07b1b25",
+    "src/cephvr/gui/log_wrap.py": "b697f8e5b8a04479f20a69043a234f7d519dda431dbe767e036e803906964e9b",
+    "src/cephvr/gui/previews.py": "0d8c4d873fc5c9bf7115f8ef9a0721bca0ad497e1b55b641112f23d0bd6cf09d",
+    "src/cephvr/gui/splash.py": "5139372836ab9f21ed1f573d3233e79d5d2cb2c41a124bc817d4821646b1b7df",
+    "src/cephvr/gui/tracking_forms.py": "8eb195e3738df2688ce01580ec2fc1d4937b7227fa230fe14063fa342b05640f"
+  },
+  "finding": "Native150 Tracking log continuation word assigned soft-wraps into timestamp column; images native-150 capture pre-fix appearance.",
+  "gui_regression": "1072 passed in 206.25s, before final narrow-toolbar/scaled-wrap refinements."
+}

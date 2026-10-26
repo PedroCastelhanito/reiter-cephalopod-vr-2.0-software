@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="59" time="50.178" timestamp="2026-10-26T16:13:52.597628+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_screen_dimension_cards_align_fields_and_keep_focus[amber_phosphor]" time="0.283" /><testcase classname="tests.gui.test_dashboard" name="test_mixed_projector_cards_keep_local_labels_and_focus[amber_phosphor]" time="0.297" /><testcase classname="tests.gui.test_dashboard" name="test_trial_row_actions_scroll_target_and_align_cards[amber_phosphor]" time="2.359"><failure message="AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(496, 277) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(306, 257) PyQt6.QtCore.QSize(176, 247)&#10;assert False">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001C434DB7D90&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.appearance.select(style)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        editor.drafts[editor.index].name = "Primate - Part 1 of 2 (10 minutes)"
+        trials.item(editor.index).setText(editor.drafts[editor.index].name)
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() == editor.timeline_card.height()
+        for card, controls in (
+            (editor.trial_card, (editor.trial_card.caption, trials)),
+            (
+                editor.timeline_card,
+                (
+                    editor.timeline_card.caption,
+                    editor.timeline,
+                    editor.group_editor,
+                    editor.output_preview_button,
+                    editor.sequence_summary,
+                ),
+            ),
+        ):
+            assert all(
+                card.rect().contains(
+                    control.rect().translated(control.mapTo(card, QPoint()))
+                )
+                for control in controls
+            )
+        assert editor.selected_group_label.text() == (
+            "SELECTED GROUP" if style == "amber_phosphor" else "Selected group"
+        )
+        assert editor.group_editor.parentWidget() is editor.timeline_card
+        assert editor.sequence_summary.geometry().bottom() &lt; editor.timeline.y()
+        assert editor.group_editor.y() &gt; editor.timeline.geometry().bottom()
+        last_right = (
+            editor.timeline.x()
+            + len(editor.timeline.nodes) * editor.timeline.block_width()
+            - 7
+        )
+        assert abs(editor.group_editor.geometry().right() + 1 - last_right) &lt;= 1
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        remove = next(c for c in trials.removers if c.isVisible())
+        assert remove.property("trial_row") == editor.index
+        assert trials.viewport().rect().contains(remove.geometry())
+        assert not remove.visibleRegion().isEmpty()
+        QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+        assert editor.drafts[editor.index].name in editor.delete_dialog.text()
+        editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
+        assert not hasattr(editor, "delete_trial_button")
+        assert trials.add.height() == trials.visualItemRect(trials.item(0)).height()
+        visible_row = trials.visualItemRect(trials.item(0)).intersected(
+            trials.viewport().rect()
+        )
+        assert trials.add.x() == visible_row.x()
+        assert trials.add.width() == visible_row.width()
+        assert trials.add.y() &gt; trials.visualItemRect(trials.item(0)).bottom()
+        QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+        editor.add_trial()
+        assert editor.index == 2
+        app.processEvents()
+        rect = trials.visualItemRect(trials.item(0))
+&gt;       _move_mouse_and_wait_for_native_event(trials.viewport(), rect.center(), app)
+
+tests\gui\test_dashboard.py:17780: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = &lt;PyQt6.QtWidgets.QWidget object at 0x000001C426AC4F70&gt;
+position = PyQt6.QtCore.QPoint(190, 20)
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -&gt; None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+&gt;       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(496, 277) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(306, 257) PyQt6.QtCore.QSize(176, 247)
+E       assert False
+
+tests\gui\test_dashboard.py:775: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_managed_appearance_restores_shared_or_legacy_preference[standard-amber_phosphor-amber_phosphor]" time="0.901" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_log_wraps_for_display_only" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_popups_and_owned_windows_get_scanline_film" time="1.860" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_tab_bars_elide_without_unthemed_scroll_buttons" time="1.483" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_combo_popup_and_dialog_icons_follow_amber" time="2.098" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_navigation_uses_chevron_markers_with_hover[1400]" time="1.797" /><testcase classname="tests.gui.test_dashboard" name="test_phosphor_navigation_uses_chevron_markers_with_hover[1920]" time="1.917" /><testcase classname="tests.gui.test_dashboard" name="test_amber_palette_keeps_readable_contrast" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_amber_disabled_fields_and_placeholders_are_unfilled_and_legible" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_amber_table_headers_share_the_caption_style" time="1.865" /><testcase classname="tests.gui.test_dashboard" name="test_amber_layout_details_align_and_shrink" time="1.437" /><testcase classname="tests.gui.test_dashboard" name="test_log_column_header_tracks_category_width" time="0.003" /><testcase classname="tests.gui.test_dashboard" name="test_configuration_groups_share_cards_across_tabs[amber_phosphor]" time="3.321"><failure message="AssertionError: Tracking configuration&#10;assert 447 &lt;= 429&#10; +  where 447 = &lt;built-in method width of TrackingControls object at 0x000001C4309F7760&gt;()&#10; +    where &lt;built-in method width of TrackingControls object at 0x000001C4309F7760&gt; = &lt;cephvr.gui.tracking_controls.TrackingControls object at 0x000001C4309F7760&gt;.width&#10; +  and   429 = &lt;built-in method width of QWidget object at 0x000001C4309F4820&gt;()&#10; +    where &lt;built-in method width of QWidget object at 0x000001C4309F4820&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x000001C4309F4820&gt;.width&#10; +      where &lt;PyQt6.QtWidgets.QWidget object at 0x000001C4309F4820&gt; = &lt;built-in method viewport of QScrollArea object at 0x000001C4309F7490&gt;()&#10; +        where &lt;built-in method viewport of QScrollArea object at 0x000001C4309F7490&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000001C4309F7490&gt;.viewport">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001C429736B90&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_configuration_groups_share_cards_across_tabs(window, app, style):
+        from PyQt6.QtWidgets import QScrollArea
+    
+        from cephvr.gui.editing_card import EditingCard
+        from cephvr.gui.theme import colors_for
+    
+        window.appearance.select(style, persist=False)
+        devices, dashboard = window.devices, window.dashboard
+        projectors, tracking = devices.projectors, window.tracking
+        open_protocol_group(window.protocol.editor)
+    
+        def device_page(index, subtab=None):
+            window.page_buttons[2].click()
+            devices.tabs.setCurrentIndex(index)
+            if subtab is not None:
+                projectors.setup_tabs.setCurrentIndex(subtab)
+    
+        def tracking_page(index):
+            window.page_buttons[3].click()
+            tracking.tabs.setCurrentIndex(index)
+    
+        pages = [
+            (
+                lambda: window.page_buttons[0].click(),
+                (
+                    dashboard.session_group,
+                    dashboard.subject_group,
+                    window.recordings.data_group,
+                    window.recordings.video_group,
+                ),
+            ),
+            (
+                lambda: window.page_buttons[1].click(),
+                (
+                    window.protocol.program_card,
+                    window.protocol.assets,
+                    window.protocol.editor.subgroup.generation_controls,
+                ),
+            ),
+            (
+                lambda: device_page(0),
+                (devices.cameras.identity_card, devices.cameras.trigger_card),
+            ),
+            (
+                lambda: device_page(1),
+                (
+                    devices.microcontroller.configuration,
+                    devices.microcontroller.triggers,
+                    devices.microcontroller.io,
+                ),
+            ),
+            (
+                lambda: device_page(2, 0),
+                (
+                    projectors.brightness,
+                    projectors.rig_editor.tank_group,
+                    projectors.rig_editor.subject_group,
+                    projectors.rig_editor.distance_group,
+                ),
+            ),
+            (lambda: device_page(2, 1), (projectors.measurements,)),
+            (
+                lambda: device_page(2, 2),
+                (projectors.vsync_card, projectors.timing, projectors.timing.blackouts),
+            ),
+            (
+                lambda: device_page(3),
+                (devices.spikeglx.configuration, devices.spikeglx.mapping),
+            ),
+            (
+                lambda: tracking_page(0),
+                (
+                    tracking.configuration,
+                    tracking.forms.preprocessing.crop,
+                    tracking.forms.preprocessing.resize_card,
+                ),
+            ),
+            (
+                lambda: tracking_page(1),
+                (tracking.forms.reference, tracking.forms.distance_calibration),
+            ),
+            (lambda: tracking_page(2), (tracking.forms.search, tracking.forms.pose)),
+            (
+                lambda: tracking_page(3),
+                (tracking.forms.optical_flow, tracking.forms.response),
+            ),
+        ]
+        try:
+            for width in (1175, 720):
+                window.resize(width, 950)
+                for activate, groups in pages:
+                    activate()
+                    app.processEvents()
+                    for group in groups:
+                        assert isinstance(group, EditingCard)
+                        if not group.isVisibleTo(window):
+                            continue
+                        assert group.width() &lt;= width
+                        ancestor = group.parentWidget()
+                        while ancestor is not None and not isinstance(
+                            ancestor, QScrollArea
+                        ):
+                            ancestor = ancestor.parentWidget()
+                        assert ancestor is not None
+&gt;                       assert group.width() &lt;= ancestor.viewport().width(), (
+                            group.caption.text()
+                        )
+E                       AssertionError: Tracking configuration
+E                       assert 447 &lt;= 429
+E                        +  where 447 = &lt;built-in method width of TrackingControls object at 0x000001C4309F7760&gt;()
+E                        +    where &lt;built-in method width of TrackingControls object at 0x000001C4309F7760&gt; = &lt;cephvr.gui.tracking_controls.TrackingControls object at 0x000001C4309F7760&gt;.width
+E                        +  and   429 = &lt;built-in method width of QWidget object at 0x000001C4309F4820&gt;()
+E                        +    where &lt;built-in method width of QWidget object at 0x000001C4309F4820&gt; = &lt;PyQt6.QtWidgets.QWidget object at 0x000001C4309F4820&gt;.width
+E                        +      where &lt;PyQt6.QtWidgets.QWidget object at 0x000001C4309F4820&gt; = &lt;built-in method viewport of QScrollArea object at 0x000001C4309F7490&gt;()
+E                        +        where &lt;built-in method viewport of QScrollArea object at 0x000001C4309F7490&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000001C4309F7490&gt;.viewport
+
+tests\gui\test_dashboard.py:20536: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_editing_card_keeps_highlight_for_owned_popup[combo-amber_phosphor]" time="0.027"><failure message="AssertionError: assert 'Behavior cam' == 'Tracking cam'&#10;  &#10;  - Tracking cam&#10;  + Behavior cam">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'amber_phosphor', popup_kind = 'combo'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    @pytest.mark.parametrize("popup_kind", ["combo", "menu"])
+    def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QLineEdit, QMenu, QVBoxLayout, QWidget
+    
+        from cephvr.gui.components import button, combo
+        from cephvr.gui.editing_card import EditingCard
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            RETRO_COLORS,
+            colors_for,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        host = QWidget()
+        if style != "standard":
+            host.setProperty("retroConsole", True)
+            host.setProperty("retroPalette", style)
+            colors = PHOSPHOR_COLORS if style == "amber_phosphor" else RETRO_COLORS
+            host.setStyleSheet(
+                retro_stylesheet(colors)
+                + (phosphor_stylesheet() if style == "amber_phosphor" else "")
+            )
+        layout = QVBoxLayout(host)
+        first, second = EditingCard("Camera and preset"), EditingCard("Trigger")
+        layout.addWidget(first)
+        layout.addWidget(second)
+        choice = combo(("Behavior cam", "Tracking cam", "Eye tracking", "Unassigned"))
+        menu_button = button("Layer")
+        menu = QMenu(menu_button)
+        menu.addAction("Add layer")
+        first.body.addWidget(choice)
+        first.body.addWidget(menu_button)
+        outside = QLineEdit()
+        second.body.addWidget(outside)
+        host.resize(640, 400)
+        host.show()
+        try:
+            for cancel in (False, True):
+                owner = choice if popup_kind == "combo" else menu_button
+                owner.setFocus()
+                app.processEvents()
+                assert first.editing and not second.editing
+                if popup_kind == "combo":
+                    choice.showPopup()
+                    popup = choice.view()
+                else:
+                    menu.popup(menu_button.mapToGlobal(QPoint(0, menu_button.height())))
+                    popup = menu
+                app.processEvents()
+                assert first.editing and not second.editing
+                assert first.editing_label.text() == "Editing"
+                assert (
+                    first.grab().toImage().pixelColor(8, 8).name()
+                    == colors_for(first).projector_edit
+                )
+                if cancel:
+                    QTest.keyClick(popup, Qt.Key.Key_Escape)
+                elif popup_kind == "combo":
+                    rect = popup.visualRect(popup.model().index(1, 0))
+                    QTest.mouseClick(
+                        popup.viewport(), Qt.MouseButton.LeftButton, pos=rect.center()
+                    )
+&gt;                   assert choice.currentText() == "Tracking cam"
+E                   AssertionError: assert 'Behavior cam' == 'Tracking cam'
+E                     
+E                     - Tracking cam
+E                     + Behavior cam
+
+tests\gui\test_dashboard.py:20627: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_editing_card_keeps_highlight_for_owned_popup[menu-amber_phosphor]" time="0.024"><failure message="assert (False)&#10; +  where False = &lt;cephvr.gui.editing_card.EditingCard object at 0x000001C430A331C0&gt;.editing">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'amber_phosphor', popup_kind = 'menu'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    @pytest.mark.parametrize("popup_kind", ["combo", "menu"])
+    def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QLineEdit, QMenu, QVBoxLayout, QWidget
+    
+        from cephvr.gui.components import button, combo
+        from cephvr.gui.editing_card import EditingCard
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            RETRO_COLORS,
+            colors_for,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        host = QWidget()
+        if style != "standard":
+            host.setProperty("retroConsole", True)
+            host.setProperty("retroPalette", style)
+            colors = PHOSPHOR_COLORS if style == "amber_phosphor" else RETRO_COLORS
+            host.setStyleSheet(
+                retro_stylesheet(colors)
+                + (phosphor_stylesheet() if style == "amber_phosphor" else "")
+            )
+        layout = QVBoxLayout(host)
+        first, second = EditingCard("Camera and preset"), EditingCard("Trigger")
+        layout.addWidget(first)
+        layout.addWidget(second)
+        choice = combo(("Behavior cam", "Tracking cam", "Eye tracking", "Unassigned"))
+        menu_button = button("Layer")
+        menu = QMenu(menu_button)
+        menu.addAction("Add layer")
+        first.body.addWidget(choice)
+        first.body.addWidget(menu_button)
+        outside = QLineEdit()
+        second.body.addWidget(outside)
+        host.resize(640, 400)
+        host.show()
+        try:
+            for cancel in (False, True):
+                owner = choice if popup_kind == "combo" else menu_button
+                owner.setFocus()
+                app.processEvents()
+&gt;               assert first.editing and not second.editing
+E               assert (False)
+E                +  where False = &lt;cephvr.gui.editing_card.EditingCard object at 0x000001C430A331C0&gt;.editing
+
+tests\gui\test_dashboard.py:20606: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_variation_cards_focus_and_remove_preserve_remaining_rules[amber_phosphor]" time="2.159" /><testcase classname="tests.gui.test_dashboard" name="test_retro_epoch_tints_are_stable_and_dim[amber_phosphor]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_pending_visible_update_preserves_placement[amber_phosphor-False]" time="0.063" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_pending_visible_update_preserves_placement[amber_phosphor-True]" time="0.062" /><testcase classname="tests.gui.test_dashboard" name="test_preview_workspace_frames_shown_streams_and_timeline[amber_phosphor]" time="1.436" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[standard]" time="0.836" /><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[retro_console]" time="1.337"><failure message="assert 66 &gt;= 67&#10; +  where 66 = &lt;built-in method width of QPushButton object at 0x000001C42F32CCA0&gt;()&#10; +    where &lt;built-in method width of QPushButton object at 0x000001C42F32CCA0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C42F32CCA0&gt;.width&#10; +  and   67 = &lt;built-in method width of QSize object at 0x000001C42F30D4D0&gt;()&#10; +    where &lt;built-in method width of QSize object at 0x000001C42F30D4D0&gt; = PyQt6.QtCore.QSize(67, 25).width&#10; +      where PyQt6.QtCore.QSize(67, 25) = &lt;built-in method sizeHint of QPushButton object at 0x000001C42F32CCA0&gt;()&#10; +        where &lt;built-in method sizeHint of QPushButton object at 0x000001C42F32CCA0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C42F32CCA0&gt;.sizeHint">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001C42F2FE710&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'retro_console'
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001C42F334390&gt;
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_preview_toolbar_wraps_without_hiding_controls(window, app, style, monkeypatch):
+        window.appearance.select(style, persist=False)
+        show_previews(window)
+        workspace = window.dashboard.preview_workspace
+        workspace.advanced_toggle.setChecked(True)
+        workspace.apply_views(
+            tuple(
+                PreviewView(key, name, active=True)
+                for key, name in (
+                    ("behavior", "Behavior cam"),
+                    ("tracking", "Tracking cam"),
+                    ("stimulus", "Visual stimulus"),
+                )
+            ),
+            allowed=True,
+        )
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        workspace.rebuild_projector_controls()
+        controls = [
+            *workspace.controls.values(),
+            workspace.plots_toggle,
+            *workspace.projector_controls.values(),
+        ]
+        for width, expected_row in ((1920, 0), (900, 1), (1920, 0)):
+            window.resize(width, 1032)
+            for _ in range(3):
+                app.processEvents()
+            index = workspace.toolbar.indexOf(workspace.advanced_row)
+            assert workspace.toolbar.getItemPosition(index)[0] == expected_row
+            assert workspace.toggle_bar.height() &lt;= (48 if expected_row == 0 else 80)
+            for control in controls:
+                assert control.isVisible()
+&gt;               assert control.width() &gt;= control.sizeHint().width()
+E               assert 66 &gt;= 67
+E                +  where 66 = &lt;built-in method width of QPushButton object at 0x000001C42F32CCA0&gt;()
+E                +    where &lt;built-in method width of QPushButton object at 0x000001C42F32CCA0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C42F32CCA0&gt;.width
+E                +  and   67 = &lt;built-in method width of QSize object at 0x000001C42F30D4D0&gt;()
+E                +    where &lt;built-in method width of QSize object at 0x000001C42F30D4D0&gt; = PyQt6.QtCore.QSize(67, 25).width
+E                +      where PyQt6.QtCore.QSize(67, 25) = &lt;built-in method sizeHint of QPushButton object at 0x000001C42F32CCA0&gt;()
+E                +        where &lt;built-in method sizeHint of QPushButton object at 0x000001C42F32CCA0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C42F32CCA0&gt;.sizeHint
+
+tests\gui\test_dashboard.py:22127: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_preview_toolbar_wraps_without_hiding_controls[amber_phosphor]" time="1.401"><failure message="assert 65 &gt;= 66&#10; +  where 65 = &lt;built-in method width of QPushButton object at 0x000001C426AD91B0&gt;()&#10; +    where &lt;built-in method width of QPushButton object at 0x000001C426AD91B0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C426AD91B0&gt;.width&#10; +  and   66 = &lt;built-in method width of QSize object at 0x000001C434C976F0&gt;()&#10; +    where &lt;built-in method width of QSize object at 0x000001C434C976F0&gt; = PyQt6.QtCore.QSize(66, 25).width&#10; +      where PyQt6.QtCore.QSize(66, 25) = &lt;built-in method sizeHint of QPushButton object at 0x000001C426AD91B0&gt;()&#10; +        where &lt;built-in method sizeHint of QPushButton object at 0x000001C426AD91B0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C426AD91B0&gt;.sizeHint">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000001C426A7E3B0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000001C4296C7F40&gt;
+style = 'amber_phosphor'
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001C43474F6D0&gt;
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_preview_toolbar_wraps_without_hiding_controls(window, app, style, monkeypatch):
+        window.appearance.select(style, persist=False)
+        show_previews(window)
+        workspace = window.dashboard.preview_workspace
+        workspace.advanced_toggle.setChecked(True)
+        workspace.apply_views(
+            tuple(
+                PreviewView(key, name, active=True)
+                for key, name in (
+                    ("behavior", "Behavior cam"),
+                    ("tracking", "Tracking cam"),
+                    ("stimulus", "Visual stimulus"),
+                )
+            ),
+            allowed=True,
+        )
+        workspace.stimulus_area.set_projectors(("Left", "Front", "Right", "Bottom"))
+        workspace.rebuild_projector_controls()
+        controls = [
+            *workspace.controls.values(),
+            workspace.plots_toggle,
+            *workspace.projector_controls.values(),
+        ]
+        for width, expected_row in ((1920, 0), (900, 1), (1920, 0)):
+            window.resize(width, 1032)
+            for _ in range(3):
+                app.processEvents()
+            index = workspace.toolbar.indexOf(workspace.advanced_row)
+            assert workspace.toolbar.getItemPosition(index)[0] == expected_row
+            assert workspace.toggle_bar.height() &lt;= (48 if expected_row == 0 else 80)
+            for control in controls:
+                assert control.isVisible()
+&gt;               assert control.width() &gt;= control.sizeHint().width()
+E               assert 65 &gt;= 66
+E                +  where 65 = &lt;built-in method width of QPushButton object at 0x000001C426AD91B0&gt;()
+E                +    where &lt;built-in method width of QPushButton object at 0x000001C426AD91B0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C426AD91B0&gt;.width
+E                +  and   66 = &lt;built-in method width of QSize object at 0x000001C434C976F0&gt;()
+E                +    where &lt;built-in method width of QSize object at 0x000001C434C976F0&gt; = PyQt6.QtCore.QSize(66, 25).width
+E                +      where PyQt6.QtCore.QSize(66, 25) = &lt;built-in method sizeHint of QPushButton object at 0x000001C426AD91B0&gt;()
+E                +        where &lt;built-in method sizeHint of QPushButton object at 0x000001C426AD91B0&gt; = &lt;PyQt6.QtWidgets.QPushButton object at 0x000001C426AD91B0&gt;.sizeHint
+
+tests\gui\test_dashboard.py:22127: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_preview_toggle_selection_has_distinct_fill[amber_phosphor]" time="1.268" /><testcase classname="tests.gui.test_dashboard" name="test_log_categories_expand_to_longest_without_replacing_rows[standard]" time="0.798" /><testcase classname="tests.gui.test_dashboard" name="test_log_categories_expand_to_longest_without_replacing_rows[retro_console]" time="1.162" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[Plain message]" time="0.695" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[ \xb7 Missing subject]" time="0.689" /><testcase classname="tests.gui.test_dashboard" name="test_log_entry_paths_always_include_category[[MCU] Already tagged]" time="0.690" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[standard]" time="2.209" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[retro_console]" time="2.700" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_hides_construction_and_reveals_ready_window[amber_phosphor]" time="2.682" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[None-retro_console-retro_console]" time="0.026" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[amber_phosphor-standard-amber_phosphor]" time="0.022" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[bad-amber_phosphor-standard]" time="0.014" /><testcase classname="tests.gui.test_dashboard" name="test_startup_splash_preference_fallback[standard-amber_phosphor-standard]" time="0.013" /><testcase classname="tests.gui.test_dashboard" name="test_startup_bootstrap_closes_splash_on_failure" time="1.064" /><testcase classname="tests.gui.test_dashboard" name="test_splash_moves_during_construction_without_dispatching_callbacks" time="1.090" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Combined]" time="0.075" /><testcase classname="tests.gui.test_dashboard" name="test_advanced_content_and_projector_filters[amber_phosphor-Per-projector]" time="0.059" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-False-830]" time="0.117" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-False-1000]" time="0.119" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-True-830]" time="0.120" /><testcase classname="tests.gui.test_dashboard" name="test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom[amber_phosphor-True-1000]" time="0.121" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-None]" time="0.099" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-amber_phosphor]" time="0.090" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size0-retro_console]" time="0.098" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-None]" time="0.124" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-amber_phosphor]" time="0.089" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size1-retro_console]" time="0.104" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-None]" time="0.123" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-amber_phosphor]" time="0.096" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size2-retro_console]" time="0.124" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-None]" time="0.103" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-amber_phosphor]" time="0.103" /><testcase classname="tests.gui.test_dashboard" name="test_per_projector_compact_layout_preserves_plots_and_fps[size3-retro_console]" time="0.088" /></testsuite></testsuites>

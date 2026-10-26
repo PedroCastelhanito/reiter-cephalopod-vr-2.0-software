@@ -1327,7 +1327,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 153
+**Status:** Accepted · **Revision:** 154
 
 - Related configuration controls across Dashboard, Protocol, Devices and Tracking
   share filled editing cards, grouped by operator task. Reuse an existing group
@@ -1344,7 +1344,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   #293236 resting and #373429 editing fills. Keep focus styling and validation
   in the existing controls, including dynamically replaced fields and Advanced.
 
-- GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash,
+- GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash
+  with antialiased rounded corners and transparent outer pixels,
   using the saved Style (legacy fallback and unknown-to-Standard behavior retained),
   a thin indeterminate segment moving side to side and no terminal cursor. During
   widget construction, repaint only the splash without dispatching queued callbacks;
