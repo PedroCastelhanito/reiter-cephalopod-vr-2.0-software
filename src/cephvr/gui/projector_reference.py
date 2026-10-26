@@ -201,6 +201,26 @@ class ProjectorReference(EditingSurface):
         first = 0 if self.compact else 1
         top = 1 if self.compact else 0
         action_col = first + 4
+        source = self.parameters.motion_source
+        self_asset = bool(
+            source is not None
+            and source.currentText() == "Self"
+            and self.parameters.asset_forms
+        )
+        if self_asset:
+            asset = next(control for title, control in columns if title == "Asset")
+            asset_layout = asset.layout()
+            assert asset_layout is not None
+            browse_item = asset_layout.itemAt(1)
+            assert browse_item is not None
+            browse = browse_item.widget()
+            assert browse is not None
+            # Reserve Browse separately so parameter fields end at the path edge.
+            self.grid.setColumnMinimumWidth(
+                action_col,
+                browse.width() + asset_layout.spacing() - self.grid.horizontalSpacing(),
+            )
+            action_col += 1
         if self.compact:
             self.side_grid.addWidget(self.identity_label, 0, 0)
             self.side_grid.addWidget(self.caption, 1, 0)
@@ -222,7 +242,7 @@ class ProjectorReference(EditingSurface):
         self.layer_label.setVisible(bool(self.face))
         self.layer.setVisible(bool(self.face))
         self.grid.setColumnMinimumWidth(action_col, self.actions_button.width())
-        for col in range(first, action_col):
+        for col in range(first, first + 4):
             self.grid.setColumnStretch(col, 1)
         if not self.narrow:
             self.grid.setColumnMinimumWidth(first, 246)
@@ -247,6 +267,7 @@ class ProjectorReference(EditingSurface):
                 row, col, span = top, first, 2 if self.narrow else 1
             elif title == "Asset":
                 span = 2 if self.narrow and self.face else 3 if self.face else 4
+                span += int(self_asset)
                 row, col = top, action_col - span
             elif control is self.actions_button:
                 row, col, span = top, action_col, 1

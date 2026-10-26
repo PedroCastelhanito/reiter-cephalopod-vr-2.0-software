@@ -74,6 +74,11 @@ class SquareViewport:
                 else max(self.side - extent, min(0.0, getattr(self, name))),
             )
 
+    @property
+    def transform(self) -> tuple[int, float, float, float, float]:
+        """Immutable display identity for rejecting work superseded by native input."""
+        return self.side, self.fit, self.zoom, self.tx, self.ty
+
     def render(self, frame: Any, cv: Any, numpy: Any) -> Any:
         scale = self.fit * self.zoom
         matrix = numpy.array(

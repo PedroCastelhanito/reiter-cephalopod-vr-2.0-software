@@ -7,6 +7,9 @@ import sys
 import threading
 from collections.abc import Callable, Generator
 from concurrent.futures import Future
+from copy import copy
+from dataclasses import dataclass
+from functools import partial
 from typing import Any
 from uuid import UUID
 
@@ -16,7 +19,7 @@ from cephvr.acquisition.preview.viewport import SquareViewport
 from cephvr.acquisition.preview.window_thread import window_thread
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
-from cephvr.platform.windows.preview_caption import HoverPreviewCaption
+from cephvr.platform.windows.preview_caption import color_preview_caption
 from cephvr.platform.windows.preview_creation import StagedPreviewWindow
 from cephvr.platform.windows.preview_owner import WindowsPreviewOwner
 from cephvr.platform.windows.window_coordinates import (
@@ -29,6 +32,13 @@ from cephvr.shared.pixels.preparer import PixelPreparer, PreparedImage
 from cephvr.shared.pixels.types import PixelLayout
 from cephvr.shared.preview_geometry import PreviewGeometryGuard
 from cephvr.shared.preview_rates import PreviewPacer, PreviewRateMeter
+
+
+@dataclass(frozen=True)
+class ReaderWork:
+    """One synchronous image operation to run on this viewer's reader thread."""
+
+    operation: Callable[[], Any]
 
 
 def display_array(image: PreparedImage, numpy: Any) -> Any:
@@ -44,7 +54,7 @@ def display_array(image: PreparedImage, numpy: Any) -> Any:
 
 
 class HighGuiPreview:
-    """Share one HighGUI owner; wait for this viewer's frames independently.
+    """Prepare images on this reader; share only HighGUI/native window operations.
 
     The bounded event wait pumps native messages even without frames. Arriving
     frames wake it immediately; new images are paced at 20 Hz without a backlog.
@@ -106,20 +116,30 @@ class HighGuiPreview:
     def _run(self) -> None:
         try:
             steps = self._run_window()
-            wakeup: bool | None = None
+            result: Any = None
+            failure: Exception | None = None
 
             def advance() -> Any:
+                nonlocal failure
+                error, failure = failure, None
                 try:
-                    return steps.send(wakeup)
+                    return (
+                        steps.throw(error) if error is not None else steps.send(result)
+                    )
                 except StopIteration:
                     return None
 
             try:
-                while (ring := window_thread.call(advance)) is not None:
-                    wakeup = ring.wait(10_000_000)
-            except Exception as exc:
-                self.failure = str(exc)
-                raise
+                while (work := window_thread.call(advance)) is not None:
+                    try:
+                        result = (
+                            work.operation()
+                            if isinstance(work, ReaderWork)
+                            else work.wait(10_000_000)
+                        )
+                    except Exception as exc:
+                        # Re-enter the owner so its normal cleanup handles partial work.
+                        failure = exc
             finally:
                 window_thread.call(steps.close)
         except Exception as exc:
@@ -130,13 +150,12 @@ class HighGuiPreview:
                 self.done.set_result(True)
                 self.on_closed(self)
 
-    def _run_window(self) -> Generator[Any, bool | None, None]:
+    def _run_window(self) -> Generator[Any, Any, None]:
         ring: Any = None
         cv: Any = None
         window = False
         closed = True
         owner: WindowsPreviewOwner | None = None
-        caption: HoverPreviewCaption | None = None
         geometry = PreviewGeometryGuard()
         try:
             if self.output_bits != 8:
@@ -163,19 +182,14 @@ class HighGuiPreview:
             ring = SharedRing.attach(
                 self.attachment, layout, self.attachment.sync.target
             )
-            preparer = PixelPreparer(layout)
+            preparer = yield ReaderWork(lambda: PixelPreparer(layout))
+            if self._stop.is_set() or ring.retired:
+                return
             pixels = bytearray(layout.image_payload_bytes)
             side = self.placement.side if self.placement is not None else 640
             viewport = SquareViewport(layout.width, layout.height, side)
 
             def mouse(event: int, x: int, y: int, flags: int, _param: object) -> None:
-                if (
-                    event == cv.EVENT_LBUTTONDOWN
-                    and caption is not None
-                    and caption.press(x, y, viewport.side)
-                ):
-                    viewport.end_pan()
-                    return
                 if event == cv.EVENT_MOUSEWHEEL:
                     viewport.wheel(x, y, flags)
                 elif event == cv.EVENT_LBUTTONDBLCLK:
@@ -196,7 +210,7 @@ class HighGuiPreview:
                 cv.imshow(self.title, numpy.zeros((side, side), numpy.uint8))
                 cv.resizeWindow(self.title, side, side)
                 cv.setMouseCallback(self.title, mouse)
-                cv.waitKey(1)
+                cv.pollKey()
                 if self.placement is not None:
                     position_preview_frame(
                         self.title, self.placement.x, self.placement.y
@@ -213,10 +227,11 @@ class HighGuiPreview:
                 if sys.platform == "win32":
                     native = self.native_handle = preview_window_handle(self.title)
                     blank_preview_caption(native)
-                    caption = HoverPreviewCaption(native)
-                    # Refit after removing chrome so the client fills the square slot.
+                    if self.placement is not None:
+                        color_preview_caption(native, self.placement)
+                    # Refit the square client before final native-frame placement.
                     cv.resizeWindow(self.title, side, side)
-                    cv.waitKey(1)
+                    cv.pollKey()
                     if self.placement is not None:
                         position_preview_frame(
                             native, self.placement.x, self.placement.y
@@ -232,9 +247,46 @@ class HighGuiPreview:
                 geometry.arranged(owner.geometry(), owner.placement_revision())
             self.visible = True
 
-            def render() -> Any:
-                image = viewport.render(latest, cv, numpy)
-                return caption.draw(image, cv) if caption is not None else image
+            def current() -> bool:
+                return (
+                    not self._stop.is_set()
+                    and not ring.retired
+                    and (scope != "session" or ring.run_id == run_id)
+                )
+
+            def render() -> Generator[ReaderWork, Any, bool]:
+                nonlocal owner_minimized
+                view = copy(viewport)
+                image = yield ReaderWork(lambda: view.render(latest, cv, numpy))
+                cv.pollKey()
+                owner_minimized = owner.sync() if owner is not None else False
+                if not owner_minimized and not self._visible(cv):
+                    self.visible = False
+                    return False
+                if (
+                    not current()
+                    or owner_minimized
+                    or view.transform != viewport.transform
+                ):
+                    viewport.dirty = True
+                    return False
+                viewport.dirty = False
+                cv.imshow(self.title, image)
+                if not self.ready.done():
+                    cv.pollKey()
+                    if not self._visible(cv):
+                        raise RuntimeError("OpenCV window closed before first image")
+                    self.ready.set_result(None)
+                return True
+
+            def prepare(sequence: int, expected_run: UUID) -> tuple[Any, Any]:
+                read = ring.read_into(sequence, pixels, expected_run_id=expected_run)
+                image = None
+                if read.status == "frame":
+                    image = display_array(
+                        preparer.prepare_preview(pixels, self.output_bits), numpy
+                    )
+                return read, image
 
             last = -1
             meter = PreviewRateMeter()
@@ -242,8 +294,9 @@ class HighGuiPreview:
             frame_wakeup = True
             latest: Any = None
             while not self._stop.is_set() and not ring.retired:
+                # pollKey avoids a scheduler sleep on the shared Win32 UI owner.
                 # Check X before imshow: imshow must never recreate a user-closed window.
-                cv.waitKey(1)
+                cv.pollKey()
                 now_ns = host_time_ns()
                 rates = meter.sample(now_ns)
                 if rates is not None and self.on_rates is not None:
@@ -269,6 +322,8 @@ class HighGuiPreview:
                         owner.retarget(placement.gui_window_handle)
                         self.placement.gui_window_handle = placement.gui_window_handle
                         geometry.arranged(owner.geometry(), owner.placement_revision())
+                if placement is not None and self.native_handle:
+                    color_preview_caption(self.native_handle, placement)
                 was_minimized = owner_minimized
                 owner_minimized = owner.sync() if owner is not None else False
                 if was_minimized and not owner_minimized and owner is not None:
@@ -310,7 +365,7 @@ class HighGuiPreview:
                                 cv.resizeWindow(
                                     self.title, placement.side, placement.side
                                 )
-                            cv.waitKey(1)
+                            cv.pollKey()
                             position_preview_frame(
                                 native, placement.x, placement.y, topmost=False
                             )
@@ -321,16 +376,16 @@ class HighGuiPreview:
                             )
                             self.placement = placement
                             self.placement.snap_to_grid = False
-                if caption is not None and not owner_minimized:
-                    viewport.dirty |= caption.sync()
-                if not owner_minimized and viewport.dirty and latest is not None:
-                    cv.imshow(self.title, render())
                 if scope == "session":
                     current_run = ring.run_id
                     if current_run != run_id:
-                        run_id, last = current_run, -1
+                        run_id, last, latest = current_run, -1, None
                         meter = PreviewRateMeter()
                         pacer = PreviewPacer()
+                if not owner_minimized and viewport.dirty and latest is not None:
+                    yield from render()
+                    if not self.visible:
+                        break
                 count = ring.published_count if frame_wakeup and run_id.int else 0
                 if count > 0 and count - 1 != last:
                     if not pacer.ready(now_ns):
@@ -338,23 +393,28 @@ class HighGuiPreview:
                         frame_wakeup = True
                         continue
                     sequence = count - 1
-                    read = ring.read_into(sequence, pixels, expected_run_id=run_id)
+                    read, prepared = yield ReaderWork(
+                        partial(prepare, sequence, run_id)
+                    )
+                    if not current():
+                        latest = None
+                        frame_wakeup = True
+                        continue
                     if read.status == "frame":
                         if read.record is not None:
                             meter.received(
                                 read.record.frame_id, read.record.acquisition_time_ns
                             )
-                        prepared = preparer.prepare_preview(pixels, self.output_bits)
-                        latest = display_array(prepared, numpy)
+                        latest = prepared
                         if not owner_minimized:
-                            cv.imshow(self.title, render())
-                            meter.presented += 1
-                        if not self.ready.done():
-                            cv.waitKey(1)
-                            if not owner_minimized and not self._visible(cv):
-                                raise RuntimeError(
-                                    "OpenCV window closed before first image"
-                                )
+                            meter.presented += int((yield from render()))
+                        if not self.visible:
+                            break
+                        if not current():
+                            latest = None
+                            frame_wakeup = True
+                            continue
+                        if owner_minimized and not self.ready.done():
                             self.ready.set_result(None)
                         last = sequence
                         frame_wakeup = (yield ring) is True
@@ -375,7 +435,7 @@ class HighGuiPreview:
                     except cv.error as exc:
                         if "NULL window" not in str(exc):
                             raise
-                    cv.waitKey(1)
+                    cv.pollKey()
                     if self._visible(cv):
                         raise RuntimeError(
                             "OpenCV window remains visible after destroy"

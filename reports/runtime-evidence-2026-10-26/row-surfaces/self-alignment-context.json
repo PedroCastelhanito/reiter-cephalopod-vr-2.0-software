@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-26",
+  "scope": "G02rev162 uncommitted GUI layout; base recorded in context.json",
+  "command": "pytest tests/gui/test_dashboard.py -q -k \"mixed_projector_cards_keep_local_labels or reference_motion_source_switches_controls or reference_advanced_controls_align\" --tb=short",
+  "result": "12 passed,951 deselected; self-alignment-tests.txt",
+  "checks": "Targeted Ruff/format2 files and Win32mypy1 file pass; boundaries760/zero, whitespace pass",
+  "source_sha256": "e44d050f7bf5486a19190f1f08cfdef93e2f795d23f049dc9fcaf63a841611a4",
+  "limits": "Qt offscreen layout-coordinate checks; no native image inspection or device/rig operation."
+}

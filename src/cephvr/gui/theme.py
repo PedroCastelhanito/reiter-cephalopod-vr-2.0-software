@@ -34,8 +34,8 @@ class Palette:
     page: str = "#09121a"
     sidebar: str = "#0d151d"
     card: str = "#121c25"
-    projector: str = "#24333f"
-    projector_edit: str = "#25435a"
+    projector: str = "#1b2832"
+    projector_edit: str = "#1c3345"
     input: str = "#0c141b"
     border: str = "#2a3947"
     input_border: str = "#2b3d4c"
@@ -102,8 +102,8 @@ COLORS = Palette()
 SIZES = Metrics()
 
 RETRO_COLORS = Palette(
-    projector="#23383a",
-    projector_edit="#294a50",
+    projector="#1a2b2d",
+    projector_edit="#203a3f",
     window="#0b1213",
     page="#0c1415",
     sidebar="#091011",
@@ -145,8 +145,8 @@ RETRO_TINTS = (
 # over readable amber labels, clear frames with bright corner brackets, amber focus,
 # orange inverse fills and cream ready lamps on cool charcoal.
 PHOSPHOR_COLORS = Palette(
-    projector="#293236",
-    projector_edit="#373429",
+    projector="#20292d",
+    projector_edit="#2b281f",
     window="#21282b",
     page="#21282b",
     sidebar="#1e2427",
@@ -178,10 +178,10 @@ PHOSPHOR_COLORS = Palette(
     error="#ff5a40",
     disabled="#ae916b",
 )
-# Buttons rest as outlined boxes over a faint tint and fill only on hover:
+# Buttons keep a muted resting fill and brighten on hover:
 # (resting tint, hover fill, outline/text).
-PHOSPHOR_BUTTON = ("transparent", "#e49a44", "#f0ab55")
-PHOSPHOR_STOP_BUTTON = ("transparent", "#f38970", "#f27f5e")
+PHOSPHOR_BUTTON = ("#443a2c", "#e49a44", "#f0ab55")
+PHOSPHOR_STOP_BUTTON = ("#49332e", "#f38970", "#f27f5e")
 # Unselected tabs remain readable while the coral current tab stands out.
 PHOSPHOR_TAB_DIM = "#cba06b"
 # Left padding that leaves room for the `>` tab marker before icon and text.
@@ -304,7 +304,7 @@ def stylesheet(
     QPushButton {{ background: {c.secondary}; border: 1px solid {c.input_border};
                   border-radius: {s.button_radius}px; padding: 10px 12px;
                   font-weight: 700; }}
-    QPushButton[role='icon'] {{ padding: 0; border-radius: 6px; background: transparent; border-color: transparent; }}
+    QPushButton[role='icon'] {{ padding: 0; border-radius: 6px; background: {c.secondary}; border-color: transparent; }}
     QPushButton[role='icon']::menu-indicator {{ image: none; width: 0; }}
     QPushButton:hover {{ background: {c.hover}; border-color: {c.focus}; }}
     QPushButton:pressed {{ background: {c.window}; }}
@@ -390,6 +390,7 @@ def stylesheet(
     QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 40px 12px 8px; border-radius: 6px; }}
     QListWidget[role='trials']::item:selected {{ background: {c.selection}; }}
     QTableWidget {{ background: {c.input}; border: 1px solid {c.input_border};
+                   selection-background-color: transparent;
                    border-radius: {s.field_radius}px; gridline-color: transparent; }}
     QHeaderView {{ background: transparent; }}
     QHeaderView::section {{ background: {c.active}; color: {c.accent}; border: none;
@@ -397,7 +398,7 @@ def stylesheet(
     QHeaderView::section:first {{ border-top-left-radius: {s.field_radius}px; }}
     QHeaderView::section:last {{ border-top-right-radius: {s.field_radius}px; }}
     QTableView::item {{ padding: 6px {s.table_cell_padding}px; }}
-    QTableView::item:selected {{ background: {c.selection}; }}
+    QTableView::item:selected {{ background: transparent; }}
     QScrollArea, QScrollArea > QWidget > QWidget {{ background: transparent; border: none; }}
     QScrollBar:vertical {{ width: 0px; }}
     QScrollBar:horizontal {{ height: 0px; }}
@@ -421,8 +422,8 @@ def stylesheet(
     QWidget#PreviewWorkspace QFrame#PreviewToggles {{ border: none;
         border-bottom: 1px solid {c.border}; border-radius: 0; }}
     QPushButton[role='preview-choice'] {{ padding: 3px 8px; border-radius: {s.field_radius}px;
-        background: transparent; color: {c.text}; }}
-    QPushButton[role='preview-choice']:hover {{ background: transparent; color: {c.text};
+        background: {c.secondary}; color: {c.text}; }}
+    QPushButton[role='preview-choice']:hover {{ background: {c.hover}; color: {c.text};
         border-color: {c.focus}; }}
     QPushButton[role='preview-choice']:checked,
     QPushButton[role='preview-choice']:checked:hover {{ background: {c.accent};
@@ -473,7 +474,7 @@ def retro_stylesheet(c: Palette = RETRO_COLORS) -> str:
     QScrollBar#ConsoleLogScroll:vertical, QScrollBar#ConsoleLogScroll::handle:vertical,
     QScrollBar#TimelineScroll:horizontal, QScrollBar#TimelineScroll::handle:horizontal {{
         border-radius: 0; }}
-    QTableView::item:selected {{ background: {c.primary}; color: {c.text}; }}
+    QTableView::item:selected {{ background: transparent; color: {c.text}; }}
     QTabBar::tab:selected {{ background: {c.accent}; color: {c.window}; }}
     QTreeWidget[role='rail']::item:selected {{ background: {c.accent}; color: {c.window}; }}
     """
@@ -555,16 +556,21 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QPushButton[role='danger']:hover, QPushButton[role='compact-stop']:hover,
     QPushButton[stopAction='true']:hover {{ background: {stop_fill};
         color: {c.window}; border-color: {stop_fill}; }}
-    QPushButton[toggle='on'] {{ background: transparent; color: {c.text};
+    QPushButton[toggle='on'] {{ background: {tint}; color: {c.text};
         border-color: {c.input_border}; }}
     QPushButton[toggle='on']:checked:enabled {{ background: {fill}; color: {c.window};
         border-color: {fill}; }}
     QPushButton:disabled, QPushButton:disabled:hover,
     QPushButton[role='primary']:disabled, QPushButton[role='danger']:disabled,
     QPushButton[role='compact']:disabled, QPushButton[role='compact-stop']:disabled,
-    QPushButton[stopAction='true']:disabled {{ background: transparent;
-        color: {c.disabled}; border-color: {c.input_border}; }}
-    QPushButton[role='icon'] {{ background: transparent; border-color: transparent; }}
+    QPushButton[stopAction='true']:disabled,
+    QPushButton[role='icon']:disabled, QPushButton[role='icon']:disabled:hover,
+    QPushButton[role='preview-choice']:disabled,
+    QPushButton[role='preview-choice']:disabled:hover,
+    QPushButton[role='preview-choice']:disabled:checked {{ background: #2c2b27;
+        color: {c.disabled}; border-color: {c.border}; }}
+    QPushButton[role='icon'], QPushButton[role='preview-choice'] {{
+        background: {tint}; border-color: {c.input_border}; }}
     QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ background: transparent;
         border: none; border-bottom: 1px solid {c.input_border}; padding-left: 2px; }}
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{

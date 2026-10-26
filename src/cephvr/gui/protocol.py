@@ -15,9 +15,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import button, combo, configuration_file_card
+from cephvr.gui.components import Card, button, combo, configuration_file_card
 from cephvr.gui.configuration_files import JSON, ConfigurationFiles
-from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.layouts import column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_batches import grouped_program
@@ -75,7 +74,7 @@ class ProtocolPage(QWidget):
         self.session_mode = combo(("Not set", "Open-loop", "Closed-loop"))
         self.session_mode.currentTextChanged.connect(self.participation_changed.emit)
         recordings.changed.connect(self.participation_changed.emit)
-        self.program_card = EditingCard("Protocol type")
+        self.program_card = Card("Protocol type")
         toolbar = QHBoxLayout()
         toolbar.setSpacing(10)
         toolbar.addWidget(self.session_mode, 1)

@@ -309,6 +309,8 @@ message PreviewWindowPlacement {
   repeated StimulusPreviewTile stimulus_tiles = 9; // Stimulus only: 1..4 individual views; absent means Combined.
   repeated string hidden_stimulus_surfaces = 10; // Display-only Left/Front/Right/Bottom exclusions, including Combined.
   optional uint32 stimulus_background_rgb = 11; // Display-only GUI surround, packed 0xRRGGBB.
+  optional uint32 camera_caption_rgb = 13; // Native title background, packed 0xRRGGBB.
+  optional uint32 camera_caption_text_rgb = 14; // Native title text, packed 0xRRGGBB.
   map<string, uint32> stimulus_surface_colors = 12; // Display-only face outline colors, packed 0xRRGGBB.
 }
 message CameraCommandRequest {

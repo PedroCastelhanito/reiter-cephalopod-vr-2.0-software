@@ -1,0 +1,8 @@
+{
+  "opencv": "4.13.0",
+  "samples_per_variant": 100,
+  "waitKey1_median_ms": 15.9835,
+  "waitKey1_max_ms": 18.3672,
+  "pollKey_median_ms": 0.0002,
+  "pollKey_max_ms": 0.0033
+}

@@ -1,0 +1,52 @@
+{
+  "renderer": null,
+  "vendor": null,
+  "errors": [],
+  "elapsed_seconds": 8.00165700004436,
+  "cpu_core_percent": 5.467617519690916,
+  "native_process": {
+    "cpu_seconds": 0.40625,
+    "poll": {
+      "count": 431,
+      "mean_ms": 18.456003480113335,
+      "p95_ms": 61.90624996088445,
+      "max_ms": 64.45559998974204
+    },
+    "frame_intervals": {
+      "count": 149,
+      "mean_ms": 53.47315167801942,
+      "p95_ms": 94.174539973028,
+      "max_ms": 96.11689997836947
+    }
+  },
+  "frame_callbacks": {
+    "count": 161,
+    "mean_ms": 1.4183422418959115,
+    "p95_ms": 1.9209000747650862,
+    "max_ms": 2.9395000310614705
+  },
+  "frame_intervals": {
+    "count": 161,
+    "mean_ms": 50.00413229807587,
+    "p95_ms": 50.83710001781583,
+    "max_ms": 51.051000016741455
+  },
+  "native_poll": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "gl_paint_submission": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "scope": "Generated RGB; separate HighGUI process using production Win32 owner/geometry helpers; summed GUI and viewer process CPU; 200ms placement sampling and 10ms native polling; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "mode": "native-follow",
+  "moving": true,
+  "pixels": 640,
+  "streams": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

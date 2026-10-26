@@ -186,7 +186,7 @@ class MicrocontrollerPanel(DevicePanel):
     @staticmethod
     def pin_table(direction: str) -> DataTable:
         table = DataTable(0, 5)
-        table.setHorizontalHeaderLabels(["Enable", direction, "Pin", "Test", ""])
+        table.setHorizontalHeaderLabels(["Use", direction, "Pin", "Test", ""])
         header = table.horizontalHeader()
         assert header is not None
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)

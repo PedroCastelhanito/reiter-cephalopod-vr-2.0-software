@@ -1,0 +1,17 @@
+{
+  "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "vendor": "NVIDIA Corporation",
+  "batch_readback": {
+    "count": 80,
+    "mean_ms": 0.8019125103601255,
+    "p95_ms": 1.0030150588136166,
+    "max_ms": 1.2153000570833683
+  },
+  "cpu_core_percent": 1.5535783433509265,
+  "scope": "Synchronous RGB readback only; no IPC/upload or scene load",
+  "mode": "readback",
+  "moving": false,
+  "pixels": 1024,
+  "streams": 1,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe"
+}

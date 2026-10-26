@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QVBoxLayout, QW
 
 from cephvr.gui.components import Card, field, label
 from cephvr.gui.device_panel import entry
-from cephvr.gui.editing_card import EditingCard, EditingSurface
+from cephvr.gui.editing_card import EditingRow, EditingSurface
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.configuration import load_projection_settings
 
@@ -95,9 +95,10 @@ class RigGeometryEditor(Card):
     def __init__(self) -> None:
         super().__init__("Rig geometry")
         self.body.setSpacing(SIZES.group_gap)
-        self.tank_group = EditingCard("Tank")
-        self.subject_group = EditingCard("Subject position")
-        self.distance_group = EditingCard("Subject to screens")
+        self.tank_group = EditingRow("Tank")
+        self.subject_group = EditingRow("Subject position")
+        self.distance_group = EditingRow("Subject to screens")
+        self.body.setSpacing(12)
         self.fields: dict[str, QLineEdit] = {}
         grids = (QGridLayout(), QGridLayout())
         for i, (key, title) in enumerate(

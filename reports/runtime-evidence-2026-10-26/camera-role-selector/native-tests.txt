@@ -1,0 +1,268 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_______ test_camera_role_dropdown_opens_and_selects_by_mouse[standard] ________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002142D49A5F0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+style = 'standard'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_camera_role_dropdown_opens_and_selects_by_mouse(window, app, style):
+        window.appearance.select(style, persist=False)
+        window.select_page(2)
+        cameras = window.devices.cameras
+        choice = cameras.role
+        window.activateWindow()
+        assert QTest.qWaitForWindowActive(window)
+        app.processEvents()
+        choice.setFocus()
+        app.processEvents()
+        try:
+            QTest.mouseClick(
+                choice,
+                Qt.MouseButton.LeftButton,
+                pos=QPoint(choice.width() - 14, choice.height() // 2),
+            )
+            app.processEvents()
+            assert QTest.qWaitForWindowExposed(choice.view().window())
+            assert choice.view().isVisible()
+            index = choice.model().index(choice.findText("Eye tracking"), 0)
+            choice.view().scrollTo(index)
+            rect = choice.view().visualRect(index)
+            assert choice.view().viewport().rect().contains(rect.center())
+>           _move_mouse_and_wait_for_native_event(
+                choice.view().viewport(), rect.center(), app
+            )
+
+tests\gui\test_dashboard.py:25366: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <PyQt6.QtWidgets.QWidget object at 0x000002142D368DC0>
+position = PyQt6.QtCore.QPoint(280, 67)
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(603, 740) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(323, 673) PyQt6.QtCore.QSize(495, 108)
+E       assert False
+
+tests\gui\test_dashboard.py:781: AssertionError
+_____ test_camera_role_dropdown_opens_and_selects_by_mouse[retro_console] _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002142D298820>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+style = 'retro_console'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_camera_role_dropdown_opens_and_selects_by_mouse(window, app, style):
+        window.appearance.select(style, persist=False)
+        window.select_page(2)
+        cameras = window.devices.cameras
+        choice = cameras.role
+        window.activateWindow()
+        assert QTest.qWaitForWindowActive(window)
+        app.processEvents()
+        choice.setFocus()
+        app.processEvents()
+        try:
+            QTest.mouseClick(
+                choice,
+                Qt.MouseButton.LeftButton,
+                pos=QPoint(choice.width() - 14, choice.height() // 2),
+            )
+            app.processEvents()
+            assert QTest.qWaitForWindowExposed(choice.view().window())
+            assert choice.view().isVisible()
+            index = choice.model().index(choice.findText("Eye tracking"), 0)
+            choice.view().scrollTo(index)
+            rect = choice.view().visualRect(index)
+            assert choice.view().viewport().rect().contains(rect.center())
+>           _move_mouse_and_wait_for_native_event(
+                choice.view().viewport(), rect.center(), app
+            )
+
+tests\gui\test_dashboard.py:25366: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <PyQt6.QtWidgets.QWidget object at 0x00000214219AAE60>
+position = PyQt6.QtCore.QPoint(280, 62)
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(603, 701) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(323, 639) PyQt6.QtCore.QSize(495, 100)
+E       assert False
+
+tests\gui\test_dashboard.py:781: AssertionError
+____ test_camera_role_dropdown_opens_and_selects_by_mouse[amber_phosphor] _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002141D9EB6D0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+style = 'amber_phosphor'
+
+    @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+    def test_camera_role_dropdown_opens_and_selects_by_mouse(window, app, style):
+        window.appearance.select(style, persist=False)
+        window.select_page(2)
+        cameras = window.devices.cameras
+        choice = cameras.role
+        window.activateWindow()
+        assert QTest.qWaitForWindowActive(window)
+        app.processEvents()
+        choice.setFocus()
+        app.processEvents()
+        try:
+            QTest.mouseClick(
+                choice,
+                Qt.MouseButton.LeftButton,
+                pos=QPoint(choice.width() - 14, choice.height() // 2),
+            )
+            app.processEvents()
+            assert QTest.qWaitForWindowExposed(choice.view().window())
+            assert choice.view().isVisible()
+            index = choice.model().index(choice.findText("Eye tracking"), 0)
+            choice.view().scrollTo(index)
+            rect = choice.view().visualRect(index)
+            assert choice.view().viewport().rect().contains(rect.center())
+>           _move_mouse_and_wait_for_native_event(
+                choice.view().viewport(), rect.center(), app
+            )
+
+tests\gui\test_dashboard.py:25366: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+widget = <PyQt6.QtWidgets.QWidget object at 0x000002141DBC88B0>
+position = PyQt6.QtCore.QPoint(247, 42)
+app = <PyQt6.QtWidgets.QApplication object at 0x000002142D5455A0>
+timeout_ms = 1000
+
+    def _move_mouse_and_wait_for_native_event(
+        widget: QWidget, position: QPoint, app: QApplication, *, timeout_ms: int = 1000
+    ) -> None:
+        """Wait for the platform-delivered hover event after moving the real cursor."""
+        from PyQt6.QtCore import QObject
+    
+        target_global = widget.mapToGlobal(position)
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        matched = False
+    
+        class TargetMouseMove(QObject):
+            def eventFilter(self, receiver, event):
+                nonlocal matched
+                if (
+                    receiver is widget
+                    and event.type() == QEvent.Type.MouseMove
+                    and event.globalPosition().toPoint() == target_global
+                ):
+                    matched = True
+                    QTimer.singleShot(0, loop.quit)
+                return False
+    
+        probe = TargetMouseMove(widget)
+        widget.installEventFilter(probe)
+        timer.start(timeout_ms)
+        try:
+            QTest.mouseMove(widget, position)
+            if not matched:
+                loop.exec()
+        finally:
+            timer.stop()
+            widget.removeEventFilter(probe)
+>       assert matched, (
+            f"native MouseMove was not delivered to {type(widget).__name__} at "
+            f"{target_global} within {timeout_ms} ms; visible={widget.isVisible()}, "
+            f"global geometry={widget.mapToGlobal(widget.rect().topLeft())} "
+            f"{widget.size()}"
+        )
+E       AssertionError: native MouseMove was not delivered to QWidget at PyQt6.QtCore.QPoint(570, 674) within 1000 ms; visible=True, global geometry=PyQt6.QtCore.QPoint(323, 632) PyQt6.QtCore.QSize(495, 68)
+E       assert False
+
+tests\gui\test_dashboard.py:781: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_camera_role_dropdown_opens_and_selects_by_mouse[standard]
+FAILED tests/gui/test_dashboard.py::test_camera_role_dropdown_opens_and_selects_by_mouse[retro_console]
+FAILED tests/gui/test_dashboard.py::test_camera_role_dropdown_opens_and_selects_by_mouse[amber_phosphor]
+3 failed, 963 deselected in 13.58s

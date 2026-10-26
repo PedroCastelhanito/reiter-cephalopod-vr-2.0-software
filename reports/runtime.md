@@ -1,5 +1,287 @@
 # Controller and supervisor status
 
+## Commit preparation — 2026-10-26
+
+`repo-commit-sync-oct26`: retained current G01/G02/A10 implementation and dated
+provenance, including the completed second-preview placement fix. Regenerated
+19 Protobuf sources locally; generated bindings remain ignored. GUI validation:
+966 passed in four offscreen workers; three setup errors came from placing demo
+assets inside the repository. All three pass using the default external pytest
+temporary directory; the six finalized placement cases also pass (9-case rerun).
+Preview/platform/shared checks:207 passed,4 Windows/rig exclusions. The initial
+sandboxed run timed out in asyncio socketpair initialization; rerun with loopback
+access passed. An initial slow serial GUI attempt was stopped for the worker run.
+Ruff and format checks pass; Win32 mypy checks286 sources; boundary checker finds
+zero violations across760 modules with existing size advisories. No responsibility
+or dependency changes were added during cleanup (ARCH-002).
+Local Markdown target/anchor audit fixed one historical Amber review anchor;
+two historical Oct17 screenshot targets remain absent. Emergency reports and
+raw evidence retained under GOV-001. Native/full-load acceptance remains under
+[E15](../docs/architecture/system-contracts.md#e15) and the rig checklist.
+
+
+## Camera role selector — 2026-10-26
+
+`camera-role-selector`: owner reports a dropdown that does not open. Fresh managed
+launch now opens all four choices in Retro and Amber; selecting the existing role
+closes the popup without changing camera assignment. Original cause unproven;
+no production change claimed. Existing G01/E03 ownership and uniqueness retained.
+Three native mouse-open/keyboard-select regressions and four offscreen GUI cases
+pass; test-only ARCH-002 increment reuses the owning module, no dependencies.
+Native synthetic-hover and earlier restricted-loopback attempts had limitations;
+[evidence and commands](runtime-evidence-2026-10-26/camera-role-selector/context.md).
+Runtime left open on Cameras; no capture/Setup/recording action requested.
+
+
+## Protocol header cards — 2026-10-26
+
+`protocol-header-cards` implements [G02rev161](../docs/architecture/gui.md#g02):
+Protocol type and Assets folder use the same main Card as Configuration file.
+ARCH-002 review reuses that existing owner; two component substitutions, no new
+dependencies or runtime behavior. Five focused participation/layout tests pass,
+including wide/narrow layouts and three styles. Ruff/format and Win32 mypy for
+both changed sources pass; boundaries760/zero and whitespace pass. Amber offscreen
+render inspected; no native restart or rig acceptance.
+[Render/method](runtime-evidence-2026-10-26/protocol-header-cards/context.md).
+
+## Native camera captions and preview pacing — 2026-10-26
+
+Owner-requested [G01rev337](../docs/architecture/gui.md#g01) restores native camera
+chrome with GUI card/text colors and removes title-bar icons. Slots reserve existing
+DPI-aware chrome; native move/resize/close and private image pan/zoom retain their
+owners. Unsupported caption-color attributes retain system colors. Two bounded RGB
+fields use existing placement transport; generated bindings updated.
+
+Owner's restarted view still shows11.8fps. Source/configuration retain20Hz caps;
+removing measured waitKey(1) sleep (15.98ms median) alone did not resolve throughput.
+A generated-image probe at retained camera layouts finds Behavior preparation35.49ms
+plus16.65ms channel ordering, exceeding a50ms frame interval before the shared UI
+owner services Tracking. Avoid unnecessary uint64 scaling for already full-range8-bit
+preview pixels: private-copy output is byte-identical; preparation falls to6.11ms,
+whole measured Behavior pipeline about53→23ms. Tracking preparation3.58→1.23ms.
+Higher-depth rounding, SDK validation and recording paths stay unchanged (A03/A10).
+
+History establishes shared native ownership added Oct19 and20Hz pacing Oct21.
+Earlier Oct26 evidence already records camera10–12.5fps while Stimulus is near20;
+no retained20fps camera baseline found. The precise onset of the owner's regression
+remains unproven. Measured conversion cost is a concrete bottleneck, not a live FPS pass.
+
+Owner now authorizes independent image preparation under
+[A10rev73](../docs/architecture/acquisition.md#a10). Each existing reader performs
+frame copying, SDK conversion, channel ordering and viewport resampling; native
+window operations remain on the shared owner. One in-flight operation per reader
+carries no queued history. Private viewport snapshots and final run/stop/retirement/
+closure/transform checks discard superseded results. Exceptions return through the
+existing cleanup path; private work completes before release evidence.
+
+ARCH-002 reuses the existing readers and generator dispatcher, no new thread/process/
+dependency.181 local preview/platform tests and two native three-viewer variants pass,
+including blocked-first-reader/second-viewer progress, view change while rendering,
+stale-work rejection and preparation/render failures. Ruff/format, Win32mypy and
+boundaries760/zero pass. [Current source/check evidence](runtime-evidence-2026-10-26/independent-preview-preparation/context.md).
+Earlier pixel optimization/timings and caption checks remain in
+[caption evidence](runtime-evidence-2026-10-26/camera-native-caption/context.md).
+No active application restart/capture/recording operation. Remaining live FPS and
+GUI theme/icon/DPI/drag/Snap acceptance: [rig checklist](rig-verification.md#camera-native-caption).
+
+## Idle action button backgrounds — 2026-10-26
+
+Owner follow-up `gui-dashboard-card-spacing` under G02rev158 dims disabled Amber
+fills to charcoal, including icon and checked preview controls. Dashboard
+Session/Subject and Data/Videos now share their main card's inset without doubling
+padding; Saving options retains its natural height. Six focused theme/layout tests
+pass across wide/narrow layouts and three styles; six rendered action roles confirm
+the darker disabled background. Offscreen Dashboard render visually inspected.
+Ruff/format, Win32 mypy for three affected sources and boundaries760/zero pass.
+ARCH-002 retains existing layout/theme owners and no dependencies; theme's existing
+size advisory remains a cohesive token/selector owner. No running-app restart.
+[Render and method](runtime-evidence-2026-10-26/dashboard-card-spacing/context.md).
+
+`gui-idle-button-fill` implements [G02 revision157](../docs/architecture/gui.md#g02):
+Amber actions have muted amber resting fills, danger actions muted red, and stronger
+existing hover/checked states. Disabled, icon and unchecked preview controls retain
+backgrounds; Standard/Retro icon and preview controls use existing palette fills.
+ARCH-002 review keeps this token/selector correction in the cohesive shared theme
+owner despite its existing size advisory; no dependency or runtime state is added.
+Two focused theme tests pass; Ruff check/format and Win32 mypy for theme.py pass,
+boundary checks report760 modules/zero violations and git diff --check passes.
+An isolated offscreen Qt render sampled all seven action roles with backgrounds
+distinct from the window (amber #443a2c, danger #49332e). The temporary screenshot
+was unavailable to the image viewer; no visual inspection or live-app restart is claimed.
+
+## Configuration row surfaces — 2026-10-26
+
+`table-selected-row-spacing` fixes the apparent oversized first inventory row under
+[G02rev164](../docs/architecture/gui.md#g02). Qt's native selection background
+overpainted the six-pixel row insets; the shared delegate now owns selection fill,
+with native cell/row selection backgrounds transparent. Selection and keyboard
+behavior remain intact. ARCH-002 uses the existing delegate/theme owners.
+Six focused cases pass (five together; one rerun after sandbox temp-directory
+fixture failure), covering three-theme gap pixels, camera selection and projector
+layout. Ruff/format, Win32 mypy and boundaries760/zero pass. Offscreen selected
+camera rows visually inspected with equal66px row heights; no live restart.
+[Evidence](runtime-evidence-2026-10-26/table-selected-row-spacing/context.md).
+
+`gui-darker-row-surfaces` under [G02rev163](../docs/architecture/gui.md#g02)
+darkens the shared idle and selected/editing tokens in all three palettes. Amber
+uses #20292d idle and #2b281f selected, retaining the cool/warm distinction and
+focus accent. Shared table and editing-surface painting propagates this throughout
+the GUI. ARCH-002 review changes only existing color tokens in the cohesive theme
+owner, without extra styling rules or dependencies. Twelve focused existing GUI
+tests pass (row pixels/selection, form layouts and editing-card behavior); theme
+Ruff/format/Win32mypy and boundaries760/zero pass. No native app restart or visual
+inspection of the running GUI; existing rig acceptance remains separate.
+
+Protocol Self-field refinement ([G02rev162](../docs/architecture/gui.md#g02)):
+reserve the asset Browse column separately in the existing projector grid so the
+last Self field ends at the path text edge. Linked/Advanced spans retain their
+existing behavior.12 focused cases pass across three styles and wide/narrow
+layouts, including Self/Linked transitions; targeted Ruff/format/mypy and
+boundaries760/zero pass. ARCH-002 uses existing grid ownership, no dependencies.
+[Result/method](runtime-evidence-2026-10-26/row-surfaces/self-alignment-context.json).
+No native desktop rendering check or rig operation.
+
+[G02 revision160](../docs/architecture/gui.md#g02) uses one Screen dimensions-style
+row surface across Cameras, MCU, Displays, calibration, pulse/blackout, SpikeGLX
+and Tracking tables. Shared painting supplies fill, rounded corners and focus
+accent; tables share12px row separation. The former faint-band option is removed.
+Rig geometry retains compact identity-left rows; pixel calibration and SpikeGLX
+retain the requested main section cards. Ordinary forms remain unfilled and
+Dashboard retains its separately verified single inset.
+
+ARCH-002 review consolidates duplicate drawing in EditingSurface and DataTable,
+removes the row-style flag and keeps existing columns, editing, mappings and
+serialization. No dependency or runtime back-reference; unchanged size advisories.
+Current validation:15 focused tests pass (three-style row pixels/focus, wide/narrow
+forms, keyboard navigation, pulse layout, SpikeGLX enable/remove and calibration
+roundtrip). GUI Ruff/format205 files, Win32mypy201 sources, boundaries760/zero and
+whitespace pass.36 offscreen renders cover12 page/subtab states in each of three
+themes; all three overview sheets visually reviewed. These are visible-page
+presentation fixtures, not device data, native desktop or rig acceptance.
+[Current render/method evidence](runtime-evidence-2026-10-26/row-surfaces/consistency/context.json).
+Prior captures and validation attempts remain historical in the same evidence
+folder. The first consistency render attempt used an incorrect fixture key
+(screen instead of face); corrected without production changes. Prior wider test
+selection stalled and sandbox-temp setup failed; neither is claimed as a pass.
+
+## Embedded preview feasibility — 2026-10-26
+
+The owner requests the net tradeoff: remove native positioning/following/resizing
+machinery and count embedded GUI-GPU presentation plus stimulus transfer cost.
+[G01 revision335](../docs/architecture/gui.md#g01) permits an isolated experiment;
+production viewers remain detached. A03 already separates camera preview consumption
+from capture/recording, whereas V01's existing stimulus preview draws GPU textures
+without readback. SYS-002's GUI and renderer GPU assignments were verified in the
+probe as AMD Radeon(TM) Graphics and RTX5060Ti respectively.
+
+**Owner disposition:** retain this as **To implement / To review code**, unwired
+to the actual GUI. Integration and further live replay are deferred for now; preserve
+the standalone prototype and unresolved resize-freeze evidence for later review.
+
+**Current optimized experiment:** implemented ordinary Qt raster and one shared
+GPU canvas in the isolated tool. Both retain reusable owned frame buffers;
+the GPU canvas retains per-stream RGB8/R8 textures, uploads only new batches and
+reuses them on resize. Grayscale avoids RGB expansion. Independent20Hz source and
+16ms GUI motion timers remain; production code/settings/dependencies are unchanged.
+Pixel checks cover orientation, distinct streams and exact RGB channel fidelity;
+source mutation/buffer reuse and pending-frame coalescing checks pass.
+
+RGB CPU medians (% of one logical core, generated-frame component workload):
+
+| Variant | Stationary | Moving/resizing |
+| --- | ---: | ---: |
+| Native-follow reference |7.42|25.99|
+| Original per-stream GL widgets |5.86|28.71|
+| Reusable Qt raster |10.67|28.33|
+| Shared persistent GPU textures |2.33|20.51|
+
+Three completed samples per cell except native moving (two; one failed).
+Shared-texture moving CPU is about29% below the original prototype's median in this
+bounded comparison; all three paired rounds improve. This is not whole-machine CPU,
+GPU utilization or backend timing evidence.23 RGB and5 grayscale measured cases pass;
+two native-moving reference cases exit-1073740791, one with an invalid GUI window
+handle traceback. Their cause is unproven; exclude them rather than infer a production
+defect. All optimized cases pass, with no skipped generated sequences. Raster paint
+completion and GL swap are different timing endpoints, neither physical scanout.
+
+Two owner-requested20s replays pass. The owner reports smoother previews but
+**system-wide lag during the replay, returning to normal after both previews close**.
+This usability issue remains unresolved and blocks a production recommendation.
+Other GUI validation was active concurrently. After closure, no preview benchmark
+process remained; a5s sample shows other Python workers using about two cores,
+4–9% total CPU, about38GiB available memory, idle NVIDIA GPUs and low sampled GPU
+engine activity. This after-the-fact snapshot cannot exclude transient stalls or
+separate preview cost from combined GUI activity. Keep further live comparison
+isolated from other GUI tests; no other chat/process was stopped or modified.
+The subsequent owner-requested60s replay exits normally and passes pixel checks,
+but the owner reports smooth playback followed by a **desktop freeze on manual
+resize** (not confirmed application closures). Treat manual resize usability as
+failed. Distinct bar positions are intentional source phase offsets. The largest
+update/swap interval is about395ms while measured copy/draw callbacks stay below1ms;
+this does not measure the duration or establish the cause of the desktop freeze.
+Sources share the GUI event loop, so zero skipped generated sequences cannot rule
+out an event-loop stall. Windows event queries since16:50 return no matching
+application crash/hang or display-reset events and no query errors; older Qt crashes
+predate this replay. Keep GPU previews closed during investigation. No fix or driver
+cause is established, and production acceptance remains blocked by this finding.
+Ruff/format/compile and boundaries760/zero pass; new tool/widget responsibilities are
+separate under ARCH-002, with existing unchanged-backend size advisories retained.
+[Optimized source, results, replay and load evidence](runtime-evidence-2026-10-26/embedded-preview-comparison/optimized/context.md).
+
+Earlier baseline evidence: the bounded tool reuses production Win32 owner/geometry helpers in a separate
+HighGUI process and compares fixed/native-follow/off/embedded presentation. The
+21-case generated-noise matrix completes; CPU sampling varies substantially and
+does not establish a reliable net win. The owner reports **both image and window
+interaction lag** in the embedded prototype; preserve that usability failure.
+The original20Hz host-motion timer and alternating noise are inadequate smoothness
+tests. Follow-up uses moving bars, independent16ms host-motion callbacks and
+per-frame Qt swap-age/skipped-frame measurements. One second-round native startup
+times out before measurement, leaving that matched pair incomplete; this is a
+harness limitation, not a demonstrated production defect. Earlier same-process
+Qt/HighGUI failures are excluded and retained in the raw assessment.
+
+The final unrestricted6s verification completes all four probes. During continuous
+move/resize, native-follow uses10.86% of one CPU core (GUI plus viewer), embedded
+uses27.39%; these short/coarse samples are not a statistically established ratio.
+Embedded Qt swap age is4.10ms p95/12.05ms maximum, with zero skipped generated
+sequences, so this sample does not show a growing frame queue. It does not explain
+away the owner's perceived lag or establish physical display latency. Synchronous
+RTX5060Ti RGB readback adds0.805ms mean for one1024-square image or1.494ms for four
+640-square images, excluding IPC/upload/full scene contention. No net performance
+benefit is established for this embedded implementation. Prefer retaining current
+production viewers until an alternative passes usability and full-load comparison.
+35 successful result/exit pairs are checked; separate failed cases remain explicit.
+One restricted readback repeat exits-1073741816 with no stderr/result. The four
+unrestricted probes pass, but this does not prove the sandbox caused earlier failures.
+Ruff, format, compilation and boundaries760/zero pass; size advisories concern
+unchanged backend modules. Link targets/anchors and diff whitespace pass.
+
+No production adoption or other-backend performance claim follows from these probes.
+Camera conversion/shared rings, full GUI instruments, authenticated placement RPCs,
+scene/recording/Tracking load, compositor GPU utilization and physical display
+latency remain outside this component measurement. Follow-up acceptance belongs in
+the [rig checklist](rig-verification.md#embedded-preview-comparison).
+[Source snapshots, commands, raw results and limitations](runtime-evidence-2026-10-26/embedded-preview-comparison/context.md).
+
+Design references for the implemented experiment (not a production selection): the original prototype
+uses one QOpenGLWidget per stream plus owned QImage copies/QPainter. Its result does
+not establish the cost of all embedded designs. [Qt](https://doc.qt.io/qt-6/qopenglwidget.html)
+documents per-widget framebuffer recreation on resize and top-level composition.
+The optimized comparison above tests a simple Qt raster image widget and one GPU
+canvas with persistent per-stream textures, uploading new frames once and scaling
+retained textures during resize. Preserve A03 ownership/latest-frame semantics;
+no unsafe shared-buffer zero-copy or new dependency is selected.
+[Micro-Manager](https://micro-manager.org/High_Speed_Acquisition_in_Micro-Manager)
+separates display frame skipping from acquisition failure;
+[ACQ4](https://pmc.ncbi.nlm.nih.gov/articles/PMC3906568/) demonstrates Qt/PyQtGraph
+live imaging. [PyQtGraph's image guidance](https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/imageitem.html#performance)
+emphasizes contiguous row-major data and avoiding conversion fallbacks. These are
+design references, not performance evidence for this rig. Camera previews are the
+smaller first target; cross-adapter stimulus transfer needs separate end-to-end
+measurement. G01's20Hz source preview limit is distinct from GUI interaction rate;
+changing that limit is outside this experiment. The source review itself introduced
+no runtime changes; subsequent isolated implementation/results are recorded above.
+
 Oct26 MCU-release shutdown warning resolved: acquisition skipped a redundant Close
 only after its claim was already absent/acknowledged released.156 focused checks
 and a45-second native dummy stop/shutdown pass, no warning and zero managed
@@ -241,6 +523,16 @@ were inspected. These are isolated offscreen checks; no running app restart or
 native/DPI/hardware acceptance.
 
 ## Video preview pending-layout stability — 2026-10-26
+
+`preview-second-initial-placement` repairs the second-camera first-open jump under
+[G01](../docs/architecture/gui.md#g01): newly parented slot frames now participate
+in synchronous layout before the native open command receives its position.
+The existing hidden native reveal mechanism is unchanged. ARCH-002 review keeps
+this as one explicit show call in the existing grid owner, with no new state or
+dependency. The regression fails before the fix; 21 related checks now pass,
+including both camera opening orders in all three themes. Ruff/format, focused
+Win32 mypy and boundaries (760 modules, zero violations) pass. Native first reveal
+after restart remains unverified. [Evidence](runtime-evidence-2026-10-26/preview-second-initial-placement/context.md).
 
 `preview-toggle-jitter` fixes a reproduced preview geometry jump under
 [G01](../docs/architecture/gui.md#g01) revision325. Pending camera commands added
@@ -1254,6 +1546,7 @@ its restore latch requires reopening. Close without saving discards current-wind
 edits and retains the repaired on-disk draft. Native reopen/save remains unverified;
 no hardware actions or runtime/rig acceptance claimed.
 
+<a id="amber-phosphor-style-review-2026-10-23"></a>
 ## Amber phosphor style review — 2026-10-23
 
 Oct26 current-source review: the historical Preview-controls/card-frame overlap is

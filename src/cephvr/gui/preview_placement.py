@@ -1,6 +1,5 @@
 """Display-only placement hints for acquisition-owned camera windows."""
 
-import sys
 from math import ceil
 
 from PyQt6.QtCore import QPoint, QRect, QTimer, pyqtSignal
@@ -107,7 +106,7 @@ class PreviewSlot(QWidget):
         for index, (key, name) in enumerate(requested.items()):
             frame = previous.get(key)
             if frame is None:
-                frame = PreviewFrame(decorated=sys.platform != "win32")
+                frame = PreviewFrame()
                 frame.target.setProperty("preview_source", key)
                 frame.snap_button.setEnabled(bool(key))
                 frame.snap_button.clicked.connect(
@@ -141,6 +140,8 @@ class PreviewSlot(QWidget):
                     1,
                     2 if columns == 1 and not self.reserve_active else 1,
                 )
+                # Include newly parented frames in synchronous pre-open measurement.
+                frame.show()
             self.grid.setRowStretch(index // columns, 1)
         self.updateGeometry()
 
@@ -373,6 +374,9 @@ def preview_window_placement(
     try:
         host = (slot.window() or main) if slot is not None else main
         placement = _preview_window_placement(host, slot)
+        colors = colors_for(slot if slot is not None else main)
+        placement.camera_caption_rgb = int(colors.card.lstrip("#"), 16)
+        placement.camera_caption_text_rgb = int(colors.text.lstrip("#"), 16)
         if QGuiApplication.platformName() == "windows":
             hwnd, pid, creation = gui_window_identity(int(host.winId()))
             placement.gui_window_handle = hwnd

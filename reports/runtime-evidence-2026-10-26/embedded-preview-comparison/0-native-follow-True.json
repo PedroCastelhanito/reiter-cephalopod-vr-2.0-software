@@ -1,0 +1,37 @@
+{
+  "renderer": null,
+  "vendor": null,
+  "errors": [],
+  "elapsed_seconds": 10.051353699993342,
+  "cpu_core_percent": 13.368846029176051,
+  "frame_callbacks": {
+    "count": 202,
+    "mean_ms": 2.174088618450678,
+    "p95_ms": 3.043595008784905,
+    "max_ms": 3.9198000449687243
+  },
+  "frame_intervals": {
+    "count": 202,
+    "mean_ms": 49.9961193066579,
+    "p95_ms": 50.83748991601169,
+    "max_ms": 59.42730000242591
+  },
+  "native_poll": {
+    "count": 945,
+    "mean_ms": 3.6536277220067053,
+    "p95_ms": 13.977500004693866,
+    "max_ms": 44.056299957446754
+  },
+  "gl_paint_submission": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "scope": "Generated RGB; reused ReviewPreviews native layout/owner helpers; 200ms placement sampling and 10ms native polling; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "mode": "native-follow",
+  "moving": true,
+  "pixels": 640,
+  "streams": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

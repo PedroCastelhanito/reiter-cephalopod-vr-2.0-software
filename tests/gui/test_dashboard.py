@@ -341,7 +341,7 @@ def test_multiple_review_previews_have_independent_source_frames(
 
         def placement(key):
             hint = initial_placement(key)
-            decorated = key != "stimulus" and sys.platform != "win32"
+            decorated = key != "stimulus"
             width, height = preview_frame_extra() if decorated else (0, 0)
             positions[key] = QRect(
                 hint.x, hint.y, hint.side + width, hint.side + height
@@ -434,7 +434,13 @@ def test_camera_preview_slots_only_include_enabled_cameras(
     from cephvr.gui.preview_placement import preview_window_placement
 
     # Diagnostic Connect remains independent of experiment enablement (A10).
-    assert preview_window_placement(window, disabled_camera.key).side >= 128
+    hint = preview_window_placement(window, disabled_camera.key)
+    assert hint.side >= 128
+    from cephvr.gui.theme import colors_for
+
+    colors = colors_for(window.preview_slot)
+    assert hint.camera_caption_rgb == int(colors.card.lstrip("#"), 16)
+    assert hint.camera_caption_text_rgb == int(colors.text.lstrip("#"), 16)
     assert window.preview_slot.isVisible()
     window.apply_view(
         replace(
@@ -716,7 +722,7 @@ def test_preview_slot_tracks_relevant_tabs(
             if QApplication.platformName() != "windows":
                 hint = preview_window_placement(window)
                 origin = target.mapToGlobal(QPoint())
-                # Camera captions now overlay a frameless native footprint (G01).
+                # Native camera chrome is reserved inside the footprint (G01).
                 frame = QRect(hint.x, hint.y, hint.side, hint.side)
                 assert QRect(origin, target.size()).contains(frame)
 
@@ -11436,6 +11442,12 @@ def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
                         assert heading.text() == title and heading.isVisibleTo(row)
                 controls = dict(fields)
                 asset = controls["Asset"]
+                source = row.parameters.motion_source
+                asset_end = (
+                    next(iter(row.parameters.asset_forms.values()))
+                    if source is not None and source.currentText() == "Self"
+                    else asset
+                )
                 if not row.narrow:
                     values = [
                         control
@@ -11445,7 +11457,7 @@ def test_mixed_projector_cards_keep_local_labels_and_focus(app, preset):
                     assert values[0].mapTo(row, QPoint()).x() == row.stimulus.x()
                     assert (
                         values[-1].mapTo(row, QPoint()).x() + values[-1].width()
-                        == asset.mapTo(row, QPoint()).x() + asset.width()
+                        == asset_end.mapTo(row, QPoint()).x() + asset_end.width()
                     )
                     assert (
                         values[1].mapTo(row, QPoint()).x()
@@ -17945,6 +17957,12 @@ def test_reference_motion_source_switches_controls_and_requires_target(
     assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
     controls = dict(row.columns)
     assert source.currentText() == "Self"
+    path = next(iter(panel.asset_forms.values()))
+    last = controls["Rotation (°/s)"]
+    assert (
+        last.mapTo(row, QPoint()).x() + last.width()
+        == path.mapTo(row, QPoint()).x() + path.width()
+    )
     self_width = source.width()
     assert controls["Linked to"].isHidden()
     assert controls["Speed (mm/s)"].isVisibleTo(row)
@@ -20556,15 +20574,21 @@ def test_review_protocol_style_keeps_drafts_history_and_dynamic_screen_rows(
 
 
 @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
-def test_configuration_groups_share_cards_across_tabs(window, app, style):
+def test_configuration_groups_stay_unfilled_across_tabs(window, app, style):
     from PyQt6.QtWidgets import QScrollArea
 
+    from cephvr.gui.components import Card
     from cephvr.gui.editing_card import EditingCard
-    from cephvr.gui.theme import colors_for
 
     window.appearance.select(style, persist=False)
     devices, dashboard = window.devices, window.dashboard
     projectors, tracking = devices.projectors, window.tracking
+    for table in (
+        devices.microcontroller.input_table,
+        devices.microcontroller.output_table,
+    ):
+        header = table.horizontalHeader()
+        assert header.label_layout(0, header.sectionSize(0)).lineCount() == 1
     open_protocol_group(window.protocol.editor)
 
     def device_page(index, subtab=None):
@@ -20650,7 +20674,12 @@ def test_configuration_groups_share_cards_across_tabs(window, app, style):
                 activate()
                 app.processEvents()
                 for group in groups:
-                    assert isinstance(group, EditingCard)
+                    assert isinstance(group, (EditingCard, Card))
+                    filled = group in (
+                        projectors.rig_editor.tank_group,
+                        projectors.rig_editor.subject_group,
+                        projectors.rig_editor.distance_group,
+                    )
                     if not group.isVisibleTo(window):
                         continue
                     assert group.width() <= width
@@ -20676,13 +20705,88 @@ def test_configuration_groups_share_cards_across_tabs(window, app, style):
                     if controls:
                         controls[0].setFocus()
                         app.processEvents()
-                        assert group.editing
-                    assert group.grab().toImage().pixelColor(8, 8).name() == (
-                        colors_for(group).projector_edit
-                        if group.editing
-                        else colors_for(group).projector
-                    )
+                        if isinstance(group, EditingCard):
+                            assert group.editing == filled
+                    if isinstance(group, EditingCard):
+                        assert group.filled == filled
+                        assert group.editing_label.text() == (
+                            "Editing" if group.editing else ""
+                        )
+                        assert group.layout().contentsMargins().left() == (
+                            0
+                            if group
+                            in (
+                                dashboard.session_group,
+                                dashboard.subject_group,
+                                window.recordings.data_group,
+                                window.recordings.video_group,
+                            )
+                            else 12
+                            if filled
+                            else 16
+                        )
     finally:
+        window.appearance.select("standard", persist=False)
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+def test_table_row_bands_cover_empty_cells_and_preserve_selection(window, app, style):
+    from PyQt6.QtWidgets import QAbstractItemView, QLineEdit, QTableWidgetItem
+
+    from cephvr.gui.tables import DataTable
+
+    window.appearance.select(style, persist=False)
+    table = DataTable(3, 3)
+    table.setParent(window)
+    table.setGeometry(300, 150, 600, 200)
+    table.setHorizontalHeaderLabels(["Signal", "Pin", "Empty"])
+    table.setItem(0, 0, QTableWidgetItem("Trial state"))
+    table.set_control(0, 1, QLineEdit("12"))
+    table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+    table.fit_rows()
+    table.show()
+    table.raise_()
+    app.processEvents()
+    try:
+        viewport = table.viewport()
+        image = viewport.grab().toImage()
+        x = table.columnViewportPosition(2) + 10
+        y = table.rowViewportPosition(0)
+        resting = image.pixelColor(x, y + 8)
+        assert resting != image.pixelColor(x, y)
+        assert resting == image.pixelColor(x, table.rowViewportPosition(1) + 8)
+        from cephvr.gui.theme import colors_for
+
+        assert resting.name() == colors_for(table).projector
+        editor = table.cellWidget(0, 1).findChild(QLineEdit)
+        editor.setFocus()
+        app.processEvents()
+        assert (
+            viewport.grab().toImage().pixelColor(x, y + 8).name()
+            == colors_for(table).projector_edit
+        )
+        table.setFocus()
+        app.processEvents()
+        table.selectRow(0)
+        app.processEvents()
+        selected = viewport.grab().toImage()
+        assert selected.pixelColor(x, y + 8).name() == colors_for(table).projector_edit
+        # Selection preserves the same six-pixel top/bottom gap as an idle row.
+        for offset in (0, 5, table.rowHeight(0) - 6, table.rowHeight(0) - 1):
+            assert selected.pixelColor(x, y + offset) == image.pixelColor(
+                x, y + offset
+            ), (
+                offset,
+                selected.pixelColor(x, y + offset).name(),
+                image.pixelColor(x, y + offset).name(),
+            )
+        table.setRowHidden(1, True)
+        table.fit_rows()
+        app.processEvents()
+        assert table.rowViewportPosition(2) == table.rowHeight(0)
+    finally:
+        table.deleteLater()
         window.appearance.select("standard", persist=False)
 
 
@@ -20712,7 +20816,8 @@ def test_editing_card_keeps_highlight_for_owned_popup(app, style, popup_kind):
             + (phosphor_stylesheet() if style == "amber_phosphor" else "")
         )
     layout = QVBoxLayout(host)
-    first, second = EditingCard("Camera and preset"), EditingCard("Trigger")
+    first = EditingCard("Front", filled=True)
+    second = EditingCard("Left", filled=True)
     layout.addWidget(first)
     layout.addWidget(second)
     choice = combo(("Behavior cam", "Tracking cam", "Eye tracking", "Unassigned"))
@@ -22148,8 +22253,8 @@ def test_preview_workspace_frames_shown_streams_and_timeline(
     assert dialog.preview_host.caption.y() == dialog.details.caption.y()
     if __import__("sys").platform == "win32":
         for frame in window.preview_slot.frames.values():
-            assert frame.target.property("framelessPreview")
-            assert frame.target.width() == frame.target.height()
+            assert not frame.target.property("framelessPreview")
+            assert frame.target.height() > frame.target.width()
     # Video and stimulus share the available area equally by default.
     assert dialog.details.width() / sum(dialog.splitter.sizes()) == pytest.approx(
         1 / 2, abs=0.03
@@ -23282,6 +23387,67 @@ def test_preview_motion_overlay_linked_baseline_and_independent(
         assert unsupported.name.startswith("Front")
         assert "Combined texture translation" in unsupported.message
     timeline.close()
+
+
+@pytest.mark.parametrize("style", [None, "amber_phosphor", "retro_console"])
+@pytest.mark.parametrize("first", [0, 1])
+def test_second_preview_initial_placement_matches_settled_grid(app, style, first):
+    from cephvr.gui.preview_placement import PreviewSlot, preview_window_placement
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.theme import RETRO_PALETTES, retro_stylesheet
+
+    workspace = PreviewWorkspace(None)
+    workspace.resize(1600, 1000)
+    if style is not None:
+        workspace.setProperty("retroConsole", True)
+        workspace.setProperty("retroPalette", style)
+        workspace.setStyleSheet(retro_stylesheet(RETRO_PALETTES[style][0]))
+    slot = PreviewSlot()
+    workspace.preview_layout.addWidget(slot)
+    workspace.empty_hint.hide()
+    sources = (
+        PreviewView(
+            "a", "Behavior cam", active=True, available=True, visible=first == 0
+        ),
+        PreviewView(
+            "b", "Tracking cam", active=True, available=True, visible=first == 1
+        ),
+    )
+
+    def project(values):
+        workspace.apply_views(values, allowed=True)
+        slot.set_sources(values, reserve_active=True)
+        slot.attach_controls(workspace, external=True)
+
+    try:
+        project(sources)
+        workspace.show()
+        for _ in range(3):
+            app.processEvents()
+        second = sources[1 - first].key
+        initial = preview_window_placement(workspace, second)
+        assert tuple(slot.frames) == (sources[first].key,)
+        project(tuple(replace(v, pending=v.key == second) for v in sources))
+        for _ in range(3):
+            app.processEvents()
+        pending = preview_window_placement(workspace, second)
+        assert (initial.x, initial.y, initial.side) == (
+            pending.x,
+            pending.y,
+            pending.side,
+        )
+        project(tuple(replace(v, visible=True) for v in sources))
+        for _ in range(3):
+            app.processEvents()
+        settled = preview_window_placement(workspace, second)
+        assert (initial.x, initial.y, initial.side) == (
+            settled.x,
+            settled.y,
+            settled.side,
+        )
+    finally:
+        workspace.close()
+        workspace.deleteLater()
 
 
 def test_preview_grid_retains_pending_footprints_and_existing_targets(app):
@@ -25232,3 +25398,37 @@ async def test_stale_camera_layout_after_session_cleanup_is_noop():
     assert not calls
     with pytest.raises(ClientError, match="No current preview run"):
         await _camera(client, dict(role=1, kind=rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW))
+
+
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+def test_camera_role_dropdown_opens_by_mouse_and_selects_by_keyboard(
+    window, app, style
+):
+    window.appearance.select(style, persist=False)
+    window.select_page(2)
+    cameras = window.devices.cameras
+    choice = cameras.role
+    window.activateWindow()
+    assert QTest.qWaitForWindowActive(window)
+    app.processEvents()
+    choice.setFocus()
+    app.processEvents()
+    try:
+        QTest.mouseClick(
+            choice,
+            Qt.MouseButton.LeftButton,
+            pos=QPoint(choice.width() - 14, choice.height() // 2),
+        )
+        app.processEvents()
+        assert QTest.qWaitForWindowExposed(choice.view().window())
+        assert choice.view().isVisible()
+        QTest.keyClick(choice.view(), Qt.Key.Key_Down)
+        QTest.keyClick(choice.view(), Qt.Key.Key_Down)
+        QTest.keyClick(choice.view(), Qt.Key.Key_Return)
+        app.processEvents()
+        assert not choice.view().isVisible()
+        assert choice.currentText() == cameras.selected.role == "Eye tracking"
+        assert cameras.table.item(0, 2).text() == "Eye tracking"
+    finally:
+        choice.hidePopup()
+        window.appearance.select("standard", persist=False)

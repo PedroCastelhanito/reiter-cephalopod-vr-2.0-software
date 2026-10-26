@@ -1,0 +1,60 @@
+{
+  "renderer": "AMD Radeon(TM) Graphics",
+  "vendor": "ATI Technologies Inc.",
+  "errors": [],
+  "elapsed_seconds": 20.04737629997544,
+  "cpu_core_percent": 23.30417172847563,
+  "frame_callbacks": {
+    "count": 402,
+    "mean_ms": 0.372361442171482,
+    "p95_ms": 0.5540650279726833,
+    "max_ms": 0.7345000049099326
+  },
+  "frame_intervals": {
+    "count": 402,
+    "mean_ms": 50.02091542281331,
+    "p95_ms": 62.06757508334704,
+    "max_ms": 65.2432000497356
+  },
+  "motion_intervals": {
+    "count": 1254,
+    "mean_ms": 15.997615789432388,
+    "p95_ms": 16.479834989877418,
+    "max_ms": 31.62650007288903
+  },
+  "qt_presentation": [
+    {
+      "age": {
+        "count": 401,
+        "mean_ms": 7.032149625208201,
+        "p95_ms": 10.609599994495511,
+        "max_ms": 17.473599989898503
+      },
+      "intervals": {
+        "count": 400,
+        "mean_ms": 50.00083274993813,
+        "p95_ms": 63.333674950990826,
+        "max_ms": 71.20600005146116
+      },
+      "skipped": 0
+    }
+  ],
+  "paint_cpu_submission": {
+    "count": 1480,
+    "mean_ms": 0.13456716103089117,
+    "p95_ms": 0.4311599128413945,
+    "max_ms": 0.5787999834865332
+  },
+  "scope": "Generated images; separate HighGUI process using production Win32 owner/geometry helpers; summed GUI and viewer process CPU; 200ms placement sampling, 10ms native polling, 16ms geometry timer; age ends at raster paint completion or Qt frameSwapped, not screen scanout; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "pixel_verification": "orientation, stream content and redraw upload reuse passed",
+  "coalescing_verification": "two pending submissions produce one latest upload",
+  "texture_uploads": 1326,
+  "source_batches": 441,
+  "presentation_endpoint": "Qt frameSwapped or native imshow submission",
+  "mode": "texture",
+  "moving": true,
+  "pixels": 640,
+  "streams": 3,
+  "channels": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

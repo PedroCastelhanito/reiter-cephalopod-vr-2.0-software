@@ -1,0 +1,10 @@
+....E                                                                    [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of test_projector_reference_measurements_derive_distance_and_roundtrip _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+E   OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ae56fc2e-a58f-49bd-9625-f773bc7c9664}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+=========================== short test summary info ===========================
+ERROR tests/gui/test_dashboard.py::test_projector_reference_measurements_derive_distance_and_roundtrip
+4 passed, 961 deselected, 1 error in 4.07s

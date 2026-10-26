@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-26",
+  "scope": "G02rev159; uncommitted GUI changes on the context.json base, with concurrent edits preserved",
+  "method": "QT_QPA_PLATFORM=offscreen; DashboardWindow(sample=True), ReviewControls, isolated screen-style.ini settings. Amber1600x1000, local rig/calibration/SpikeGLX presentation drafts. Five processEvents calls per page before grab. No device discovery or commands.",
+  "screenshots": [
+    "screen-style-rig.png",
+    "screen-style-calibration.png",
+    "screen-style-pulse.png",
+    "screen-style-spike.png"
+  ],
+  "results": [
+    "screen-style-focused.txt:10 passed",
+    "screen-style-behavior.txt:4 passed/1 sandbox temp setup error",
+    "screen-style-measurement.txt:1 passed after fresh writable basetemp",
+    "screen-style-tests.txt: initial broader selection interrupted after no completion; no result claimed",
+    "GUI Ruff/format205 files, Win32mypy201 files, boundaries760/zero pass"
+  ],
+  "source_sha256": {
+    "editing_card.py": "aaa95b45e4a8698da5eb926978c4df21dc3ea56a6235796ddbdd895f7fad0c0d",
+    "tables.py": "bff100695b39292c9521ba4a92e37bbf394b5f28df0a8c51fc7fcf6335011762",
+    "projector_geometry.py": "f8d6a455e09657d61b4fb055750842a8c9ebc83205c8f3f8914c2fe6e07dd994",
+    "projector_measurements.py": "b12d3c52827e45f09b3fc8505714b06a56bc9bd4f4c2fa31b864940007d63711",
+    "projector_timing.py": "1a2d041f0834a1c26b753c75c2f05af3914ec2141ea9f8c04c261df9319cd6e8",
+    "spikeglx.py": "3b48eda150229ce2f97fbc6a3b411eb83e0885fa627d51f21ef8c04b3bf458b5"
+  },
+  "limits": "Offscreen rendering/presentation only; native app/rig not checked."
+}

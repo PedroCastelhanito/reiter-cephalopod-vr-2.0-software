@@ -674,7 +674,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 72
+**Status:** Accepted · **Revision:** 73
 
 - Visible native camera previews report E08 PreviewRates from existing latest-frame IDs
   and acquisition timestamps, without adding capture-worker messages. One queued
@@ -786,8 +786,14 @@ stamping/filtering and the mappings still need runtime implementation.
   Session viewers follow that allocation across trial run IDs without opening capture
   outside trials; 0 Hz disables attachment. Session cleanup closes readers before
   releasing their mappings. All acquisition Win32 viewers share one HighGUI/native
-  window owner thread outside the coordinator event loop; independent bounded frame
-  waits never block that thread or another viewer. Native X closure hides only that window.
+  window owner thread outside the coordinator event loop. Each viewer's existing
+  reader thread owns bounded frame waits, private frame copying, SDK conversion,
+  channel ordering and viewport image preparation. Only native window/input/placement
+  operations run on the shared owner. One in-flight preparation per viewer carries
+  no frame backlog; snapshot viewport state and reject results superseded by native
+  input, stop, closure, retirement or session-run changes before display. Cleanup
+  waits for that viewer's private work, then closes its native window/mapping with
+  truthful release evidence. Native X closure hides only that window.
   Publish monotone visibility/failure observations for the exact run; stale callbacks
   cannot change a replacement run or complete a camera command. Viewer availability
   gates neither Ready nor capture start. Retain each local reader in the native

@@ -1,0 +1,26 @@
+[
+  {
+    "path": "tools/benchmark_preview_presentation.py",
+    "sha256": "A4D8438B0E4F5627F24E444E406AD567F1D4F5E97308E43918E10A67C47FCE47"
+  },
+  {
+    "path": "src/cephvr/platform/windows/preview_owner.py",
+    "sha256": "1D5DA6A5E10DCEDAE9921EA8AE20F831AB0ACA6D72A431F5EC1197874C2A801B"
+  },
+  {
+    "path": "src/cephvr/platform/windows/window_coordinates.py",
+    "sha256": "4AB6806E0D2E9D7B8AB9F1D7315566F1195BCF9495098057A299F252B07354CA"
+  },
+  {
+    "path": "src/cephvr/shared/preview_geometry.py",
+    "sha256": "41EC770DD919CACFEDD5B0CBE1AF89EC84EAABA278ADC8A3F4F8715946511BB7"
+  },
+  {
+    "path": "src/cephvr/acquisition/preview/highgui.py",
+    "sha256": "B0E2AED74BE46259767DCE1DCFA74A9FC0A171781AEE5E45129DE44B98065A16"
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/rendering/preview.py",
+    "sha256": "2AD293AE939689F4CE54C7C959B26BF6B5699475FC85A46A3A38CFE79AE0ADE3"
+  }
+]

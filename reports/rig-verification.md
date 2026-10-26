@@ -1,5 +1,29 @@
 # Rig verification — outstanding checks
 
+<a id="camera-native-caption"></a>
+- [ ] [gui] [acquisition] After normal restart, verify camera icon-free native title colors
+  across GUI themes, drag/resize/Snap and mixed-DPI placement. Verify either camera
+  opened second appears at its final slot immediately. Measure both camera
+  preview FPS against20Hz cap while source30/60Hz and recording remain independent.
+  Isolated native slow-reader independence, stale-work rejection, chrome/pan/zoom/close
+  and byte-identical8-bit preparation speedup pass; no live FPS improvement
+  is claimed. [Assessment](runtime.md#native-camera-captions-and-preview-pacing--2026-10-26).
+
+
+<a id="embedded-preview-comparison"></a>
+- [ ] `embedded-preview-comparison` [gui] [acquisition] [visual_stimulus]
+  Before considering a production replacement, resolve owner-observed system-wide
+  lag during the optimized preview replay (normal again after closure), isolate
+  preview-on/off runs from concurrent GUI testing, and resolve prototype image/window lag
+  and native-probe startup reliability, then compare previews off, native viewers
+  and embedded latest-frame consumption at matched dimensions/cadence and the same
+  recording/stimulus/available Tracking load. Repeat stationary and interactive
+  cases; measure source gaps, recording loss/substitutions, renderer timing tails,
+  Tracking latency/backlog, frame age and CPU/GPU load. A stalled GUI must never gate
+  producers. Preserve SYS-002 placement and E15's physical/full-workload boundary.
+  Component CPU/swap/readback measurements do not close this check.
+  [Current assessment](runtime.md#embedded-preview-feasibility--2026-10-26).
+
 Oct26 bounded lifecycle checks complete: deliberate GPU-budget rejection with the
 saved Behavioral camera confirms cleanup and fresh Setup/Cancel; two60-second Visual
 Stimulus-only trials, NewSession, post-session calibration Open/Close and normal

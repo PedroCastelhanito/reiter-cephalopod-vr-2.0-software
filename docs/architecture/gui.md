@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 334
+**Status:** Accepted · **Revision:** 337
 
 - Protocol category is separate from session Control: Media presentation, Texture
   drift or 3D navigation. Preserve projector rows, row-local Layer management,
@@ -67,12 +67,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Camera and Visual Stimulus previews display the newest available frame at up to
   20 Hz, using the source rate when slower, without duplicate frames or catch-up
   bursts. Capture, recording and projector presentation rates are independent.
-- Native camera previews remain borderless. On hover, draw a drag/close strip over
-  the private displayed image; never change the window/client dimensions or image
-  transform when the strip appears. Keep the strip visible through an active drag.
-  Camera slots reserve no native-caption space; the square client fills the GUI
-  frame. Acquisition owns overlay input and native move/close dispatch; image
-  pan/zoom below the strip and manual placement/Snap remain independent.
+- Native camera previews retain the OpenCV/Windows title bar for native move,
+  resize and close, with no title-bar icon. GUI slots reserve native chrome around the square image.
+  Bounded display-only RGB hints match caption background/text to the GUI card/text
+  colors; unsupported Windows versions retain system colors. Acquisition applies
+  colors without modifying pixels or taking over native input. Image pan/zoom and
+  manual placement/Snap remain independent; G01's preview rate limit is unchanged.
 - Preview stream headings and Show controls sit eight logical pixels above their native
   frame, with measured source and preview FPS directly below. Hidden, unavailable or
   three-second-stale measurements show a dash; layout reserves the footer when choosing
@@ -663,7 +663,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   and reapplies maximization once after the first native/layout event pass; later
   operator Restore remains available.
   Other tabs reclaim Preview space. Previews remain detached,
-  never embedded or reparented. Preview uses bracketed native-window footprints instead of
+  never embedded or reparented in production. An isolated optional benchmark may
+  compare native positioning/following with embedded GUI-GPU presentation and
+  stimulus readback cost; it grants no experiment/device authority and does not
+  select a production replacement. Preview uses bracketed native-window footprints instead of
   ordinary cards, each captioned with its source (`[ BEHAVIOR CAM ]`); the native window
   carries no title text and `[ PREVIEW ]` names only the empty footprint. Retro doubles
   each bracket and shows static, centered `-- NO SIGNAL --` text without a caret
@@ -1327,22 +1330,42 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 154
+**Status:** Accepted · **Revision:** 164
 
-- Related configuration controls across Dashboard, Protocol, Devices and Tracking
-  share filled editing cards, grouped by operator task. Reuse an existing group
-  instead of nesting another surface around it; wrap groups in an outlined titled card
-  only when they share one device or purpose (camera, rig, session), and leave
-  standalone groups bare. Spacing between groups, card padding and body gaps come from
-  `SIZES` (`group_gap` 18, `card_padding`, `body_gap`); keep compact comparative tables
-  together. Inventory, status readouts, logs, timelines and preview plots retain
-  their section containers. Use 18px spacing between nested editing groups, wrap
-  titles within their column and reflow action rows at narrow widths. While a
-  control has keyboard focus, its card uses the theme editing fill, a left focus
-  accent and an Editing label. Focus in an owned dropdown or menu keeps this
-  treatment active; clear it when focus leaves the card and its owned popups. Amber uses
-  #293236 resting and #373429 editing fills. Keep focus styling and validation
-  in the existing controls, including dynamically replaced fields and Advanced.
+- In Protocol Self motion rows, align the last parameter field with the right edge
+  of the Asset text field, excluding Browse. Preserve Linked and Advanced alignment
+  and responsive field reflow.
+- Configuration groups are unfilled by default, with headings and spacing rather
+  than nested cards: Session/Subject, camera/preset/trigger,
+  MCU connection and I/O sections, and Tracking forms. Use an inner surface
+  only when repeated rows or editors would otherwise be hard to distinguish.
+  Protocol type and Assets folder each use a main framed card matching Configuration
+  file, retaining their existing top-row widths and responsive stacking.
+  Unfilled groups retain the shared16px content inset and vertical padding so
+  their fields/actions align with neighbouring sections. Dashboard Session/Subject
+  and Data/Videos use their enclosing main card's inset without additional inner
+  padding; Saving options keeps its natural content height. MCU checkbox columns use
+  the short heading Use; removing a fill does not change fonts or application scale.
+  All repeated table rows use the Screen dimensions-style rounded editing surface:
+  camera/display inventories, MCU I/O, calibration, pulse/blackout rows, SpikeGLX
+  inputs and Tracking coordinates. Share fill, radius, focus accent and12px gaps
+  across tabs and all three themes; do not keep a second faint-band table style.
+  Keep idle and selected/editing row fills dark and subdued across the GUI,
+  retaining their distinct cool/warm Amber hues and the existing focus accent.
+  Selected rows use that same inset surface, preserving six pixels above/below
+  each row card, including below the header; selection never changes its height
+  or paints over the gaps with a native full-cell highlight.
+  Preserve selection, keyboard editing and existing validation affordances.
+  Rig geometry uses Screen dimensions-style compact rows with identity at left
+  for Tank, Subject position and Subject to screens. Pixel-to-mm calibration,
+  pulse Frame/Pulse and SpikeGLX input-channel tables use the same rounded fill,
+  focus accent and12px row separation. Pixel-to-mm calibration has a main outlined
+  section matching Projection calibration; SpikeGLX has separate main connection
+  and Input channels cards. Keep fields and their data/validation ownership intact.
+  Repeated projector/variation editors retain their needed grouping and owned-popup
+  focus treatment. Inventory, status, log, timeline and preview section containers
+  remain. Group gaps and body spacing use shared `SIZES`; wrap titles and reflow
+  actions at narrow widths. Do not surround a whole I/O table with another inner card.
 
 - GUI startup displays a compact text-only `CephVR2.0` / `Initializing` splash
   with antialiased rounded corners and transparent outer pixels,
@@ -1363,7 +1386,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the field with a dim-tint highlight (no solid accent slab or default scroller strips),
   message boxes draw Amber glyph icons instead of the native coloured ones, and expanding
   tab bars (Projector setup, Tracking) elide text rather than show Qt's unthemed
-  scroll buttons. Microcontroller Inputs/Outputs use the standard card padding, and the
+  scroll buttons. Microcontroller Inputs/Outputs use compact row bands, and the
   local review fixture controls use a separate Review menu.
 - Amber navigation gives every main page, sidebar child and in-page tab a leading
   `>`; selected entries add a trailing `<`, with both markers, icon and label coral.
@@ -1486,9 +1509,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   and `Epoch N · duration` below, subsection headings shown as `| NAME |`, and the page heading omitted.
   The sidebar wordmark is centred and navigation is left-aligned: `< Icon Title >` with bright brackets when selected, dim
   brackets on hover. Selected text stays coral-red under hover; repaint
-  navigation icons and labels on the checked-state signal before page-layout work. Buttons rest as plain orange outlines and fill orange
-  on hover; Stop, Abort, Disconnect and Cancel actions do the same in red; disabled
-  buttons are dim outlines and toggles fill only when checked. Selection elsewhere (trials, group/epoch blocks, batch bands) has no fill: pale-gold
+  navigation icons and labels on the checked-state signal before page-layout work. Action buttons retain a muted amber background at rest and fill orange
+  on hover; Stop, Abort, Disconnect and Cancel actions use a muted red background
+  and brighter red hover. Disabled buttons use a darker charcoal fill than enabled
+  resting buttons, with dim outlines/text even on hover or when checked;
+  unchecked toggles and icon actions also retain a visible background, with stronger
+  checked fills. Selection elsewhere (trials, group/epoch blocks, batch bands) has no fill: pale-gold
   text and a bright outline. HUD and
   log text share the value colour; wrapped log rows continue under the message
   column for display only (copied text is the stored row). Focus is bright amber,
@@ -1571,7 +1597,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Style selection controls films and heading/lamp glow automatically;
   main page headings share the card-title glow. In Previews, master switches use
   standard checkboxes; compact per-item buttons use solid accent fill with dark text
-  when selected and an unfilled outline when unselected, including on hover.
+  when selected and a muted button background when unselected, brightening on hover.
   Unavailable controls are hidden under G01, with no third visual state;
   keyboard focus keeps a distinct dashed outline. Retro also
   glows stream and projector headings, shows projector titles uppercase and gives each
@@ -1691,19 +1717,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dependent section so hidden sections leave no empty gap; preserve compact
   same-row/table checkboxes beside their associated values.
 - Camera trigger source/rate/pin fields align at their bottom edge when labels wrap.
-  VSync mode occupies a Display synchronization card aligned to sibling card edges;
-  its field fills the shared card body within the normal padding.
+  VSync mode occupies an unfilled Display synchronization group aligned to sibling
+  group edges.
 - Keep page alignment, fixed card gaps, labeled fields, natural button heights,
   content-measured table columns, semantic status labels and inherited dialog styling
   consistent across pages. Same-row controls share their tallest natural height
   through the shared row helper, including pin/Test and path/Browse pairs. Compact
   checkbox/radio indicators and icon-only header actions are explicit exceptions.
   Shared card headers leave extra vertical space before
-  content. A shared compact Card density (12-pixel padding, 8-pixel title gap)
-  keeps small Inputs/Outputs cards fitted without changing other cards. Their shared
-  row layout separates enable, signal name, pin and Test/Stop into aligned columns:
+  content. The shared Inputs/Outputs table layout separates enable, signal name,
+  pin and Test/Stop into aligned columns:
   compact centered checkboxes and equally distributed name, pin and action columns.
-  Both cards use the same column proportions and spacing; longer names wrap.
+  Both tables use the same column proportions and spacing; longer names wrap.
   Card titles sit near the top-left corner in a true gap in the rounded
   outline, with transparent captions and continuous card fill. Console cards contain
   no Clear button or separate action row.

@@ -85,7 +85,7 @@ class CalibrationCards(Card):
         self.cards: dict[str, EditingCard] = {}
         self.body.setSpacing(SIZES.group_gap)
         for face in FACES:
-            card = EditingCard(face)
+            card = EditingCard(face, filled=True)
             self.cards[face] = card
             grid = QGridLayout()
             grid.setHorizontalSpacing(12)

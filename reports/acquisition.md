@@ -1,5 +1,17 @@
 # Acquisition status
 
+Oct26 camera preview preparation is independent under A10rev73: each existing
+reader owns private copy, SDK conversion, channel order and viewport resampling;
+native window operations remain shared. One in-flight operation per viewer and
+final identity/lifetime/view checks reject stale work.181 local preview/platform
+and two native tests pass, including deliberately blocked first-camera preparation
+while a second viewer becomes ready. Earlier G01rev337 themed/icon-free captions
+and byte-identical8-bit optimization remain. Actual final live FPS and full-load
+acceptance remain unverified.
+[Assessment](runtime.md#native-camera-captions-and-preview-pacing--2026-10-26) ·
+[Current evidence](runtime-evidence-2026-10-26/independent-preview-preparation/context.md).
+
+
 Oct26 `failed-setup-retired-report` is resolved under
 [E06/E08](../docs/architecture/system-contracts.md#e06). Exact cancelled Setup Ready
 retains factual attachment ownership for Cleanup without advancing readiness.

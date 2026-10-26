@@ -1,0 +1,84 @@
+{
+  "renderer": "AMD Radeon(TM) Graphics",
+  "vendor": "ATI Technologies Inc.",
+  "errors": [],
+  "elapsed_seconds": 6.050261799944565,
+  "cpu_core_percent": 3.615546024834897,
+  "frame_callbacks": {
+    "count": 122,
+    "mean_ms": 0.8553139327216099,
+    "p95_ms": 1.1035950214136392,
+    "max_ms": 1.5349999302998185
+  },
+  "frame_intervals": {
+    "count": 122,
+    "mean_ms": 49.99672704983167,
+    "p95_ms": 50.184330058982596,
+    "max_ms": 50.506899948231876
+  },
+  "motion_intervals": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "qt_presentation": [
+    {
+      "age": {
+        "count": 121,
+        "mean_ms": 1.8913000013894778,
+        "p95_ms": 2.5095000164583325,
+        "max_ms": 2.9015999753028154
+      },
+      "intervals": {
+        "count": 120,
+        "mean_ms": 50.002973333660826,
+        "p95_ms": 50.5572700756602,
+        "max_ms": 51.4137001009658
+      },
+      "skipped": 0
+    },
+    {
+      "age": {
+        "count": 121,
+        "mean_ms": 1.8951950444693655,
+        "p95_ms": 2.5129999266937375,
+        "max_ms": 2.9058000072836876
+      },
+      "intervals": {
+        "count": 120,
+        "mean_ms": 50.0029966662017,
+        "p95_ms": 50.557300075888634,
+        "max_ms": 51.41620000358671
+      },
+      "skipped": 0
+    },
+    {
+      "age": {
+        "count": 121,
+        "mean_ms": 1.8968884275133207,
+        "p95_ms": 2.514899941161275,
+        "max_ms": 2.910299925133586
+      },
+      "intervals": {
+        "count": 120,
+        "mean_ms": 50.003001666239776,
+        "p95_ms": 50.557324959663674,
+        "max_ms": 51.416700007393956
+      },
+      "skipped": 0
+    }
+  ],
+  "gl_paint_submission": {
+    "count": 363,
+    "mean_ms": 0.09662534409143626,
+    "p95_ms": 0.17177002737298608,
+    "max_ms": 0.25559996720403433
+  },
+  "scope": "Generated RGB; separate HighGUI process using production Win32 owner/geometry helpers; summed GUI and viewer process CPU; 200ms placement sampling, 10ms native polling, 16ms geometry timer; frame age ends at Qt frameSwapped, not physical screen scanout; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "mode": "embedded",
+  "moving": false,
+  "pixels": 640,
+  "streams": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

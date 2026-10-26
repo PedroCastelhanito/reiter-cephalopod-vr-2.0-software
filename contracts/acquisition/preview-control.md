@@ -110,6 +110,12 @@ Cameras page); validate the handle before rebinding.
 `update_existing_only` marks automatic layout refreshes: if the exact-run viewer
 is absent or closed, succeed without allocating/reopening it. Check native X before
 applying hints or drawing. Unowned legacy viewers retain their existing placement.
+Optional `camera_caption_rgb` and `camera_caption_text_rgb` are display-only
+packed `0xRRGGBB` values bounded to `0xFFFFFF` at both command boundaries.
+Apply them to native Windows caption background/text before reveal and on layout
+updates; absent fields restore system colors. Unsupported native color attributes
+retain system chrome. Keep native move/resize/close and reserve its footprint (G01).
+
 GUI measures the requested source's named bracketed footprint in the Preview grid
 in the Dashboard workspace or below Cameras/Tracking HUD/log, including native chrome and DPI, and centers its fitting frame
 there; without a visible slot it falls back beside the GUI within the work
@@ -192,6 +198,16 @@ GUI event/render thread. Check `published_count` against the last handled frame;
 notification alone is not a frame. On attachment, inspect the current slot
 before waiting so an already-published image is not missed. Publication and stop/detach
 wake the reader; waits always recheck new-frame and cancellation predicates.
+
+Each viewer's existing reader thread copies and prepares its private newest image,
+including SDK conversion, channel order and viewport resampling. Native window,
+input and placement operations remain on the shared HighGUI owner (A10). Only one
+preparation is in flight per reader; native steps pass private viewport snapshots
+and await no image work on the shared owner. Before display, recheck stop/retirement,
+session run, native closure/minimization and the current viewport transform. Discard
+invalidated work; a newer view redraws from that reader's cached private pixels.
+Reader failures return through the native owner's normal cleanup path. Do not signal
+release while private work, native closure or mapping release remains unconfirmed.
 
 G01 caps new viewer images at 20 Hz, or the source rate when slower. Pending new
 frames may wait through the existing bounded event-service interval until due;

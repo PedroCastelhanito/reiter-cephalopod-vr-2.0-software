@@ -10,6 +10,7 @@ from PyQt6.QtGui import QGuiApplication
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.gui.preview_follow import PreviewOwner, bind_preview_owner
 from cephvr.gui.preview_placement import cocoa_preview_position
+from cephvr.platform.windows.preview_caption import color_preview_caption
 from cephvr.platform.windows.preview_creation import StagedPreviewWindow
 from cephvr.platform.windows.window_coordinates import (
     blank_preview_caption,
@@ -190,6 +191,9 @@ class ReviewPreviews(QObject):
         cv.resizeWindow(title, placement.side, placement.side)
         cv.waitKey(1)
         if sys.platform == "win32":
+            color_preview_caption(
+                preview_window_handle(title) if ref is None else int(ref), placement
+            )
             position_preview_frame(
                 title if ref is None else ref,
                 placement.x,

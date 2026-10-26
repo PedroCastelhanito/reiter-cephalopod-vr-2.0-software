@@ -1,17 +1,22 @@
 """Shared camera-style tables with optional persistent form controls."""
 
-from PyQt6.QtCore import QEvent, QSize, Qt, QTimer, pyqtSlot
+from PyQt6.QtCore import QEvent, QModelIndex, QRectF, QSize, Qt, QTimer, pyqtSlot
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QHBoxLayout,
     QHeaderView,
     QPushButton,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QTableWidget,
     QWidget,
 )
 
 from cephvr.gui.components import ActionHeader, button
+from cephvr.gui.editing_card import paint_editing_surface
 from cephvr.gui.icons import device_icon
 from cephvr.gui.table_header import TableHeader
 from cephvr.gui.theme import SIZES, colors_for
@@ -28,9 +33,55 @@ def refresh_button(hint: str) -> QPushButton:
     return control
 
 
+class RowSurfaceDelegate(QStyledItemDelegate):
+    """Dim, tightly fitted row bands, including behind persistent cell editors."""
+
+    def paint(
+        self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
+    ) -> None:
+        if painter is None:
+            return
+        painter.save()
+        table = self.parent()
+        assert isinstance(table, DataTable)
+        viewport = table.viewport()
+        assert viewport is not None
+        rect = QRectF(
+            0, option.rect.y() + 6, viewport.width(), option.rect.height() - 12
+        )
+        focus = QApplication.focusWidget()
+        # Follow popup ownership back to its cell, matching EditingSurface focus.
+        while focus is not None and not table.isAncestorOf(focus):
+            focus = focus.parentWidget()
+        focused_row = (
+            table.indexAt(focus.mapTo(viewport, focus.rect().center())).row()
+            if focus is not None and focus is not table
+            else -1
+        )
+        painter.setClipRect(option.rect)
+        paint_editing_surface(
+            painter,
+            rect,
+            colors_for(table),
+            focused_row == index.row()
+            or bool(option.state & QStyle.StateFlag.State_Selected),
+        )
+        # The shared surface owns selection; native selection would fill its gaps.
+        content = QStyleOptionViewItem(option)
+        content.state &= ~(
+            QStyle.StateFlag.State_Selected | QStyle.StateFlag.State_HasFocus
+        )
+        super().paint(painter, content, index)
+        painter.restore()
+
+
 class DataTable(QTableWidget):
     def __init__(self, rows: int, columns: int) -> None:
         super().__init__(rows, columns)
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            app.focusChanged.connect(self.refresh_row_focus)
+        self.setItemDelegate(RowSurfaceDelegate(self))
         self._hide_empty_header = False
         self.empty_text = ""
         self._extra_height = 0
@@ -49,6 +100,11 @@ class DataTable(QTableWidget):
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+    def refresh_row_focus(self, old: QWidget | None, new: QWidget | None) -> None:
+        viewport = self.viewport()
+        if viewport is not None:
+            viewport.update()
 
     def has_visible_rows(self) -> bool:
         return any(not self.isRowHidden(row) for row in range(self.rowCount()))
@@ -143,6 +199,7 @@ class DataTable(QTableWidget):
                 control = self.cellWidget(row, column)
                 if control is not None:
                     height = max(height, control.sizeHint().height() + 12)
+            height += 20
             self.setRowHeight(row, height)
         header = self.horizontalHeader()
         assert header is not None

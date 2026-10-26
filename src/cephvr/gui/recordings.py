@@ -15,7 +15,7 @@ class RecordingsCard(Card):
 
     def __init__(self, cameras: CamerasPanel, spikeglx: QCheckBox) -> None:
         super().__init__("Saving options")
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.cameras = cameras
         self.can_edit = False
         self.body.setSpacing(SIZES.group_gap)
@@ -25,6 +25,7 @@ class RecordingsCard(Card):
             (self.data_group, self.data_grid),
             (self.video_group, self.video_grid),
         ):
+            group.body.setContentsMargins(0, 0, 0, 0)
             grid.setHorizontalSpacing(8)
             grid.setVerticalSpacing(10)
             grid.setColumnMinimumWidth(2, 24)

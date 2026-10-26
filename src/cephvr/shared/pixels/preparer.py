@@ -137,16 +137,20 @@ class PixelPreparer:
                 self._output_bytes,
                 self._row_bytes,
             )
-            scale_full_range_into(
-                self._numpy,
-                image,
-                target,
-                self.layout.pixel_format.effective_bits,
-                self._container_bits,
-                target_bits,
-                target_bits,
-                self._scale_scratch,
-            )
+            if self.layout.pixel_format.effective_bits == target_bits == 8:
+                # Already full-range bytes: preserve a private copy without rescaling.
+                target[:] = memoryview(image.GetBuffer()).cast("B")[:size]
+            else:
+                scale_full_range_into(
+                    self._numpy,
+                    image,
+                    target,
+                    self.layout.pixel_format.effective_bits,
+                    self._container_bits,
+                    target_bits,
+                    target_bits,
+                    self._scale_scratch,
+                )
         finally:
             image.Release()
         return PreparedImage(

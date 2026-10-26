@@ -1,0 +1,57 @@
+{
+  "renderer": null,
+  "vendor": null,
+  "errors": [],
+  "elapsed_seconds": 2.0508207000093535,
+  "cpu_core_percent": 18.28536253794833,
+  "frame_callbacks": {
+    "count": 42,
+    "mean_ms": 0.14412617366317482,
+    "p95_ms": 0.17973497742787004,
+    "max_ms": 0.18810003530234098
+  },
+  "frame_intervals": {
+    "count": 42,
+    "mean_ms": 50.04374285705299,
+    "p95_ms": 51.59605999942869,
+    "max_ms": 51.963599980808794
+  },
+  "motion_intervals": {
+    "count": 128,
+    "mean_ms": 16.00403828160779,
+    "p95_ms": 16.48320005624555,
+    "max_ms": 16.665400005877018
+  },
+  "qt_presentation": [
+    {
+      "age": {
+        "count": 41,
+        "mean_ms": 1.182585358392538,
+        "p95_ms": 2.9526998987421393,
+        "max_ms": 3.3558999421074986
+      },
+      "intervals": {
+        "count": 40,
+        "mean_ms": 50.02723500074353,
+        "p95_ms": 51.904549973551184,
+        "max_ms": 52.29940009303391
+      },
+      "skipped": 0
+    }
+  ],
+  "gl_paint_submission": {
+    "count": 138,
+    "mean_ms": 0.8014789849951647,
+    "p95_ms": 1.0437050310429186,
+    "max_ms": 1.15430005826056
+  },
+  "scope": "Generated RGB; separate HighGUI process using production Win32 owner/geometry helpers; summed GUI and viewer process CPU; 200ms placement sampling, 10ms native polling, 16ms geometry timer; frame age ends at Qt frameSwapped, not physical screen scanout; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "pixel_verification": "orientation, stream content and redraw upload reuse passed",
+  "presentation_endpoint": "paint end",
+  "mode": "raster",
+  "moving": true,
+  "pixels": 640,
+  "streams": 3,
+  "channels": 1,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

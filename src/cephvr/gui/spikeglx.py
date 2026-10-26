@@ -14,9 +14,8 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.action_cancellation import PendingAction
-from cephvr.gui.components import button, combo, label, remove_button
+from cephvr.gui.components import Card, button, combo, label, remove_button
 from cephvr.gui.device_panel import DevicePanel, entry
-from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
@@ -39,7 +38,6 @@ class SpikeGLXPanel(DevicePanel):
                 ("STREAMS", "—"),
             ),
             ("Test connection",),
-            editing_card=True,
         )
         self.pairing = QCheckBox("SpikeGLX pairing enabled")
         self.pairing.setChecked(False)
@@ -62,7 +60,7 @@ class SpikeGLXPanel(DevicePanel):
         self.command_port.setToolTip("Read-only synchronization_config.toml setting")
         self.add("HOST", self.address)
         self.add("COMMAND PORT", self.command_port)
-        self.mapping = EditingCard("Input channels")
+        self.mapping = Card("Input channels")
         self.table = DataTable(0, 7)
         self.table.setHorizontalHeaderLabels(
             ["Use", "Signal", "Stream", "Index", "Channel index", "Bit", ""]

@@ -1,0 +1,38 @@
+[
+  {
+    "camera": "behavior",
+    "variant": "baseline",
+    "median_ms": {
+      "prepare": 35.4944,
+      "channel_order": 16.6486,
+      "viewport": 0.4641
+    }
+  },
+  {
+    "camera": "behavior",
+    "variant": "identity-copy",
+    "median_ms": {
+      "prepare": 6.1113,
+      "channel_order": 16.7233,
+      "viewport": 0.4664
+    }
+  },
+  {
+    "camera": "tracking",
+    "variant": "baseline",
+    "median_ms": {
+      "prepare": 3.5767,
+      "channel_order": 0.0023,
+      "viewport": 0.1592
+    }
+  },
+  {
+    "camera": "tracking",
+    "variant": "identity-copy",
+    "median_ms": {
+      "prepare": 1.23,
+      "channel_order": 0.0016,
+      "viewport": 0.2082
+    }
+  }
+]

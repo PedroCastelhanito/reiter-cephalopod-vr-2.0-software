@@ -13,9 +13,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import label
+from cephvr.gui.components import Card, label
 from cephvr.gui.device_panel import entry
-from cephvr.gui.editing_card import EditingCard
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.tables import DataTable
 from cephvr.visual_stimulus.config.calibration_bars import (
@@ -24,7 +23,7 @@ from cephvr.visual_stimulus.config.calibration_bars import (
 )
 
 
-class ProjectorMeasurements(EditingCard):
+class ProjectorMeasurements(Card):
     changed = pyqtSignal()
 
     def __init__(self, drafts: dict[str, dict[str, str]]) -> None:

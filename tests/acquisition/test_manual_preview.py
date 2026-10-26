@@ -169,6 +169,58 @@ def test_square_viewport_pan_keeps_smaller_axis_centered(width, height):
 
 
 @pytest.mark.parametrize(
+    "symbol,output_bits",
+    [("Mono8", 8), ("BayerRG8", 8), ("RGB8packed", 8), ("Mono8", 16), ("Mono12", 8)],
+)
+def test_preview_pixel_copy_matches_full_range_conversion(
+    monkeypatch, symbol, output_bits
+):
+    import numpy as np
+
+    from cephvr.acquisition.camera.native_formats import pylon_pixel_format
+    from cephvr.shared.pixels import preparer as module
+    from cephvr.shared.pixels.types import PixelLayout
+
+    pytest.importorskip("pypylon")
+    width = height = 16
+    fmt = pylon_pixel_format(symbol)
+    channels = 3 if symbol == "RGB8packed" else 1
+    item_bytes = 2 if symbol == "Mono12" else 1
+    source = bytearray(
+        np.arange(
+            width * height * channels, dtype="<u2" if item_bytes == 2 else "u1"
+        ).tobytes()
+    )
+    layout = PixelLayout(width, height, fmt, width * channels * item_bytes, len(source))
+    preparer = module.PixelPreparer(layout)
+    image = preparer._convert(source)
+    expected = bytearray(width * height * preparer._channels * (output_bits // 8))
+    try:
+        module.scale_full_range_into(
+            np,
+            image,
+            memoryview(expected),
+            fmt.effective_bits,
+            preparer._container_bits,
+            output_bits,
+            output_bits,
+            preparer._scale_scratch,
+        )
+    finally:
+        image.Release()
+    if fmt.effective_bits == output_bits == 8:
+        monkeypatch.setattr(
+            module,
+            "scale_full_range_into",
+            lambda *_: pytest.fail("8-bit identity must not rescale"),
+        )
+    result = preparer.prepare_preview(source, output_bits)
+    assert bytes(result.data) == expected
+    source[:] = bytes(len(source))
+    assert bytes(result.data) == expected  # No borrowed camera/source storage.
+
+
+@pytest.mark.parametrize(
     "message_type", [wire.CameraCommandRequest, wire.AcquisitionCameraCommand]
 )
 @pytest.mark.parametrize(
@@ -203,6 +255,12 @@ def test_preview_placement_admission_bounds(
         wire.PreviewWindowPlacement(side=128, stimulus_background_rgb=0x21282B)
     )
     assert not valid_preview_placement(request)
+    for field in ("camera_caption_rgb", "camera_caption_text_rgb"):
+        request.preview_placement.CopyFrom(wire.PreviewWindowPlacement(side=128))
+        setattr(request.preview_placement, field, 0xFFFFFF)
+        assert valid_preview_placement(request)
+        setattr(request.preview_placement, field, 0x1000000)
+        assert not valid_preview_placement(request)
 
 
 @pytest.mark.parametrize(
@@ -237,8 +295,10 @@ def test_preview_gui_owner_requires_complete_identity(
 
 @pytest.mark.windows
 @pytest.mark.skipif(sys.platform != "win32", reason="Win32 HighGUI windows")
+@pytest.mark.parametrize("slow_first", [False, True])
 def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
     monkeypatch: pytest.MonkeyPatch,
+    slow_first: bool,
 ) -> None:
     import ctypes
     import threading
@@ -254,6 +314,7 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
     pytest.importorskip("pypylon")
     images: list[tuple[int, bytes]] = []
     changed = threading.Event()
+    preparing, release_preparation = threading.Event(), threading.Event()
     zoomed, panned, reset = threading.Event(), threading.Event(), threading.Event()
     original = highgui.display_array
     render = highgui.SquareViewport.render
@@ -277,22 +338,12 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         result = original(image, numpy)
         images.append((threading.get_ident(), bytes(result)))
         changed.set()
+        if slow_first and "preview 1 " in threading.current_thread().name:
+            preparing.set()
+            assert release_preparation.wait(5), "Test must release the slow reader"
         return result
 
     monkeypatch.setattr(highgui, "display_array", display)
-    captions = []
-
-    class Caption(highgui.HoverPreviewCaption):
-        hovered = False
-
-        def __init__(self, handle):
-            super().__init__(handle)
-            captions.append(self)
-
-        def sync(self):
-            return self._show(self.hovered)
-
-    monkeypatch.setattr(highgui, "HoverPreviewCaption", Caption)
     reveal = highgui.StagedPreviewWindow.show
     reveals = []
 
@@ -374,12 +425,24 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
                 f"CephVR isolated preview {role} {uuid4()}",
                 lambda _reader: None,
                 placement=wire.PreviewWindowPlacement(
-                    x=100 + role * 300, y=100, side=256
+                    x=100 + role * 300,
+                    y=100,
+                    side=256,
+                    camera_caption_rgb=0x21282B,
+                    camera_caption_text_rgb=0xFFE3AF,
                 ),
             )
             resources.append((ring, producer_ring, reader))
             reader.start()
-            reader.ready.result(timeout=5)
+            if slow_first and role == 1:
+                assert preparing.wait(3)
+                assert not reader.ready.done()
+            else:
+                reader.ready.result(timeout=3)
+                if slow_first and role == 2:
+                    assert not resources[0][2].ready.done()
+                    release_preparation.set()
+                    resources[0][2].ready.result(timeout=3)
             # Frame waits are independent; both displays share one HighGUI owner.
             deadline = time.monotonic() + 3
             while len(images) < role and time.monotonic() < deadline:
@@ -387,7 +450,9 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
                 changed.clear()
             assert images[role - 1][1] == b"\xff\x80\x40\x00", reader.failure
             assert not reader.done.done()
-        assert len({thread for thread, _ in images}) == 1
+        assert {thread for thread, _ in images} == {
+            reader._thread.ident for _, _, reader in resources
+        }
         # Send native X close to one window; the other remains alive.
         native = ctypes.WinDLL("user32", use_last_error=True)
         native.FindWindowW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
@@ -435,6 +500,8 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
             )
             == 0
         )
+        # Caption color attributes are set-only; check native setter acceptance.
+        assert highgui.color_preview_caption(handle, first.placement)
         assert (visible.left, visible.top) == (400, 100)
         from cephvr.platform.windows.window_coordinates import (
             operator_window_geometry,
@@ -444,28 +511,11 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         anchor, work_area, scale = operator_window_geometry(handle)
         assert anchor[:2] == (400, 100)
         assert work_area[2] > 0 and work_area[3] > 0 and scale >= 1
-        assert anchor[2:] == (256, 256)
+        assert anchor[2] >= 256 and anchor[3] > 256
         native.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
         assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
-        from cephvr.acquisition.preview.window_thread import window_thread
-
-        def hover(shown):
-            captions[0].hovered = shown
-            captions[0].sync()
-            assert not native.GetWindowLongW(handle, -16) & 0x00C00000
-            assert captions[0].shown == shown
-            assert operator_window_geometry(handle)[0] == anchor
-            current = ctypes.wintypes.RECT()
-            assert native.GetWindowRect(child, ctypes.byref(current))
-            assert (current.left, current.top, current.right, current.bottom) == (
-                rect.left,
-                rect.top,
-                rect.right,
-                rect.bottom,
-            )
-
-        window_thread.call(lambda: hover(True))
-        window_thread.call(lambda: hover(False))
+        assert native.GetWindowLongW(handle, -16) & 0x00C00000
+        assert native.GetWindowLongW(handle, -20) & 0x00000001
         native.GetForegroundWindow.restype = ctypes.c_void_p
         foreground = native.GetForegroundWindow()
         position_preview_frame(handle, 410, 110)
@@ -514,10 +564,8 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert native.PostMessageW(child, 0x0203, 0, (128 << 16) | 128)
         assert reset.wait(3), "Native double-click did not restore the fitted view"
         assert resources[0][1].published_count == 2
-        captions[0].hovered = True
-        window_thread.call(captions[0].sync)
-        assert native.PostMessageW(child, 0x0201, 1, (10 << 16) | 245)
-        # The overlay X closes only this viewer, never its producer.
+        assert native.PostMessageW(handle, 0x0010, 0, 0)
+        # Native close affects only this viewer, never its producer.
         assert first.done.result(timeout=5), first.failure
         assert not second.done.done()
         for ring, producer_ring, _reader in resources:
@@ -525,6 +573,7 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         second.stop()
         assert second.done.result(timeout=5), second.failure
     finally:
+        release_preparation.set()
         for ring, producer_ring, reader in reversed(resources):
             reader.stop()
             assert reader.done.result(timeout=5), reader.failure
@@ -537,6 +586,13 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
     [
         ("", False, ""),
         ("display", False, ""),
+        ("prepare", False, ""),
+        ("render", False, ""),
+        ("view", False, ""),
+        ("close", False, ""),
+        ("stop", False, ""),
+        ("retire", False, ""),
+        ("run", False, ""),
         ("release", False, ""),
         ("wait", False, ""),
         ("", True, ""),
@@ -566,6 +622,8 @@ def test_highgui_private_latest_frame_thread_and_x_close(
 
     calls: list[tuple[str, int]] = []
     sequences: list[int] = []
+    preparation_threads = []
+    rendered = []
     native = b"\x11\x22\x33"
     closed = threading.Event()
     owner_state = {"hidden": False, "closed": False}
@@ -602,7 +660,23 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     class CV:
         import cv2 as native_cv
 
-        warpAffine = staticmethod(native_cv.warpAffine)
+        EVENT_MOUSEWHEEL = 10
+
+        def warpAffine(self, *args, **kwargs):
+            from cephvr.acquisition.preview.window_thread import window_thread
+
+            preparation_threads.append(threading.get_ident())
+            assert threading.get_ident() == reader._thread.ident
+            if failure == "render":
+                raise RuntimeError("render failed")
+            rendered.append(args[1].copy())
+            if failure == "view" and len(rendered) == 1:
+                # Native input arrives while the reader is rendering its snapshot.
+                window_thread.call(
+                    lambda: self.mouse(self.EVENT_MOUSEWHEEL, 320, 320, 120 << 16, None)
+                )
+            return self.native_cv.warpAffine(*args, **kwargs)
+
         INTER_LINEAR = native_cv.INTER_LINEAR
         BORDER_REPLICATE = native_cv.BORDER_REPLICATE
         WINDOW_NORMAL = 0
@@ -614,6 +688,8 @@ def test_highgui_private_latest_frame_thread_and_x_close(
         def __getattr__(self, name: str) -> object:
             def operation(*args: object) -> object:
                 calls.append((name, threading.get_ident()))
+                if name == "setMouseCallback":
+                    self.mouse = args[1]
                 if name == "getWindowProperty":
                     return int(
                         not owner_state["hidden"]
@@ -640,6 +716,7 @@ def test_highgui_private_latest_frame_thread_and_x_close(
         def read_into(
             self, sequence: int, pixels: bytearray, **_kwargs: object
         ) -> object:
+            preparation_threads.append(threading.get_ident())
             sequences.append(sequence)
             pixels[:] = native
             self.published_count = 6
@@ -652,6 +729,8 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             )
 
         def wait(self, _timeout: int) -> bool:
+            if failure == "run":
+                self.retired = True
             if failure == "wait":
                 raise RuntimeError("frame event wait failed")
             return True
@@ -668,6 +747,17 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             pass
 
         def prepare_preview(self, pixels: bytearray, _bits: int) -> PreparedImage:
+            preparation_threads.append(threading.get_ident())
+            if failure == "prepare":
+                raise RuntimeError("prepare failed")
+            if failure == "close":
+                cv.destroyed = True
+            elif failure == "stop":
+                reader.stop()
+            elif failure == "retire":
+                ring.retired = True
+            elif failure == "run":
+                ring.run_id = UUID(int=0)
             assert bytes(pixels) == native
             return PreparedImage(memoryview(pixels), 1, 1, 3, "RGB", 8, 8, 8, "full", 3)
 
@@ -681,6 +771,11 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     monkeypatch.setattr(highgui, "PixelPreparer", Preparer)
     attachment = acq.FrameBufferAttachment()
     attachment.buffer.preview.acquisition_run_id = str(uuid4())
+    if failure == "run":
+        from uuid import UUID
+
+        ring.run_id = uuid4()
+        attachment.buffer.session.session_id = str(ring.run_id)
     attachment.buffer.image.CopyFrom(
         camera.CameraImageLayout(
             width=1,
@@ -699,13 +794,7 @@ def test_highgui_private_latest_frame_thread_and_x_close(
     monkeypatch.setattr(highgui, "position_preview_frame", lambda *_, **kw: None)
     monkeypatch.setattr(highgui, "preview_window_handle", lambda *_: 99)
     monkeypatch.setattr(highgui, "blank_preview_caption", lambda *_: None)
-    monkeypatch.setattr(
-        highgui,
-        "HoverPreviewCaption",
-        lambda *_: SimpleNamespace(
-            sync=lambda: False, draw=lambda image, cv: image, press=lambda *args: False
-        ),
-    )
+    monkeypatch.setattr(highgui, "color_preview_caption", lambda *_: None)
     placement = (
         wire.PreviewWindowPlacement(
             x=0,
@@ -734,20 +823,27 @@ def test_highgui_private_latest_frame_thread_and_x_close(
         reader.update_placement(hint)
         hint.side = 400  # Submission copies and coalesces, rather than borrowing.
     reader.start()
-    if failure == "display":
-        with pytest.raises(RuntimeError, match="display failed"):
+    if failure in {"display", "prepare", "render", "close", "stop", "retire", "run"}:
+        with pytest.raises(RuntimeError, match="failed|closed before ready"):
             reader.ready.result(timeout=3)
     else:
         reader.ready.result(timeout=3)
     assert reader.done.result(timeout=3) == (failure != "release")
     assert closed.wait(3)
-    assert sequences == ([2] if failure in {"display", "wait"} else [2, 5])
+    assert sequences == (
+        [2]
+        if failure
+        in {"display", "wait", "prepare", "render", "close", "stop", "retire", "run"}
+        else [2, 5]
+    )
     assert ring.released == (failure != "release")
     assert owner_state["closed"] is bool(minimized or layout)
     assert owner_state.get("retargeted", False) == (layout == "host")
     assert len({identity for _, identity in calls}) == 1
     assert calls[0][1] != threading.get_ident()
-    if not failure:
+    assert set(preparation_threads) == {reader._thread.ident}
+    assert reader._thread.ident != calls[0][1]
+    if failure in {"", "view"}:
         assert np.array_equal(
             cv.images[-1],
             np.full(
@@ -761,8 +857,15 @@ def test_highgui_private_latest_frame_thread_and_x_close(
             ),
         )
         assert reader.failure == ""
-    else:
+    elif failure not in {"close", "stop", "retire", "run"}:
         assert reader.failure
+    if failure == "view":
+        assert len(rendered) == 3 and len(cv.images) == 3
+        assert not np.array_equal(rendered[0], rendered[1])
+    if failure in {"close", "stop", "retire", "run", "prepare", "render"}:
+        assert (
+            len(cv.images) == 1
+        )  # Never present retired or cancelled prepared pixels.
 
 
 @pytest.mark.asyncio

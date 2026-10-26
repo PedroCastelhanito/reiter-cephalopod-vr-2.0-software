@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-26",
+  "base_revision": "e6210a3d545c490e10dffa4f7b5bbd0f9a474fa9",
+  "scope": "Uncommitted GUI presentation changes only; G02 revision155. No hardware/runtime or native desktop acceptance.",
+  "method": "Qt offscreen DashboardWindow(sample=True), ReviewControls, isolated QSettings, Amber phosphor, 1600x1000. Local MCU draft inputs A/B and trial pin12. Captures after five processEvents calls per page; empty inventories are not device discovery.",
+  "checks": [
+    "pytest tests/gui/test_dashboard.py -q -k \"table_row_bands or configuration_groups_stay_unfilled or editing_card_keeps_highlight or shared_tables_tab or width_capped_table or projector_config_tabs_keep_column_width\": 15 passed, 948 deselected",
+    "ruff check src/cephvr/gui tests/gui: pass",
+    "ruff format --check src/cephvr/gui tests/gui: 205 files pass",
+    "mypy --platform win32 src/cephvr/gui: 201 files pass",
+    "tools/check_backend_boundaries.py: 760 modules, zero violations; pre-existing size advisories",
+    "git diff --check: pass"
+  ],
+  "sha256": {
+    "src/cephvr/gui/editing_card.py": "0a6009fc0df0b71298846ad92ea4bb412ccdf7a244ce3d58c470cab4f9fdaad0",
+    "src/cephvr/gui/tables.py": "795b8f34a4cedb9cf787eb912c7078d3087689a460cc8e0b2b93caa6ca651b90",
+    "src/cephvr/gui/projector_calibration.py": "a1570d3200260db9881d244cef1f946bfa7efd88b89bd095deab85aaaff03d74",
+    "tests/gui/test_dashboard.py": "7ec0413ef069fc5f861627287885acb1f70ac11924b97e059892b0b6c20b0581"
+  }
+}

@@ -330,6 +330,13 @@ def test_blank_preview_caption_keeps_handle_placement(
         GetWindowThreadProcessId=process_id,
         GetWindowRect=rect,
         SetWindowTextW=lambda hwnd, text: calls.append(("text", hwnd, text)) or True,
+        GetWindowLongW=lambda *_: 0x00000100,
+        SetWindowLongW=lambda hwnd, index, style: (
+            calls.append(("style", hwnd, style)) or 0x100
+        ),
+        SendMessageW=lambda hwnd, message, kind, icon: (
+            calls.append(("icon", hwnd, kind, icon)) or 0
+        ),
         SetWindowPos=lambda hwnd, after, x, y, *_: (
             calls.append(("pos", hwnd, x, y)) or True
         ),
@@ -346,12 +353,20 @@ def test_blank_preview_caption_keeps_handle_placement(
     monkeypatch.setattr(ctypes, "get_last_error", lambda: 0, raising=False)
 
     handle = coordinates.preview_window_handle("preview")
+    monkeypatch.setattr(ctypes, "set_last_error", lambda _: None, raising=False)
     coordinates.blank_preview_caption(handle)
     del titles["preview"]  # The blanked window can no longer be found by title.
     coordinates.position_preview_frame(handle, 410, 110, topmost=False)
 
     assert handle == 77
-    assert calls == [("text", 77, ""), ("pos", 77, 400, 110)]
+    assert calls == [
+        ("text", 77, ""),
+        ("style", 77, 0x101),
+        ("icon", 77, 0, 0),
+        ("icon", 77, 1, 0),
+        ("pos", 77, 0, 0),
+        ("pos", 77, 400, 110),
+    ]
     with pytest.raises(OSError):
         coordinates.preview_window_handle("preview")
 
@@ -399,84 +414,28 @@ def test_placement_events_count_operator_completion_not_dpi_or_position():
     assert events.revision == 1
 
 
-def test_hover_caption_preserves_footprint_and_stays_during_drag(monkeypatch):
-    from contextlib import nullcontext
-
+@pytest.mark.parametrize("result", [0, -2147024809])
+def test_native_caption_colors_preserve_native_chrome(monkeypatch, result):
+    from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.platform.windows import preview_caption as module
 
-    cursor = [0, 0]
-    button = [0]
     calls = []
 
-    def point(out):
-        out._obj.x, out._obj.y = cursor
-        return True
+    def setter(handle, attribute, value, size):
+        calls.append((handle, attribute, value._obj.value, size))
+        return result
 
-    def rectangle(handle, out):
-        out._obj.left, out._obj.top = 10, 20
-        out._obj.right, out._obj.bottom = 210, 220
-        return True
-
-    user = SimpleNamespace(
-        GetWindowLongW=lambda *_: 0x00CF0000,
-        SetWindowLongW=lambda *args: calls.append(("style", args[-1])) or 1,
-        GetCursorPos=point,
-        GetAsyncKeyState=lambda _: button[0],
-        GetWindowRect=rectangle,
-        SetWindowPos=lambda *args: calls.append(("position", args)) or True,
-        PostMessageW=lambda *args: calls.append(("message", args)) or True,
-        ReleaseCapture=lambda: calls.append(("release", ())) or True,
-    )
-    monkeypatch.setattr(module.ctypes, "WinDLL", lambda *a, **k: user, raising=False)
-    monkeypatch.setattr(module.ctypes, "set_last_error", lambda _: None, raising=False)
-    monkeypatch.setattr(module, "physical_coordinates", nullcontext)
     monkeypatch.setattr(
-        module,
-        "_visible_frame",
-        lambda _: SimpleNamespace(left=10, top=20, right=210, bottom=220),
+        module.ctypes, "WinDLL", lambda _: SimpleNamespace(DwmSetWindowAttribute=setter)
     )
-    chrome = module.HoverPreviewCaption(77)
-    assert not chrome.shown
-    initial_calls = list(calls)
-    cursor[:] = [30, 40]
-    chrome.sync()
-    assert chrome.shown
-    count = len(calls)
-    chrome.sync()
-    assert len(calls) == count
-    cursor[:] = [900, 900]
-    button[0] = 0x8000
-    chrome.sync()
-    assert chrome.shown and len(calls) == count
-    button[0] = 0
-    chrome.sync()
-    assert not chrome.shown
-    assert calls == initial_calls  # Hover never changes native style or geometry.
-    assert not chrome.press(10, 10, 200)
-    chrome._show(True)
-    assert not chrome.press(10, 60, 200)  # Image pan remains available.
-    assert chrome.press(10, 10, 200)
-    assert calls[-1][1][:3] == (77, 0x00A1, 2)
-    assert chrome.press(190, 10, 200)
-    assert calls[-1][1][:3] == (77, 0x0010, 0)
-
-
-def test_caption_overlay_leaves_image_geometry_and_pixels_below_header_unchanged():
-    import cv2
-    import numpy as np
-
-    from cephvr.platform.windows.preview_caption import HoverPreviewCaption
-
-    caption = HoverPreviewCaption.__new__(HoverPreviewCaption)
-    caption.shown = True
-    for shape in ((128, 128), (128, 128, 3)):
-        original = np.full(shape, 123, dtype=np.uint8)
-        rendered = caption.draw(original.copy(), cv2)
-        assert rendered.shape == original.shape
-        assert np.array_equal(rendered[caption.height :], original[caption.height :])
-        assert not np.array_equal(
-            rendered[: caption.height], original[: caption.height]
-        )
-        caption.shown = False
-        assert np.array_equal(caption.draw(original.copy(), cv2), original)
-        caption.shown = True
+    hint = rpc.PreviewWindowPlacement(
+        camera_caption_rgb=0x123456, camera_caption_text_rgb=0xABCDEF
+    )
+    assert module.color_preview_caption(77, hint) is (result == 0)
+    assert calls == [(77, 35, 0x563412, 4), (77, 36, 0xEFCDAB, 4)]
+    hint.ClearField("camera_caption_rgb")
+    module.color_preview_caption(77, hint)
+    assert calls[-2][2] == 0xFFFFFFFF
+    hint.camera_caption_rgb = 0x1000000
+    with pytest.raises(ValueError, match="packed RGB"):
+        module.color_preview_caption(77, hint)

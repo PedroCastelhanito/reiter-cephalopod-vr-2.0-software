@@ -167,6 +167,8 @@ class Dashboard(QWidget):
         card.body.setSpacing(SIZES.group_gap)
         self.session_group = EditingCard("Session")
         self.subject_group = EditingCard("Subject")
+        for group in (self.session_group, self.subject_group):
+            group.body.setContentsMargins(0, 0, 0, 0)
         grid = QGridLayout()
         grid.setHorizontalSpacing(SIZES.field_x_gap)
         grid.setVerticalSpacing(SIZES.field_y_gap)

@@ -1,0 +1,259 @@
+{
+  "separate": [
+    {
+      "file": "separate-0-embedded-False.json",
+      "mode": "embedded",
+      "moving": false,
+      "cpu_core_percent": 8.345855999158491
+    },
+    {
+      "file": "separate-0-embedded-True.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 11.252875753864876
+    },
+    {
+      "file": "separate-0-native-fixed-False.json",
+      "mode": "native-fixed",
+      "moving": false,
+      "cpu_core_percent": 13.199257532238507
+    },
+    {
+      "file": "separate-0-native-follow-False.json",
+      "mode": "native-follow",
+      "moving": false,
+      "cpu_core_percent": 0.0
+    },
+    {
+      "file": "separate-0-native-follow-True.json",
+      "mode": "native-follow",
+      "moving": true,
+      "cpu_core_percent": 5.467617519690916
+    },
+    {
+      "file": "separate-0-off-False.json",
+      "mode": "off",
+      "moving": false,
+      "cpu_core_percent": 0.0
+    },
+    {
+      "file": "separate-0-off-True.json",
+      "mode": "off",
+      "moving": true,
+      "cpu_core_percent": 2.14790237699141
+    },
+    {
+      "file": "separate-1-embedded-False.json",
+      "mode": "embedded",
+      "moving": false,
+      "cpu_core_percent": 9.959206216494715
+    },
+    {
+      "file": "separate-1-embedded-True.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 10.933867222638435
+    },
+    {
+      "file": "separate-1-native-fixed-False.json",
+      "mode": "native-fixed",
+      "moving": false,
+      "cpu_core_percent": 7.999502716506677
+    },
+    {
+      "file": "separate-1-native-follow-False.json",
+      "mode": "native-follow",
+      "moving": false,
+      "cpu_core_percent": 8.593357928060298
+    },
+    {
+      "file": "separate-1-native-follow-True.json",
+      "mode": "native-follow",
+      "moving": true,
+      "cpu_core_percent": 19.91035611213989
+    },
+    {
+      "file": "separate-1-off-False.json",
+      "mode": "off",
+      "moving": false,
+      "cpu_core_percent": 0.3882211588481332
+    },
+    {
+      "file": "separate-1-off-True.json",
+      "mode": "off",
+      "moving": true,
+      "cpu_core_percent": 2.926334067490928
+    },
+    {
+      "file": "separate-2-embedded-False.json",
+      "mode": "embedded",
+      "moving": false,
+      "cpu_core_percent": 8.345699149218127
+    },
+    {
+      "file": "separate-2-embedded-True.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 14.251332063039824
+    },
+    {
+      "file": "separate-2-native-fixed-False.json",
+      "mode": "native-fixed",
+      "moving": false,
+      "cpu_core_percent": 1.367136762128567
+    },
+    {
+      "file": "separate-2-native-follow-False.json",
+      "mode": "native-follow",
+      "moving": false,
+      "cpu_core_percent": 0.0
+    },
+    {
+      "file": "separate-2-native-follow-True.json",
+      "mode": "native-follow",
+      "moving": true,
+      "cpu_core_percent": 5.662317020057063
+    },
+    {
+      "file": "separate-2-off-False.json",
+      "mode": "off",
+      "moving": false,
+      "cpu_core_percent": 0.0
+    },
+    {
+      "file": "separate-2-off-True.json",
+      "mode": "off",
+      "moving": true,
+      "cpu_core_percent": 2.717401498845623
+    }
+  ],
+  "motion": [
+    {
+      "file": "motion-0-embedded-False.json",
+      "mode": "embedded",
+      "moving": false,
+      "cpu_core_percent": 5.939612384438719,
+      "max_qt_age_p95_ms": 2.149400068446994,
+      "max_qt_age_ms": 2.319499966688454,
+      "skipped": 0
+    },
+    {
+      "file": "motion-0-embedded-True.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 26.323991910149495,
+      "max_qt_age_p95_ms": 6.688299938105047,
+      "max_qt_age_ms": 9.241800056770444,
+      "skipped": 0
+    },
+    {
+      "file": "motion-0-native-follow-False.json",
+      "mode": "native-follow",
+      "moving": false,
+      "cpu_core_percent": 9.884322874604795
+    },
+    {
+      "file": "motion-0-native-follow-True.json",
+      "mode": "native-follow",
+      "moving": true,
+      "cpu_core_percent": 24.54300856091176
+    },
+    {
+      "file": "motion-0-off-True.json",
+      "mode": "off",
+      "moving": true,
+      "cpu_core_percent": 5.942442825736542
+    },
+    {
+      "file": "motion-1-embedded-False.json",
+      "mode": "embedded",
+      "moving": false,
+      "cpu_core_percent": 3.615546024834897,
+      "max_qt_age_p95_ms": 2.514899941161275,
+      "max_qt_age_ms": 2.910299925133586,
+      "skipped": 0
+    },
+    {
+      "file": "motion-1-embedded-True.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 30.754832720611,
+      "max_qt_age_p95_ms": 8.336600032635033,
+      "max_qt_age_ms": 11.678399983793497,
+      "skipped": 0
+    },
+    {
+      "file": "motion-1-off-True.json",
+      "mode": "off",
+      "moving": true,
+      "cpu_core_percent": 5.728268187739683
+    }
+  ],
+  "unrestricted": [
+    {
+      "file": "unrestricted-embedded-3x640.json",
+      "mode": "embedded",
+      "moving": true,
+      "cpu_core_percent": 27.39136724332762,
+      "max_qt_age_p95_ms": 4.098899895325303,
+      "max_qt_age_ms": 12.047900003381073,
+      "skipped": 0
+    },
+    {
+      "file": "unrestricted-native-follow-3x640.json",
+      "mode": "native-follow",
+      "moving": true,
+      "cpu_core_percent": 10.855569937951108
+    },
+    {
+      "file": "unrestricted-readback-1x1024.json",
+      "mode": "readback",
+      "moving": false,
+      "cpu_core_percent": 2.070492484033572,
+      "readback": {
+        "count": 120,
+        "mean_ms": 0.8045833344416072,
+        "p95_ms": 0.9923150995746255,
+        "max_ms": 1.0314000537618995
+      }
+    },
+    {
+      "file": "unrestricted-readback-4x640.json",
+      "mode": "readback",
+      "moving": false,
+      "cpu_core_percent": 2.8470865157108745,
+      "readback": {
+        "count": 120,
+        "mean_ms": 1.4935633322844903,
+        "p95_ms": 1.8094750354066491,
+        "max_ms": 1.8576000584289432
+      }
+    }
+  ],
+  "readback": [
+    {
+      "file": "readback-0-1x1024.json",
+      "mode": "readback",
+      "moving": false,
+      "cpu_core_percent": 1.5535783433509265,
+      "readback": {
+        "count": 80,
+        "mean_ms": 0.8019125103601255,
+        "p95_ms": 1.0030150588136166,
+        "max_ms": 1.2153000570833683
+      }
+    },
+    {
+      "file": "readback-0-4x640.json",
+      "mode": "readback",
+      "moving": false,
+      "cpu_core_percent": 1.9402407344259966,
+      "readback": {
+        "count": 80,
+        "mean_ms": 1.5644787563360296,
+        "p95_ms": 1.8463949614670128,
+        "max_ms": 2.3127999156713486
+      }
+    }
+  ]
+}

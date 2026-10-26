@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-26",
+  "base_revision": "e6210a3d545c490e10dffa4f7b5bbd0f9a474fa9",
+  "scope": "A10rev73, existing working-tree caption/color/pixel optimizations and unrelated concurrent changes retained",
+  "sha256": {
+    "src/cephvr/acquisition/preview/highgui.py": "eac5725bcdda18762bec8a9e3cc635124c411d4311511cbf94a5ffd37467d755",
+    "src/cephvr/acquisition/preview/viewport.py": "896d190c57607c1b7e9f66f89a7930b586958158b224106f65a64227c1d3a886",
+    "tests/acquisition/test_manual_preview.py": "ff934ed337d948c5774aca57a488523e713cd9ebb63a7fe745833bc163153141"
+  }
+}

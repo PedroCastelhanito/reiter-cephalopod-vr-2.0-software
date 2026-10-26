@@ -1,0 +1,113 @@
+{
+  "rgb": [
+    {
+      "mode": "native-follow",
+      "moving": false,
+      "n": 3,
+      "cpu_median": 7.421476188410485,
+      "cpu_min": 5.46849633010477,
+      "cpu_max": 8.540389009017952,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "embedded",
+      "moving": false,
+      "n": 3,
+      "cpu_median": 5.858423592010527,
+      "cpu_min": 3.493392525949341,
+      "cpu_max": 8.927763493694803,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "raster",
+      "moving": false,
+      "n": 3,
+      "cpu_median": 10.674452362337371,
+      "cpu_min": 7.420876335629954,
+      "cpu_max": 11.063809593946443,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "texture",
+      "moving": false,
+      "n": 3,
+      "cpu_median": 2.329234096647735,
+      "cpu_min": 1.5622803238675662,
+      "cpu_max": 5.240949964823986,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "native-follow",
+      "moving": true,
+      "n": 2,
+      "cpu_median": 25.994695547724668,
+      "cpu_min": 25.041259920994797,
+      "cpu_max": 26.948131174454534,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "embedded",
+      "moving": true,
+      "n": 3,
+      "cpu_median": 28.705933180830414,
+      "cpu_min": 27.588300466857408,
+      "cpu_max": 39.64093396668448,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "raster",
+      "moving": true,
+      "n": 3,
+      "cpu_median": 28.329588135824284,
+      "cpu_min": 26.978275735540368,
+      "cpu_max": 28.72789858737562,
+      "skipped_sequences": 0
+    },
+    {
+      "mode": "texture",
+      "moving": true,
+      "n": 3,
+      "cpu_median": 20.50601258476641,
+      "cpu_min": 19.135896759028245,
+      "cpu_max": 24.460841432421834,
+      "skipped_sequences": 0
+    }
+  ],
+  "gray": [
+    {
+      "mode": "native-follow",
+      "moving": false,
+      "cpu": 5.165548045829259
+    },
+    {
+      "mode": "raster",
+      "moving": false,
+      "cpu": 4.947780025490505
+    },
+    {
+      "mode": "raster",
+      "moving": true,
+      "cpu": 33.85245881025171
+    },
+    {
+      "mode": "texture",
+      "moving": false,
+      "cpu": 2.0661584941504394
+    },
+    {
+      "mode": "texture",
+      "moving": true,
+      "cpu": 20.135157586229095
+    }
+  ],
+  "failures": [
+    {
+      "file": "gray-native-follow-True.exit.txt",
+      "exit": -1073740791
+    },
+    {
+      "file": "rgb-1-native-follow-True.exit.txt",
+      "exit": -1073740791
+    }
+  ]
+}

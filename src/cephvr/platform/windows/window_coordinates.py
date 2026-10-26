@@ -127,10 +127,40 @@ def preview_window_handle(title: str) -> int:
 
 
 def blank_preview_caption(handle: int) -> None:
-    """Clear the native caption text; the title bar keeps move/close behavior."""
+    """Clear caption text/icon while retaining native move/resize/close controls."""
     api = ctypes.WinDLL("user32", use_last_error=True)
     api.SetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPCWSTR]
+    api.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+    api.SetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_long]
+    api.SendMessageW.argtypes = [
+        wintypes.HWND,
+        wintypes.UINT,
+        ctypes.c_size_t,
+        ctypes.c_ssize_t,
+    ]
+    api.SendMessageW.restype = ctypes.c_ssize_t
+    api.SetWindowPos.argtypes = [
+        wintypes.HWND,
+        wintypes.HWND,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        wintypes.UINT,
+    ]
     if not api.SetWindowTextW(handle, ""):
+        raise ctypes.WinError(ctypes.get_last_error())
+    style = api.GetWindowLongW(handle, -20)
+    ctypes.set_last_error(0)
+    # Suppress the default class-icon fallback without removing the system menu.
+    if (
+        not api.SetWindowLongW(handle, -20, style | 0x00000001)
+        and ctypes.get_last_error()
+    ):
+        raise ctypes.WinError(ctypes.get_last_error())
+    api.SendMessageW(handle, 0x0080, 0, 0)  # WM_SETICON / ICON_SMALL
+    api.SendMessageW(handle, 0x0080, 1, 0)  # ICON_BIG
+    if not api.SetWindowPos(handle, None, 0, 0, 0, 0, 0x0037):
         raise ctypes.WinError(ctypes.get_last_error())
 
 

@@ -49,6 +49,10 @@ def valid_preview_placement(
         and not hint.hidden_stimulus_surfaces
         and not hint.HasField("stimulus_background_rgb")
         and not hint.stimulus_surface_colors
+        and all(
+            not hint.HasField(field) or getattr(hint, field) <= 0xFFFFFF
+            for field in ("camera_caption_rgb", "camera_caption_text_rgb")
+        )
         and 128 <= hint.side <= 2048
         and abs(hint.x) <= 1_000_000
         and abs(hint.y) <= 1_000_000

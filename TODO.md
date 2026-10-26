@@ -10,7 +10,9 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `preview-interaction-transitions` [gui] [acquisition] Verify live overlay-header dragging/Snap; blank-title camera windows unavailable to automation and manual result pending. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26)
+- [ ] `repo-commit-sync-oct26` [repo] Validate and tidy the current changes, commit and synchronize main. Owner: cleanup chat. Done when checks are recorded and origin/main matches the committed snapshot.
+
+- [ ] `preview-interaction-transitions` [gui] [acquisition] Verify restored native title-bar theme/DPI/drag/Snap and live camera FPS after restart; isolated native/icon and pixel-equality checks pass; measured8-bit preparation bottleneck fixed (Behavior35.49→6.11ms), independent reader preparation/shared native owner now passes181 local and2 native cases; final live FPS and original regression onset unverified. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26)
 
 - [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and compact Preview toolbar natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Oct26 bounded native run verifies settled Video/card/splitter and Combined/Per-projector/projector toggles; compact plots/FPS clipping fixed and137-second native retest passes Retro/Amber at1442x972; DPI/Snap/full-load follow acceptance pending. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
 
@@ -21,6 +23,8 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 [Acquisition](reports/acquisition.md); remaining acceptance work is listed below.
 
 ## Next
+
+- [ ] `camera-role-selector` [gui] Identify original dropdown-opening failure if it recurs. Oct26 fresh managed launch opens all roles in Retro/Amber;3 native and4 offscreen checks pass. Original cause remains unproven; no production fix claimed. — [Evidence](reports/runtime.md#camera-role-selector--2026-10-26)
 
 - [ ] `gui-startup-splash` [gui] [launcher] [supervisor] Verify physical alternate-monitor/mixed-DPI handoff and managed controller-unavailable startup. Rounded transparent corners, three-style native handoff (Standard without CRT), bootstrap-failure cleanup and isolated100/125/150% presentation are validated. These do not close physical display transitions or controller-failure injection. — [Evidence](reports/runtime-evidence-2026-10-26/gui-polish/context.json), [Rig checklist](reports/rig-verification.md)
 
@@ -121,6 +125,8 @@ SpikeGLX availability and pulse mappings remain prerequisites; projector power i
 - [ ] `spikeglx-controller-integration` [spikeglx] [controller] [gui] Verify installed-version mapping and paired Setup/writing/monitor/stop after pulse inventory and remote availability are supplied. Status: Oct15 saved-endpoint read-only SDK check times out; remote state unknown. Earlier Oct13 reachability is historical, not current readiness. Pulse mapping remains owner-deferred; no remote mutation or paired acceptance ran. — [Current assessment](reports/runtime.md), [Rig checks](reports/rig-verification.md)
 
 ## Deferred
+
+- [ ] `embedded-preview-desktop-lag` [gui] **To implement / To review code** — Owner defers integration: retain the standalone raster/shared-texture prototype unwired to the actual GUI. Review code and resolve the manual-resize desktop freeze before reconsidering integration; no further live replay for now. Component checks pass and playback was smooth, but resize usability failed; cause remains unresolved. G01 benchmark scope only. — [Assessment](reports/runtime.md#embedded-preview-feasibility--2026-10-26), [Rig comparison](reports/rig-verification.md#embedded-preview-comparison)
 
 - [ ] `camera-connect-continuity` [acquisition] [controller] Verify uninterrupted additional-camera Connect after a separately authorized protocol5 upload. Status: source/architecture/host/tests complete; owner suites1302 pass, final Connect5 pass, actual-sketch native1 pass and AVR build pass. Reason: owner explicitly prohibits flashing now; installed firmware/electrical jitter and live capture continuity remain unverified. Done when: the authorized deployment and remaining continuity checks in the single rig checklist pass. — [Assessment/evidence](reports/acquisition.md), [Rig procedure](reports/rig-verification.md#managed-device-gui)
 

@@ -1,0 +1,144 @@
+{
+  "measured_seconds": 5.0169876,
+  "cpu": [
+    {
+      "pid": 13332,
+      "name": "python",
+      "one_core_percent": 100.28,
+      "working_set_mb": 904.3
+    },
+    {
+      "pid": 20300,
+      "name": "python",
+      "one_core_percent": 99.35,
+      "working_set_mb": 1460.4
+    },
+    {
+      "pid": 47068,
+      "name": "python",
+      "one_core_percent": 23.36,
+      "working_set_mb": 518.0
+    },
+    {
+      "pid": 2692,
+      "name": "explorer",
+      "one_core_percent": 6.54,
+      "working_set_mb": 498.9
+    },
+    {
+      "pid": 39024,
+      "name": "ChatGPT",
+      "one_core_percent": 4.36,
+      "working_set_mb": 1022.6
+    },
+    {
+      "pid": 46900,
+      "name": "ChatGPT",
+      "one_core_percent": 4.05,
+      "working_set_mb": 262.4
+    },
+    {
+      "pid": 48220,
+      "name": "pwsh",
+      "one_core_percent": 0.62,
+      "working_set_mb": 96.1
+    },
+    {
+      "pid": 38788,
+      "name": "python",
+      "one_core_percent": 0.31,
+      "working_set_mb": 61.6
+    },
+    {
+      "pid": 37636,
+      "name": "msedge",
+      "one_core_percent": 0.31,
+      "working_set_mb": 164.1
+    },
+    {
+      "pid": 28652,
+      "name": "OneDrive.Sync.Service",
+      "one_core_percent": 0.31,
+      "working_set_mb": 32.9
+    },
+    {
+      "pid": 13832,
+      "name": "ctfmon",
+      "one_core_percent": 0.31,
+      "working_set_mb": 37.1
+    },
+    {
+      "pid": 19660,
+      "name": "claude",
+      "one_core_percent": 0.31,
+      "working_set_mb": 270.2
+    }
+  ],
+  "counters": [
+    {
+      "Path": "\\\\desktop-msoh8el\\memory\\available mbytes",
+      "CookedValue": 39086.0,
+      "Timestamp": "2026-10-26T16:42:43.427+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\memory\\available mbytes",
+      "CookedValue": 39029.0,
+      "Timestamp": "2026-10-26T16:42:42.414+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\memory\\available mbytes",
+      "CookedValue": 38999.0,
+      "Timestamp": "2026-10-26T16:42:41.397+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\processor(_total)\\% processor time",
+      "CookedValue": 9.414940689433038,
+      "Timestamp": "2026-10-26T16:42:41.397+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\processor(_total)\\% processor time",
+      "CookedValue": 8.747304422340807,
+      "Timestamp": "2026-10-26T16:42:42.414+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_46900_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 4.269701547397814,
+      "Timestamp": "2026-10-26T16:42:41.3919498+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\processor(_total)\\% processor time",
+      "CookedValue": 4.150004221257064,
+      "Timestamp": "2026-10-26T16:42:43.427+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_46900_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 3.611490732920323,
+      "Timestamp": "2026-10-26T16:42:43.4213441+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_46900_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 3.608361054878173,
+      "Timestamp": "2026-10-26T16:42:42.4076159+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_2552_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 1.2679138254218438,
+      "Timestamp": "2026-10-26T16:42:43.4213441+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_2552_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 1.1683761031307436,
+      "Timestamp": "2026-10-26T16:42:42.4076159+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_2552_luid_0x00000000_0xa1b6fa23_phys_0_eng_0_engtype_3d)\\utilization percentage",
+      "CookedValue": 1.1127663454279086,
+      "Timestamp": "2026-10-26T16:42:41.3919498+09:00"
+    },
+    {
+      "Path": "\\\\desktop-msoh8el\\gpu engine(pid_4_luid_0x00000000_0xa1b6fa23_phys_0_eng_1_engtype_copy)\\utilization percentage",
+      "CookedValue": 0.5020135137283143,
+      "Timestamp": "2026-10-26T16:42:41.3919498+09:00"
+    }
+  ]
+}

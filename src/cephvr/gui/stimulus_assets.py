@@ -1,11 +1,11 @@
 """Single asset root shared by the protocol's prepared stimulus files."""
 
-from cephvr.gui.editing_card import EditingCard
+from cephvr.gui.components import Card
 from cephvr.gui.paths import PathField
 from cephvr.gui.view import DashboardView
 
 
-class StimulusAssetsCard(EditingCard):
+class StimulusAssetsCard(Card):
     def __init__(self) -> None:
         super().__init__("Assets folder")
         picker = PathField(

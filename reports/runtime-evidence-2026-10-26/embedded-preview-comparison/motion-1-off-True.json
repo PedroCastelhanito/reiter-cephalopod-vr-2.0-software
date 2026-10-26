@@ -1,0 +1,38 @@
+{
+  "renderer": null,
+  "vendor": null,
+  "errors": [],
+  "elapsed_seconds": 6.000941100064665,
+  "cpu_core_percent": 5.728268187739683,
+  "frame_callbacks": {
+    "count": 121,
+    "mean_ms": 0.002400002881022524,
+    "p95_ms": 0.003800028935074806,
+    "max_ms": 0.01850002445280552
+  },
+  "frame_intervals": {
+    "count": 121,
+    "mean_ms": 50.007742974899465,
+    "p95_ms": 50.45159999281168,
+    "max_ms": 50.73360004462302
+  },
+  "motion_intervals": {
+    "count": 375,
+    "mean_ms": 16.00249333338191,
+    "p95_ms": 16.0441099666059,
+    "max_ms": 16.56429993454367
+  },
+  "qt_presentation": [],
+  "gl_paint_submission": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "scope": "Generated RGB; separate HighGUI process using production Win32 owner/geometry helpers; summed GUI and viewer process CPU; 200ms placement sampling, 10ms native polling, 16ms geometry timer; frame age ends at Qt frameSwapped, not physical screen scanout; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "mode": "off",
+  "moving": true,
+  "pixels": 640,
+  "streams": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}

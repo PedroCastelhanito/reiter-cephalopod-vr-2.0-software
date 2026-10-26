@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-26",
+  "revision": "G02rev160, uncommitted source; base revision in ../context.json",
+  "method": "QT_QPA_PLATFORM offscreen; DashboardWindow(sample=True), ReviewControls; isolated QSettings. 1600x1000, five processEvents per page. Local MCU pins/input and blackout draft, pulse enabled. Each overview crops left control column x282..902,y30..980 and arranges 4 columns/3 rows; full page PNGs retained. No device discovery/commands or settings writes outside isolated fixture.",
+  "pages": [
+    "Dashboard",
+    "Protocol",
+    "Cameras",
+    "MCU",
+    "Geometry",
+    "Calibration",
+    "Synchronization",
+    "SpikeGLX",
+    "Tracking preprocessing",
+    "Tracking calibration",
+    "Tracking pose",
+    "Tracking motion"
+  ],
+  "themes": [
+    "standard",
+    "retro_console",
+    "amber_phosphor"
+  ],
+  "validation": [
+    "../consistency-tests.txt:15 passed,948 deselected",
+    "Ruff check/format src/cephvr/gui tests/gui:205 files pass",
+    "mypy --platform win32 src/cephvr/gui:201 sources pass",
+    "tools/check_backend_boundaries.py:760 modules/zero violations, existing size advisories",
+    "git diff --check:pass"
+  ],
+  "visual_review": "All three overview sheets inspected; visible-page offscreen presentation only. No native desktop or rig acceptance.",
+  "attempts": "Initial screenshot fixture failed KeyError screen in blackout draft; corrected to face and all36 renders completed.",
+  "source_sha256": {
+    "editing_card.py": "d9b7695b8364be35ae2e31bcc1d6aeef56a8755a9764e01e42e04157507f25cd",
+    "tables.py": "6540097a6e5e72c6fe4bb06ffa07a7087fec01158ebc8b935b7aaf4a9249b97f",
+    "projector_measurements.py": "14a602a32ceb0bce3e7e9c829368d01992a0d74f3f03b48a0a9546a8954d55a0",
+    "projector_timing.py": "1d139001ff673b0de9299df4760dd31e35a611afa5b95ba433e031b8722f64f6",
+    "spikeglx.py": "48d7d5de7edb09426cd409b61cea94a5a9628cdc5e3b8782cbfa71fd2055c323"
+  }
+}

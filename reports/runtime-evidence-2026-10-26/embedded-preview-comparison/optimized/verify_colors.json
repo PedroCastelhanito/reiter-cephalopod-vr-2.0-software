@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "raster",
+    "passed": true
+  },
+  {
+    "kind": "texture",
+    "passed": true,
+    "renderer": "AMD Radeon(TM) Graphics",
+    "vendor": "ATI Technologies Inc."
+  }
+]

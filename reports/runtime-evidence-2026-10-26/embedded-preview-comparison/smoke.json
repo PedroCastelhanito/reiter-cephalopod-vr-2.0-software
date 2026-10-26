@@ -1,0 +1,37 @@
+{
+  "renderer": "AMD Radeon(TM) Graphics",
+  "vendor": "ATI Technologies Inc.",
+  "errors": [],
+  "elapsed_seconds": 2.0052951000398025,
+  "cpu_core_percent": 11.687805949126787,
+  "frame_callbacks": {
+    "count": 40,
+    "mean_ms": 0.7469075120752677,
+    "p95_ms": 0.9763850772287695,
+    "max_ms": 1.5447000041604042
+  },
+  "frame_intervals": {
+    "count": 40,
+    "mean_ms": 50.02971750218421,
+    "p95_ms": 50.61675496981479,
+    "max_ms": 50.6276999367401
+  },
+  "native_poll": {
+    "count": 0,
+    "mean_ms": 0.0,
+    "p95_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "gl_paint_submission": {
+    "count": 123,
+    "mean_ms": 3.458447147698361,
+    "p95_ms": 0.26815994642674923,
+    "max_ms": 387.5016999663785
+  },
+  "scope": "Generated RGB; reused ReviewPreviews native layout/owner helpers; no camera conversion, RPC, shared-memory IPC, recording or Tracking; GPU paint timing is CPU submission, not GPU completion",
+  "mode": "embedded",
+  "moving": false,
+  "pixels": 640,
+  "streams": 3,
+  "interpreter": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+}
