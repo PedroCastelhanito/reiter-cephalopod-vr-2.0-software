@@ -98,5 +98,7 @@ were also removed:6320files/111029425bytes (`cleanup-external.json`). Absolute p
 and absence of reparse points were checked; no tracked content was removed.
 
 Remote fetch showed HEAD and origin/main equal before changes. Local validation
-and cleanup are complete; commit/sync follows and its result is recorded in LOG. Existing E15 rig deferrals
+and cleanup are complete. Implementation/evidence commit84d0d8b6 was pushed to
+origin/main; the post-push tree was clean and HEAD/origin differed by0/0. LOG
+records completion; the final tracking-only commit closes the task queue. Existing E15 rig deferrals
 and unrelated TODO acceptance items remain open.

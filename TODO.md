@@ -10,7 +10,6 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `repo-cleanup-and-code-review` [repo] Complete commit and sync of the reviewed cleanup/fixes. Owner: Codex cleanup/review chat. Status: hierarchical Astra/Luna review complete; 1,071 GUI, 2,643 backend and two synthetic native tests pass; lint/format/type/boundary/schema checks pass. Final disposable cache/fixture cleanup complete; commit and sync pending. Preserve GOV-001 evidence and existing rig deferrals. — [Review evidence](reports/runtime-evidence-2026-10-26/repo-review/context.md)
 
 
 
