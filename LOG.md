@@ -11313,3 +11313,13 @@ was already absent. Removed five existing task-owned external test directories
 source hashes, settings proof and local images. Shared/concurrent caches and preview
 benchmark work are preserved. Only this chat's source, evidence and document hunks
 are included in the upcoming commit; three explicit rig acceptance tasks remain open.
+
+### 2026-10-26 - [repo] [gui] Record GUI polish synchronization
+
+Validated GUI implementation/evidence commit `c8fa8c871d9420fdd2a4b811f6ce9d6f317cca38` was pushed to
+origin/main; ahead/behind is0/0. The exact-case validation summary records1073
+GUI and71 native cases with passing final/replay evidence, plus static checks and
+corrected150% rendering. Two style tasks are closed; three explicitly scoped
+live-rig acceptance tasks remain open. Concurrent preview optimization files and
+shared-document edits remain preserved outside this commit. No GUI source or
+experiment setting change from this task remains uncommitted.
