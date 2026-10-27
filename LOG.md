@@ -12240,3 +12240,7 @@ syntax and whitespace checks pass; no force push or history rewrite was used.
 ### 2026-10-27 - [acquisition] [tracking] [gui] [visual_stimulus] Owner deferral and stale proposal correction
 
 Owner defers representative illuminated-camera scene work; move eye-tracking-source-darkness to Deferred without changing imaging settings. Review-device-layout-promotion was mistakenly re-presented as an open implementation choice. Oct19 mcu-output-card-spacing and verification-complete LOG entries, current G01/V20/V22 and shared GUI code establish that runtime I/O draft authoring and per-screen pulse support were already promoted and locally verified. Remove the stale TODO and correct the current audit recommendation. Physical input capture and native/electrical/optical acceptance retain their existing deferrals; no new implementation approved or performed. Documentation/source inspection only; no runtime test needed.
+
+### 2026-10-27 - [acquisition] [tracking] [visual_stimulus] Camera-scene deferral follow-through
+
+Reconciled the current queue with the owner decision: camera-scene work resumes only on explicit owner request with representative scene/illumination available. The dependent stimulus-review-encoding-cost comparison is also Deferred until that prerequisite is reopened. The completed device-layout promotion remains absent from TODO; physical input capture and outstanding native/optical acceptance retain their existing status. No runtime, device settings or concurrent task ownership changed.
