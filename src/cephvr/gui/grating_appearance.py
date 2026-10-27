@@ -5,10 +5,31 @@ from math import isfinite
 from typing import Any
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import field
-from cephvr.gui.stimulus_form import ValueEditor
+from cephvr.gui.components import field, label
+
+
+class RgbEdit(QWidget):
+    """One horizontal R/G/B row, so the control keeps a single-line height."""
+
+    changed = pyqtSignal()
+
+    def __init__(self, values: list[float]) -> None:
+        super().__init__()
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(4)
+        self.edits = [QLineEdit(str(value)) for value in values]
+        for name, edit in zip("RGB", self.edits, strict=True):
+            edit.setMinimumWidth(0)
+            edit.setAccessibleName(name)
+            edit.textEdited.connect(self.changed)
+            row.addWidget(label(name, "label"))
+            row.addWidget(edit, 1)
+
+    def read(self) -> list[float]:
+        return [float(edit.text()) for edit in self.edits]
 
 
 class GratingAppearance(QWidget):
@@ -40,25 +61,20 @@ class GratingAppearance(QWidget):
                 )
             ],
         }
-        schema = {
-            "type": "array",
-            "prefixItems": [{"type": "number"}] * 3,
-            "minItems": 3,
-            "maxItems": 3,
-        }
-        self.colors = ValueEditor(
-            {"type": "object", "properties": {key: schema for key in colors}},
-            colors,
-            {},
+        self.color_a, self.color_b = (
+            RgbEdit(colors["color_a"]),
+            RgbEdit(colors["color_b"]),
         )
-        self.colors.changed.connect(self.changed)
+        for edit in (self.color_a, self.color_b):
+            edit.changed.connect(self.changed)
         self.period.textEdited.connect(self.changed)
         self.sharpness.textEdited.connect(self.changed)
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.addWidget(field("Spatial period (mm)", self.period))
         body.addWidget(field("Sharpness (0–1)", self.sharpness))
-        body.addWidget(self.colors)
+        body.addWidget(field("Color A (linear RGB)", self.color_a))
+        body.addWidget(field("Color B (linear RGB)", self.color_b))
 
     def read(self) -> dict[str, Any]:
         period, sharpness = float(self.period.text()), float(self.sharpness.text())
@@ -71,8 +87,7 @@ class GratingAppearance(QWidget):
             raise ValueError(
                 "Grating needs a positive finite period and sharpness in [0,1]"
             )
-        colors = self.colors.read()
-        a, b = colors["color_a"], colors["color_b"]
+        a, b = self.color_a.read(), self.color_b.read()
         if any(not isfinite(c) or not 0 <= c <= 1 for c in (*a, *b)):
             raise ValueError("Grating colors must be finite linear RGB in [0,1]")
         pattern = deepcopy(self.values["pattern"])

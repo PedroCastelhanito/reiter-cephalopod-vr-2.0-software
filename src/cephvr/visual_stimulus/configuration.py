@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 20
+_POLICY_VERSION = 21
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "193ee66da1cee37d05b6a7986b18ee72df78d808e149e540be94c8d12bac619b"
+_POLICY_SHA256 = "949d34639265ec973c81688de09d6d4713a29c215a0970a698a17cfd988dde5f"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -77,6 +77,7 @@ _POLICY_KEYS = frozenset(
     programs.trial_state programs.group_order_modes programs.group_order_default
     assets.source_stability assets.protection_failure assets.image_profiles
     assets.video_profiles assets.arena_profile
+    sparse_noise.generation sparse_noise.lookahead_patterns sparse_noise.late_pattern
     image_residency.loader_threads image_residency.upload_chunk_bytes
     image_residency.upload_chunks_per_turn
     image_residency.readiness image_residency.late_image image_residency.evidence

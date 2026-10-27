@@ -1637,6 +1637,53 @@ def test_image_selection_evidence_preserves_repeated_actual_indices():
         )
 
 
+def test_sparse_selection_evidence_records_hashes_and_background_holds():
+    from pydantic import ValidationError
+
+    from cephvr.visual_stimulus.config.models.evidence_model import (
+        EvidenceRecord,
+        ImageSelection,
+    )
+    from cephvr.visual_stimulus.recording.evidence_records import (
+        build_render_group_record,
+    )
+    from cephvr.visual_stimulus.rendering.types import ImageSnapshot
+
+    digest = "ab" * 32
+    generator = "cephvr-sparse-noise-spaced-bernoulli-v2"
+    shown = ImageSnapshot(
+        "noise", "noise", 4, "noise", 4, "current", False, digest, generator
+    )
+    blank = ImageSnapshot("noise", "noise", 0, "noise", None, "background_hold", False)
+    for group, snapshot in enumerate((shown, blank)):
+        state = EvidenceStateSnapshot(
+            group, "scene", group, ("noise",), (), (), (), (snapshot,)
+        )
+        record = build_render_group_record(group, state, (), (), "rgba", "yuv420p")
+        image = EvidenceRecord.model_validate_json(
+            EvidenceRecord(payload=record).model_dump_json()
+        ).payload.state.images[0]
+        assert (image.image_index, image.disposition, image.pattern_sha256) == (
+            snapshot.image_index,
+            snapshot.disposition,
+            snapshot.pattern_sha256,
+        )
+    base = dict(
+        instance_id="noise",
+        requested_asset_id="noise",
+        requested_image_index=0,
+        asset_id="noise",
+        repeated=False,
+    )
+    for invalid in (
+        dict(image_index=None, disposition="residency_hold"),
+        dict(image_index=0, disposition="background_hold"),
+        dict(image_index=0, disposition="current", pattern_sha256=digest),
+    ):
+        with pytest.raises(ValidationError):
+            ImageSelection.model_validate({**base, **invalid})
+
+
 @pytest.mark.parametrize("owned", [False, True])
 def test_capture_handoff_owns_buffer_through_partial_blocked_writes(
     owned: bool,

@@ -9,7 +9,7 @@ import numpy as np
 
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 
-from .textures import authored_recipe, texture_pixels
+from .textures import authored_recipe, display_pixels, texture_pixels
 
 
 def preview_texture(
@@ -22,7 +22,7 @@ def preview_texture(
     screen: bool,
     directory: Path,
     check: Callable[[], None],
-) -> tuple[np.ndarray, str]:
+) -> np.ndarray:
     document = authored_recipe(document)
     sparse = document.get("kind") == "sparse_noise"
     if screen:
@@ -75,11 +75,33 @@ def preview_texture(
         v = np.floor(np.mod(y / th + 0.5, 1) * pixels.shape[0]).astype(int)
         result = pixels[v[:, None], u[None, :]]
     check()
-    title = f"{face.capitalize()} screen" if screen else "Appearance sample"
-    if sparse and not screen:
-        title = "Appearance sample (Protocol resolves screen patterns)"
-    suffix = f" · Pattern {index}" if sparse else ""
-    return (
-        np.asarray(result),
-        f"{title}: {width:g} × {height:g} mm{suffix}. Display sRGB preview; optical accuracy requires rig verification.",
-    )
+    return np.asarray(result)
+
+
+def texture_job(
+    document: dict[str, Any],
+    root: Path,
+    geometry: Geometry | None,
+    *,
+    face: str,
+    index: int,
+    screen: bool,
+    directory: Path,
+) -> Callable[[Callable[[], None]], np.ndarray]:
+    """Worker operation producing display-ready sRGB RGB8, so the GUI only wraps it."""
+
+    def run(check: Callable[[], None]) -> np.ndarray:
+        return display_pixels(
+            preview_texture(
+                document,
+                root,
+                geometry,
+                face=face,
+                index=index,
+                screen=screen,
+                directory=directory,
+                check=check,
+            )
+        )
+
+    return run

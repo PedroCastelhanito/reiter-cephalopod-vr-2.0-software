@@ -22,6 +22,7 @@ from cephvr.gui.trial_preview_image import screen_image as screen_image
 from cephvr.gui.trial_preview_media import PreviewMedia
 from cephvr.gui.trial_preview_plan import PreviewLayer
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
+from cephvr.visual_stimulus.config.models.program_model import SparseNoiseSettings
 from cephvr.visual_stimulus.rendering.color import linear_to_srgb
 from cephvr.visual_stimulus.rendering.image_fit import (
     SCREEN_IMAGE_FITS,
@@ -34,6 +35,11 @@ from cephvr.visual_stimulus.rendering.layer_projection import (
 )
 from cephvr.visual_stimulus.rendering.motion import evaluate_function
 from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+from cephvr.visual_stimulus.resources.sparse_noise import grid_for_extent, pattern_rgba
+from cephvr.visual_stimulus.resources.sparse_noise_stream import (
+    MAX_GRID_CELLS,
+    layer_recipe,
+)
 
 
 def image_quad(image: QImage, points: list[QPointF], painter: QPainter) -> None:
@@ -203,6 +209,42 @@ class PreviewCanvas(QWidget):
                 "\n".join(dict.fromkeys(errors)),
             )
 
+    def sparse_image(
+        self, setting: SparseNoiseSettings, values: dict[str, float]
+    ) -> tuple[QImage, tuple[float, float]]:
+        """Generated pattern over its background, plus the grid's physical extent (mm)."""
+        recipe = layer_recipe(setting)
+        surface = self.rig_geometry.surfaces.get(self.face)
+        width, height = (
+            (surface.width, surface.height)
+            if surface
+            else (values["width"], values["height"])
+        )
+        grid = grid_for_extent(
+            recipe, recipe.surfaces[0], width, height, max_cells=MAX_GRID_CELLS
+        )
+        index = setting.pattern_at(self.local_ns)
+
+        def build() -> QImage:
+            pixels = pattern_rgba(recipe, grid, index)
+            pattern = QImage(
+                pixels,
+                grid.columns,
+                grid.rows,
+                grid.columns * 4,
+                QImage.Format.Format_RGBA8888_Premultiplied,
+            )
+            image = QImage(pattern.size(), QImage.Format.Format_ARGB32_Premultiplied)
+            gray = linear_to_srgb(setting.appearance.background_linear)
+            image.fill(QColor.fromRgbF(gray, gray, gray))
+            compose = QPainter(image)
+            compose.drawImage(0, 0, pattern)
+            compose.end()
+            return image
+
+        key = (recipe.model_dump_json(), grid, index)
+        return self.media.sparse_pattern(key, build), (grid.width_mm, grid.height_mm)
+
     def draw_layer(self, painter: QPainter, rect: QRectF, layer: PreviewLayer) -> None:
         setting, values = layer.setting, layer.values
         surface = self.rig_geometry.surfaces.get(self.face)
@@ -235,10 +277,10 @@ class PreviewCanvas(QWidget):
                     "Prepared image textures are required for this planning preview"
                 )
             asset = str(setting.pattern.asset_id)
+        elif setting.kind == "sparse_noise":
+            asset = ""
         else:
             asset = str(setting.asset_id)
-        if setting.kind == "image" and setting.sparse_noise is not None:
-            asset = setting.sparse_noise.asset_at(self.local_ns)
         if inline_grating:
             assert setting.kind == "texture"
             from cephvr.gui.grating_image import grating_image
@@ -256,6 +298,9 @@ class PreviewCanvas(QWidget):
                     )
                 )
             )
+        elif setting.kind == "sparse_noise":
+            image, extent = self.sparse_image(setting, values)
+            values = dict(values, width=extent[0], height=extent[1])
         elif setting.kind == "video":
             identity = f"{setting.instance_id}:{asset}"
             image = self.media.video(
@@ -266,24 +311,6 @@ class PreviewCanvas(QWidget):
             )
         else:
             image = self.media.image(asset)
-        if (
-            setting.kind == "image"
-            and setting.sparse_noise is not None
-            and not image.isNull()
-        ):
-            background = QImage(image.size(), QImage.Format.Format_ARGB32_Premultiplied)
-            background.fill(
-                QColor.fromRgbF(
-                    *(
-                        linear_to_srgb(c)
-                        for c in setting.sparse_noise.background_linear_rgb
-                    )
-                )
-            )
-            compose = QPainter(background)
-            compose.drawImage(0, 0, image)
-            compose.end()
-            image = background
         if image.isNull():
             if asset in self.media.errors:
                 raise ValueError(

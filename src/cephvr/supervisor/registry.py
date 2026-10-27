@@ -34,7 +34,7 @@ from cephvr.supervisor.launch_validation import (
     launch_work_key,
     validate_plan,
 )
-from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
+from cephvr.visual_stimulus.identity import HELPER_ROLES as VISUAL_STIMULUS_HELPER_ROLES
 
 LIVE_PHASES = (wire.LAUNCH_PHASE_OPERATIONAL, wire.LAUNCH_PHASE_CLEANUP_REQUIRED)
 
@@ -203,7 +203,7 @@ class LaunchRegistry:
                         entry.plan.owner.role in ACQUISITION_WORKER_ROLES
                         or (
                             entry.plan.owner.role == "visual_stimulus_renderer"
-                            and entry.plan.child.role in VISUAL_STIMULUS_FFMPEG_ROLES
+                            and entry.plan.child.role in VISUAL_STIMULUS_HELPER_ROLES
                         )
                     )
                     or entry.plan.child.role in CONTROLLER_NATIVE_HELPER_ROLES

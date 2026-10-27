@@ -21,7 +21,14 @@ from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from .cleanup import cleanup_resources, cleanup_unregistered_resources
 from .display_calibration import DisplayCalibrationOwner
 from .display_owner import DisplayOwner
-from .ports import EnginePort, FeedbackPort, PreparationPort, RecordingPort, ReportPort
+from .ports import (
+    EnginePort,
+    FeedbackPort,
+    PreparationPort,
+    RecordingPort,
+    ReportPort,
+    SparseNoisePort,
+)
 from .preparation import PreparationJob, begin
 from .state import DriverState, TrialArtifact
 from .trial_admissions import TrialAdmissions
@@ -55,6 +62,7 @@ class LifecycleDriver:
         cancelled: threading.Event,
         clock: Callable[[], int] = host_time_ns,
         shutdown: Callable[[], None],
+        sparse_noise: SparseNoisePort | None = None,
     ) -> None:
         self.worker, self.owner, self.controller = worker, owner, controller
         self.backend = pb.BackendContext(
@@ -76,6 +84,7 @@ class LifecycleDriver:
             reports,
         )
         self.cancelled, self.clock, self.shutdown = cancelled, clock, shutdown
+        self.sparse_noise = sparse_noise
         self.state = DriverState()
         self.admissions = TrialAdmissions(
             self.state,
@@ -86,6 +95,7 @@ class LifecycleDriver:
             feedback,
             clock,
             self.lifecycle,
+            sparse_noise,
         )
         self.trials = TrialExecution(
             state=self.state,
@@ -98,6 +108,7 @@ class LifecycleDriver:
             cancelled=cancelled,
             clock=clock,
             emit=self.lifecycle,
+            sparse_noise=sparse_noise,
         )
         self.preview_revision = 0
         self._preview_state: tuple[bool, bool, str] | None = None
@@ -457,6 +468,16 @@ class LifecycleDriver:
             raise RuntimeError(
                 "closed-loop program has no authenticated feedback attachment"
             )
+        if self.sparse_noise is not None:
+            setup_command = visual_stimulus.WorkerCommand.FromString(
+                request.command.SerializeToString()
+            )
+            self.sparse_noise.declare(
+                tuple(record.artifact for record in records),
+                lambda key, path: self.announce_for(
+                    setup_command, deadline_ns, key, path
+                ),
+            )
         ready = pb.ReadyReport(
             context=self.context(request.command),
             configuration_revision=request.command.target.configuration_revision,
@@ -664,6 +685,7 @@ class LifecycleDriver:
             engine=self.engine,
             feedback=self.feedback,
             emit=self.confirm_cleanup,
+            sparse_noise=self.sparse_noise,
         )
         self._retire_released_resources()
         self.state.resources.clear()

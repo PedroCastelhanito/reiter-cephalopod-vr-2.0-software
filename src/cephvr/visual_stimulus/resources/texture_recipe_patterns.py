@@ -9,22 +9,13 @@ from collections.abc import Callable, Mapping
 import numpy as np
 
 from cephvr.visual_stimulus.resources.texture_recipe_geometry import (
-    _mix,
     _num,
     _polar_grating,
     _smoothstep,
+    mix_rgb,
 )
 
-_FACES = ("front", "left", "right", "bottom")
-_VERTICAL_FACES = ("left", "front", "right")
-_FACE_ALIASES = {
-    "screen_front": "front",
-    "screen_left": "left",
-    "screen_right": "right",
-    "screen_bottom": "bottom",
-    "top": "bottom",
-}
-_PALETTE = np.array(
+PALETTE = np.array(
     [
         (255, 32, 32),
         (32, 220, 255),
@@ -297,7 +288,7 @@ def _grating(params: dict[str, object], size: int) -> np.ndarray:
         )
         alpha = np.clip(alpha * (1 - sharpness) + shaped * sharpness, 0, 1)
     if "color_a" in params or "color_b" in params:
-        return _mix(
+        return mix_rgb(
             _color(params.get("color_a"), (255, 255, 255)),
             _color(params.get("color_b"), (0, 0, 0)),
             alpha,
@@ -359,7 +350,7 @@ def _calibration_grid(
     ix = _line_indices(size, count, width, check=check)
     iy = _line_indices(size, count, width, check=check)
     vertical, horizontal = ix >= 0, iy >= 0
-    palette = _PALETTE[:colors]
+    palette = PALETTE[:colors]
     vo, ho = (
         _integer(params.get("vertical_color_offset"), 0),
         _integer(params.get("horizontal_color_offset"), 3),
@@ -462,7 +453,7 @@ def _filtered_noise(
     gy = (np.roll(field, -1, axis=0) - np.roll(field, 1, axis=0)) * 0.5
     gx = (np.roll(field, -1, axis=1) - np.roll(field, 1, axis=1)) * 0.5
     distance = (field - threshold) / np.maximum(np.sqrt(gx * gx + gy * gy), 1e-8)
-    return _mix(a, b, _smoothstep(-0.5, 0.5, distance))
+    return mix_rgb(a, b, _smoothstep(-0.5, 0.5, distance))
 
 
 def _dots(

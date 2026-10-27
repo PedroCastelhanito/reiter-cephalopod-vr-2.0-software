@@ -29,6 +29,7 @@ from cephvr.visual_stimulus.compiler.transitions import compile_boundaries
 from cephvr.visual_stimulus.config.models.artifact_models import CompiledEpoch
 from cephvr.visual_stimulus.config.models.program_model import (
     Fixed,
+    Program,
     Random,
     TargetTotal,
     Time,
@@ -109,6 +110,54 @@ class VideoTransitionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "active texture reference"):
             make_program(json.dumps(source))
 
+    def _linked_media_payload(self):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+
+        program = add_stimulus(blank_program(), 0, "Grating", ("Bottom",))
+        program = add_stimulus(program, 0, "Grating", ("Front",))
+        payload = program.model_dump(mode="json")
+        payload["category"] = "media_presentation"
+        settings = payload["sequence"][0]["settings"]
+        settings[1]["linked_to"] = settings[0]["instance_id"]
+        for axis in ("x", "y", "rotation"):
+            settings[1]["motion"][axis] = {"kind": "hold"}
+        settings[1]["phase_x"] = settings[1]["phase_y"] = {"kind": "hold"}
+        return payload, payload["sequence"][0]["epoch_id"], settings
+
+    def test_saved_media_links_are_reported_and_valid_ones_kept(self):
+        from cephvr.visual_stimulus.config.texture_links import media_presentation_links
+
+        payload, epoch_id, settings = self._linked_media_payload()
+        program = Program.model_validate_json(json.dumps(payload))
+        self.assertEqual(
+            media_presentation_links(program),
+            ((epoch_id, settings[1]["instance_id"], settings[0]["instance_id"]),),
+        )
+        self.assertEqual(
+            program.sequence[0].settings[1].linked_to, settings[0]["instance_id"]
+        )
+        payload["category"] = "navigation_3d"
+        self.assertEqual(
+            media_presentation_links(Program.model_validate_json(json.dumps(payload))),
+            (),
+        )
+
+    def test_invalid_saved_media_link_names_epoch_instance_and_predating_programs(self):
+        payload, epoch_id, settings = self._linked_media_payload()
+        settings[1]["linked_to"] = "gone"
+        with self.assertRaises(ValueError) as caught:
+            Program.model_validate_json(json.dumps(payload))
+        message = str(caught.exception)
+        self.assertIn(epoch_id, message)
+        self.assertIn(settings[1]["instance_id"], message)
+        self.assertIn("'gone'", message)
+        self.assertIn("predate linked Media motion", message)
+        payload["category"] = "navigation_3d"
+        with self.assertRaises(ValueError) as caught:
+            Program.model_validate_json(json.dumps(payload))
+        self.assertNotIn("predate", str(caught.exception))
+
     def test_media_motion_survives_compilation_and_legacy_category_loading(self):
         source = json.loads(fixture_source())
         source["category"] = "texture_drift"
@@ -117,6 +166,26 @@ class VideoTransitionTests(unittest.TestCase):
         self.assertEqual(program.category, "media_presentation")
         plan = make_prepared_trial(encoded)
         self.assertEqual(plan.epochs[0].settings, program.sequence[0].settings)
+
+    def test_marked_grating_rejects_square_kind_that_rendering_would_ignore(self):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+
+        program = add_stimulus(blank_program(), 0, "Grating", ("Front",))
+        payload = program.model_dump(mode="json")
+        setting = payload["sequence"][0]["settings"][0]
+        self.assertTrue(setting["grating"])
+        Program.model_validate_json(json.dumps(payload))
+        setting["pattern"]["kind"] = "square_grating"
+        with self.assertRaisesRegex(ValueError, "sine_grating"):
+            Program.model_validate_json(json.dumps(payload))
+        setting["grating"] = False  # unmarked square gratings still render as square
+        Program.model_validate_json(json.dumps(payload))
+
+    def test_published_program_schema_accepts_legacy_category(self):
+        schema = Program.model_json_schema(mode="validation")
+        enum = schema["properties"]["category"]["anyOf"][0]["enum"]
+        self.assertEqual(enum, ["media_presentation", "navigation_3d", "texture_drift"])
 
 
 class DurationResolutionTests(unittest.TestCase):

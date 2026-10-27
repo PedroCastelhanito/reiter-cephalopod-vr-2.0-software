@@ -855,6 +855,7 @@
               "mapping": {
                 "arena": "#/$defs/ArenaSettings",
                 "image": "#/$defs/ImageSettings",
+                "sparse_noise": "#/$defs/SparseNoiseSettings",
                 "texture": "#/$defs/TextureSettings",
                 "video": "#/$defs/VideoSettings"
               },
@@ -872,6 +873,9 @@
               },
               {
                 "$ref": "#/$defs/ArenaSettings"
+              },
+              {
+                "$ref": "#/$defs/SparseNoiseSettings"
               }
             ]
           },
@@ -901,6 +905,7 @@
                 "mapping": {
                   "arena": "#/$defs/ArenaSettings",
                   "image": "#/$defs/ImageSettings",
+                  "sparse_noise": "#/$defs/SparseNoiseSettings",
                   "texture": "#/$defs/TextureSettings",
                   "video": "#/$defs/VideoSettings"
                 },
@@ -918,6 +923,9 @@
                 },
                 {
                   "$ref": "#/$defs/ArenaSettings"
+                },
+                {
+                  "$ref": "#/$defs/SparseNoiseSettings"
                 }
               ]
             },
@@ -1426,17 +1434,6 @@
           "title": "Feedback",
           "type": "array"
         },
-        "sparse_noise": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SparseNoiseSequence"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "kind": {
           "const": "image",
           "title": "Kind",
@@ -1704,7 +1701,8 @@
             "image",
             "video",
             "texture",
-            "arena"
+            "arena",
+            "sparse_noise"
           ],
           "title": "Family",
           "type": "string"
@@ -2452,68 +2450,170 @@
       "title": "SparseNoiseAppearance",
       "type": "object"
     },
-    "SparseNoiseSequence": {
+    "SparseNoiseSettings": {
       "additionalProperties": false,
+      "description": "Seeded patterns generated during playback; no image assets (V04).\n\nCompilation resolves the complete-cell grid from the display and replaces width\nand height with its physical extent.",
       "properties": {
-        "appearance": {
-          "anyOf": [
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "space": {
+          "discriminator": {
+            "mapping": {
+              "physical_surface": "#/$defs/PhysicalSpace",
+              "visual_angle": "#/$defs/AngularSpace"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
             {
-              "$ref": "#/$defs/SparseNoiseAppearance"
+              "$ref": "#/$defs/PhysicalSpace"
             },
             {
-              "type": "null"
+              "$ref": "#/$defs/AngularSpace"
             }
           ],
-          "default": null
+          "title": "Space"
         },
-        "asset_ids": {
-          "items": {
-            "maxLength": 128,
-            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
-            "type": "string"
+        "initial": {
+          "$ref": "#/$defs/Initial2D"
+        },
+        "width": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
           },
-          "maxItems": 1000000,
-          "minItems": 1,
-          "title": "Asset Ids",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Width"
+        },
+        "height": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Height"
+        },
+        "opacity": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Opacity"
+        },
+        "motion": {
+          "$ref": "#/$defs/Motion2D"
+        },
+        "reset": {
+          "title": "Reset",
+          "type": "boolean"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "title": "Assignments",
           "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "$ref": "#/$defs/Feedback"
+          },
+          "title": "Feedback",
+          "type": "array"
+        },
+        "kind": {
+          "const": "sparse_noise",
+          "title": "Kind",
+          "type": "string"
+        },
+        "appearance": {
+          "$ref": "#/$defs/SparseNoiseAppearance"
+        },
+        "pattern_count": {
+          "exclusiveMinimum": 0,
+          "title": "Pattern Count",
+          "type": "integer"
         },
         "pattern_duration": {
           "$ref": "#/$defs/Time"
-        },
-        "background_linear_rgb": {
-          "default": [
-            0.5,
-            0.5,
-            0.5
-          ],
-          "maxItems": 3,
-          "minItems": 3,
-          "prefixItems": [
-            {
-              "maximum": 1,
-              "minimum": 0,
-              "type": "number"
-            },
-            {
-              "maximum": 1,
-              "minimum": 0,
-              "type": "number"
-            },
-            {
-              "maximum": 1,
-              "minimum": 0,
-              "type": "number"
-            }
-          ],
-          "title": "Background Linear Rgb",
-          "type": "array"
         }
       },
       "required": [
-        "asset_ids",
+        "instance_id",
+        "space",
+        "initial",
+        "width",
+        "height",
+        "opacity",
+        "motion",
+        "reset",
+        "assignments",
+        "feedback",
+        "kind",
+        "appearance",
+        "pattern_count",
         "pattern_duration"
       ],
-      "title": "SparseNoiseSequence",
+      "title": "SparseNoiseSettings",
       "type": "object"
     },
     "SubgroupDraft": {
@@ -3393,7 +3493,8 @@
         {
           "enum": [
             "media_presentation",
-            "navigation_3d"
+            "navigation_3d",
+            "texture_drift"
           ],
           "type": "string"
         },
@@ -3402,6 +3503,7 @@
         }
       ],
       "default": null,
+      "description": "`texture_drift` is a legacy alias that loads as `media_presentation`.",
       "title": "Category"
     },
     "assets": {

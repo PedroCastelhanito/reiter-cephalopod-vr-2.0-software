@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import json
 import math
 import os
 import platform
@@ -19,10 +18,10 @@ from PIL import Image
 
 from cephvr.visual_stimulus.resources.glb import GLBScene, parse_glb
 
+from .bake import TextureCache, bake_surface_texture
 from .files import dependency, json_bytes, limits, read_bytes
 from .geometry import GeometryCache, Mesh, build_geometry
 from .models import ArenaDesign
-from .textures import display_pixels, texture_pixels
 
 GENERATOR = "cephvr-arena-v1"
 
@@ -135,12 +134,23 @@ class Writer:
         )
 
 
+def triangle_sampler(areas: np.ndarray, rng: np.random.Generator) -> Callable[[], int]:
+    """Draw area-weighted triangle indices exactly as `rng.choice(n, p=areas/sum)`.
+
+    The cumulative distribution is built once, not per draw (O(log n) each).
+    """
+    cdf = (areas / areas.sum()).cumsum()
+    cdf /= cdf[-1]
+    return lambda: int(cdf.searchsorted(rng.random(), side="right"))
+
+
 def compile_arena(
     design: ArenaDesign,
     root: Path,
     *,
     check: Callable[[], None] = lambda: None,
     geometry_cache: GeometryCache | None = None,
+    texture_cache: TextureCache | None = None,
 ) -> CompiledArena:
     budget = limits().max_asset_cpu_bytes
     maximum = max(1, budget // 256)
@@ -164,9 +174,6 @@ def compile_arena(
         dependencies[name] = hashlib.sha256(data).hexdigest()
         return data
 
-    def read_image(path: Path) -> bytes:
-        return read(path.resolve().relative_to(root.resolve()).as_posix())
-
     meshes = (
         geometry_cache.build(design, maximum, check)
         if geometry_cache is not None
@@ -185,71 +192,14 @@ def compile_arena(
             "alphaCutoff": surface.alpha_cutoff,
         }
         if surface.visible and surface.texture:
-            raw = read(surface.texture)
-            if surface.texture.lower().endswith(".json"):
-                document = json.loads(raw)
-                if document.get("kind") == "sparse_noise" or (
-                    document.get("pattern") == "polar_grating"
-                    and document.get("cephvr_asset_type") != "texture_field"
-                    and not document.get("params", {}).get("tile_local", False)
-                ):
-                    raise ValueError(
-                        "Arena surfaces require static tile recipes, not screen-dependent patterns"
-                    )
-                image_path = document.get("params", {}).get("texture_path")
-                if image_path:
-                    parent = dependency(root, surface.texture).parent
-                    read(
-                        (parent / str(image_path))
-                        .relative_to(root.resolve())
-                        .as_posix()
-                    )
-                if document.get("cephvr_asset_type") == "texture_field":
-                    field_texture = True
-                    from cephvr.visual_stimulus.resources.texture_recipe import (
-                        generate_texture_recipe,
-                        parse_texture_recipe,
-                    )
-
-                    patches = [m for m in meshes if m.surface == name]
-                    coordinates = (
-                        np.concatenate([m.uv for m in patches])
-                        * surface.texture_scale_mm
-                    )
-                    low, high = coordinates.min(axis=0), coordinates.max(axis=0)
-                    extent = high - low
-                    scale = 1024 / max(extent)
-                    nx, ny = (
-                        max(1, round(extent[0] * scale)),
-                        max(1, round(extent[1] * scale)),
-                    )
-                    pixels = generate_texture_recipe(
-                        parse_texture_recipe(raw),
-                        extent_mm=tuple(extent),
-                        sample_size=(nx, ny),
-                        offset_mm=tuple((low + high) / 2),
-                        check=check,
-                    )
-                    # Bake this finite GLB consumer, without repeating or resizing the field.
-                    for mesh in patches:
-                        mesh.uv = (
-                            (mesh.uv * surface.texture_scale_mm - low) / extent
-                        ).astype("f4")
-                        mesh.uv[:, 1] = 1 - mesh.uv[:, 1]
-                else:
-                    pixels = texture_pixels(
-                        document,
-                        root,
-                        check=check,
-                        recipe_directory=dependency(root, surface.texture).parent,
-                        read_image=read_image,
-                        authored=False,
-                    )
-                # Legacy recipes are linear RGB8; glTF texture samples are sRGB.
-                pixels = display_pixels(pixels)
-                stream = io.BytesIO()
-                Image.fromarray(pixels).save(stream, format="PNG")
-                raw = stream.getvalue()
+            raw, field_texture = bake_surface_texture(
+                surface,
+                [m for m in meshes if m.surface == name],
+                root,
+                read,
+                check,
+                texture_cache,
+            )
             with Image.open(io.BytesIO(raw)) as image:
                 if image.width * image.height * 16 > budget:
                     raise ValueError("Surface texture exceeds decoded image budget")
@@ -346,15 +296,11 @@ def compile_arena(
             default = len(writer.document["materials"])
             writer.document["materials"].append({})
             rng = np.random.default_rng(layer.seed)
-            weights = areas / areas.sum()
-            anchor = int(rng.choice(len(triangles), p=weights))
+            pick = triangle_sampler(areas, rng)
+            anchor = pick()
             for _ in range(count):
                 check()
-                selected = (
-                    anchor
-                    if rng.random() < layer.clustering
-                    else int(rng.choice(len(triangles), p=weights))
-                )
+                selected = anchor if rng.random() < layer.clustering else pick()
                 tri = triangles[selected]
                 a, b = rng.random(2)
                 if a + b > 1:
@@ -411,6 +357,26 @@ def compile_arena(
                 raise ValueError("Arena textures exceed decoded image budget")
             image.verify()
     return CompiledArena(data, scene, dependencies, names)
+
+
+def arena_job(
+    document: dict[str, Any],
+    root: Path,
+    geometry_cache: GeometryCache,
+    texture_cache: TextureCache,
+) -> Callable[[Callable[[], None]], CompiledArena]:
+    """Worker operation validating and compiling a snapshot of the arena document."""
+
+    def run(check: Callable[[], None]) -> CompiledArena:
+        return compile_arena(
+            ArenaDesign.model_validate(document),
+            root,
+            check=check,
+            geometry_cache=geometry_cache,
+            texture_cache=texture_cache,
+        )
+
+    return run
 
 
 def export_arena(

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal, Self, get_args
 
 from pydantic import Field, field_validator, model_validator
 
@@ -70,12 +70,7 @@ class Geometry(Model):
     def geometry_rules(self) -> Self:
         if self.near_mm >= self.far_mm:
             raise ValueError("near_mm must be less than far_mm")
-        if {s.surface_id for s in self.surfaces} != {
-            "front",
-            "left",
-            "right",
-            "bottom",
-        }:
+        if {s.surface_id for s in self.surfaces} != set(get_args(SurfaceId)):
             raise ValueError("exactly one of each required surface is needed")
 
         def sub(a: tuple[float, ...], b: tuple[float, ...]) -> tuple[float, ...]:
@@ -313,12 +308,7 @@ class DisplayProfile(Model):
             and not outputs[self.photodiode_output_id].enabled
         ):
             raise ValueError("the designated photodiode output must be enabled")
-        if {m.surface_id for m in self.mappings} != {
-            "front",
-            "left",
-            "right",
-            "bottom",
-        }:
+        if {m.surface_id for m in self.mappings} != set(get_args(SurfaceId)):
             raise ValueError("mappings must cover every required surface")
         if {m.output_id for m in self.mappings} != set(outputs):
             raise ValueError(

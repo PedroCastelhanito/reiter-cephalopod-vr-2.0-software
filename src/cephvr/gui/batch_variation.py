@@ -365,7 +365,7 @@ class BatchVariationRow(EditingSurface):
             and self.settings
             and all(
                 (setting := self.settings[self.targets[i][2]]).kind == "video"
-                or (setting.kind == "image" and setting.sparse_noise is None)
+                or setting.kind == "image"
                 or (setting.kind == "texture" and setting.pattern.kind == "image_tile")
                 for i in indices
             )

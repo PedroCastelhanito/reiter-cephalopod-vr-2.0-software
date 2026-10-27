@@ -85,9 +85,22 @@ class ImageSelection(Model):
     requested_asset_id: Id
     requested_image_index: U32
     asset_id: Id
-    image_index: U32
-    disposition: Literal["current", "residency_hold"]
+    # None only for background_hold: a sparse layer drew no pattern yet (V04).
+    image_index: U32 | None
+    disposition: Literal["current", "residency_hold", "background_hold"]
     repeated: bool
+    # Sparse noise, on the frame a pattern is first shown: SHA-256 of its generated
+    # cell bytes (pattern_rgba, top row first) and the generator that made them.
+    pattern_sha256: Digest | None = None
+    pattern_generator: Id | None = None
+
+    @model_validator(mode="after")
+    def background_has_no_pattern(self) -> Self:
+        if (self.image_index is None) != (self.disposition == "background_hold"):
+            raise ValueError("only a background hold lacks an actual image index")
+        if (self.pattern_sha256 is None) != (self.pattern_generator is None):
+            raise ValueError("a pattern hash requires its generator")
+        return self
 
 
 class Pose(Model):

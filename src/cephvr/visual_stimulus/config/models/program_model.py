@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from itertools import pairwise
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, JsonValue, field_validator, model_validator
 
 from cephvr.visual_stimulus.config.categories import Category, validate_category
 
@@ -34,7 +34,7 @@ from .schema_common import SurfaceId as Surface
 from .sparse_noise_appearance import SparseNoiseAppearance
 
 Finite = float
-Family = Literal["image", "video", "texture", "arena"]
+Family = Literal["image", "video", "texture", "arena", "sparse_noise"]
 
 
 class Time(Model):
@@ -248,50 +248,40 @@ class LayerBase(Model):
     feedback: tuple[Feedback, ...]
 
 
-class SparseNoiseSequence(Model):
-    appearance: SparseNoiseAppearance | None = None
-    asset_ids: Annotated[tuple[Id, ...], Field(min_length=1, max_length=1000000)]
-    pattern_duration: Time
-    background_linear_rgb: tuple[
-        Annotated[float, Field(ge=0, le=1)],
-        Annotated[float, Field(ge=0, le=1)],
-        Annotated[float, Field(ge=0, le=1)],
-    ] = (0.5, 0.5, 0.5)
-
-    @model_validator(mode="after")
-    def valid_sequence(self) -> Self:
-        if not 0 < self.pattern_duration.ns() * len(self.asset_ids) <= (1 << 63) - 1:
-            raise ValueError("Sparse-noise pattern duration must be positive")
-        return self
-
-    def asset_at(self, local_ns: int) -> str:
-        return self.asset_ids[
-            min(max(0, local_ns) // self.pattern_duration.ns(), len(self.asset_ids) - 1)
-        ]
-
-
 class ImageSettings(LayerBase):
-    sparse_noise: SparseNoiseSequence | None = None
     kind: Literal["image"]
     asset_id: AssetChoice
     sampling: Literal["nearest", "linear"]
 
-    @model_validator(mode="after")
-    def sparse_source(self) -> Self:
-        if self.sparse_noise is not None and (
-            self.asset_id != self.sparse_noise.asset_ids[0]
-            or self.sampling != "nearest"
-            or self.fit != "stretch"
-            or not isinstance(self.space, PhysicalSpace)
-            or len(self.space.mappings) != 1
-        ):
-            raise ValueError(
-                "Sparse noise requires its first frame, nearest sampling and physical stretch"
-            )
-        return self
-
     # Preserve the appearance of programs authored before image fitting existed.
     fit: Literal["resize", "source", "fold", "contain", "cover", "stretch"] = "stretch"
+
+
+class SparseNoiseSettings(LayerBase):
+    """Seeded patterns generated during playback; no image assets (V04).
+
+    Compilation resolves the complete-cell grid from the display and replaces width
+    and height with its physical extent.
+    """
+
+    kind: Literal["sparse_noise"]
+    appearance: SparseNoiseAppearance
+    pattern_count: PositiveInt
+    pattern_duration: Time
+
+    @model_validator(mode="after")
+    def sparse_layer(self) -> Self:
+        if not 0 < self.pattern_duration.ns() * self.pattern_count <= (1 << 63) - 1:
+            raise ValueError("Sparse-noise pattern duration must be positive")
+        if not isinstance(self.space, PhysicalSpace) or len(self.space.mappings) != 1:
+            raise ValueError("Sparse noise requires one physical screen mapping")
+        return self
+
+    def pattern_at(self, local_ns: int) -> int:
+        """Pattern index at epoch-local time, holding the last pattern at exhaustion."""
+        return min(
+            max(0, local_ns) // self.pattern_duration.ns(), self.pattern_count - 1
+        )
 
 
 class VideoSettings(LayerBase):
@@ -384,6 +374,16 @@ class TextureSettings(LayerBase):
             raise ValueError(
                 "Inline Grating requires a positive constant spatial frequency"
             )
+        if (
+            self.grating
+            and isinstance(self.pattern, Grating)
+            and self.pattern.kind != "sine_grating"
+        ):
+            # Marked rendering is shaped by feature_sharpness alone, so kind would be ignored.
+            raise ValueError(
+                "Inline Grating requires pattern kind sine_grating; "
+                "use feature_sharpness 1 for a square wave"
+            )
         if self.grating and self.linked_to is None:
             from cephvr.visual_stimulus.config.grating import validate_motion
 
@@ -424,7 +424,11 @@ class ArenaSettings(Model):
 
 
 Settings = Annotated[
-    ImageSettings | VideoSettings | TextureSettings | ArenaSettings,
+    ImageSettings
+    | VideoSettings
+    | TextureSettings
+    | ArenaSettings
+    | SparseNoiseSettings,
     Field(discriminator="kind"),
 ]
 
@@ -609,9 +613,23 @@ def refs(value: object) -> Iterator[Ref]:
             yield from refs(item)
 
 
+def _accept_legacy_category(schema: dict[str, JsonValue]) -> None:
+    """Publish the loader-normalized legacy value so external validation matches."""
+    branches = schema.get("anyOf")
+    for branch in branches if isinstance(branches, list) else ():
+        names = branch.get("enum") if isinstance(branch, dict) else None
+        if isinstance(names, list):
+            names.append("texture_drift")
+    schema["description"] = (
+        "`texture_drift` is a legacy alias that loads as `media_presentation`."
+    )
+
+
 class Program(Model):
     format_version: Version2
-    category: Category | None = None
+    category: Category | None = Field(
+        default=None, json_schema_extra=_accept_legacy_category
+    )
 
     @field_validator("category", mode="before")
     @classmethod
@@ -692,10 +710,18 @@ class Program(Model):
                             "Random rules require distinct active instance parameters"
                         )
                 settings_sets = (node.settings, *node.repetition_settings)
-                from cephvr.visual_stimulus.config.texture_links import validate_links
+                from cephvr.visual_stimulus.config.texture_links import (
+                    link_failure,
+                    validate_links,
+                )
 
                 for settings in settings_sets:
-                    validate_links(settings)
+                    try:
+                        validate_links(settings)
+                    except ValueError as exc:
+                        raise link_failure(
+                            node.epoch_id, settings, self.category, exc
+                        ) from exc
                     ids = [x.instance_id for x in settings]
                     unique(ids)
                     if set(ids) != active:
@@ -712,13 +738,6 @@ class Program(Model):
                     sources = []
                     if isinstance(block, (ImageSettings, VideoSettings, ArenaSettings)):
                         sources.append((block.asset_id, block.kind))
-                        if (
-                            isinstance(block, ImageSettings)
-                            and block.sparse_noise is not None
-                        ):
-                            sources.extend(
-                                (aid, "image") for aid in block.sparse_noise.asset_ids
-                            )
                     if isinstance(block, TextureSettings) and isinstance(
                         block.pattern, ImageTile
                     ):
@@ -731,13 +750,6 @@ class Program(Model):
                             if block.kind == "arena" or not sources:
                                 raise ValueError(
                                     "Asset variations require an image, video or image-tile texture"
-                                )
-                            if (
-                                isinstance(block, ImageSettings)
-                                and block.sparse_noise is not None
-                            ):
-                                raise ValueError(
-                                    "Sparse-noise pattern resources cannot use Asset variations"
                                 )
                             if isinstance(block, TextureSettings) and block.grating:
                                 if len(rule.grating_periods_mm) != len(rule.asset_ids):
@@ -763,11 +775,6 @@ class Program(Model):
                             "video": {"mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"},
                             "arena": {"glb2_static_unlit_v1"},
                         }[kind]
-                        if (
-                            isinstance(block, ImageSettings)
-                            and block.sparse_noise is not None
-                        ):
-                            allowed = {"png_uint_v1"}
                         if isinstance(block, TextureSettings) and block.grating:
                             allowed = {"cephvr_grating_json_v1"}
                         if isinstance(aid, Ref):

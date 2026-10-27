@@ -1,56 +1,64 @@
-# Sparse-noise recipe preparation
+# Sparse-noise generation
 
 Authority: [V04](../../docs/architecture/visual_stimulus.md#v04),
 [V14/V15](../../docs/architecture/visual_stimulus.md#v14),
 [V13](../../docs/architecture/visual_stimulus.md#v13).
 
-The backend prepares a recipe into an ordinary format-2 image program and compact
-PNG grid assets before runtime Setup. There is no render-loop random generation.
-This is not a CephVR1 static texture-design JSON: use the GUI picker or preparation
-API/CLI below, then the existing program loader.
+Sparse noise is a program layer generated during playback by a contained helper,
+never inside the render loop. There are no image assets or prepared bundles; the
+pre-generated PNG path was removed on 2026-10-28, and programs containing image-form
+sparse sequences no longer load.
 
-## Inline epoch authoring
+## Runtime generation (`sparse_noise` layer)
 
-Choose Media presentation → Sparse noise in a projector/layer row. Set square size
+Choose Media presentation → Sparse noise in a projector/layer row and set square size
 (mm), minimum center distance (mm), activation probability, background (linear),
-explicit seed, pattern count and duration (seconds) directly in the epoch editor.
-Apply sparse noise prepares a unique internal image bundle off the GUI thread using
-configured geometry and the existing generator. No external recipe asset is required.
-The protocol retains the appearance, seed, timing and generated resource identities.
-Other layers and the epoch duration stay unchanged. Unapplied edits and missing
-preparation block Save/preview; authority, Assets, enabled-screen or geometry changes
-cancel/discard late results. Existing files are never overwritten; uncommitted bundles
-may remain. Reapply after changing physical geometry.
+explicit seed, pattern count and duration (seconds) in the epoch editor. Edits apply
+directly to the program's `sparse_noise` layer (`appearance`, `pattern_count`,
+`pattern_duration`); there are no image assets, prepared bundle or Apply step.
+Compilation fixes the layer's width/height to the grid resolved from the active
+display, so geometry changes need no re-authoring.
 
-Execution indexes the compact image sequence at epoch-local time, restarting each
-occurrence, truncating at the epoch end and holding its final pattern at exhaustion.
-Generated images use the usual protected source admission, byte budgets, residency,
-nearest sampling and actual-image evidence. All sequence members form the admitted
-working set. Each layer composites its own linear background behind inactive cells;
-residual grid margins expose underlying content. Short sequences are permitted inside
-an E05-valid trial. Standalone recipe trials retain their original minimum duration.
+Each prepared trial containing sparse layers launches one contained generator helper
+(`python -m cephvr.visual_stimulus.sparse_noise_helper` through the managed entry,
+role `visual_stimulus_sparse_noise`) at PrepareTrial. Both processes derive the same
+request order from the prepared trial: every shown pattern of every layer occurrence,
+sorted by trial-relative due time, then layer order.
 
-## Legacy recipe import
+Pipe protocol (`resources/sparse_noise_wire.py`): stdin carries one `JOB <json>` line
+(layers with recipe, resolved grid, epoch start, pattern duration and shown count),
+then `CREDIT <n>` lines allowing requests with sequence < n; stdin EOF stops the
+helper. stdout carries per request a 48-byte little-endian header (`SPN2`, u64
+sequence, u32 length, 32-byte SHA-256 of the pattern's `pattern_rgba` bytes) and `columns × rows × 4` RGBA8 bytes, bottom row first, with
+cells identical to `pattern_rgba` for the same seed and screen.
 
-The existing recipe/CLI preparation and canonical program import remain supported.
-The retained GUI trial-import helper independently selects per-screen external
-appearance recipes, preserves seeds/provenance, and uses common count/duration with
-matching backgrounds. It is not a Protocol type. It appends a prepared trial without
-replacing existing trials. External recipe changes require explicit regeneration.
-The per-layer preparation uses an internal `cephvr-sparse-noise-layer-v1` sequence
-manifest, published as `sequence.json`, rather than advertising a short playable trial.
+The renderer keeps 100 patterns (E14 `sparse_noise.lookahead_patterns`) ahead per
+concurrently presented layer: the first window is resident before Ready and credit
+grows as shown patterns retire. Textures are grid-sized RGBA8, reused from a bounded
+pool, sampled nearest through the calibrated projection. A pattern not yet generated
+holds the newest due resident pattern with `residency_hold` evidence; before the
+occurrence's first pattern only the background shows, recorded as `background_hold`
+with `image_index` null. The trial clock never waits. Helper failure or early exit
+fails the trial. Evidence `State.images` records one selection per sparse layer:
+`asset_id` and `requested_asset_id` are the instance ID, `requested_image_index` and
+`image_index` the requested and actual zero-based pattern index within the current
+epoch occurrence (`State.epoch_occurrence`). The first frame showing a pattern also
+records `pattern_sha256`, the SHA-256 of `pattern_rgba` (top row first, before the GL
+flip), and `pattern_generator`; repeated frames omit both.
 
-## Recipe fields
+## Appearance and recipe fields
 
-Use [the schema](sparse-noise-recipe.schema.json) and
-[example](examples/sparse-noise.json). All fields are required; unknown fields fail.
-Example values are illustrative, not rig defaults.
+A layer's `appearance` uses the [appearance schema](sparse-noise-appearance.schema.json).
+The offline editor still accepts full version-2 recipe files
+([schema](sparse-noise-recipe.schema.json), [example](examples/sparse-noise.json)) as
+appearance input and ignores their timing and screens. All fields are required;
+unknown fields fail. Example values are illustrative, not rig defaults.
 
 | Field | Meaning |
 | --- | --- |
 | `format_version`, `kind` | `2`, `"sparse_noise"` |
 | `seed` | Integer 0 through 18446744073709551615; preserve without floating-point conversion. |
-| `surfaces` | Distinct physical screen names: `front`, `left`, `right`, `bottom`; each needs an active output mapping. |
+| `surfaces` | Distinct physical screen names: `front`, `left`, `right`, `bottom`; each needs an active output mapping; Geometry-only callers must pass the active surface set to enforce this. |
 | `square_size_mm` | Positive physical cell side length. |
 | `min_active_cell_distance_mm` | Nonnegative minimum center-to-center separation between eligible cells, in mm. |
 | `active_probability` | Independent probability of activating each eligible cell, from 0 to 1. |
@@ -64,7 +72,8 @@ there is no field repetition, angular sizing, partial edge square or stretching
 to consume residual space. A square too large to fit fails preparation.
 For each pattern, shuffle all grid cells and greedily accept a cell only if its
 center is at least `min_active_cell_distance_mm` from every previously accepted
-center. This regenerates a maximal eligible layout for every pattern; it does not
+center (integer cell offsets are compared with a 1e-9 tolerance on the squared cell
+ratio, so exactly equal distances qualify despite float rounding). This regenerates a maximal eligible layout for every pattern; it does not
 guarantee maximum packing, uniform spatial coverage or distinct consecutive layouts.
 Zero distance allows every cell. Independently activate each eligible cell with
 `active_probability`: zero produces background only; one activates the entire
@@ -73,15 +82,13 @@ eligible count. Active cells independently choose black or white with equal
 probability. Inactive eligible cells remain background; they are not backfilled.
 
 Version-1 density recipes must be explicitly updated to version 2 with both new
-fields; density has no equivalent distance/probability conversion. Already generated
-image programs remain usable without interpreting or migrating their source recipes.
+fields; density has no equivalent distance/probability conversion.
 
 One RGBA texel represents one cell: active texels are opaque black/white, inactive
 ones transparent over the exact scene background. Fixed millimetre image layers
 use nearest sampling and the existing calibrated projection/photometric pipeline.
 Unselected outputs receive the background. Screens share epoch timing, not a claim
-of simultaneous optical refresh. Regenerate when geometry changes; playback does
-not reinterpret the source recipe.
+of simultaneous optical refresh.
 
 ## Reproducibility and retained outputs
 
@@ -96,38 +103,10 @@ Bytes are row-major from top-left. Global RNG state is unused. Reordering/removi
 other screens or extending the sequence preserves existing patterns. Independent
 streams may produce repeats.
 
-Keep the whole generated bundle. `provenance.json` retains recipe/seed, generator
-and Python versions, display snapshot, resolved grids, actual active counts per pattern, pixel/file hashes and the
-program hash. PNGs and the expanded program are authoritative. Regeneration needs
-matching recipe, geometry and generator/Python implementation; cross-version
-Python sampling compatibility is not assumed. Runtime E13/V13 retains its usual
-resolved plan and actual presentation evidence; external bundle provenance is not
-automatically copied into experiment output. A seed alone is not a replay archive.
-
-## API and command
-
-From the repository root with its Python environment:
-
-```powershell
-.venv/Scripts/python.exe tools/prepare_sparse_noise.py --recipe sparse-noise.json --display display-profile.json --output assets/sparse-noise-run
-```
-
-The display input is canonical backend DisplayProfile JSON, not GUI calibration
-draft JSON. Optional `--config` selects the backend TOML for existing resource
-limits. Output must be a new directory; load its `program.json` and use that
-directory as asset root. Errors/cancellation may leave an incomplete directory;
-the playable program is published last. Normal runtime Setup is still required.
-
-Python: `prepare_sparse_noise(recipe, display, destination, *, max_cells,
-max_patterns, max_document_bytes, check=...)` in
-`cephvr.visual_stimulus.resources.sparse_noise`; parse recipes with
-`parse_sparse_noise_json(source, max_bytes=...)`. The optional check callback may
-raise for cancellation/expiry. The CLI derives a per-grid ceiling from the existing
-CPU limit at 512 bytes/cell, and uses existing epoch/document limits. Conservative
-4096 bytes per screen-pattern document admission precedes expansion. Normal Setup
-still admits actual CPU/GPU/plan budgets and protects all sources.
-
-Playback retains existing bounded image residency, original clocks, readiness
-holds and requested/actual asset evidence. No new missed-onset policy or timing
-guarantee is introduced. Physical size, calibration, margins, optical onsets and
-combined-load acceptance belong to the [rig checklist](../../reports/rig-verification.md).
+Nothing is written to disk during generation. Regeneration needs the same appearance,
+screen, resolved grid (from the trial's logged display profile), generator id and
+Python version; cross-version Python sampling compatibility is not assumed. The
+experiment output retains the resolved plan and per-frame actual pattern indices
+(E13/V13); a seed alone is not a replay archive. Physical size, calibration, margins,
+optical onsets and combined-load acceptance belong to the
+[rig checklist](../../reports/rig-verification.md).

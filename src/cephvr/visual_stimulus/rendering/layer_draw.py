@@ -10,15 +10,14 @@ from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.rendering.evidence import (
     clip_vertex_components,
     float32_words,
+    layer_uniform_values,
 )
-from cephvr.visual_stimulus.rendering.image_fit import (
-    SCREEN_IMAGE_FITS,
-    screen_image_frame,
-)
+from cephvr.visual_stimulus.rendering.image_fit import SCREEN_IMAGE_FITS
+from cephvr.visual_stimulus.rendering.layer_cache import LayerCache
 from cephvr.visual_stimulus.rendering.scene_resources import (
     PreparedSceneOutput as _OutputScene,
 )
-from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+from cephvr.visual_stimulus.rendering.types import InstanceSnapshot, UniformSnapshot
 
 
 def draw_layer(
@@ -30,7 +29,9 @@ def draw_layer(
     mapping_id: str,
     snapshot: InstanceSnapshot,
     normalized: list[tuple[float, float]],
+    cache: LayerCache | None = None,
 ) -> Any:
+    layers = LayerCache.for_artifact(artifact, cache)
     output_index = tuple(o.output_id for o in artifact.display.active_outputs).index(
         output_id
     )
@@ -46,6 +47,7 @@ def draw_layer(
     image_pixels = None
     fold = None
     field = None
+    field_values: dict[str, tuple[float, float]] = {}
     if settings.kind == "texture" and settings.pattern.kind == "image_tile":
         field = frame.field_programs.get(str(settings.pattern.asset_id))
         if field is not None:
@@ -54,7 +56,15 @@ def draw_layer(
                     "Physical texture fields require millimetre coordinates"
                 )
             program, array = field
-    if settings.kind in ("image", "video"):
+    if settings.kind == "sparse_noise":
+        # Grid-resolution RGBA8 cells; the shader scales and composites the background.
+        mode = 10
+        if snapshot.sparse_textures is None:
+            raise RuntimeError("sparse-noise snapshot has no streamed texture")
+        texture = snapshot.sparse_textures[output_index]
+        if texture is None:
+            raise RuntimeError("sparse-noise texture is absent for this output")
+    elif settings.kind in ("image", "video"):
         if settings.kind == "image":
             mode = {
                 "resize": 0,
@@ -65,26 +75,12 @@ def draw_layer(
                 "cover": 6,
             }[settings.fit]
             if settings.fit in SCREEN_IMAGE_FITS:
-                profile = next(
-                    p
-                    for p in artifact.geometric_calibration
-                    if p.mapping_id == mapping_id
-                )
-                normalized, image_pixels = screen_image_frame(profile)
+                corners, image_pixels = layers.screen_frame(mapping_id)
+                normalized = list(corners)
                 program["image_target_pixels"].value = image_pixels
                 if settings.fit == "fold":
-                    from cephvr.visual_stimulus.rendering.image_fold import (
-                        calibrated_fold_map,
-                    )
-
-                    fold = calibrated_fold_map(
-                        artifact.display.geometry,
-                        artifact.geometric_calibration,
-                        profile,
-                    )
+                    fold = layers.fold_map(mapping_id)
                     program["image_fold_map"].write(struct.pack("6f", *fold))
-        if settings.kind == "image" and settings.sparse_noise is not None:
-            mode = 10
         asset_id = settings.asset_id
         if settings.kind == "video":
             asset_id = settings.asset_id
@@ -115,136 +111,58 @@ def draw_layer(
         else:
             if field is not None:
                 mode = 9
-                if "field_extent_mm" in program:
-                    program["field_extent_mm"].value = (
+                field_values = {
+                    "field_extent_mm": (
                         float(values["width"]),
                         float(values["height"]),
-                    )
-                if "field_phase_mm" in program:
-                    program["field_phase_mm"].value = (
+                    ),
+                    "field_phase_mm": (
                         float(values.get("phase_x", 0))
                         * float(values.get("period_x", 1)),
                         float(values.get("phase_y", 0))
                         * float(values.get("period_y", 1)),
-                    )
+                    ),
+                }
+                for name, value in field_values.items():
+                    if name in program:
+                        program[name].value = value
             else:
                 mode = 4
                 texture = gpu_resources[
                     f"{artifact.identity.resource_generation}:{pattern.asset_id}"
                 ][output_index]
     program["mode"].value = mode
-    program["grating_sharpness"].value = getattr(
-        getattr(settings, "pattern", None), "feature_sharpness", 0.0
-    )
-    program["mean_rgb"].value = _vector(
-        values.get("mean_rgb"),
-        getattr(
-            settings,
-            "mean_linear_rgb",
-            getattr(
-                getattr(settings, "sparse_noise", None),
-                "background_linear_rgb",
-                (0.0, 0.0, 0.0),
-            ),
-        ),
-    )
-    program["modulation_rgb"].value = _vector(
-        values.get("modulation_rgb"),
-        getattr(settings, "modulation_linear_rgb", (0.0, 0.0, 0.0)),
-    )
-    program["contrast"].value = float(values.get("contrast", 1.0))
-    program["opacity"].value = float(values.get("opacity", 1.0))
-    pattern_obj = settings.pattern if settings.kind == "texture" else None
-    frequency_pair = (
-        float(values.get("frequency", 0.0)) * float(values.get("width", 1.0)),
-        0.0,
-    )
-    if pattern_obj is not None and pattern_obj.kind == "checkerboard":
-        frequency_pair = (
-            float(values.get("frequency_x", 0.0)) * float(values["width"]),
-            float(values.get("frequency_y", 0.0)) * float(values["height"]),
-        )
-    period_pair = (
-        float(values.get("width", 1.0)) / float(values.get("period_x", 1.0)),
-        float(values.get("height", 1.0)) / float(values.get("period_y", 1.0)),
-    )
-    program["frequency"].value = _vector(values.get("frequency"), frequency_pair)
-    program["period"].value = _vector(values.get("period"), period_pair)
-    program["phase"].value = _vector(
-        values.get("phase"),
-        (
-            float(values.get("phase_x", 0.0)),
-            float(values.get("phase_y", 0.0)),
-        ),
-    )
+    shader = layer_uniform_values(settings, values)
+    program["grating_sharpness"].value = shader["grating_sharpness"][0]
+    program["mean_rgb"].value = shader["mean_rgb"]
+    program["modulation_rgb"].value = shader["modulation_rgb"]
+    program["contrast"].value = shader["contrast"][0]
+    program["opacity"].value = shader["opacity"][0]
+    program["frequency"].value = shader["frequency"]
+    program["period"].value = shader["period"]
+    program["phase"].value = shader["phase"]
     components = clip_vertex_components(normalized)
     program["clip_vertices"].write(struct.pack("8f", *components))
     program["image_tex"].value = 0
     if texture is not None:
         texture.use(0)
     array.render(mode=moderngl.TRIANGLE_STRIP)
-    from cephvr.visual_stimulus.rendering.types import UniformSnapshot
-
-    layout = next(
-        (
-            item
-            for item in artifact.uniform_layouts
-            if item.instance_id == snapshot.instance_id
-            and item.output_id == output_id
-            and item.name == f"clip_vertices_{mapping_id}"
-        ),
-        None,
-    )
-    if layout is None:
-        raise RuntimeError(
-            "prepared shader layout omits the mapped surface clip uniform"
-        )
-    result = [UniformSnapshot(layout.binding_id, float32_words(components))]
-    if field is not None:
-        for name, components in (
-            ("field_extent_mm", (float(values["width"]), float(values["height"]))),
-            (
-                "field_phase_mm",
-                (
-                    float(values.get("phase_x", 0)) * float(values.get("period_x", 1)),
-                    float(values.get("phase_y", 0)) * float(values.get("period_y", 1)),
-                ),
-            ),
-        ):
-            field_layout = next(
-                item
-                for item in artifact.uniform_layouts
-                if item.instance_id == snapshot.instance_id
-                and item.output_id == output_id
-                and item.name == f"{name}_{mapping_id}"
-            )
-            result.append(
-                UniformSnapshot(field_layout.binding_id, float32_words(components))
-            )
+    mapped: dict[str, Sequence[float]] = {"clip_vertices": components, **field_values}
     if image_pixels is not None:
-        image_layout = next(
-            item
-            for item in artifact.uniform_layouts
-            if item.instance_id == snapshot.instance_id
-            and item.output_id == output_id
-            and item.name == f"image_target_pixels_{mapping_id}"
-        )
-        result.append(
-            UniformSnapshot(image_layout.binding_id, float32_words(image_pixels))
-        )
+        mapped["image_target_pixels"] = image_pixels
     if fold is not None:
-        fold_layout = next(
-            item
-            for item in artifact.uniform_layouts
-            if item.instance_id == snapshot.instance_id
-            and item.output_id == output_id
-            and item.name == f"image_fold_map_{mapping_id}"
+        mapped["image_fold_map"] = fold
+    result = []
+    for name, words in mapped.items():
+        layout = layers.layout(
+            snapshot.instance_id,
+            output_id,
+            f"{name}_{mapping_id}",
+            detail=(
+                "prepared shader layout omits the mapped surface clip uniform"
+                if name == "clip_vertices"
+                else None
+            ),
         )
-        result.append(UniformSnapshot(fold_layout.binding_id, float32_words(fold)))
+        result.append(UniformSnapshot(layout.binding_id, float32_words(words)))
     return tuple(result)
-
-
-def _vector(value: Any, fallback: Sequence[float]) -> tuple[float, ...]:
-    if isinstance(value, (tuple, list)):
-        return tuple(float(component) for component in value)
-    return tuple(float(component) for component in fallback)

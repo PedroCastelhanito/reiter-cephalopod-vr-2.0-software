@@ -95,6 +95,36 @@ class PreparedCalibrationOutput:
     warp_vertex_buffers: dict[str, Any] = field(default_factory=dict)
 
 
+def compile_field_programs(
+    context: Any,
+    recipes: dict[str, Any],
+    quad_buffer: Any,
+    track: Callable[[Any], Any],
+) -> dict[str, tuple[Any, Any]]:
+    """Compile one program/array per distinct fragment source, shared by equal recipes.
+
+    Every layer draw writes all of its uniforms, so sharing a program is safe.
+    """
+    from cephvr.visual_stimulus.rendering.field_shader import layer_fragment
+
+    by_fragment: dict[str, tuple[Any, Any]] = {}
+    programs: dict[str, tuple[Any, Any]] = {}
+    for asset_id, recipe in recipes.items():
+        fragment = layer_fragment(recipe)
+        if fragment not in by_fragment:
+            program = track(
+                context.program(
+                    vertex_shader=shaders._LAYER_VERTEX, fragment_shader=fragment
+                )
+            )
+            array = track(
+                context.vertex_array(program, [(quad_buffer, "8x 2f", "in_uv")])
+            )
+            by_fragment[fragment] = (program, array)
+        programs[asset_id] = by_fragment[fragment]
+    return programs
+
+
 class SceneOutputBuilder:
     """Prepare per-output shader, warp and video resources with cleanup owners first."""
 
@@ -187,22 +217,9 @@ class SceneOutputBuilder:
             quad_array = track(
                 context.vertex_array(layer_program, [(quad_buffer, "8x 2f", "in_uv")])
             )
-            from cephvr.visual_stimulus.rendering.field_shader import layer_fragment
-
-            field_programs = {}
-            for field_asset_id, recipe in field_recipes.items():
-                fragment = layer_fragment(recipe)
-                field_program = track(
-                    context.program(
-                        vertex_shader=shaders._LAYER_VERTEX, fragment_shader=fragment
-                    )
-                )
-                field_array = track(
-                    context.vertex_array(
-                        field_program, [(quad_buffer, "8x 2f", "in_uv")]
-                    )
-                )
-                field_programs[field_asset_id] = (field_program, field_array)
+            field_programs = compile_field_programs(
+                context, field_recipes, quad_buffer, track
+            )
             output_quad_array = track(
                 context.vertex_array(
                     output_program, [(quad_buffer, "2f 2f", "in_position", "in_uv")]

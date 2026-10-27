@@ -2,7 +2,7 @@
 
 from time import monotonic_ns
 
-from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
+from PyQt6.QtCore import QEvent, QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QDialog,
@@ -23,6 +23,8 @@ from cephvr.visual_stimulus.config.models.program_model import Program
 
 
 class TrialPreview(QDialog):
+    refresh_requested = pyqtSignal()
+
     def __init__(
         self,
         program: Program,
@@ -35,6 +37,7 @@ class TrialPreview(QDialog):
         super().__init__(parent)
         if not screens:
             raise ValueError("Enable a projector in Devices before opening Preview")
+        self.program = program  # The snapshot this preview plays.
         self.plan = PreviewPlan(program, geometry.artifact().display.geometry)
         self.setWindowTitle("Trial preview")
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -56,6 +59,15 @@ class TrialPreview(QDialog):
             self.canvases[face] = canvas
         self.rig_view = PreviewRig(geometry, self.canvases)
         body.addWidget(self.rig_view, 1)
+        self.stale = QWidget()
+        stale_row = QHBoxLayout(self.stale)
+        stale_row.setContentsMargins(0, 0, 0, 0)
+        stale_row.addWidget(label("The program changed since this preview opened."), 1)
+        refresh = button("Refresh preview")
+        refresh.clicked.connect(self.refresh_requested)
+        stale_row.addWidget(refresh)
+        self.stale.hide()
+        body.addWidget(self.stale)
         self.status = label("")
         body.addWidget(self.status)
         self.slider = QSlider(Qt.Orientation.Horizontal)
@@ -96,6 +108,9 @@ class TrialPreview(QDialog):
         ):
             self.close()
         return super().eventFilter(watched, event)
+
+    def set_stale(self, stale: bool) -> None:
+        self.stale.setVisible(stale)
 
     def scrub(self, value: int) -> None:
         self.time_ns = min(self.plan.total_ns - 1, value * self.plan.total_ns // 10000)

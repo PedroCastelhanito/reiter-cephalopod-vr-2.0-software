@@ -1,7 +1,6 @@
 """One reference epoch with independent, visible per-projector editors."""
 
 import json
-from collections.abc import Callable
 from math import isfinite
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -19,7 +18,6 @@ from cephvr.gui.reference_draft import reference_mode, replace_reference
 from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_presets import add_file_stimulus, remove_stimulus
 from cephvr.gui.theme import SIZES
-from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
 
@@ -32,7 +30,6 @@ class EpochComposer(QWidget):
         self.screens: tuple[str, ...] = ()
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
-        self.sparse_geometry: Callable[[], Geometry] | None = None
         self.closed_loop = False
         self.tracking_available = True
         self.subject_height_mm: float | None = 0.0
@@ -158,7 +155,6 @@ class EpochComposer(QWidget):
     def refresh_rows(self, face: str = "", preferred: int | None = None) -> None:
         self.mode.setEnabled(self.program.category in (None, "navigation_3d"))
         for name, row in self.rows.items():
-            row.parameters.sparse_geometry = self.sparse_geometry
             row.bind(self.program, preferred if face == name else None)
         self.show_rows()
 

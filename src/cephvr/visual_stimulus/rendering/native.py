@@ -53,6 +53,8 @@ from cephvr.visual_stimulus.resources.display_calibration import (
 from cephvr.visual_stimulus.resources.glb import GLBScene
 from cephvr.visual_stimulus.resources.media import ImagePixels
 
+SPARSE_CREDIT_WRITE_NS = 5_000_000
+
 
 @dataclass(slots=True)
 class _OutputContext:
@@ -429,6 +431,36 @@ class ModernGLPort:
         if residency is not None:
             residency.finish(trial_id)
 
+    @property
+    def sparse_outputs(self) -> dict[str, Any]:
+        return self._outputs
+
+    def install_sparse_noise(self, ring: Any) -> None:
+        """Install (or remove with None) the trial's streamed sparse-noise textures."""
+        self._assert_owner()
+        self._sparse_noise = ring
+
+    def select_sparse_noise(
+        self, epoch_index: int, local_ns: int, snapshots: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        self._assert_owner()
+        ring = getattr(self, "_sparse_noise", None)
+        if ring is None:
+            if any(
+                s.settings is not None and s.settings.kind == "sparse_noise"
+                for s in snapshots
+            ):
+                raise NativeRenderingError("sparse-noise layer has no prepared stream")
+            return snapshots
+        # Credit lines are tiny; the bound only guards a helper that stopped reading.
+        selected: tuple[Any, ...] = ring.select(
+            epoch_index,
+            local_ns,
+            snapshots,
+            deadline_ns=self.clock_ns() + SPARSE_CREDIT_WRITE_NS,
+        )
+        return selected
+
     def select_images(
         self, trial_id: str, epoch_index: int, snapshots: tuple[Any, ...]
     ) -> tuple[Any, ...]:
@@ -547,6 +579,10 @@ class ModernGLPort:
                 context.activate()
                 entry = self.clock_ns()
                 self._glfw.swap_buffers(context.window)
+                if context.swap_interval > 0:
+                    # Drain the queued flip so the return time tracks the paced
+                    # vblank instead of driver queue depth (still not optical proof).
+                    context.context.finish()
             except Exception as exc:
                 error = f"VISUAL_STIMULUS_SWAP:{str(exc)[:512]}"
             returned = self.clock_ns()

@@ -2,9 +2,11 @@
 
 from collections.abc import Mapping, Sequence
 from math import dist, isfinite
+from typing import get_args
 
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
+from cephvr.visual_stimulus.config.models.schema_common import SurfaceId
 from cephvr.visual_stimulus.rendering.image_fit import screen_image_frame
 
 Point = tuple[float, float]
@@ -63,7 +65,7 @@ def fold_map(
     The net starts at the bounding rectangle's top left. Bottom sits below the
     top-aligned Left/Front/Right row in output orientation. Unused source is cropped.
     """
-    if set(extents) != {"left", "front", "right", "bottom"} or any(
+    if set(extents) != set(get_args(SurfaceId)) or any(
         not isfinite(v) or v <= 0
         for pair in (*extents.values(), front_pitch)
         for v in pair

@@ -207,10 +207,15 @@ and declaration checks alone do not validate either implementation.
 
 Each render group's State.images records one selection per image-backed instance:
 requested_asset_id/requested_image_index, actual asset_id/image_index, disposition
-(current or residency_hold), and repeated. Indices are zero-based positions in the
+(current, residency_hold, or background_hold for sparse noise), and repeated. Indices are zero-based positions in the
 sorted renderable still-image asset IDs of that trial's retained manifest (PNG/TIFF/JPEG
 or CephVR1 recipe profiles with a non-null interpretation); dependency-only resources
 are excluded. IDs bind indices to protected source fingerprints and interpretation.
+`sparse_noise` layers use their instance ID as both asset IDs and
+zero-based pattern indices within the current epoch occurrence; `background_hold`
+(null `image_index`) marks frames that drew only the layer background, and
+`pattern_sha256`/`pattern_generator` appear on the first frame showing each pattern
+(see the [sparse-noise contract](sparse-noise.md)).
 
 Repeated means the actual image identity equals this instance's preceding selection/render attempt;
 the first selection is false. It does not mean identical final pixels: current motion,

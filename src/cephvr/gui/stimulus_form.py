@@ -41,6 +41,11 @@ TITLES = {
     "rotation_deg": "Rotation (°)",
     "initial_playback": "Initial playback (s)",
     "reset": "Reset retained state",
+    "square_size_mm": "Square size (mm)",
+    "min_active_cell_distance_mm": "Min active cell distance (mm)",
+    "background_linear": "Background (linear)",
+    "pattern_count": "Patterns",
+    "pattern_duration": "Pattern duration (s)",
 }
 
 
@@ -137,7 +142,11 @@ class ValueEditor(QWidget):
                 self.children_by_key[key] = child
                 child.changed.connect(self.changed)
                 if "const" not in resolve(prop, self.definitions):
-                    if key == "value" and len(schema["properties"]) <= 2:
+                    only = len(schema["properties"])
+                    # A lone "seconds" or a value next to its tag needs no row caption.
+                    if (key == "value" and only <= 2) or (
+                        key == "seconds" and only == 1
+                    ):
                         form.addRow(child)
                     else:
                         form.addRow(label(title(key), "label"), child)

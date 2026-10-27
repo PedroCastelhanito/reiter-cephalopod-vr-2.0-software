@@ -133,6 +133,7 @@ class GuiSnapshot:
         pages = self.pages
         self.experiment.restore(data["experiment"])
         restore_protocol(pages.protocol, data["protocol"])
+        pages.protocol.notify_linked_media(data["protocol"])
         pages.devices.microcontroller.snapshots.restore(data["microcontroller"])
         projectors = pages.devices.projectors
         projectors.assignments = dict(data["projectors"]["assignments"])

@@ -4,10 +4,12 @@ import json
 import secrets
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
+from pydantic import BaseModel
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
+    QAbstractSpinBox,
     QCheckBox,
     QFileDialog,
     QGridLayout,
@@ -24,17 +26,57 @@ from cephvr.gui.components import (
     decimal_field,
     equal_row_height,
     field,
+    label,
 )
 from cephvr.gui.theme import SIZES
+from cephvr.visual_stimulus.config.models.schema_common import SurfaceId
 
+from .fields import ARRAY_HINT, HINTS, humanize, label_for, number_spec, submodel
+from .markers import clear_field, mark_field
+
+FACES = get_args(SurfaceId)
 CHOICES = {
     "alpha_mode": ["OPAQUE", "MASK"],
     "shape": ["rectangular", "circular", "torus", "two_choice", "cross"],
     "pattern": ["none", "rock", "ridges", "waves"],
-    "origin_screen": ["front", "left", "right", "bottom"],
-    "target_screen": ["front", "left", "right", "bottom"],
+    "origin_screen": list(FACES),
+    "target_screen": list(FACES),
     "unit": ["s", "ms", "us", "ns"],
 }
+COLORS = {"color", "color_a", "color_b"}
+HIDDEN = {
+    "tile_local",
+    "texture_resolution",
+    "format_version",
+    "kind",
+    "cephvr_asset_type",
+    "tile_height_mm",
+    "tile_width_mm",
+    "phase_cycles",
+    "fit_cycles_to_tile",
+    "tile_size_mm",
+    "features_per_tile",
+}
+WIDE = COLORS | {"texture", "texture_path", "model", "seed"}
+
+
+def flush_edits(root: QWidget | None) -> None:
+    """Commit text that is still being typed, as if focus had left each control."""
+    if root is None:
+        return
+    for spin in root.findChildren(QAbstractSpinBox):
+        spin.interpretText()
+    for edit in root.findChildren(QLineEdit):
+        if edit.isModified() and not isinstance(edit.parentWidget(), QAbstractSpinBox):
+            edit.editingFinished.emit()
+
+
+def _on_finished(edit: QLineEdit, commit: Callable[[], None]) -> None:
+    def finished() -> None:
+        edit.setModified(False)
+        commit()
+
+    edit.editingFinished.connect(finished)
 
 
 def property_form(
@@ -45,10 +87,18 @@ def property_form(
     title: str = "",
     directory: Path | None = None,
     hidden: frozenset[str] = frozenset(),
+    schema: type[BaseModel] | None = None,
+    path: str = "",
 ) -> QWidget:
+    """Controls for `data`; `schema` supplies limits and `path` locates error marks."""
     panel = Card(title) if title else QWidget()
     form = panel.body if isinstance(panel, Card) else QVBoxLayout(panel)
     form.setSpacing(SIZES.body_gap)
+    panel.setProperty("formPath", path)
+    banner = label("", "error", wrap=True)
+    banner.setObjectName("FormError")
+    banner.hide()
+    form.addWidget(banner)
     grid = QGridLayout()
     grid.setHorizontalSpacing(SIZES.field_x_gap)
     grid.setVerticalSpacing(SIZES.body_gap)
@@ -72,37 +122,23 @@ def property_form(
         position += 2 if wide else 1
 
     for key, value in sorted(
-        data.items(),
-        key=lambda item: (
-            item[0] in {"color", "color_a", "color_b", "background_linear"}
-        ),
+        data.items(), key=lambda item: item[0] in COLORS | {"background_linear"}
     ):
-        if key in hidden:
+        if key in hidden or key in HIDDEN:
             continue
-        if key in {
-            "tile_local",
-            "texture_resolution",
-            "format_version",
-            "kind",
-            "cephvr_asset_type",
-            "tile_height_mm",
-            "tile_width_mm",
-            "phase_cycles",
-            "fit_cycles_to_tile",
-            "tile_size_mm",
-            "features_per_tile",
-        }:
-            continue
-        label = (
-            key.replace("_mm", " (mm)")
-            .replace("_per_cm2", " (/cm²)")
-            .replace("_deg", " (°)")
-            .replace("_", " ")
-            .capitalize()
-        )
+        name = label_for(key)
+        child_path = f"{path}.{key}" if path else key
         if isinstance(value, dict):
             add_control(
-                property_form(value, changed, rebuild, title=label, directory=directory)
+                property_form(
+                    value,
+                    changed,
+                    rebuild,
+                    title=name,
+                    directory=directory,
+                    schema=submodel(schema, key),
+                    path=child_path,
+                )
             )
             continue
         if key == "scatters":
@@ -117,6 +153,8 @@ def property_form(
                         rebuild,
                         title=f"Layer {index + 1}",
                         directory=directory,
+                        schema=submodel(schema, key),
+                        path=f"{child_path}.{index}",
                     )
                 )
                 remove = button(f"Remove layer {index + 1}")
@@ -147,7 +185,8 @@ def property_form(
             changed()
 
         control: QWidget
-        if key in {"color", "color_a", "color_b"} and isinstance(value, (list, tuple)):
+        hint = HINTS.get(key, "")
+        if key in COLORS and isinstance(value, (list, tuple)):
             row = QWidget()
             channels = QGridLayout(row)
             channels.setContentsMargins(0, 0, 0, 0)
@@ -159,6 +198,7 @@ def property_form(
                 spin.setPrefix("RGBA"[index] + " ")
                 spin.setValue(channel)
                 spin.setKeyboardTracking(False)
+                spin.setAccessibleName(f"{name} {'RGBA'[index]}")
 
                 def change_channel(
                     number: float, index: int = index, key: str = key
@@ -178,10 +218,13 @@ def property_form(
             paths = QHBoxLayout(row)
             paths.setContentsMargins(0, 0, 0, 0)
             edit = QLineEdit(str(value))
+            edit.setAccessibleName(name)
             browse = button("Browse…")
-            edit.editingFinished.connect(
-                lambda edit=edit, setter=set_value: setter(edit.text())
-            )
+
+            def commit_path(edit: QLineEdit = edit, setter: Any = set_value) -> None:
+                setter(edit.text())
+
+            _on_finished(edit, commit_path)
 
             def browse_file(
                 checked: bool = False,
@@ -204,12 +247,11 @@ def property_form(
                     try:
                         relative = Path(filename).resolve().relative_to(root).as_posix()
                     except ValueError:
-                        edit.setToolTip(
-                            "Choose a file inside the asset/recipe directory"
+                        mark_field(
+                            edit, "Choose a file inside the asset/recipe directory"
                         )
-                        edit.setStyleSheet("border: 1px solid #c44")
                         return
-                    edit.setStyleSheet("")
+                    clear_field(edit)
                     edit.setText(relative)
                     setter(relative)
 
@@ -221,18 +263,27 @@ def property_form(
         elif isinstance(value, bool):
             box = QCheckBox()
             box.setChecked(value)
+            box.setAccessibleName(name)
             box.toggled.connect(set_value)
             control = box
         elif key in CHOICES:
-            selection = combo(tuple(CHOICES[key]))
-            selection.setCurrentText(str(value))
-            selection.currentTextChanged.connect(set_value)
+            selection = combo(tuple(humanize(choice) for choice in CHOICES[key]))
+            for row_index, choice in enumerate(CHOICES[key]):
+                selection.setItemData(row_index, choice)
+            selection.setCurrentIndex(max(0, selection.findData(str(value))))
+            selection.setAccessibleName(name)
+            selection.currentIndexChanged.connect(
+                lambda index, box=selection, setter=set_value: setter(
+                    box.itemData(index)
+                )
+            )
             control = selection
         elif key == "seed":
             row = QWidget()
             layout = QHBoxLayout(row)
             layout.setContentsMargins(0, 0, 0, 0)
             edit = QLineEdit(str(value))
+            edit.setAccessibleName(name)
             randomize = button("New seed")
 
             def seed_changed(
@@ -243,16 +294,15 @@ def property_form(
                     if not 0 <= seed <= 2**64 - 1:
                         raise ValueError()
                 except ValueError:
-                    edit.setToolTip(
-                        "Seed must be an integer from 0 to 18446744073709551615"
+                    mark_field(
+                        edit, "Seed must be an integer from 0 to 18446744073709551615"
                     )
-                    edit.setStyleSheet("border: 1px solid #c44")
                     set_value(edit.text())
                     return
-                edit.setStyleSheet("")
+                clear_field(edit)
                 set_value(seed)
 
-            edit.editingFinished.connect(seed_changed)
+            _on_finished(edit, seed_changed)
 
             def new_seed(
                 checked: bool = False,
@@ -268,28 +318,16 @@ def property_form(
             equal_row_height(edit, randomize)
             control = row
         elif isinstance(value, (int, float)):
+            spec = number_spec(schema, key, value)
             spin = decimal_field(0)
-            integer = isinstance(value, int) and key not in (
-                "active_probability",
-                "min_active_cell_distance_mm",
-            )
-            spin.setDecimals(0 if integer else 3)
-            spin.setRange(-1e9, 1e9)
-            if key == "active_probability":
-                spin.setRange(0, 1)
-                spin.setSingleStep(0.05)
-                spin.setToolTip(
-                    "Independent activation probability per eligible cell and pattern (0–1)."
-                )
-            elif key == "min_active_cell_distance_mm":
-                spin.setRange(0, 1e9)
-                spin.setToolTip(
-                    "Minimum center-to-center distance in mm. A new eligible layout is generated for each pattern; 0 allows all cells."
-                )
+            spin.setDecimals(spec.decimals)
+            spin.setRange(spec.minimum, spec.maximum)
+            spin.setSingleStep(spec.step)
             spin.setValue(value)
             spin.setKeyboardTracking(False)
+            spin.setAccessibleName(name)
             spin.valueChanged.connect(
-                lambda v, setter=set_value, integer=integer: setter(
+                lambda v, setter=set_value, integer=spec.integer: setter(
                     int(v) if integer else v
                 )
             )
@@ -298,42 +336,36 @@ def property_form(
             edit = QLineEdit(
                 json.dumps(value) if isinstance(value, (list, tuple)) else str(value)
             )
+            edit.setAccessibleName(name)
+            array = isinstance(value, (list, tuple))
 
             def commit(
                 edit: QLineEdit = edit,
                 setter: Callable[..., Any] = set_value,
-                array: bool = isinstance(value, (list, tuple)),
+                array: bool = array,
             ) -> None:
                 try:
                     parsed = json.loads(edit.text()) if array else edit.text()
                     if array and not isinstance(parsed, list):
                         raise ValueError("Expected a JSON list")
                 except (ValueError, json.JSONDecodeError):
-                    edit.setStyleSheet("border: 1px solid #c44")
+                    mark_field(edit, "Enter a JSON list, for example [0, 1]")
                     setter(edit.text())
                     return
-                edit.setStyleSheet("")
+                clear_field(edit)
                 setter(parsed)
 
-            edit.editingFinished.connect(commit)
+            _on_finished(edit, commit)
             control = edit
-            if isinstance(value, (list, tuple)):
-                edit.setToolTip(
-                    "Values in brackets; colors are linear channels from 0 to 1"
-                )
+            hint = ARRAY_HINT if array else hint
         control.setObjectName(key)
-        add_control(
-            field(label, control),
-            wide=key
-            in {
-                "color",
-                "color_a",
-                "color_b",
-                "texture",
-                "texture_path",
-                "model",
-                "seed",
-            }
-            or isinstance(value, (list, tuple)),
-        )
+        wrapped = field(name, control, hint=hint)
+        wrapped.setProperty("fieldPath", child_path)
+        note = label("", "error", wrap=True)
+        note.setObjectName("FieldError")
+        note.hide()
+        layout_of_field = wrapped.layout()
+        assert layout_of_field is not None
+        layout_of_field.addWidget(note)
+        add_control(wrapped, wide=key in WIDE or isinstance(value, (list, tuple)))
     return panel

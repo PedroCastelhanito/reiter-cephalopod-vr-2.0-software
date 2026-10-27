@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 36
+**Status:** Accepted · **Revision:** 37
 
 - Apply G01's 20 Hz preview cadence before optional composition and synchronization;
   slower renderer batches show at their source rate. Combined and per-projector
@@ -82,7 +82,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - One rendering worker serves the configured outputs and keeps running across trials
   to provide E05's configurable Idle presentation. Programs follow V02/V03, rendering
   stack V04, surface views V15; V12 owns the renderer's recording thread and FFmpeg
-  optional subprocess when video saving is enabled.
+  optional subprocess when video saving is enabled; V04 owns its per-trial sparse-noise
+  generator helper.
 - Controller-authorized calibration presentation uses that same rendering worker,
   prepared static arena and V15 display pipeline during Configuration. It is a
   diagnostic state outside trial programs and recording, with no duration or trial
@@ -155,7 +156,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   fades and valid links. Navigation retains one arena with 2D overlays. Arenas require
   navigation. Canonical validation governs GUI and headless input, including condition
   and repetition alternatives. Legacy texture_drift maps to media_presentation while
-  preserving executable settings; links are validated and executed in Media.
+  preserving executable settings; links are validated and executed in Media. A saved
+  Media program from before links executed may carry a stale `linked_to`: an invalid one
+  fails load naming its epoch and instance, a valid one is kept and listed by
+  `media_presentation_links`; the GUI logs one non-blocking notice per protocol/program load
+  listing the linked epochs, never altering them. A marked inline Grating requires
+  `sine_grating`; Sharpness sets its squareness.
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -289,7 +295,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 37
 
 - G01's directly authored Grating uses the existing physical procedural texture
   pipeline with positive constant period, sharpness from sinusoidal to square,
@@ -300,21 +306,33 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   source bytes, preserve period/colors/sharpness, and use the epoch Orientation.
   Uniform uses a stationary zero-contrast procedural layer with linear mean RGB,
   covering its selected projector without an external file.
-- Sparse-noise rows retain their explicit validated appearance/seed and timing in
-  the authored protocol. Apply reuses the seeded grid generator off the GUI thread
-  to prepare compact nearest-sampled image resources and provenance before Setup.
-  One layer selects floor(epoch-local-time / pattern-duration), holds the last pattern
-  at exhaustion, and restarts its indexed sequence at each epoch occurrence. Other
-  layers keep the unchanged epoch clock. Each layer retains its own background;
-  transparent inactive cells composite onto that linear background within the complete
-  centered grid extent; residual surface margins expose the underlying composition.
-  All sequence resources enter normal protected admission, image residency and actual
-  image-selection evidence. The complete sequence working set must fit admission;
-  readiness misses retain actual-image evidence without advancing the trial clock.
-  Short layer sequences are allowed inside an E05-valid trial. Standalone imported
-  sparse trials keep E05's minimum duration and matching-background rules. The
+- Sparse noise is a `sparse_noise` layer holding its validated appearance/seed,
+  pattern count and pattern duration; it has no image assets, prepared bundle or Apply
+  step. Compilation resolves the centered complete-cell grid on the layer's one active
+  screen and fixes the layer extent to it; an inactive or too-small screen fails Setup.
+  The layer shows floor(epoch-local-time / pattern-duration), holds the last pattern at
+  exhaustion and restarts at each epoch occurrence; other layers keep their clocks.
+  Each trial with sparse layers gets one contained generator helper owned by the
+  rendering worker, launched at PrepareTrial like its FFmpeg children (stdin/stdout
+  pipes, stdin-EOF stop, exact-exit cleanup; obligations declared at Setup). It
+  regenerates patterns from the seed with the unchanged v2 generator in the time order
+  both processes derive from the prepared trial. The renderer uploads one RGBA8
+  texel per cell to grid-sized textures reused from a bounded pool; the GPU scales cells
+  with nearest sampling and composites each layer's linear background behind
+  transparent cells; residual screen margins expose the underlying composition.
+  The E14 lookahead (100 patterns per concurrently presented layer) is filled before
+  PrepareTrial reports Ready and topped up as shown patterns retire. A pattern not yet
+  generated holds the newest due resident pattern with residency-hold evidence; before
+  the occurrence's first pattern only the background shows, recorded as a background
+  hold without an actual index. The trial clock never waits. Helper failure or exit
+  fails the trial under E06/E08. Evidence records each layer's requested and actual
+  pattern index; the first frame showing a pattern also records the SHA-256 of its
+  generated cells, computed once by the helper, and the generator id, so offline
+  regeneration can be verified. Pre-generated PNG sparse sequences are not
+  supported. Minimum cell distance compares integer cell
+  offsets with a 1e-9 tolerance. The
   [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md) owns scientific
-  generation, limits and provenance; no render-loop randomness or new process is added.
+  generation, limits and the pipe protocol.
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -607,6 +625,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   tuple per immediate-group repetition. A table and compact rules cannot coexist.
   Without either, use ordinary source settings. Rules must target active instances;
   sampled settings undergo normal validation and fail Setup if invalid.
+  Uniform layouts and physical-field placement checks cover every drawable candidate:
+  the base asset, Asset-rule candidates and per-repetition settings rows.
 - V06 per-occurrence durations are generated after order expansion; timeline
   boundaries derive from their integer sums. V07 continuity follows actual neighbors
   in that order; a block/repetition boundary is not by itself a reset.
@@ -756,7 +776,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v13"></a>
 ### V13 — Trial replay from program and actual render evidence
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 14
 
 - Analysis software owns offline reconstruction and lossless export. The experiment
   backend records immutable program/resolved-plan information, matching asset
@@ -787,7 +807,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Validate recorded program, assets, replay-relevant provenance and effective state
   without original-output pixel fingerprints (sampled included). No per-frame pixel
   hashing or verification-only GPU readback. Reconstructed output is validated at
-  input/state level only.
+  input/state level only; V04's sparse-noise pattern hashes cover generated cell
+  inputs, not output pixels.
 - Replay reads the complete evidence lines that exist (V28). Without the trial's
   closing record, label output "partial, up to render group N"; never present it as
   complete-trial replay or synthesize missing state. Full-trial replay requires a

@@ -169,5 +169,8 @@ rejects stale results and retains only the current per-surface geometry cache.
 Saving/exporting remains available if the authoring viewport cannot initialize.
 Runtime Setup independently admits assets and preserves V13 protected resources.
 
-This module does not provide legacy design conversion, add dynamic lighting or animation,
+Opening a legacy raster `texture_design` converts it to a physical field with a notice
+listing the dropped fields and the rendering change; the document stays modified, Save
+routes to Save as… with a `.converted.json` default, and the source is never overwritten.
+This module does not add dynamic lighting or animation,
 infer movement boundaries, modify protocols or solve projector calibration.

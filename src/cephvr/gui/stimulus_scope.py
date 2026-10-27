@@ -12,8 +12,6 @@ from cephvr.gui.program_editing import (
 )
 from cephvr.visual_stimulus.config.models.program_model import Program
 
-FACES = ("front", "left", "right", "bottom")
-
 
 def surfaces(setting: dict[str, Any]) -> list[str]:
     if setting["kind"] == "arena":

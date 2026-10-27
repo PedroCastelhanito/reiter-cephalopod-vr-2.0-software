@@ -154,6 +154,17 @@ def _resolve_asset_path(
     return candidate
 
 
+def _check_recipe_size(
+    profile: str, count: int, max_document_bytes: int | None
+) -> None:
+    if (
+        profile in TEXTURE_RECIPE_PROFILES
+        and max_document_bytes is not None
+        and count > max_document_bytes
+    ):
+        raise ValueError("texture recipe exceeds its document byte limit")
+
+
 def prepare_assets(
     program: AssetCatalogue,
     assets_root: Path,
@@ -213,14 +224,7 @@ def prepare_assets(
                 )
                 if cached is not None:
                     digest_hex, count = cached
-                    if (
-                        asset.profile in TEXTURE_RECIPE_PROFILES
-                        and max_document_bytes is not None
-                        and count > max_document_bytes
-                    ):
-                        raise ValueError(
-                            "texture recipe exceeds its document byte limit"
-                        )
+                    _check_recipe_size(asset.profile, count, max_document_bytes)
                     prepared.append(
                         PreparedAsset(
                             asset.asset_id,
@@ -286,14 +290,7 @@ def prepare_assets(
                                 )
                             break
                         count += len(chunk)
-                        if (
-                            asset.profile in TEXTURE_RECIPE_PROFILES
-                            and max_document_bytes is not None
-                            and count > max_document_bytes
-                        ):
-                            raise ValueError(
-                                "texture recipe exceeds its document byte limit"
-                            )
+                        _check_recipe_size(asset.profile, count, max_document_bytes)
                         if count > asset_limit or streaming:
                             if not streaming:
                                 budget.release(owner=f"{owner_prefix}:asset-snapshots")
@@ -319,14 +316,9 @@ def prepare_assets(
                                     break
                                 digest.update(chunk)
                                 count += len(chunk)
-                                if (
-                                    asset.profile in TEXTURE_RECIPE_PROFILES
-                                    and max_document_bytes is not None
-                                    and count > max_document_bytes
-                                ):
-                                    raise ValueError(
-                                        "texture recipe exceeds its document byte limit"
-                                    )
+                                _check_recipe_size(
+                                    asset.profile, count, max_document_bytes
+                                )
                                 budget.release(
                                     owner=f"{owner_prefix}:asset-read-buffer"
                                 )

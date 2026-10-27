@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 20
+policy_version = 21
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -45,6 +45,11 @@ protection_failure = "fail_preparation"
 image_profiles = ["png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1"]
 video_profiles = ["mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"]
 arena_profile = "glb2_static_unlit_v1"
+
+[sparse_noise]
+generation = "contained_helper_per_trial"
+lookahead_patterns = 100
+late_pattern = "previous_pattern_current_motion"
 
 [image_residency]
 loader_threads = 1

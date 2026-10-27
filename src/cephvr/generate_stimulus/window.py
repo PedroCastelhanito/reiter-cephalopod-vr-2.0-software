@@ -1,13 +1,13 @@
 """Offline authoring window; documents own state, workers receive snapshots."""
 
 import copy
+from collections.abc import Callable
 from pathlib import Path
 from queue import Empty
 from typing import Any
 
-import numpy as np
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QCloseEvent, QImage, QKeySequence, QPixmap
+from PyQt6.QtGui import QCloseEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QFileDialog,
     QListWidget,
@@ -16,20 +16,25 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, combo, field
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 
-from .arena import CompiledArena, compile_arena, export_arena
-from .documents import apply_changes, read_design, save_design
+from .arena import CompiledArena, arena_job, export_arena
+from .bake import TextureCache
+from .documents import load_design, save_design, save_suggestion
+from .errors import describe_error, error_items, status_line
 from .geometry import GeometryCache
 from .jobs import Jobs
 from .layout import AuthoringLayout
+from .markers import show_errors, workspace_items
 from .models import ArenaDesign
-from .properties import property_form
-from .texture_preview import preview_texture
+from .prompts import ask_reset, ask_unsaved, save_file_name
+from .properties import flush_edits
+from .surfaces import SurfaceEditor, arena_panel
+from .texture_panel import texture_widgets
+from .texture_preview import texture_job
 from .textures import (
-    PATTERNS,
+    is_pristine,
     load_geometry,
     new_texture,
     validate_texture,
@@ -52,13 +57,18 @@ class AuthoringWindow(AuthoringLayout):
         self.saved = copy.deepcopy(self.documents)
         self._approved_close: list[dict[str, Any]] | None = None
         self.paths: list[Path | None] = [None, None]
+        # Conversion notice while a document differs from its legacy source file.
+        self.legacy: list[str | None] = [None, None]
         self.history = [[copy.deepcopy(d)] for d in self.documents]
         self.positions = [0, 0]
         self.jobs = Jobs()
         self.geometry_cache = GeometryCache()
-        self.job_kind = "preview"
+        self.texture_cache = TextureCache()
         self.exporting = False
-        self.pixels: np.ndarray | None = None
+        self.export_serial: int | None = None
+        self.selected_names = ["floor"]
+        self.surface_editor: SurfaceEditor | None = None
+        self.problems: list[tuple[str, str]] = []
         self.setWindowTitle("CephVR2 — Generate assets[*]")
         self.resize(1280, 850)
         if parent is None:
@@ -71,32 +81,42 @@ class AuthoringWindow(AuthoringLayout):
         )
         self.viewport.failed.connect(self.status.showMessage)
         self.viewport.selected.connect(self.select_surface)
-        self.image.resized.connect(self.show_pixels)
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.setInterval(250)
         self.timer.timeout.connect(self.preview)
+        # Polled only while a job is outstanding.
         self.poll = QTimer(self)
         self.poll.setInterval(40)
         self.poll.timeout.connect(self.collect)
-        self.poll.start()
-        self.tabs.currentChanged.connect(self.rebuild)
-        self.face.currentTextChanged.connect(self.schedule)
+        self.tabs.currentChanged.connect(self.tab_changed)
+        self.face.currentIndexChanged.connect(self.schedule)
         self.preview_mode.currentIndexChanged.connect(self.rebuild)
         self.index.valueChanged.connect(self.schedule)
         self.rebuild()
 
+    @property
+    def surfaces(self) -> QListWidget:
+        assert self.surface_editor is not None
+        return self.surface_editor.list
+
     def active(self) -> int:
         return self.tabs.currentIndex()
 
-    def changed(self) -> None:
-        i = self.active()
+    def flush(self) -> None:
+        flush_edits(self.properties)
+
+    def refresh_modified(self) -> None:
+        self.setWindowModified(self.documents != self.saved)
+
+    def changed(self, index: int | None = None) -> None:
+        i = self.active() if index is None else index
         current = copy.deepcopy(self.documents[i])
         if current != self.history[i][self.positions[i]]:
             self.history[i] = self.history[i][: self.positions[i] + 1] + [current]
             self.history[i] = self.history[i][-100:]
             self.positions[i] = len(self.history[i]) - 1
-        self.setWindowModified(self.documents != self.saved)
+        self.refresh_modified()
         self.schedule()
 
     def schedule(self, *args: Any) -> None:
@@ -104,14 +124,29 @@ class AuthoringWindow(AuthoringLayout):
             self.jobs.cancel.set()
             self.timer.start()
 
+    def submit(self, operation: Callable[[Callable[[], None]], Any]) -> int:
+        serial = self.jobs.submit(operation)
+        self.poll.start()
+        return serial
+
+    def tab_changed(self, index: int) -> None:
+        # Pending edits still belong to the panel being left.
+        self.flush()
+        self.problems = []
+        self.set_stale(False)
+        self.rebuild()
+
     def rebuild(self, *args: Any) -> None:
         i = self.active()
         arena = i == 1
         self.viewport.setVisible(arena)
         self.image.setVisible(not arena)
-        self.fit_button.setVisible(arena)
+        self.arena_controls.setVisible(arena)
+        self.preview_controls.setVisible(not arena)
         self.face_field.setVisible(not arena and self.preview_mode.currentIndex() == 1)
         self.mode_field.setVisible(not arena)
+        self.legacy_note.setText(self.legacy[i] or "")
+        self.legacy_note.setVisible(self.legacy[i] is not None)
         self.index_field.setVisible(
             not arena and self.documents[0].get("kind") == "sparse_noise"
         )
@@ -119,114 +154,59 @@ class AuthoringWindow(AuthoringLayout):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(SIZES.card_gap)
-        if not arena:
-            selector = combo(
-                tuple(
-                    name
-                    for name in [*PATTERNS, "sparse_noise"]
-                    if name not in {"bars_horizontal", "bars_vertical"}
-                )
-            )
-            pattern = self.documents[0].get("pattern", "sparse_noise")
-            selector.setPlaceholderText(f"{pattern} (saved recipe)")
-            selector.setCurrentIndex(selector.findText(pattern))
-
-            def pattern_changed(pattern: str) -> None:
-                self.documents[0] = new_texture(pattern)
-                self.changed()
-                self.rebuild()
-
-            selector.currentTextChanged.connect(pattern_changed)
-            pattern_card = Card("Texture")
-            pattern_card.body.addWidget(field("Pattern", selector))
-            layout.addWidget(pattern_card)
-            data = self.documents[0]
-            if data.get("kind") == "texture":
-                data = data["params"]
-            layout.addWidget(
-                property_form(
-                    data,
-                    self.changed,
-                    self.rebuild,
-                    title="Parameters",
-                    hidden=frozenset(
-                        {
-                            "texture_resolution",
-                            "tile_width_mm",
-                            "line_spacing_mm",
-                            "line_width_mm",
-                        }
-                        if self.documents[0].get("pattern")
-                        in {"bars_horizontal", "bars_vertical"}
-                        else ()
-                    ),
-                    directory=self.root
-                    if self.paths[0] is None
-                    else self.paths[0].parent,
-                )
-            )
+        if arena:
+            self.arena_panel(layout)
         else:
-            design = self.documents[1]
-            geometry = {k: v for k, v in design.items() if k != "surfaces"}
-
-            def geometry_changed() -> None:
-                design.update(geometry)
-                self.changed()
-
-            layout.addWidget(
-                property_form(
-                    geometry, geometry_changed, self.rebuild, title="Geometry"
-                )
-            )
-            self.surfaces = QListWidget()
-            self.surfaces.addItems(list(design["surfaces"]))
-            self.surfaces.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
-            self.surfaces.setFixedHeight(130)
-            layout.addWidget(self.surfaces)
-            self.surfaces.setCurrentRow(0)
-            self.surface_panel = QVBoxLayout()
-            layout.addLayout(self.surface_panel)
-            self.surfaces.itemSelectionChanged.connect(self.surface_properties)
-            self.surface_properties()
+            for widget in texture_widgets(
+                self.documents[0],
+                self.root if self.paths[0] is None else self.paths[0].parent,
+                lambda: self.changed(0),
+                self.rebuild,
+                self.change_pattern,
+            ):
+                layout.addWidget(widget)
         layout.addStretch()
         self.set_properties(panel)
+        self.apply_markers()
         self.schedule()
 
-    def surface_properties(self) -> None:
-        while self.surface_panel.count():
-            item = self.surface_panel.takeAt(0)
-            assert item is not None
-            widget = item.widget()
-            if widget is not None:
-                widget.setParent(None)
-                widget.deleteLater()
-        selected = [item.text() for item in self.surfaces.selectedItems()]
-        if not selected:
+    def change_pattern(self, selector: Any, old: str, new: str) -> None:
+        """Replace the document's pattern; its parameters reset, so confirm real edits."""
+        self.flush()
+        if new == old:
             return
-        data = copy.deepcopy(self.documents[1]["surfaces"][selected[0]])
-        previous = copy.deepcopy(data)
+        if not is_pristine(self.documents[0], old) and not ask_reset(
+            self,
+            "Change pattern",
+            "Changing the pattern resets its parameters. Continue?",
+            "Reset parameters",
+        ):
+            selector.blockSignals(True)
+            selector.setCurrentIndex(selector.findData(old))
+            selector.blockSignals(False)
+            return
+        self.documents[0] = new_texture(new)
+        self.changed(0)
+        self.rebuild()
 
-        def changed() -> None:
-            nonlocal previous
-            for name in selected:
-                apply_changes(self.documents[1]["surfaces"][name], previous, data)
-            previous = copy.deepcopy(data)
-            self.changed()
-
-        self.surface_panel.addWidget(
-            property_form(
-                data,
-                changed,
-                self.surface_properties,
-                title=" / ".join(selected),
-                directory=self.root,
-            )
+    def arena_panel(self, layout: QVBoxLayout) -> None:
+        self.surface_editor = arena_panel(
+            layout,
+            self.documents[1],
+            self.root,
+            self.selected_names,
+            lambda: self.changed(1),
+            self.rebuild,
+            self.surfaces_rebuilt,
         )
+
+    def surfaces_rebuilt(self) -> None:
+        self.apply_markers()
         self.refresh_captions()
 
     def select_surface(self, name: str) -> None:
-        if self.active() == 1:
-            self.surfaces.setCurrentRow(list(self.documents[1]["surfaces"]).index(name))
+        if self.active() == 1 and self.surface_editor is not None:
+            self.surface_editor.select(name)
 
     def undo(self) -> None:
         self.restore(-1)
@@ -240,39 +220,31 @@ class AuthoringWindow(AuthoringLayout):
         if 0 <= position < len(self.history[i]):
             self.positions[i] = position
             self.documents[i] = copy.deepcopy(self.history[i][position])
+            self.refresh_modified()
             self.rebuild()
 
     def preview(self) -> None:
         document = copy.deepcopy(self.documents[self.active()])
         root, geometry = self.root, self.display_geometry
-        face, index = self.face.currentText(), self.index.value()
+        face, index = str(self.face.currentData()), self.index.value()
         screen = self.preview_mode.currentIndex() == 1
         recipe_directory = self.root if self.paths[0] is None else self.paths[0].parent
-        geometry_cache = self.geometry_cache
-        self.job_kind = "preview"
         if self.active() == 1:
-            self.jobs.submit(
-                lambda check: compile_arena(
-                    ArenaDesign.model_validate(document),
-                    root,
-                    check=check,
-                    geometry_cache=geometry_cache,
-                )
+            self.submit(
+                arena_job(document, root, self.geometry_cache, self.texture_cache)
             )
         else:
-            self.jobs.submit(
-                lambda check: preview_texture(
+            self.submit(
+                texture_job(
                     document,
                     root,
                     geometry,
                     face=face,
                     index=index,
-                    check=check,
-                    directory=recipe_directory,
                     screen=screen,
+                    directory=recipe_directory,
                 )
             )
-        self.status.clearMessage()
 
     def collect(self) -> None:
         while True:
@@ -280,48 +252,52 @@ class AuthoringWindow(AuthoringLayout):
                 serial, result, error = self.jobs.results.get_nowait()
             except Empty:
                 break
+            if serial == self.export_serial:
+                # A finished export is reported even if it was cancelled meanwhile.
+                self.export_serial = None
+                self.set_exporting(False)
+                if not error:
+                    self.status.showMessage(f"Exported {result}")
+                elif not self.jobs.cancel.is_set():
+                    self.show_problem(error)
+                continue
             if serial != self.jobs.serial or self.jobs.cancel.is_set():
                 continue
-            exporting = self.exporting
-            self.set_exporting(False)
             if error:
-                self.status.showMessage(error)
+                self.show_problem(error)
                 continue
-            if exporting:
-                self.status.showMessage(f"Exported {result}")
-                continue
+            self.problems = []
+            self.apply_markers()
+            self.set_stale(False)
             if isinstance(result, CompiledArena):
                 self.viewport.set_arena(result)
             else:
-                self.pixels, _caption = result
-                self.show_pixels()
+                self.image.set_pixels(result)
             if isinstance(result, CompiledArena) and self.viewport.error:
                 message = f"3D preview unavailable: {self.viewport.error}. Export remains available."
                 self.status.showMessage(message)
             else:
                 self.status.clearMessage()
+        if not self.jobs.working and self.jobs.results.empty():
+            self.poll.stop()
 
-    def show_pixels(self) -> None:
-        if self.pixels is None:
-            return
-        from .textures import display_pixels
+    def show_problem(self, text: str) -> None:
+        """Mark the offending fields and dim the now-stale preview."""
+        self.problems = error_items(text)
+        self.apply_markers()
+        self.set_stale(True)
+        self.status.showMessage(status_line(text))
 
-        pixels = display_pixels(self.pixels)
-        height, width = pixels.shape[:2]
-        image = QImage(
-            pixels.tobytes(), width, height, width * 3, QImage.Format.Format_RGB888
-        ).copy()
-        self.image.setPixmap(
-            QPixmap.fromImage(image).scaled(
-                self.image.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.FastTransformation,
-            )
+    def apply_markers(self) -> None:
+        items = workspace_items(self.problems, self.active() == 1, self.selected_names)
+        show_errors(self.properties, items)
+
+    def set_stale(self, stale: bool) -> None:
+        self.image.dimmer.setEnabled(stale)
+        self.preview_note.setText(
+            "Preview out of date: fix the marked fields." if stale else ""
         )
-
-    def resizeEvent(self, event: Any) -> None:
-        super().resizeEvent(event)
-        self.show_pixels()
+        self.preview_note.setVisible(stale)
 
     def validate(self) -> None:
         if self.active() == 1:
@@ -330,14 +306,12 @@ class AuthoringWindow(AuthoringLayout):
             validate_texture(self.documents[0])
 
     def confirm_discard(self) -> bool:
+        self.flush()
         i = self.active()
-        return (
-            self.documents[i] == self.saved[i]
-            or QMessageBox.question(
-                self, "Unsaved design", "Discard unsaved changes to this design?"
-            )
-            == QMessageBox.StandardButton.Yes
-        )
+        if self.documents[i] == self.saved[i]:
+            return True
+        choice = ask_unsaved(self, "Unsaved design", "This design has unsaved changes.")
+        return self.save() if choice == "save" else choice == "discard"
 
     def new(self) -> None:
         if self.confirm_discard():
@@ -345,15 +319,15 @@ class AuthoringWindow(AuthoringLayout):
             self.documents[i] = (
                 new_texture() if i == 0 else ArenaDesign().model_dump(mode="json")
             )
-            self.paths[i] = None
+            self.paths[i], self.legacy[i] = None, None
             self.saved[i] = copy.deepcopy(self.documents[i])
             self.history[i] = [copy.deepcopy(self.documents[i])]
             self.positions[i] = 0
+            self.refresh_modified()
             self.rebuild()
 
     def open(self) -> None:
-        if not self.confirm_discard():
-            return
+        self.flush()
         filename, _ = QFileDialog.getOpenFileName(
             self, "Open design", str(self.root), "Design JSON (*.json)"
         )
@@ -361,49 +335,65 @@ class AuthoringWindow(AuthoringLayout):
             return
         try:
             path = Path(filename)
-            data = read_design(path)
-            arena = data.get("kind") == "arena_design"
-            i = 1 if arena else 0
-            if i != self.active() and self.documents[i] != self.saved[i]:
-                raise ValueError(
-                    "Save or discard the other workspace's modified design before opening this file"
-                )
+            data, notice = load_design(path)
+            i = 1 if data.get("kind") == "arena_design" else 0
+            if i != self.active():
+                if self.documents[i] != self.saved[i]:
+                    raise ValueError(
+                        "Save or discard the other workspace's modified design before opening this file"
+                    )
+            elif not self.confirm_discard():
+                return
             self.documents[i] = data
-            self.saved[i] = copy.deepcopy(data)
-            self.paths[i] = path
+            # A converted design never equals its file, so it stays modified.
+            self.saved[i] = copy.deepcopy(data) if notice is None else {}
+            self.paths[i], self.legacy[i] = path, notice
             self.history[i] = [copy.deepcopy(data)]
             self.positions[i] = 0
             self.tabs.setCurrentIndex(i)
+            self.refresh_modified()
             self.rebuild()
         except Exception as error:
-            QMessageBox.warning(self, "Cannot open design", str(error))
+            QMessageBox.warning(self, "Cannot open design", describe_error(error))
 
-    def save(self) -> None:
+    def save(self) -> bool:
+        self.flush()
         try:
             self.validate()
             i = self.active()
             previous_path = self.paths[i]
-            filename, _ = QFileDialog.getSaveFileName(
-                self,
-                "Save design as",
-                str(
-                    previous_path
-                    or self.root / ("design.arena.json" if i else "texture.json")
-                ),
-                "JSON (*.json)",
+            default = self.root / ("design.arena.json" if i else "texture.json")
+            legacy = previous_path is not None and self.legacy[i] is not None
+            title = "Save design as"
+            if legacy:
+                title = "Save converted legacy design as a new file"
+            filename = save_file_name(
+                self, title, save_suggestion(previous_path, legacy, default)
             )
             if not filename:
-                return
+                return False
             path = Path(filename)
+            if previous_path and legacy and path.resolve() == previous_path.resolve():
+                QMessageBox.warning(
+                    self,
+                    "Cannot save design",
+                    "The legacy file is never overwritten; choose a new file name.",
+                )
+                return False
             origin = self.root if previous_path is None else previous_path.parent
             self.documents[i] = save_design(self.documents[i], self.root, path, origin)
-            self.paths[i] = path
+            self.paths[i], self.legacy[i] = path, None
             self.saved[i] = copy.deepcopy(self.documents[i])
+            self.refresh_modified()
             # Saving returns a new document; bind controls and preview to that owner.
             self.rebuild()
             self.status.showMessage(f"Saved {path}")
+            return True
         except Exception as error:
-            QMessageBox.warning(self, "Cannot save design", str(error))
+            text = describe_error(error)
+            self.show_problem(text)
+            QMessageBox.warning(self, "Cannot save design", text)
+            return False
 
     def set_exporting(self, exporting: bool) -> None:
         self.exporting = exporting
@@ -416,6 +406,7 @@ class AuthoringWindow(AuthoringLayout):
         if self.active() == 0:
             self.save()
             return
+        self.flush()
         filename, _ = QFileDialog.getSaveFileName(
             self,
             "Export new arena bundle directory",
@@ -430,14 +421,13 @@ class AuthoringWindow(AuthoringLayout):
             destination = Path(filename)
             self.timer.stop()
             self.set_exporting(True)
-            self.job_kind = "export"
-            self.jobs.submit(
+            self.export_serial = self.submit(
                 lambda check: export_arena(design, root, destination, check=check)
             )
             self.status.showMessage("Validating and exporting arena…")
         except Exception as error:
             self.set_exporting(False)
-            QMessageBox.warning(self, "Cannot export", str(error))
+            QMessageBox.warning(self, "Cannot export", describe_error(error))
 
     def cancel_job(self) -> None:
         self.jobs.cancel.set()
@@ -474,15 +464,21 @@ class AuthoringWindow(AuthoringLayout):
         event.accept()
 
     def confirm_close(self) -> bool:
+        self.flush()
         if self.documents == self.saved or self.documents == self._approved_close:
             return True
-        if (
-            QMessageBox.question(
-                self, "Unsaved designs", "Close and discard unsaved changes?"
-            )
-            != QMessageBox.StandardButton.Yes
-        ):
+        choice = ask_unsaved(
+            self, "Unsaved designs", "Save your changes before closing?"
+        )
+        if choice == "cancel":
             return False
+        if choice == "save":
+            for i in range(len(self.documents)):
+                if self.documents[i] != self.saved[i]:
+                    self.tabs.setCurrentIndex(i)
+                    if not self.save():
+                        return False
+            return True
         # Managed closure may finish asynchronously after configuration history saves.
         self._approved_close = copy.deepcopy(self.documents)
         return True

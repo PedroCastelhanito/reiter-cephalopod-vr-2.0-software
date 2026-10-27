@@ -540,7 +540,12 @@ def test_native_confirmation_rejects_python_fields(
 
 
 @pytest.mark.parametrize(
-    "role", ["visual_stimulus_ffmpeg", "visual_stimulus_ffmpeg_probe"]
+    "role",
+    [
+        "visual_stimulus_ffmpeg",
+        "visual_stimulus_ffmpeg_probe",
+        "visual_stimulus_sparse_noise",
+    ],
 )
 def test_renderer_eof_helper_exit_retains_cleanup_without_process_fault(role):
     native = RegistryNative()
@@ -592,12 +597,17 @@ def test_exact_membership_and_retain_until_cleanup() -> None:
     assert state.containment_job_name in native.closed
 
 
-def test_visual_stimulus_ffmpeg_child_must_belong_to_exact_renderer_work() -> None:
+@pytest.mark.parametrize(
+    "role", [VISUAL_STIMULUS_FFMPEG_ROLE, "visual_stimulus_sparse_noise"]
+)
+def test_visual_stimulus_helper_child_must_belong_to_exact_renderer_work(
+    role: str,
+) -> None:
     registry = LaunchRegistry(RegistryNative(), 15_000_000_000)
     request = wire.PlanLaunchRequest(
         command_id=str(uuid4()),
         owner=_identity("visual_stimulus"),
-        child=_identity(VISUAL_STIMULUS_FFMPEG_ROLE),
+        child=_identity(role),
         executable=EXE,
         stop_method="owner_stdin_eof",
         parent_operation=types.OperationContext(command_id=str(uuid4())),

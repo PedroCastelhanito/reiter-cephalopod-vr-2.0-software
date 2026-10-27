@@ -1,5 +1,8 @@
 """Present existing family editors as reference-table cells, without copying values."""
 
+from collections.abc import Iterable
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
 from cephvr.gui.arena_movement import ArenaMovement
@@ -10,9 +13,41 @@ from cephvr.gui.grating_motion import GratingMotion
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.motion_source import MotionSource
+from cephvr.gui.sparse_noise_layer import CAPTIONS
 from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.gui.stimulus_parameters import StimulusParameters
+
+
+def chain_tab_order(controls: Iterable[QWidget]) -> None:
+    """Make Tab follow the on-screen order instead of widget creation order."""
+    controls = list(controls)
+    if not controls:
+        return
+    window = controls[0].window()
+    focusable = [
+        widget
+        for control in controls
+        for widget in (control, *control.findChildren(QWidget))
+        # Skip popups (their own windows) and proxied sub-widgets such as spin editors.
+        if widget.window() is window
+        and widget.focusPolicy() & Qt.FocusPolicy.TabFocus
+        and widget.focusProxy() is None
+    ]
+    for first, second in zip(focusable, focusable[1:], strict=False):
+        QWidget.setTabOrder(first, second)
+
+
+def beside(first: QWidget, second: QWidget, caption: str) -> QWidget:
+    """One cell holding two controls side by side; the first takes the spare width."""
+    first.setAccessibleName(caption)
+    cell = QWidget()
+    layout = QHBoxLayout(cell)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(4)
+    layout.addWidget(first, 1)
+    layout.addWidget(second)
+    return cell
 
 
 def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
@@ -65,23 +100,15 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
     )
     if editor.sparse_layer is not None:
         sparse = editor.sparse_layer
-        sparse_captions = (
-            "Square size (mm)",
-            "Minimum distance (mm)",
-            "Active probability",
-            "Background (linear)",
-            "Seed",
-            "Patterns",
-            "Pattern duration (s)",
-        )
         sparse.form.hide()
         result = [
             (caption, sparse.form.children_by_key[key])
-            for caption, key in zip(
-                sparse_captions, sparse.form.children_by_key, strict=True
-            )
+            for key, caption in CAPTIONS.items()
         ]
-        result.append(("Preparation", sparse.configure))
+        # Keep the seed's "New seed" inline with its cell.
+        for index, (caption, control) in enumerate(result):
+            if caption == "Seed":
+                result[index] = (caption, beside(control, sparse.new_seed, caption))
         for caption, control in result:
             control.setAccessibleName(caption)
             editor.external_controls.append(control)
@@ -99,8 +126,8 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             result = [
                 ("Spatial period (mm)", appearance.period),
                 ("Sharpness (0–1)", appearance.sharpness),
-                ("Color A (linear RGB)", appearance.colors.children_by_key["color_a"]),
-                ("Color B (linear RGB)", appearance.colors.children_by_key["color_b"]),
+                ("Color A (linear RGB)", appearance.color_a),
+                ("Color B (linear RGB)", appearance.color_b),
             ]
         result.extend(
             (("Orientation (°)", grating.orientation), ("Speed (mm/s)", grating.speed))
@@ -203,6 +230,6 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
         control.setMinimumWidth(0)
         if title != "Asset":
             control.setAccessibleName(title)
-            control.setToolTip(title or "No stimulus")
+            control.setToolTip(control.toolTip() or title or "No stimulus")
         editor.external_controls.append(control)
     return result

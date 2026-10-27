@@ -15,6 +15,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     ImageSettings,
     ImageTile,
     Settings,
+    SparseNoiseSettings,
     TextureSettings,
     VideoSettings,
 )
@@ -38,6 +39,8 @@ def _compatibility(settings: Settings) -> tuple[object, ...]:
         resource = (settings.pattern.kind, settings.pattern.asset_id)
     elif isinstance(settings, TextureSettings):
         resource = settings.pattern.kind
+    elif isinstance(settings, SparseNoiseSettings):
+        resource = settings.appearance.model_dump_json()
     else:
         raise TypeError(f"unsupported settings model: {type(settings).__name__}")
     return settings.kind, resource, settings.space.model_dump(mode="json")

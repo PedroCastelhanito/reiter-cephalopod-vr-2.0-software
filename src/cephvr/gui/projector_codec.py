@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, get_args
 
+from cephvr.visual_stimulus.config.models.schema_common import SurfaceId
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
 _MAX_PROFILE_BYTES = 16_777_216
-_FACES = frozenset({"front", "left", "right", "bottom"})
+_FACES = frozenset(get_args(SurfaceId))
 
 
 def _unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:

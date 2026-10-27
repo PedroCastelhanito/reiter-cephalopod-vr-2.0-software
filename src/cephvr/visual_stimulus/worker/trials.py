@@ -9,7 +9,7 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
-from .ports import EnginePort, FeedbackPort, RecordingPort
+from .ports import EnginePort, FeedbackPort, RecordingPort, SparseNoisePort
 from .state import DriverState
 from .timing import OutputTiming
 
@@ -28,6 +28,7 @@ class TrialExecution:
         cancelled: threading.Event,
         clock: Callable[[], int],
         emit: Callable[[pb.LifecycleReport, int], None],
+        sparse_noise: SparseNoisePort | None = None,
     ) -> None:
         self.state, self.worker, self.backend, self.policies = (
             state,
@@ -43,6 +44,7 @@ class TrialExecution:
             clock,
         )
         self.lifecycle = emit
+        self.sparse_noise = sparse_noise
 
     def context(self, command: visual_stimulus.WorkerCommand) -> pb.ReportContext:
         return pb.ReportContext(
@@ -173,6 +175,9 @@ class TrialExecution:
         trial.cutoff_ns = cutoff_ns
         actual = trial.release.command if trial.release else command
         limit = cutoff_ns + self.policies.trial_finished.initial_ns
+        if self.sparse_noise is not None:
+            # Idle no longer samples streamed patterns; confirm the helper exit.
+            self.sparse_noise.finish(limit)
         trial.finish_deadline_ns = limit
         trial.stop_command = actual
         if trial.begun:

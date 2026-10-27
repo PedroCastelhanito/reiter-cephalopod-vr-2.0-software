@@ -46,7 +46,8 @@ def stimulus_key(program: Program, epoch: Epoch) -> str:
 
 def stimulus_color(key: str) -> QColor:
     hue = int.from_bytes(hashlib.sha256(key.encode()).digest()[:2], "big") % 360
-    return QColor.fromHsv(hue, 115, 145)
+    # Value 115 keeps the light card text at 4.5:1 or better for every hue.
+    return QColor.fromHsv(hue, 115, 115)
 
 
 def epoch_heading(epoch: Epoch, index: int) -> str:

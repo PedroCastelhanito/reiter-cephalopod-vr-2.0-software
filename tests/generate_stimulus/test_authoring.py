@@ -283,7 +283,7 @@ def test_sparse_preview_retains_centered_margins(tmp_path) -> None:
     document.update(
         square_size_mm=7, min_active_cell_distance_mm=0.0, active_probability=1.0
     )
-    pixels, caption = preview_texture(
+    pixels = preview_texture(
         document,
         tmp_path,
         geometry(),
@@ -297,7 +297,6 @@ def test_sparse_preview_retains_centered_margins(tmp_path) -> None:
     assert (pixels[-1] == 128).all() and (pixels[:, -1] == 128).all()
     inset = round(pixels.shape[0] * 0.02)
     assert set(np.unique(pixels[inset:-inset, inset:-inset])) <= {0, 255}
-    assert "100" in caption
 
 
 @pytest.mark.parametrize(
@@ -327,7 +326,7 @@ def test_preview_full_hd_preserves_screen_aspect(
         return pixels
 
     monkeypatch.setattr(texture_preview, "texture_pixels", capture)
-    pixels, _ = texture_preview.preview_texture(
+    pixels = texture_preview.preview_texture(
         document,
         tmp_path,
         Geometry.model_validate_json(json.dumps(profile)),
@@ -437,15 +436,12 @@ def test_projector_independent_tile_preview(pattern, tmp_path):
     assert not {"origin_screen", "target_screen", "surfaces"} & saved.keys()
     assert not {"origin_screen", "target_screen"} & saved.get("params", {}).keys()
     options = dict(index=3, screen=False, directory=tmp_path, check=lambda: None)
-    pixels, caption = preview_texture(saved, tmp_path, None, face="front", **options)
-    other, other_caption = preview_texture(
-        saved, tmp_path, geometry(), face="left", **options
-    )
+    pixels = preview_texture(saved, tmp_path, None, face="front", **options)
+    other = preview_texture(saved, tmp_path, geometry(), face="left", **options)
     assert np.array_equal(pixels, other)
     assert pixels.shape == (1080, 1080, 3)
     assert "texture_resolution" not in saved.get("params", {})
     assert json.loads((tmp_path / "recipe.json").read_bytes()) == saved
-    assert caption == other_caption
     if pattern == "polar_grating":
         recipe = parse_texture_recipe((tmp_path / "recipe.json").read_bytes())
         assert np.array_equal(
@@ -566,3 +562,255 @@ def test_arena_field_baking_preserves_physical_scale_and_geometry_cache(tmp_path
     design.surfaces["floor"].texture_scale_mm = 42
     third = compile_arena(design, tmp_path, geometry_cache=cache)
     assert first.scene.textures[0].image == third.scene.textures[0].image
+
+
+def test_limits_resolve_once_per_process(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from cephvr.generate_stimulus import files
+
+    calls = []
+    monkeypatch.setattr(
+        files,
+        "load_file_policies",
+        lambda root: calls.append(root) or SimpleNamespace(limits=object()),
+    )
+    files.limits.cache_clear()
+    try:
+        files.limits()
+        files.limits()
+        assert len(calls) == 1
+    finally:
+        files.limits.cache_clear()
+
+
+def field_arena(tmp_path: Path, surfaces=("floor", "wall_n")) -> ArenaDesign:
+    from cephvr.generate_stimulus.documents import save_design
+
+    save_design(new_texture("noise_gray"), tmp_path, tmp_path / "field.json", tmp_path)
+    design = ArenaDesign(subdivisions=2)
+    for name in surfaces:
+        design.surfaces[name].texture = "field.json"
+    return design
+
+
+def test_baked_field_cache_reuses_unrelated_edits_and_invalidates_inputs(
+    tmp_path, monkeypatch
+) -> None:
+    from cephvr.generate_stimulus import bake
+    from cephvr.generate_stimulus.geometry import GeometryCache
+
+    generated = []
+    original = bake.generate_texture_recipe
+
+    def counting(*args, **kwargs):
+        generated.append(kwargs["extent_mm"])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(bake, "generate_texture_recipe", counting)
+    design = field_arena(tmp_path)
+    geometry_cache, cache = GeometryCache(), bake.TextureCache()
+
+    def build():
+        return compile_arena(
+            design, tmp_path, geometry_cache=geometry_cache, texture_cache=cache
+        )
+
+    first = build()
+    assert len(generated) == 2
+    design.surfaces["floor"].color = (1, 0, 0, 1)
+    design.surfaces["wall_n"].alpha_cutoff = 0.25
+    cached = build()
+    assert len(generated) == 2
+    assert [t.image for t in cached.scene.textures] == [
+        t.image for t in first.scene.textures
+    ]
+    # Cached bytes match a fresh uncached compile of the same design.
+    assert (
+        cached.glb == compile_arena(design, tmp_path, geometry_cache=geometry_cache).glb
+    )
+    generated.clear()
+    design.width_mm = 400
+    build()
+    assert len(generated) == 2
+    recipe = json.loads((tmp_path / "field.json").read_bytes())
+    recipe["params"]["seed"] = 9
+    (tmp_path / "field.json").write_bytes(json_bytes(recipe))
+    build()
+    assert len(generated) == 4
+
+
+def test_texture_cache_is_bounded_lru() -> None:
+    from cephvr.generate_stimulus.bake import TextureCache
+
+    cache = TextureCache(size=2)
+    cache.put(b"a", b"1")
+    cache.put(b"b", b"2")
+    assert cache.get(b"a") == b"1"
+    cache.put(b"c", b"3")
+    assert cache.get(b"b") is None
+    assert (cache.get(b"a"), cache.get(b"c")) == (b"1", b"3")
+
+
+def test_display_table_built_once_and_texture_parsed_once(monkeypatch) -> None:
+    from cephvr.generate_stimulus import textures
+
+    assert textures._srgb_table() is textures._srgb_table()
+    assert textures.display_pixels(np.array([[0, 255]], dtype=np.uint8)).tolist() == [
+        [0, 255]
+    ]
+    parsed = []
+    original = textures.parse_texture_recipe
+    monkeypatch.setattr(
+        textures,
+        "parse_texture_recipe",
+        lambda *a, **k: parsed.append(1) or original(*a, **k),
+    )
+    textures.texture_pixels(new_texture("grating"), Path("."), authored=False)
+    assert len(parsed) == 1
+
+
+def test_validation_messages_are_concise_and_located() -> None:
+    from pydantic import ValidationError
+
+    from cephvr.generate_stimulus.errors import (
+        describe_error,
+        error_items,
+        status_line,
+    )
+
+    layer = Scatter(model="m.glb").model_dump()
+    layer.update(min_scale=5, max_scale=2)
+    design = ArenaDesign().model_dump()
+    design["surfaces"]["floor"]["scatters"] = [layer]
+    with pytest.raises(ValidationError) as caught:
+        ArenaDesign.model_validate(design)
+    text = describe_error(caught.value)
+    assert "pydantic" not in text and "[type=" not in text and "http" not in text
+    assert error_items(text) == [
+        ("surfaces.floor.scatters.0", "Minimum scale must not exceed maximum scale")
+    ]
+    assert status_line(text) == (
+        "Preview not updated. Floor: Minimum scale must not exceed maximum scale"
+    )
+    assert error_items("Field blur_mm must be at least 0 mm") == [
+        ("", "Field blur_mm must be at least 0 mm")
+    ]
+    with pytest.raises(ValidationError) as caught:
+        ArenaDesign(width_mm=-5)
+    assert error_items(describe_error(caught.value))[0][0] == "width_mm"
+
+
+def test_number_specs_follow_model_metadata() -> None:
+    from cephvr.generate_stimulus.fields import label_for, number_spec
+    from cephvr.visual_stimulus.config.models.sparse_noise import SparseNoiseAppearance
+
+    clustering = number_spec(Scatter, "clustering", 0)
+    assert (clustering.integer, clustering.minimum, clustering.maximum) == (
+        False,
+        0,
+        1,
+    )
+    assert number_spec(Scatter, "min_scale", 1).minimum > 0
+    width = number_spec(ArenaDesign, "width_mm", 500)
+    assert not width.integer and 0 < width.minimum < 0.01 and width.maximum == 1e6
+    segments = number_spec(ArenaDesign, "segments", 48)
+    assert (segments.integer, segments.minimum, segments.maximum) == (True, 8, 256)
+    assert number_spec(SparseNoiseAppearance, "square_size_mm", 5.0).minimum > 0
+    assert number_spec(None, "feature_sharpness", 1.0).maximum == 1
+    assert number_spec(None, "bar_count", 24).integer
+    assert label_for("color_a") == "Color A (linear RGB)"
+    assert label_for("background_linear") == "Background (linear)"
+    assert label_for("feature_sharpness") == "Sharpness (0–1)"
+    assert label_for("min_active_cell_distance_mm") == "Minimum distance (mm)"
+    assert label_for("spacing_mm") == "Spacing (mm)"
+
+
+def test_jobs_report_work_and_keep_finished_cancelled_results() -> None:
+    import time
+
+    jobs = Jobs()
+    assert not jobs.working
+
+    def finish_after_cancel(check):
+        jobs.cancel.set()
+        return "published"
+
+    serial = jobs.submit(finish_after_cancel)
+    assert jobs.working
+    assert jobs.results.get(timeout=3) == (serial, "published", None)
+    deadline = time.monotonic() + 3
+    while jobs.working and time.monotonic() < deadline:
+        time.sleep(0.01)
+    jobs.close()
+    assert not jobs.working
+
+
+LEGACY_NOISE = {
+    "cephvr_asset_type": "texture_design",
+    "kind": "texture",
+    "pattern": "filtered_noise",
+    "size": 512,
+    "params": {
+        "seed": 3,
+        "features_per_tile": 12,
+        "tile_width_mm": 100,
+        "tile_height_mm": 100,
+        "texture_resolution": 512,
+        "color_a": [1, 1, 1],
+        "color_b": [0, 0, 0],
+        "black_fraction": 0.5,
+    },
+}
+
+
+def test_legacy_texture_design_opens_with_conversion_notice(tmp_path: Path) -> None:
+    from cephvr.generate_stimulus.documents import load_design, save_design
+
+    legacy, field = tmp_path / "legacy.json", tmp_path / "field.json"
+    legacy.write_text(json.dumps(LEGACY_NOISE))
+    design, notice = load_design(legacy)
+    assert design["cephvr_asset_type"] == "texture_field"
+    assert design["params"]["seed"] == 3
+    assert notice is not None
+    for dropped in ("size", "features_per_tile", "tile_width_mm", "texture_resolution"):
+        assert dropped in notice
+    assert "seed" not in notice.split("dropped fields:")[1].split(".")[0]
+    # Field files and bars keep their meaning: only true conversions are flagged.
+    save_design(design, tmp_path, field, tmp_path)
+    assert load_design(field)[1] is None
+    sparse = new_texture("sparse_noise")
+    legacy.write_text(json.dumps(sparse))
+    assert load_design(legacy)[1] is None
+    image = {**new_texture("image"), "params": {"texture_path": "a.png"}}
+    legacy.write_text(json.dumps(image))
+    assert load_design(legacy)[1] is None
+
+
+def test_save_suggestion_never_proposes_the_legacy_source(tmp_path: Path) -> None:
+    from cephvr.generate_stimulus.documents import save_suggestion
+
+    source, default = tmp_path / "old.json", tmp_path / "texture.json"
+    assert save_suggestion(source, True, default) == str(
+        tmp_path / "old.converted.json"
+    )
+    assert save_suggestion(source, False, default) == str(source)
+    assert save_suggestion(None, False, default) == str(default)
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_triangle_sampler_matches_generator_choice(seed: int) -> None:
+    from cephvr.generate_stimulus.arena import triangle_sampler
+
+    shape = np.random.default_rng(100 + seed)
+    count = int(shape.integers(1, 3000))
+    areas = shape.random(count) ** 3
+    areas[shape.random(count) < 0.3] = 0.0
+    areas[0] += 1e-3
+    weights = areas / areas.sum()
+    reference, actual = np.random.default_rng(seed), np.random.default_rng(seed)
+    pick = triangle_sampler(areas, actual)
+    for _ in range(200):
+        assert pick() == int(reference.choice(count, p=weights))
+        # Interleaved draws must leave both streams in step.
+        assert reference.random(2).tolist() == actual.random(2).tolist()

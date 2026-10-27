@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
-from .ports import EnginePort, FeedbackPort, RecordingPort
+from .ports import EnginePort, FeedbackPort, RecordingPort, SparseNoisePort
 from .state import DriverState, Trial
 
 
@@ -21,6 +21,7 @@ class TrialAdmissions:
     feedback: FeedbackPort | None
     clock: Callable[[], int]
     lifecycle: Callable[[pb.LifecycleReport, int], None]
+    sparse_noise: SparseNoisePort | None = None
 
     def context(self, command: visual_stimulus.WorkerCommand) -> pb.ReportContext:
         return pb.ReportContext(
@@ -46,6 +47,9 @@ class TrialAdmissions:
         ):
             raise ValueError("prepared trial identity/duration mismatch")
         self.engine.prepare_trial(artifact.artifact)
+        if self.sparse_noise is not None:
+            # Ready waits for the first sparse-noise lookahead window (V04).
+            self.sparse_noise.prepare(artifact.artifact, request.command, deadline_ns)
         if (
             self.feedback is not None
             and self.state.setup is not None

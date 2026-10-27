@@ -254,7 +254,8 @@ def field(title: str, editor: QWidget, *, hint: str = "") -> QWidget:
     )
     caption.setBuddy(editor)
     caption.setToolTip(hint)
-    editor.setToolTip(hint)
+    if hint:  # Keep a tooltip the caller already set on the editor.
+        editor.setToolTip(hint)
     if isinstance(editor, QLineEdit):
         editor.setSizePolicy(
             QSizePolicy.Policy.Ignored, editor.sizePolicy().verticalPolicy()

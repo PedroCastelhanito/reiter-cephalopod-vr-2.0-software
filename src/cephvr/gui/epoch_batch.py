@@ -10,6 +10,7 @@ from cephvr.gui.rig_parameter_edits import (
     parameter_value as parameter_value,
 )
 from cephvr.gui.rig_parameter_edits import patch_setting as patch_setting
+from cephvr.gui.stimulus_columns import is_sparse_noise
 from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
@@ -44,7 +45,7 @@ def epoch_paths(program: Program) -> tuple[tuple[int, ...], ...]:
 def family(setting: Any) -> str:
     if setting.kind == "texture" and setting.uniform:
         return "Uniform"
-    if setting.kind == "image" and setting.sparse_noise is not None:
+    if is_sparse_noise(setting):
         return "Sparse noise"
     if setting.kind == "texture" and setting.grating:
         return "Grating"

@@ -7,6 +7,10 @@ from collections.abc import Iterator
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.evidence_model import UniformLayout
 from cephvr.visual_stimulus.config.models.program_model import Node, Program
+from cephvr.visual_stimulus.resources.physical_field import (
+    candidate_assets,
+    epoch_settings,
+)
 
 _SHADER = "cephvr-linear-scene-v1"
 _SCALARS = ("opacity", "contrast")
@@ -25,15 +29,18 @@ def build_uniform_layouts(
     fold_images: dict[str, set[str]] = {}
     field_instances: set[str] = set()
     for node in _walk(program.sequence):
-        for setting in node.settings if node.kind == "epoch" else ():
+        for setting in epoch_settings(node) if node.kind == "epoch" else ():
             if (
                 setting.kind == "texture"
                 and setting.pattern.kind == "image_tile"
                 and physical_field_assets
+                # Any drawable candidate (table row or Asset rule) may be a field.
+                and any(
+                    not isinstance(asset_id, str) or asset_id in physical_field_assets
+                    for asset_id in candidate_assets(node, setting)
+                )
             ):
-                asset_id = setting.pattern.asset_id
-                if not isinstance(asset_id, str) or asset_id in physical_field_assets:
-                    field_instances.add(setting.instance_id)
+                field_instances.add(setting.instance_id)
             if setting.kind == "image" and setting.fit in {"resize", "source", "fold"}:
                 surfaces = (
                     {m.surface_id for m in setting.space.mappings}
@@ -47,7 +54,7 @@ def build_uniform_layouts(
         {
             setting.instance_id
             for node in _walk(program.sequence)
-            for setting in (node.settings if node.kind == "epoch" else ())
+            for setting in (epoch_settings(node) if node.kind == "epoch" else ())
             if setting.kind != "arena"
         }
     ):
@@ -56,7 +63,7 @@ def build_uniform_layouts(
             if any(
                 s.instance_id == instance_id and s.kind == "texture" and s.grating
                 for node in _walk(program.sequence)
-                for s in (node.settings if node.kind == "epoch" else ())
+                for s in (epoch_settings(node) if node.kind == "epoch" else ())
             )
             else ()
         )
@@ -150,7 +157,7 @@ def build_uniform_layouts(
         {
             setting.instance_id
             for node in _walk(program.sequence)
-            for setting in (node.settings if node.kind == "epoch" else ())
+            for setting in (epoch_settings(node) if node.kind == "epoch" else ())
             if setting.kind == "arena"
         }
     ):

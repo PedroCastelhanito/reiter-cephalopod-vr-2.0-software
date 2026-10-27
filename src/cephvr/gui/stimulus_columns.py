@@ -3,10 +3,14 @@
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
 
+def is_sparse_noise(setting: Settings) -> bool:
+    return setting.kind == "sparse_noise"
+
+
 def stimulus_columns(setting: Settings) -> tuple[tuple[str, str], ...]:
     if setting.kind == "texture" and setting.uniform:
         return ()
-    if setting.kind == "image" and setting.sparse_noise is not None:
+    if is_sparse_noise(setting):
         return ()
     if setting.kind == "texture" and setting.grating:
         return (("Orientation (°)", "Orientation"), ("Speed (mm/s)", "Speed"))

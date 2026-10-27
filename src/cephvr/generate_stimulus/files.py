@@ -3,13 +3,16 @@
 import json
 import os
 import tempfile
+from functools import cache
 from pathlib import Path
 from typing import Any
 
 from cephvr.visual_stimulus.configuration import load_file_policies
 
 
+@cache
 def limits() -> Any:
+    """Resolved once per process; configuration edits need a window restart."""
     return load_file_policies(Path(__file__).resolve().parents[3]).limits
 
 

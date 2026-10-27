@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.program_model import Settings
@@ -50,9 +50,11 @@ class ImageSnapshot:
     requested_asset_id: str
     requested_image_index: int
     asset_id: str
-    image_index: int
+    image_index: int | None
     disposition: str
     repeated: bool
+    pattern_sha256: str | None = None
+    pattern_generator: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +71,8 @@ class InstanceSnapshot:
     decoded_frame: ImagePixels | None = None
     media_selection: MediaSnapshot | None = None
     image_selection: ImageSnapshot | None = None
+    # Streamed sparse-noise texture per active output index; excluded from evidence.
+    sparse_textures: tuple[Any, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

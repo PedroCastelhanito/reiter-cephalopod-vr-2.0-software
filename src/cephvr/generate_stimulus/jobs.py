@@ -2,8 +2,10 @@
 
 from collections.abc import Callable
 from queue import Empty, Queue
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from typing import Any
+
+from .errors import describe_error
 
 
 class Cancelled(Exception):
@@ -17,18 +19,23 @@ class Jobs:
         self.cancel = Event()
         self.closed = Event()
         self.serial = 0
+        # True from submission until the worker is idle and its result is queued.
+        self.working = False
+        self.lock = Lock()
         Thread(target=self._run, daemon=True, name="stimulus-authoring").start()
 
     def submit(self, operation: Callable[[Callable[[], None]], Any]) -> int:
-        self.cancel.set()
-        self.cancel = Event()
-        self.serial += 1
-        try:
-            self.pending.get_nowait()
-        except Empty:
-            pass
-        self.pending.put_nowait((self.serial, self.cancel, operation))
-        return self.serial
+        with self.lock:
+            self.cancel.set()
+            self.cancel = Event()
+            self.serial += 1
+            try:
+                self.pending.get_nowait()
+            except Empty:
+                pass
+            self.pending.put_nowait((self.serial, self.cancel, operation))
+            self.working = True
+            return self.serial
 
     def close(self) -> None:
         self.closed.set()
@@ -54,10 +61,13 @@ class Jobs:
 
             try:
                 check()
-                value = operation(check)
-                check()
-                self._publish((serial, value, None))
+                # A finished value is always queued: a cancelled export may have
+                # published already, and the consumer discards obsolete serials.
+                self._publish((serial, operation(check), None))
             except Cancelled:
-                continue
+                pass
             except Exception as error:
-                self._publish((serial, None, str(error)))
+                self._publish((serial, None, describe_error(error)))
+            with self.lock:
+                if self.pending.empty():
+                    self.working = False

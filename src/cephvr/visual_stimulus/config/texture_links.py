@@ -4,17 +4,69 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from cephvr.visual_stimulus.config.models.display_profile import Geometry, Surface
     from cephvr.visual_stimulus.config.models.program_model import (
+        Program,
         Settings,
         TextureSettings,
     )
 
 Vector = tuple[float, float, float]
 _MOTION_TARGETS = {"x", "y", "rotation", "phase_x", "phase_y", "period_x", "period_y"}
+
+
+def media_presentation_links(program: Program) -> tuple[tuple[str, str, str], ...]:
+    """(epoch_id, follower, reference) per link in a Media program, for load notices.
+
+    Programs saved before V02 rev 18 kept `linked_to` while the compiler ignored it.
+    Valid ones now drive motion, so a loader can list them for the user.
+    """
+    from cephvr.visual_stimulus.config.models.program_model import (
+        Epoch,
+        TextureSettings,
+    )
+
+    found: list[tuple[str, str, str]] = []
+
+    def walk(nodes: Sequence[Any]) -> None:
+        for node in nodes:
+            if not isinstance(node, Epoch):
+                walk(node.body)
+                continue
+            for settings in (node.settings, *node.repetition_settings):
+                found.extend(
+                    (node.epoch_id, item.instance_id, item.linked_to)
+                    for item in settings
+                    if isinstance(item, TextureSettings) and item.linked_to is not None
+                )
+
+    if program.category == "media_presentation":
+        walk(program.sequence)
+    return tuple(dict.fromkeys(found))
+
+
+def link_failure(
+    epoch_id: str, settings: Sequence[Settings], category: str | None, cause: Exception
+) -> ValueError:
+    """Name the epoch and linked instances; flag programs saved before linked Media motion."""
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    links = ", ".join(
+        f"{item.instance_id!r} -> {item.linked_to!r}"
+        for item in settings
+        if isinstance(item, TextureSettings) and item.linked_to is not None
+    )
+    note = (
+        " Media programs saved before V02 rev 18 may carry an ignored stale link; "
+        "links are now validated and executed, so fix or clear `linked_to`. "
+        "Such programs predate linked Media motion."
+        if category == "media_presentation"
+        else ""
+    )
+    return ValueError(f"Epoch {epoch_id!r} links ({links}): {cause}.{note}")
 
 
 def validate_links(settings: Sequence[Settings], *, resolved: bool = False) -> None:

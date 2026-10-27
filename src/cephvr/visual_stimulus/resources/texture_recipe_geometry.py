@@ -7,14 +7,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-_FACES = ("front", "left", "right", "bottom")
-_FACE_ALIASES = {
-    "screen_front": "front",
-    "screen_left": "left",
-    "screen_right": "right",
-    "screen_bottom": "bottom",
-    "top": "bottom",
-}
+from cephvr.visual_stimulus.resources.texture_recipe import FACE_ALIASES, FACES
 
 
 def _num(value: object, default: float) -> float:
@@ -30,7 +23,7 @@ def _smoothstep(low: float, high: float, values: np.ndarray) -> np.ndarray:
     return t * t * (3 - 2 * t)
 
 
-def _color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]:
+def rgb_color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]:
     if isinstance(value, str):
         text = value.strip().lstrip("#")
         if len(text) == 6:
@@ -46,7 +39,7 @@ def _color(value: object, default: tuple[int, int, int]) -> tuple[int, int, int]
     return default
 
 
-def _mix(
+def mix_rgb(
     a: tuple[int, int, int], b: tuple[int, int, int], alpha: np.ndarray
 ) -> np.ndarray:
     ca, cb = np.asarray(a, dtype=np.float32), np.asarray(b, dtype=np.float32)
@@ -137,9 +130,9 @@ def _polar_grating(
     if outer > 0:
         bright = np.where(radius <= outer, bright, 0)
     if "color_a" in params or "color_b" in params:
-        return _mix(
-            _color(params.get("color_a"), (255, 255, 255)),
-            _color(params.get("color_b"), (0, 0, 0)),
+        return mix_rgb(
+            rgb_color(params.get("color_a"), (255, 255, 255)),
+            rgb_color(params.get("color_b"), (0, 0, 0)),
             1 - bright,
         )
     lum = np.clip(
@@ -152,10 +145,10 @@ def _polar_grating(
 
 
 def _face(value: object) -> str:
-    face = _FACE_ALIASES.get(
+    face = FACE_ALIASES.get(
         str(value or "front").strip().lower(), str(value or "front").strip().lower()
     )
-    if face not in _FACES:
+    if face not in FACES:
         raise ValueError(f"Unknown polar texture surface: {value!r}.")
     return face
 
@@ -163,14 +156,14 @@ def _face(value: object) -> str:
 def _validated_corners(raw: Mapping[str, object]) -> dict[str, np.ndarray]:
     result: dict[str, np.ndarray] = {}
     aliases = {str(key).strip().lower(): value for key, value in raw.items()}
-    for face in _FACES:
+    for face in FACES:
         value = aliases.get(face)
         if value is None:
             value = next(
                 (
                     val
                     for key, val in aliases.items()
-                    if _FACE_ALIASES.get(key, key) == face
+                    if FACE_ALIASES.get(key, key) == face
                 ),
                 None,
             )

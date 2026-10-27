@@ -1,5 +1,6 @@
 """Canonical program helpers for local timeline editing; no runtime ownership."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite
 
@@ -22,6 +23,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     TextureSettings,
     Time,
 )
+from cephvr.visual_stimulus.config.texture_links import media_presentation_links
 
 
 @dataclass
@@ -52,6 +54,21 @@ class TrialDraft:
         ):
             return self.source_program
         return self.program
+
+
+def linked_media_notice(drafts: Sequence[TrialDraft], *, numbered: bool) -> str:
+    """One load notice naming linked Media epochs; empty when no program has links."""
+    items = [
+        f"{f'Trial {number} ' if numbered else ''}{epoch} ({follower} → {reference})"
+        for number, draft in enumerate(drafts, 1)
+        for epoch, follower, reference in media_presentation_links(draft.program)
+    ]
+    if not items:
+        return ""
+    return (
+        f"Linked Media motion is active in: {', '.join(items)}. Saved programs from "
+        "before links executed may drive motion now; review before running."
+    )
 
 
 def blank_program() -> Program:

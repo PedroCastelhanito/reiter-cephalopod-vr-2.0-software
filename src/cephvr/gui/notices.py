@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 
+from pydantic import ValidationError
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
 
@@ -18,6 +19,18 @@ def passive_validation() -> Iterator[None]:
         yield
     finally:
         WARNINGS_ENABLED.reset(token)
+
+
+def readable_error(error: BaseException) -> str:
+    """Plain text for a user-facing message, without pydantic's URL and input dump."""
+    if isinstance(error, ValidationError):
+        parts = []
+        for item in error.errors(include_url=False, include_input=False):
+            where = ".".join(str(part) for part in item["loc"])
+            message = item["msg"].removeprefix("Value error, ")
+            parts.append(f"{where}: {message}" if where else message)
+        return "; ".join(parts) or str(error)
+    return str(error)
 
 
 STATUS_EVENT = QEvent.Type(QEvent.registerEventType())

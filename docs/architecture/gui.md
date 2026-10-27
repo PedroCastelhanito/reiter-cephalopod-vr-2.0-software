@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 369
+**Status:** Accepted · **Revision:** 370
 
 - Generate assets is a lazy main-GUI tab; standalone invocation opens the same
   offline editor in its own window. First opening receives an explicit asset root
@@ -59,13 +59,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   independently in each epoch's projector/layer row. None removes that layer.
   Uniform authors linear RGB without an asset. Sparse noise authors square size,
   minimum center distance, activation probability, background, explicit seed,
-  pattern count and pattern duration directly in that row. Apply prepares a bounded,
-  cancellable sequence off the GUI thread using V04's existing generator, retains
-  the validated appearance in the protocol, and commits only the selected layer;
-  other layers retain their timing. Editing authority, Assets, screen or geometry
-  changes discard late results. Retain external recipe/program import compatibility;
-  an external recipe is not required. Generated image resources/provenance remain
-  internal execution inputs under the [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
+  pattern count and pattern duration directly in that row as a V04 `sparse_noise`
+  layer, without assets or an Apply step; other layers retain their timing. Its
+  preview generates the due pattern with V04's generator. Pre-generated PNG sparse
+  sequences and their import are not supported under the
+  [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
 
 - While Tracking development is paused, managed no-Tracking applications hide the
   Tracking page/navigation, status indicator, velocity-saving option, session-mode

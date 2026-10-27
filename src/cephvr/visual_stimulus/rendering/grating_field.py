@@ -2,7 +2,10 @@
 
 from dataclasses import replace
 
-from cephvr.visual_stimulus.config.grating_field import field_on_surface
+from cephvr.visual_stimulus.config.grating_field import (
+    SurfaceUnfolder,
+    field_on_surface,
+)
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import (
     Constant,
@@ -18,6 +21,7 @@ def shared_grating_snapshots(
     snapshots: tuple[InstanceSnapshot, ...], geometry: Geometry
 ) -> tuple[InstanceSnapshot, ...]:
     by_id = {s.instance_id: s for s in snapshots}
+    unfolder = SurfaceUnfolder(geometry)
     result = []
     for snapshot in snapshots:
         target = snapshot.settings
@@ -37,7 +41,7 @@ def shared_grating_snapshots(
             k: float(v) for k, v in source.state if isinstance(v, (int, float))
         }
         frequency, rotation, phase = field_on_surface(
-            settings, source_values, target, geometry
+            settings, source_values, target, geometry, unfolder
         )
         values = dict(snapshot.state)
         values.update(

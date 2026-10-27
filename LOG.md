@@ -13287,3 +13287,161 @@ ahead/behind is0/0. Removed the completed coordination task after recording this
 outcome. General epoch assignments remain Deferred; policy inventory consistency,
 full GUI verification and existing rig/relaunch acceptance remain open in TODO.
 Final bookkeeping is committed and synced separately; no additional runtime edit.
+
+
+### 2026-10-27 — stimulus-authoring-review-findings opened [visual_stimulus] [gui]
+
+Three read-only reviews of commit bfe24b35 (correctness/compatibility,
+simplification/performance, GUI/UX); no source edited. Checks run: boundaries 0
+violations, schemas 14/14 no drift, policy/config versions consistent, 23 offscreen
+generate_stimulus GUI tests pass, 686 non-GUI Visual Stimulus/authoring cases pass
+and 6 fail on macOS (3 missing OpenGL and 2 stale generated protobuf, both
+environmental; 1 `_hash` negative-index cast, a real arm64 defect also seen as a
+RuntimeWarning). Code-read only and unverified: mixed field/raster repetition
+candidates can raise StopIteration in layer_draw after Setup; legacy
+`texture_design` files convert to `texture_field` on Save; Generate-window spin
+ranges and tooltips; unwired export/undo/new/calibration actions; 124 px grating
+row inputs; unreadable arena Surfaces list in the default theme. Simplification
+candidates (cache `limits()`, bake/fold-map caches, test_dashboard.py split) are
+estimates unless measured. Not rig validation; shader/GLSL paths unrunnable on
+macOS. Findings are listed in the TODO task and the session summary only.
+
+
+### 2026-10-27 — stimulus-authoring-review-findings: fixes applied and verified locally [visual_stimulus] [gui]
+
+Owner-authorized simplification table and GUI fixes (excluding unwired-action UI) were
+implemented by three Sonnet coders on disjoint file sets and reviewed here; nothing
+committed. Included `_hash` int64 cast, `LayerCache`, caches, sparse-noise single
+validation, Generate-window validation/prompts/themes and epoch-editor splits, grating
+row height, sparse-noise cancel/cleanup and test move. I applied the epoch card value
+change (145 to 115) and repointed the close-veto test at `ask_unsaved` (it hung on the new
+modal prompt). Re-run here: 743 Visual Stimulus/authoring pass, 3 OpenGL environmental
+failures; 294 focused GUI pass (keyword selection, full suite not run); Ruff, format,
+Win32 mypy, boundaries, 14 schemas pass. Not verified: GL paths (E15), the 4 failing and 2
+aborting GUI tests reported as identical at HEAD, and the correctness findings left
+unapplied (see TODO). Report: reports/visual_stimulus.md; rig checklist extended.
+
+
+### 2026-10-28 — stimulus-authoring-review-findings: correctness fixes applied [visual_stimulus] [gui]
+
+Owner approved the Part 1 correctness fixes; two Sonnet coders implemented them and the
+results were re-run here, uncommitted. Fixed: mixed field/raster candidate layouts and
+placement checks, link-failure messages for legacy Media programs, schema `texture_drift`,
+marked Grating `kind`, colour validation, sparse-noise distance tolerance and optional
+`active_surfaces`, dead `photodiode_level`, legacy `texture_design` Save-as protection,
+bit-identical scatter cdf sampling. V02/V04/V08 text and register revisions (19/35/10) and
+the authoring contract were updated. Re-run: 775 Visual Stimulus/authoring pass, 3 OpenGL
+environmental failures; coders reported 80 authoring/generate GUI and 47 sparse/link GUI
+tests passing (not re-run here); ruff, format, Win32 mypy, boundaries and 14 schemas pass.
+Not verified: GL draw (E15), GUI load notice and `active_surfaces` wiring (not done), full GUI
+suite (not run). Behavior changes to confirm: marked Grating with `square_grating` no longer
+loads (no such repo documents found); new Setup rejection for field candidates on
+non-physical placement; legacy bars now also require Save as.
+
+
+### 2026-10-28 — sparse-noise-throughput: generator speedup and capacity review [visual_stimulus]
+
+Owner asked whether runtime texture generation keeps up with thousands of 300 ms
+sparse patterns on four projectors (code review only; not the rig). Generation runs at
+Apply, not per frame; per-frame selection is ~3 µs/layer. Replaced the spacing scan in
+`eligible_cells` with a disk stencil over a blocked mask, bound RNG methods in
+`pattern_rgba`, and hash PNGs in memory: byte-identical output (320 golden + 900 fuzz
+cases), ~4× faster spaced generation locally. 225 resource/authoring tests, Ruff, format,
+Win32 mypy, boundaries pass. Found: float32 textures plus whole-sequence admission cap
+long sequences under the 1 GiB GPU budget; options await the owner (TODO
+`sparse-noise-throughput`). Uncommitted; no rig timing.
+
+
+### 2026-10-28 — stimulus-authoring-review-findings: GUI wiring [gui] [visual_stimulus]
+
+Owner asked for the two GUI items left from the correctness fixes. A Sonnet coder added a
+one-per-load logged notice for linked Media epochs (toolbar load, `load_program`, whole-GUI
+restore; invalid-link failures now read without pydantic boilerplate) and passed the
+enabled-projector surfaces (`enabled_screens`) as `active_surfaces` into the sparse-noise
+import dialog and inline layer, read at each preparation. Re-run here: 97 focused GUI cases
+pass (sparse, linked_media, protocol_load, stimulus_authoring, snapshot; full suite not run),
+775 Visual Stimulus/authoring pass with the 3 known OpenGL failures; ruff, format, Win32
+mypy, boundaries pass. The notice is a log-console message, not a dialog; the dialog cannot
+reach an inactive surface through its UI, so that test overrides the set. Not verified
+natively or on the rig.
+
+
+### 2026-10-28 — sparse-noise-offline-regeneration: reproduction conditions documented [visual_stimulus]
+
+Owner asked to document, next to the generator, the conditions for regenerating
+sparse-noise patterns on an analysis machine. Added a module docstring to
+`resources/sparse_noise.py` (only edit; the runtime-generator chat owns the rest of
+that file): same GENERATOR id, recorded Python version, logged snapshot inputs and
+display profile, actual per-frame index, row/column orientation, and the residual
+`math.dist` boundary risk. The output was confirmed independent of PYTHONHASHSEED
+(320 golden cases identical under two seeds). Cross-machine equality is reasoned, not
+tested on the rig; per-pattern hashes are not yet recorded. Added Deferred TODO
+`sparse-noise-offline-regeneration` for the owner's post-experiment module.
+
+
+### 2026-10-28 — sparse-noise-runtime-generator: patterns generated during playback [visual_stimulus] [gui] [supervisor]
+
+Owner chose runtime generation (option C) in a separate contained process, 100 patterns
+ahead (relayed from the fork chat), no PNGs. Implemented, uncommitted: `sparse_noise` layer
+kind with compile-time grid extent; `sparse_noise_stream`/`sparse_noise_wire`; per-trial
+`sparse_noise_helper` launched through the renderer's `SupervisedEncoderLauncher` as role
+`visual_stimulus_sparse_noise` (supervisor helper set extended); `SparseNoiseRing` with
+RGBA8 grid textures, prefill before PrepareTrial Ready, credit window and hold evidence;
+lifecycle/cleanup hooks; policy v21 `[sparse_noise]`; V04 rev 36, V01 rev 37, contracts
+and schemas regenerated. A Sonnet coder replaced the GUI Apply flow with inline editing
+and generated previews (reviewed here). Ring tests found and fixed a credit deadlock when the
+helper lags. Local evidence: real-pipe helper test byte-identical, startup 0.2–0.3 s;
+828 Visual Stimulus/supervisor pass (3 known PyOpenGL failures), 131 authoring pass, 30
+focused GUI pass with 2 dashboard failures on a preset label from earlier uncommitted work;
+static checks pass. Not verified on Windows or the rig. Supersedes TODO
+`sparse-noise-throughput` and `sparse-noise-rig`; legacy PNG removal awaits the owner's
+confirmation of the list.
+
+
+### 2026-10-28 — sparse-noise-runtime-generator: legacy PNG path removed, evidence gaps closed [visual_stimulus] [gui]
+
+Owner approved removing the PNG sparse path (sparse noise only; Media images unchanged) and,
+via the fork chat, recording per-pattern hashes and truthful blank frames. Removed the
+image-form `sparse_noise` model/schedule/engine/draw/compile branches, bundle preparation,
+`sparse_noise_selection.py`, `tools/prepare_sparse_noise.py`; a Sonnet coder removed the GUI
+import dialog/helper and legacy rows (reviewed; its staged deletions were unstaged). The
+helper now sends SHA-256 of `pattern_rgba` in frame header `SPN2`; `ImageSelection` gains
+`background_hold` (null `image_index`) and first-display `pattern_sha256`/`pattern_generator`.
+V04 rev 37, V13 rev 14, G01 rev 370; contracts and schemas regenerated. Re-run: 817 Visual
+Stimulus/supervisor pass (3 known PyOpenGL failures), 131 authoring, focused GUI 54 pass
+(2 known dashboard failures) and 24 sparse/preview pass; static checks pass. Old protocols
+with image-form sparse rows no longer load. Not verified on Windows or the rig.
+
+
+### 2026-10-28 — sparse-noise-offline-regeneration: docstring matches new evidence [visual_stimulus]
+
+The runtime-generator chat closed the two owner-approved evidence gaps (per-pattern
+`pattern_sha256`/`pattern_generator` on first display; `background_hold` with null
+`image_index` for blank frames). Checked the field names in `evidence_model.py` and
+`sparse_noise_ring.py`, then updated the `sparse_noise.py` reproduction docstring
+(item 4 and verification) with targeted edits only. Ruff, format and whitespace pass;
+the other chat's tests were not re-run here. Updated the deferred TODO.
+
+
+### 2026-10-28 — Rendering/presentation source review [visual_stimulus]
+
+Owner asked what could improve stimulus rendering and presentation. Read V04/V10/V15/V20–V23,
+`rendering/engine.py`, `native.py`, `scene.py`, `upload.py`, the GL-owner loop and draw code.
+Unverified source-review concerns (no runtime or rig measurement): video frames are
+converted uint8→float32 with a NumPy EOTF and uploaded as RGBA32F on the GL thread once
+per output; frame state is evaluated at loop CPU time, not the expected flip time; the
+current epoch is found by a linear scan every tick; swap-return times are CPU returns, not
+flip times; each output costs three float passes plus a blit; several VSync pulse outputs
+swap one after another. Nothing changed in code; no TODO entries added pending owner choice.
+
+
+### 2026-10-28 — Rendering review: small fixes applied, larger items queued [visual_stimulus]
+
+Owner chose per finding: apply epoch lookup, swap timing and per-frame cleanup; queue
+flip-time evaluation and pass merging; defer video upload, multiple VSync outputs and BT.709.
+`RendererEngine.render_tick` resumes the epoch search at `TrialState.epoch_index`; per-tick
+imports moved to module level; `ModernGLPort.present` calls `finish()` after VSync swaps
+(intervals above zero) before stamping `swap_return_ns`. The native submission test now
+asserts the fence runs only on VSync outputs. 647 Visual Stimulus tests pass (3 known
+PyOpenGL failures); ruff, format, Windows mypy, boundaries and diff check pass. Not run on
+Windows or the rig. Report section and six TODO entries added.

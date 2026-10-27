@@ -16,6 +16,7 @@ from cephvr.visual_stimulus.rendering.evidence import (
     uniform_values,
 )
 from cephvr.visual_stimulus.rendering.image_fit import SCREEN_CORNERS, SCREEN_IMAGE_FITS
+from cephvr.visual_stimulus.rendering.layer_cache import LayerCache
 from cephvr.visual_stimulus.rendering.layer_draw import draw_layer
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
@@ -49,6 +50,7 @@ class ModernGLSceneRenderer:
 
     def __init__(self) -> None:
         self._artifacts: dict[str, PreparedTrial] = {}
+        self._layer_caches: dict[str, LayerCache] = {}
         self._outputs: dict[str, dict[str, _OutputScene]] = {}
         self._active_trial_id: str | None = None
         self._resource_builder = SceneOutputBuilder()
@@ -89,6 +91,7 @@ class ModernGLSceneRenderer:
         output_scenes: dict[str, _OutputScene] = {}
         self._outputs[trial_id] = output_scenes
         self._artifacts[trial_id] = artifact
+        self._layer_caches[trial_id] = LayerCache(artifact)
         self._resources[trial_id] = resources.prepared_content
         self._gpu_resources[trial_id] = self._resource_builder.prepare_trial(
             artifact, resources, outputs, gpu_resources, output_scenes
@@ -174,6 +177,7 @@ class ModernGLSceneRenderer:
                     snapshots,
                     trial_gpu_resources,
                     uniforms_by_id,
+                    self._layer_caches.get(trial_id),
                 )
             frame.output_fbo.use()
             context.viewport = (0, 0, output_context.width, output_context.height)
@@ -235,8 +239,10 @@ class ModernGLSceneRenderer:
         snapshots: dict[str, InstanceSnapshot],
         gpu_resources: dict[str, Any],
         uniforms_by_id: dict[str, UniformSnapshot],
+        layers: LayerCache | None = None,
     ) -> None:
         """Draw the optional arena first, then the prepared bottom-to-top layers."""
+        layers = LayerCache.for_artifact(artifact, layers)
         arena_id = scene.arena_instance_id
         if arena_id is not None:
             arena = snapshots.get(arena_id)
@@ -246,7 +252,7 @@ class ModernGLSceneRenderer:
                 or arena.settings.kind != "arena"
             ):
                 raise RuntimeError(f"prepared arena instance {arena_id} is missing")
-            uniforms_by_id.update(uniform_values(artifact, arena))
+            uniforms_by_id.update(uniform_values(artifact, arena, layers))
             if arena.active:
                 self._draw_arena(
                     frame,
@@ -281,16 +287,16 @@ class ModernGLSceneRenderer:
                 continue
             if settings.kind == "image" and settings.fit in SCREEN_IMAGE_FITS:
                 normalized = list(SCREEN_CORNERS)
-                uniforms_by_id.update(uniform_values(artifact, snapshot))
+                uniforms_by_id.update(uniform_values(artifact, snapshot, layers))
             elif surface_map is not None:
                 snapshot = covering_texture(artifact, snapshot, mapping.surface_id)
                 normalized = physical_corners(
                     artifact, snapshot, mapping.surface_id, surface_map
                 )
-                uniforms_by_id.update(uniform_values(artifact, snapshot))
+                uniforms_by_id.update(uniform_values(artifact, snapshot, layers))
             else:
                 normalized = angular_corners(artifact, snapshot, mapping.surface_id)
-                uniforms_by_id.update(uniform_values(artifact, snapshot))
+                uniforms_by_id.update(uniform_values(artifact, snapshot, layers))
             layer_uniforms = draw_layer(
                 self._moderngl,
                 frame,
@@ -300,6 +306,7 @@ class ModernGLSceneRenderer:
                 mapping.mapping_id,
                 snapshot,
                 normalized,
+                layers,
             )
             uniforms_by_id.update((item.binding_id, item) for item in layer_uniforms)
 
@@ -445,6 +452,7 @@ class ModernGLSceneRenderer:
         self._resource_builder.partial_allocations.clear()
         self._outputs.clear()
         self._artifacts.clear()
+        self._layer_caches.clear()
         self._resources.clear()
         self._gpu_resources.clear()
 

@@ -9,12 +9,13 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, get_args
 
 from pydantic import ConfigDict, RootModel
 
 from cephvr.visual_stimulus.config.models.schema_common import (
     DEFAULT_DOCUMENT_BYTES,
+    SurfaceId,
     parse_json,
 )
 
@@ -22,6 +23,13 @@ if TYPE_CHECKING:
     import numpy as np
 
 DEFAULT_TEXTURE_RESOLUTION = 512
+FACES: tuple[str, ...] = get_args(SurfaceId)
+FACE_ALIASES: dict[str, str] = {
+    **{f"screen_{face}": face for face in FACES},
+    "top": "bottom",
+}
+# Peak procedural scratch: coordinate grids, RGB mixes and coexisting FFT fields.
+WORKING_BYTES_PER_PIXEL = 192
 
 
 class _JsonObject(RootModel[dict[str, Any]]):
@@ -211,8 +219,7 @@ def estimated_working_bytes(recipe: TextureRecipe) -> int:
     if recipe.physical_field or recipe.pattern == "image":
         return 0
     pixels = recipe.resolution * recipe.resolution
-    # Covers coordinate grids, RGB mixes, and FFT fields that coexist at peaks.
-    return pixels * 192
+    return pixels * WORKING_BYTES_PER_PIXEL
 
 
 def generate_texture_recipe(
@@ -355,24 +362,14 @@ def _validate_known_params(params: dict[str, object]) -> None:
             elif key in _BOOL_PARAMS:
                 _validate_boolean(value, key)
             elif key in _COLOR_PARAMS:
-                _validate_color(value, key)
+                validate_color(value, key)
             elif key in _SURFACE_PARAMS:
                 if value is None:
                     continue
                 if not isinstance(value, str):
                     raise ValueError(f"Texture parameter {key!r} must name a surface.")
                 normalized = value.strip().lower()
-                if normalized not in {
-                    "front",
-                    "left",
-                    "right",
-                    "bottom",
-                    "screen_front",
-                    "screen_left",
-                    "screen_right",
-                    "screen_bottom",
-                    "top",
-                }:
+                if normalized not in {*FACES, *FACE_ALIASES}:
                     raise ValueError(
                         f"Texture parameter {key!r} names an unknown surface."
                     )
@@ -410,7 +407,7 @@ def _validate_boolean(value: object, name: str) -> None:
     raise ValueError(f"Texture parameter {name!r} must be a boolean flag.")
 
 
-def _validate_color(value: object, name: str) -> None:
+def validate_color(value: object, name: str) -> None:
     if isinstance(value, str):
         color = value.strip().lstrip("#")
         if len(color) == 6:

@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from statistics import NormalDist
 from typing import Any
 
 import numpy as np
 
-from cephvr.visual_stimulus.resources.texture_recipe_geometry import _color, _mix
+from cephvr.visual_stimulus.resources.texture_recipe import validate_color
+from cephvr.visual_stimulus.resources.texture_recipe_geometry import mix_rgb, rgb_color
+from cephvr.visual_stimulus.resources.texture_recipe_patterns import PALETTE
 
 DEFAULTS: dict[str, dict[str, Any]] = {
     "grating": dict(
@@ -47,25 +49,42 @@ DEFAULTS: dict[str, dict[str, Any]] = {
 }
 
 
+def candidate_assets(node: Any, setting: Any) -> tuple[object, ...]:
+    """Base asset plus every Asset-rule candidate the setting's instance may draw."""
+    base = getattr(
+        getattr(setting, "pattern", None),
+        "asset_id",
+        getattr(setting, "asset_id", None),
+    )
+    rules = (
+        rule
+        for rule in getattr(node, "repetition_rules", ())
+        if getattr(rule, "instance_id", None) == setting.instance_id
+    )
+    return (base, *(a for rule in rules for a in getattr(rule, "asset_ids", ())))
+
+
+def epoch_settings(node: Any) -> Iterator[Any]:
+    """Base settings and every per-repetition settings row of an epoch."""
+    for settings in (node.settings, *getattr(node, "repetition_settings", ())):
+        yield from settings
+
+
 def validate_field_uses(nodes: Any, identities: set[str]) -> None:
     for node in nodes:
         if getattr(node, "kind", "epoch") == "group":
             validate_field_uses(node.body, identities)
             continue
-        for setting in node.settings:
-            asset_id = getattr(
-                getattr(setting, "pattern", None),
-                "asset_id",
-                getattr(setting, "asset_id", None),
-            )
-            if isinstance(asset_id, str) and asset_id in identities:
-                if (
-                    setting.kind != "texture"
-                    or setting.space.kind != "physical_surface"
-                ):
-                    raise ValueError(
-                        "Physical texture fields require physical-surface texture placement"
-                    )
+        for setting in epoch_settings(node):
+            if any(
+                isinstance(asset_id, str) and asset_id in identities
+                for asset_id in candidate_assets(node, setting)
+            ) and (
+                setting.kind != "texture" or setting.space.kind != "physical_surface"
+            ):
+                raise ValueError(
+                    "Physical texture fields require physical-surface texture placement"
+                )
 
 
 def validate_field(pattern: str, params: dict[str, object]) -> None:
@@ -74,6 +93,10 @@ def validate_field(pattern: str, params: dict[str, object]) -> None:
     unknown = params.keys() - DEFAULTS[pattern].keys() - {"color_a", "color_b"}
     if unknown:
         raise ValueError(f"Unsupported physical field parameters: {sorted(unknown)}")
+    for key in ("color_a", "color_b"):
+        color = params.get(key)
+        if color is not None:
+            validate_color(list(color) if isinstance(color, tuple) else color, key)
     for key, default in DEFAULTS[pattern].items():
         value = params.get(key, default)
         if key == "seed":
@@ -155,10 +178,12 @@ def threshold(p: dict[str, Any]) -> float:
 
 
 def _hash(x: np.ndarray, y: np.ndarray, seed: int) -> np.ndarray:
+    # Via int64 so negative cells wrap modulo 2**32 like GLSL uint(ivec2); a direct
+    # float->uint32 cast is undefined for negatives.
     with np.errstate(over="ignore"):
         h = (
-            x.astype(np.uint32) * np.uint32(0x1F123BB5)
-            ^ y.astype(np.uint32) * np.uint32(0x5F356495)
+            x.astype(np.int64).astype(np.uint32) * np.uint32(0x1F123BB5)
+            ^ y.astype(np.int64).astype(np.uint32) * np.uint32(0x5F356495)
             ^ np.uint32(seed32(seed))
         )
         h = (h ^ (h >> np.uint32(16))) * np.uint32(0x7FEB352D)
@@ -249,15 +274,18 @@ def sample_field(
             cx, cy = np.floor(x / pitch), np.floor(y / pitch)
             radius = p["dot_diameter_mm"] / 2
             reach = dot_neighbours(p)
+            seed = int(p["seed"])
             for j in range(-reach, reach + 1):
                 check()
                 for i in range(-reach, reach + 1):
                     ix, iy = cx + i, cy + j
-                    active = _hash(ix, iy, int(p["seed"])) < 0.25
-                    dx = x - (ix + _hash(ix, iy, int(p["seed"]) ^ 12345)) * pitch
-                    dy = y - (iy + _hash(ix, iy, int(p["seed"]) ^ 67890)) * pitch
-                    bright = np.maximum(
-                        bright, mask(radius - np.hypot(dx, dy)) * active
+                    # Only the ~25% active cells need the jitter hashes and distance.
+                    active = _hash(ix, iy, seed) < 0.25
+                    ix, iy = ix[active], iy[active]
+                    dx = x[active] - (ix + _hash(ix, iy, seed ^ 12345)) * pitch
+                    dy = y[active] - (iy + _hash(ix, iy, seed ^ 67890)) * pitch
+                    bright[active] = np.maximum(
+                        bright[active], mask(radius - np.hypot(dx, dy))
                     )
     elif pattern in {"noise_binary", "noise_gray"}:
         cell = p["element_size_mm"]
@@ -298,22 +326,20 @@ def sample_field(
         bright &= np.mod(np.where(dx < dy, y, x), dash) < p["dash_length_mm"]
     else:
         bright = np.ones(x.shape)
-    a = _color(p.get("color_a"), (255, 255, 255))
-    b = _color(p.get("color_b"), (0, 0, 0))
+    a = rgb_color(p.get("color_a"), (255, 255, 255))
+    b = rgb_color(p.get("color_b"), (0, 0, 0))
     check()
     if pattern == "calibration_grid":
-        from cephvr.visual_stimulus.resources.texture_recipe_patterns import _PALETTE
-
         index = np.floor(np.where(dx < dy, x, y) / pitch + 0.5).astype(int) % int(
             p["color_count"]
         )
-        foreground = _PALETTE[index].astype(float) * np.asarray(a) / 255
+        foreground = PALETTE[index].astype(float) * np.asarray(a) / 255
         return np.asarray(
             np.rint(
                 np.asarray(b) + np.asarray(bright)[..., None] * (foreground - b)
             ).astype(np.uint8)
         )
-    return _mix(b, a, np.asarray(bright, dtype=np.float64))
+    return mix_rgb(b, a, np.asarray(bright, dtype=np.float64))
 
 
 def raster_field(

@@ -330,7 +330,8 @@ def stylesheet(
         border-color: {c.focus}; }}
     QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
         color: {c.muted}; background: {c.window}; }}
-    QLineEdit[invalid='true'] {{ border-color: {c.danger_border}; }}
+    QLineEdit[invalid='true'], QSpinBox[invalid='true'], QDoubleSpinBox[invalid='true'],
+    QComboBox[invalid='true'] {{ border-color: {c.danger_border}; }}
     QLineEdit[role='point-coordinate'] {{ background: transparent; border-color: transparent;
                                         border-radius: 6px; padding: 7px 4px; }}
     QLineEdit[role='point-coordinate']:hover {{ background: {c.hover}; }}
@@ -389,6 +390,14 @@ def stylesheet(
     QListWidget[role='trials'] {{ background: transparent; border: none; outline: none; }}
     QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 40px 12px 8px; border-radius: 6px; }}
     QListWidget[role='trials']::item:selected {{ background: {c.selection}; }}
+    QListWidget[role='surfaces'] {{ background: {c.input}; color: {c.text};
+        border: 1px solid {c.input_border}; border-radius: {s.field_radius}px; outline: none; padding: 2px; }}
+    QListWidget[role='surfaces']:focus {{ border-color: {c.focus}; }}
+    QListWidget[role='surfaces']::item {{ color: {c.text}; padding: 6px 8px;
+        border: 1px solid transparent; border-radius: 6px; }}
+    QListWidget[role='surfaces']::item:hover {{ background: {c.hover}; }}
+    QListWidget[role='surfaces']::item:selected {{ background: {c.selection}; color: {c.coral};
+        border-color: {c.accent}; }}
     QTableWidget {{ background: {c.input}; border: 1px solid {c.input_border};
                    selection-background-color: transparent;
                    border-radius: {s.field_radius}px; gridline-color: transparent; }}
@@ -469,8 +478,9 @@ def retro_stylesheet(c: Palette = RETRO_COLORS) -> str:
     QComboBox QAbstractItemView {{
         selection-background-color: {c.accent}; selection-color: {c.window}; }}
     QMenu::item:selected {{ background: {c.accent}; color: {c.window}; }}
-    QListWidget[role='trials']::item {{ border-radius: 0; }}
-    QListWidget[role='trials']::item:selected {{ background: {c.accent}; color: {c.window}; }}
+    QListWidget[role='trials']::item, QListWidget[role='surfaces']::item {{ border-radius: 0; }}
+    QListWidget[role='trials']::item:selected, QListWidget[role='surfaces']::item:selected {{
+        background: {c.accent}; color: {c.window}; }}
     QScrollBar#ConsoleLogScroll:vertical, QScrollBar#ConsoleLogScroll::handle:vertical,
     QScrollBar#TimelineScroll:horizontal, QScrollBar#TimelineScroll::handle:horizontal {{
         border-radius: 0; }}
@@ -575,7 +585,8 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
         border: none; border-bottom: 1px solid {c.input_border}; padding-left: 2px; }}
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
         border-bottom: 1px solid {c.focus}; }}
-    QLineEdit[invalid='true'] {{ border-bottom: 1px solid {c.danger_border}; }}
+    QLineEdit[invalid='true'], QSpinBox[invalid='true'], QDoubleSpinBox[invalid='true'],
+    QComboBox[invalid='true'] {{ border-bottom: 1px solid {c.danger_border}; }}
     QLineEdit, QPlainTextEdit {{ placeholder-text-color: {PHOSPHOR_TAB_DIM}; }}
     QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
         background: transparent; color: {c.disabled};
@@ -598,7 +609,7 @@ def phosphor_stylesheet(c: Palette = PHOSPHOR_COLORS) -> str:
     QFrame#Sidebar QPushButton:hover {{ color: {c.text}; }}
     QFrame#Sidebar QLabel[role='brand'] {{ color: {c.coral}; font-weight: 600;
         letter-spacing: 4px; }}
-    QListWidget[role='trials']::item:selected,
+    QListWidget[role='trials']::item:selected, QListWidget[role='surfaces']::item:selected,
     QTreeWidget[role='rail']::item:selected {{ background: {c.active}; color: {c.text};
         border: 1px solid {c.accent}; }}
     QFrame#Sidebar QTreeWidget[role='rail']::item {{ color: {PHOSPHOR_TAB_DIM};

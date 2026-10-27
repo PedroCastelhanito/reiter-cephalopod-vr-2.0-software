@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QFileDialog, QPushButton, QWidget
 
 from cephvr.gui.components import button
 from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
+from cephvr.gui.notices import readable_error
 
 JSON = dict[str, Any]
 LOCKED_REASON = (
@@ -188,7 +189,7 @@ class ConfigurationFiles(QObject):
                 return False
             self.apply(value)
         except (OSError, ValueError, TypeError, RecursionError) as error:
-            self.message.emit(f"Cannot load {self.title}: {error}")
+            self.message.emit(f"Cannot load {self.title}: {readable_error(error)}")
             return False
         self.loaded.emit()
         self.loaded_document.emit(value, path)

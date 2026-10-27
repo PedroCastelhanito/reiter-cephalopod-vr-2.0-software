@@ -5,6 +5,7 @@ import io
 import json
 import math
 from collections.abc import Callable
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -34,14 +35,19 @@ from .files import json_bytes, limits, read_bytes
 TILE_WIDTH_MM = 100.0
 
 
-def display_pixels(pixels: np.ndarray) -> np.ndarray:
-    """Use the backend transfer function through a bounded RGB8 lookup table."""
+@cache
+def _srgb_table() -> np.ndarray:
+    # The rendering package import is heavy, so the table is built on first use.
     from cephvr.visual_stimulus.rendering.color import linear_to_srgb
 
-    table = np.asarray(
+    return np.asarray(
         [round(linear_to_srgb(i / 255) * 255) for i in range(256)], dtype=np.uint8
     )
-    return np.asarray(table[pixels])
+
+
+def display_pixels(pixels: np.ndarray) -> np.ndarray:
+    """Use the backend transfer function through a bounded RGB8 lookup table."""
+    return np.asarray(_srgb_table()[pixels])
 
 
 def authored_recipe(document: dict[str, Any]) -> dict[str, Any]:
@@ -106,6 +112,14 @@ def authored_recipe(document: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def is_pristine(document: dict[str, Any], pattern: str) -> bool:
+    """True when the document is still the untouched default of its pattern."""
+    try:
+        return document in (new_texture(pattern), authored_recipe(new_texture(pattern)))
+    except KeyError:
+        return False
+
+
 # The catalogue defines editable parameters; pixel algorithms stay backend-owned.
 PATTERNS: dict[str, dict[str, Any]] = {**DEFAULTS, "image": {"texture_path": ""}}
 
@@ -141,20 +155,22 @@ def new_texture(pattern: str = "grating") -> dict[str, Any]:
     }
 
 
-def validate_texture(document: dict[str, Any]) -> None:
+def validate_texture(document: dict[str, Any]) -> Any:
+    """Validate an authored document; return its parsed physical recipe, if any."""
     if document.get("kind") == "sparse_noise":
         parse_sparse_noise_appearance(
             json.dumps(document), max_bytes=limits().max_document_bytes
         )
-    else:
-        budget = limits()
-        recipe = parse_texture_recipe(
-            json_bytes(document),
-            max_document_bytes=budget.max_document_bytes,
-            max_texture_pixels=budget.max_asset_cpu_bytes // 192,
-        )
-        if estimated_working_bytes(recipe) > budget.max_asset_cpu_bytes:
-            raise ValueError("Texture exceeds preparation memory budget")
+        return None
+    budget = limits()
+    recipe = parse_texture_recipe(
+        json_bytes(document),
+        max_document_bytes=budget.max_document_bytes,
+        max_texture_pixels=budget.max_asset_cpu_bytes // 192,
+    )
+    if estimated_working_bytes(recipe) > budget.max_asset_cpu_bytes:
+        raise ValueError("Texture exceeds preparation memory budget")
+    return recipe
 
 
 def texture_pixels(
@@ -173,7 +189,7 @@ def texture_pixels(
 ) -> np.ndarray:
     if authored:
         document = authored_recipe(document)
-    validate_texture(document)
+    parsed = validate_texture(document)
     check()
     budget = limits()
     if document.get("kind") == "sparse_noise":
@@ -183,7 +199,7 @@ def texture_pixels(
         recipe = SparseNoiseRecipe.model_validate_json(
             json.dumps(
                 {
-                    **authored_recipe(document),
+                    **document,
                     "surfaces": [face],
                     "pattern_count": index + 1,
                     "pattern_duration": {"seconds": "60"},
@@ -214,7 +230,6 @@ def texture_pixels(
             dtype=np.uint8,
         )
         return np.where(rgba[:, :, 3:4] != 0, rgba[:, :, :3], rgb)
-    parsed = parse_texture_recipe(json_bytes(document))
     if (
         sample_size is not None
         and sample_size[0] * sample_size[1] * 192 > budget.max_asset_cpu_bytes

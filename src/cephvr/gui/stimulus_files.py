@@ -85,6 +85,16 @@ def resolve_stimulus_file(
     )
 
 
+# Imports made this session, keyed by (root, source, size, mtime) so that re-selecting
+# an unchanged external file reuses its copy instead of copying again.
+_IMPORTS: dict[tuple[Any, ...], Path] = {}
+
+
+def _stamp(path: Path) -> tuple[str, int, int]:
+    stat = path.stat()
+    return str(path), stat.st_size, stat.st_mtime_ns
+
+
 def _import_file(base: Path, selected: Path, recipe: TextureRecipe | None) -> Path:
     """Keep each import isolated; preserve recipe-relative image dependencies."""
     name = portable_path(selected.name)
@@ -100,13 +110,30 @@ def _import_file(base: Path, selected: Path, recipe: TextureRecipe | None) -> Pa
             ),
             recipe,
         )
+    source_dependency = (
+        selected.parent / dependency.logical_path if dependency is not None else None
+    )
+    key = (
+        str(base),
+        _stamp(selected),
+        _stamp(source_dependency) if source_dependency is not None else None,
+    )
+    cached = _IMPORTS.get(key)
+    if (
+        cached is not None
+        and cached.is_file()
+        and (dependency is None or (cached.parent / dependency.logical_path).is_file())
+    ):
+        return cached
     destination = Path(tempfile.mkdtemp(prefix="import-", dir=base))
     try:
         shutil.copyfile(selected, destination / name)
         if dependency is not None:
+            assert source_dependency is not None
             target = destination / dependency.logical_path
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(selected.parent / dependency.logical_path, target)
+            shutil.copyfile(source_dependency, target)
+        _IMPORTS[key] = destination / name
         return destination / name
     except BaseException:
         shutil.rmtree(destination)

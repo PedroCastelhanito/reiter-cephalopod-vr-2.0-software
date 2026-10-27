@@ -101,7 +101,8 @@ both in source/prepared-source JSON; individual epoch edits retain batch members
 with linear `mean_linear_rgb`, an asset-free procedural pattern and opacity/fades.
 The renderer extends its physical rectangle over the selected surface.
 
-Direct `grating=true` uses `sine_grating` with positive constant `frequency=1/period_mm`
+Direct `grating=true` requires `sine_grating` (other kinds are rejected; sharpness 1 gives
+the square wave) with positive constant `frequency=1/period_mm`
 and `feature_sharpness` in [0,1]. Center the signal at the rectangle center:
 `a=0.5+0.5*cos(2*pi*(frequency*x_centered+phase_x))`; blend `a` with a centered
 smoothstep of half-width `(1-sharpness)/2`, weighted by sharpness (sharpness 1 uses
@@ -112,13 +113,14 @@ The epoch's absolute rotation assignment is the single bar-normal orientation;
 Cartesian speed follows that normal. Existing marked image-tile Grating remains
 asset-backed and uses its declared source interpretation.
 
-`ImageSettings.sparse_noise` contains `asset_ids`, exact positive `pattern_duration`,
-optional validated `appearance` for direct authoring, and `background_linear_rgb`.
-Its initial asset equals the first sequence member; all members are declared PNGs,
-nearest sampled with physical stretch on one surface. Select
-`min(floor(max(0, epoch_local_ns)/duration_ns), count-1)` at each evaluation; keep
-actual requested/selected image evidence through normal residency holds. The authored
-epoch is not split, so other layers' animation/video/motion clocks stay unchanged.
+`SparseNoiseSettings` (`kind: "sparse_noise"`, instance family `sparse_noise`) holds
+`appearance`, positive `pattern_count` and exact positive `pattern_duration`, with
+one physical-surface mapping and no asset. Compilation replaces width/height with
+the resolved grid extent; patterns are generated during playback under the
+[sparse-noise contract](sparse-noise.md).
+
+The layer selects `min(floor(max(0, epoch_local_ns)/duration_ns), count-1)`; the
+authored epoch is not split, so other layers' animation/video/motion clocks stay unchanged.
 The sequence starts again at each epoch occurrence; excess patterns are truncated,
 and exhaustion holds the last. Background composites inactive alpha before layer
 opacity; residual complete-grid margins retain the underlying scene.

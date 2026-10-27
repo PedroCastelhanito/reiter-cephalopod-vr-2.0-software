@@ -1,5 +1,29 @@
 # Visual Stimulus status
 
+## Rendering and presentation review — 2026-10-28
+
+Source review of `rendering/engine.py`, `native.py`, `scene.py`, `upload.py` and the
+GL-owner loop against [V10](../docs/architecture/visual_stimulus.md#v10),
+[V20](../docs/architecture/visual_stimulus.md#v20) and V04's color pipeline. No runtime or
+rig measurement backs any item.
+
+- Applied (owner-approved, local checks only): `render_tick` resumes the epoch search at
+  `TrialState.epoch_index` instead of scanning from zero; per-tick inline imports moved to
+  module level; `ModernGLPort.present` calls `context.finish()` after each swap whose
+  interval is above zero, so `swap_return_ns` follows the paced flip rather than driver
+  queue depth. Immediate outputs are unchanged. The fence can lengthen the GL thread's
+  per-frame blocking on VSync outputs; its timing effect needs the rig
+  ([checklist](rig-verification.md)).
+- Open, not implemented: evaluate frame state at the predicted flip time instead of loop
+  CPU time (needs a V10/V13 evidence-meaning decision); merge the warp and LUT/marker
+  passes and skip the screen copy when no capture/preview is due.
+- Deferred by owner: video frames are converted uint8→float32 with a NumPy EOTF and
+  uploaded as RGBA32F on the GL thread once per output (`scene.py` video loop); several
+  VSync pulse outputs swap sequentially and may wait on unsynchronized vblanks; `bt709`
+  decoding inverts the camera OETF rather than a display EOTF such as BT.1886.
+- Validation: 647 Visual Stimulus tests pass, 3 fail at HEAD for the missing PyOpenGL
+  module; ruff, format, Windows-target mypy, boundary check and `git diff --check` pass.
+
 ## Protocol Media families — 2026-10-27
 
 `protocol-media-families` implements the owner's two protocol types and six per-epoch,
@@ -812,6 +836,111 @@ hidden by those corrections. Provenance, commands and scope are in
 [evidence](runtime-evidence-2026-10-27/sparse-noise/context.json).
 Native size/color/onset/combined-load acceptance remains in the
 [single rig checklist](rig-verification.md#sparse-noise-presentation).
+
+## Sparse-noise runtime generation — 2026-10-28
+
+`sparse-noise-runtime-generator` implements the owner's choice of patterns generated
+during playback in a separate contained process, 100 patterns ahead, under
+[V04 revision 36](../docs/architecture/visual_stimulus.md#v04), V01 revision 37 and the
+[sparse-noise contract](../contracts/visual_stimulus/sparse-noise.md). Uncommitted.
+
+- **Authoring:** new `sparse_noise` layer kind (appearance, count, duration); no PNGs
+  or Apply. The GUI edits it inline and previews by generating the pattern; legacy
+  image-form rows load read-only and still play through the image path.
+- **Compile:** width/height fixed to the grid resolved from the active display.
+- **Helper:** `sparse_noise_helper` runs per trial through `SupervisedEncoderLauncher`
+  (the renderer's FFmpeg launch path: supervisor plan, Job Object, OS/operational
+  confirmation, stdin-EOF stop, exact exit and empty-job cleanup) as role
+  `visual_stimulus_sparse_noise`, added to the supervisor's renderer-helper set.
+  JOB/CREDIT lines on stdin, framed RGBA8 cells on stdout.
+- **Renderer:** `SparseNoiseRing` prefills the first window at PrepareTrial before
+  Ready, uploads grid-sized RGBA8 textures (16 B/cell float32 no longer applies),
+  reuses retired textures and selects the newest due pattern; misses are
+  `residency_hold` evidence and never stall the clock or the credit window.
+- **Generator speedup (kept):** byte-identical stencil in `eligible_cells`; 320
+  golden and 900 fuzzed patterns equal the previous implementation.
+
+Local evidence (macOS, not the rig): the helper over real pipes starts and returns
+its first frame in 0.2–0.3 s, stops in under 40 ms on stdin EOF, and its frames are
+byte-identical to `pattern_rgba` (rows flipped for GL). Four-screen generation costs
+14 ms per pattern at 120×68 cells but 343 ms at 600×340, which cannot sustain 300 ms
+patterns in one process; the calibrated 2 mm rig grid (~10k cells over four screens)
+is about 1 ms per screen. A design defect found by the ring tests (holding the
+previously shown pattern could exhaust credit and deadlock a lagging helper) was
+fixed by showing the newest due resident pattern.
+
+Checks (macOS, Oct28): `tests/visual_stimulus` + `tests/supervisor` 828 passed, 3 failed
+(known: PyOpenGL absent locally); `tests/generate_stimulus` (offscreen) 131 passed;
+focused GUI `-k "sparse or noise or preset or layer or media_family"` 30 passed, 2
+failed in `test_dashboard.py` (they select a removed "Texture" preset label from earlier
+uncommitted preset work; not re-run at HEAD). Ruff, format, Win32 mypy (423 files),
+boundaries (0 violations), 14 schemas and whitespace pass. Policy v21 digest updated.
+
+Not verified: Windows launch/containment of a Python helper under the encoder
+launcher, helper startup time against the PrepareTrial deadline, GPU upload cost,
+optical timing. Inherited gap: the supervisor has no release path for renderer helper
+launch records (also true for its FFmpeg children), so per-trial records accumulate
+for the session. Rig steps: [rig checklist](rig-verification.md#sparse-noise-presentation).
+
+Follow-up, same day (owner-approved): the legacy PNG sparse path is removed (image-form
+`sparse_noise` sequences, bundle preparation, multi-projector import,
+`tools/prepare_sparse_noise.py`, the Protocol import dialog, legacy rows/previews and their
+tests; G01 revision 370). Old protocols with such rows no longer load. Evidence now records
+`background_hold` with null `image_index` when a sparse layer drew only its background, and
+`pattern_sha256`/`pattern_generator` on the first frame showing each pattern (helper-computed
+SHA-256 of `pattern_rgba`; V04 revision 37, V13 revision 14). Re-run: 817 Visual
+Stimulus/supervisor pass (3 known PyOpenGL failures), 131 authoring pass, focused GUI 54 pass
+with the 2 known dashboard failures and 24 sparse/preview pass; static checks pass.
+
+## Stimulus authoring review follow-up — 2026-10-27
+
+Read-only review of commit bfe24b35 (correctness, simplification, GUI) followed by
+owner-authorized fixes under [V04](../docs/architecture/visual_stimulus.md) and
+[G01](../docs/architecture/gui.md#g01), uncommitted at this entry. Applied:
+- Correctness: `physical_field._hash` casts through int64, so negative field cells match the
+  GLSL `field_hash` (the macOS `test_seeded_field_statistics_and_full_seed_range` failure
+  was this defect; Windows x86 results had masked it). Golden negative-index tests added.
+- Backend (behavior-preserving): faster `dots_rand` (bit-identical; about 1.3-1.5x, noisy),
+  per-trial `LayerCache` with one shared GL/evidence uniform computation (a missing
+  width/height now defaults to 0.0 in the GL path, as the evidence path already did),
+  fold-map/unfolder reuse, one validation of the merged sparse-noise program,
+  one GL program per distinct field fragment source, `get_args(SurfaceId)` face lists.
+- Generate window: cached `limits()` (9.6 to 0.5 ms), texture-bake cache (colour-edit
+  recompile 140-190 to about 10 ms), smooth DPR-aware preview scaling (17.8 to 2.7 ms per
+  resize), model-derived spin ranges, inline validation feedback, flush on save/close,
+  Save/Discard/Cancel prompts with Cancel default, `.json` default suffix, themed Surfaces
+  list, poll timer only while jobs run, late-export reporting.
+- Epoch editor: grating row inputs 124 to 37 px with R/G/B prefixes and visual Tab order,
+  tooltip preservation, `stimulus_layers`/`stimulus_binding`/`stimulus_asset_paths` splits
+  (output byte-identical across 158 preset combinations), import dedupe and a byte-budget
+  media cache, Trial Preview stale banner with Refresh, sparse-noise status/Cancel and
+  cleanup of only the layer's own unapplied `sparse-noise/<32 hex>` directories, shared
+  wording, epoch card value 145 to 115 (contrast at least 4.5:1 for every hue),
+  stimulus-authoring tests moved to `tests/gui/test_stimulus_authoring.py`.
+
+Validation (macOS, local): 743 Visual Stimulus/authoring tests pass, 3 fail
+(`ModuleNotFoundError: OpenGL`, environmental); 294 focused GUI tests pass (selection by
+keyword; the full GUI suite was not run). Ruff, format, Win32 mypy, boundaries and
+14 schemas pass. Four GUI tests and two preview tests fail or abort identically at HEAD
+(reported by the coder; not re-verified here). GL paths (`draw_layer` fold/field, shared
+field programs, lazy viewport texture variants, `paintGL`, picking) are not locally
+proven; they stay in the [rig checklist](rig-verification.md#stimulus-authoring).
+
+Correctness fixes applied after owner approval (Oct28): mixed field/raster candidates now
+get uniform layouts and Setup placement checks (V08); legacy `media_presentation` link load
+errors name the epoch and instance (V02); the published program schema accepts legacy
+`texture_drift`; marked inline Grating rejects `square_grating`; invalid field colours are
+rejected; sparse-noise minimum distance tolerates the 7.000000000000001 case (one golden
+case changed: the exact-distance layout) and accepts an optional `active_surfaces`; the
+unused `photodiode_level` is removed; opening a legacy `texture_design` shows a conversion
+notice and Save routes to Save as…; the arena scatter sampler uses a precomputed cdf
+(bit-identical to `rng.choice`, 4.1 s to 2.7 ms on 200k triangles x 2000 instances). Local:
+775 Visual Stimulus/authoring tests pass, 3 OpenGL environmental failures; GL draw is not
+exercised. GUI wiring (Oct28): protocol/program loads log one notice for linked Media epochs
+and report invalid-link errors readably; the sparse-noise import dialog and inline layer pass
+the enabled-projector surfaces as `active_surfaces` on each preparation (97 focused GUI cases
+pass; full suite not run). Open (TODO `stimulus-authoring-review-findings`): bars Save-as
+confirmation, follower position on unlink, unwired Generate-window actions.
 
 ## Current runtime verification
 

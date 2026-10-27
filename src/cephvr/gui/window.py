@@ -73,7 +73,7 @@ class DashboardWindow(QMainWindow):
             control = button(name, "navigation")
             control.setProperty(
                 "iconName",
-                ("dashboard", "protocol", "devices", "tracking", "protocol")[index],
+                ("dashboard", "protocol", "devices", "tracking", "geometry")[index],
             )
             control.setIconSize(QSize(20, 20))
             control.setCheckable(True)
@@ -126,13 +126,15 @@ class DashboardWindow(QMainWindow):
         self.protocol = ProtocolPage(
             self.recordings, sample=sample, tracking_available=tracking_available
         )
-        self.protocol.sparse_geometry = self.stimulus_geometry
+        self.geometry_text = ""
+        self.geometry_cache: Geometry | None = None
         subject_height = self.devices.projectors.rig_editor.fields["subject_z"]
         composer = self.protocol.editor.subgroup.composer
         subject_height.textChanged.connect(composer.set_subject_height)
         composer.set_subject_height(subject_height.text())
         self.trial_preview: TrialPreview | None = None
         self.protocol.editor.output_preview_requested.connect(self.open_trial_preview)
+        self.protocol.editor.changed.connect(self.update_trial_preview_stale)
         self.protocol.assets.folders["root"].editor.textChanged.connect(
             lambda path: setattr(self.devices.projectors, "asset_root", path)
         )
@@ -199,8 +201,6 @@ class DashboardWindow(QMainWindow):
             event.ignore()
             return
         self.authoring_page.shutdown()
-        if self.protocol.sparse_dialog is not None:
-            self.protocol.sparse_dialog.reject()
         self.tracking.annotation.close()
         super().closeEvent(event)
 
@@ -360,7 +360,12 @@ class DashboardWindow(QMainWindow):
             if projectors._geometry_dirty or profile is None
             else profile.get("geometry")
         )
-        return Geometry.model_validate_json(json.dumps(payload))
+        text = json.dumps(payload)
+        if text != self.geometry_text:  # Revalidate only when the inputs changed.
+            self.geometry_cache = Geometry.model_validate_json(text)
+            self.geometry_text = text
+        assert self.geometry_cache is not None
+        return self.geometry_cache
 
     def open_stimulus_authoring(self) -> None:
         self.select_page(4)
@@ -405,12 +410,22 @@ class DashboardWindow(QMainWindow):
         if not self.protocol.can_edit and self.trial_preview is not None:
             self.trial_preview.close()
 
-    def open_trial_preview(self) -> None:
+    def update_trial_preview_stale(self) -> None:
         if self.trial_preview is not None:
-            self.trial_preview.raise_()
-            self.trial_preview.activateWindow()
-            return
+            self.trial_preview.set_stale(
+                self.trial_preview.program != self.protocol.editor.program
+            )
+
+    def open_trial_preview(self) -> None:
         editor = self.protocol.editor
+        if self.trial_preview is not None:
+            if self.trial_preview.program == editor.program:
+                self.trial_preview.raise_()
+                self.trial_preview.activateWindow()
+                return
+            self.trial_preview.close()  # Rebuild from the current program.
+        if self.trial_preview is not None:
+            return
         projectors = self.devices.projectors
         resolutions = {
             projectors.assignments[key]: projectors.display_pixels.get(
@@ -444,4 +459,5 @@ class DashboardWindow(QMainWindow):
         self.trial_preview.finished.connect(
             lambda: setattr(self, "trial_preview", None)
         )
+        self.trial_preview.refresh_requested.connect(self.open_trial_preview)
         self.trial_preview.show()

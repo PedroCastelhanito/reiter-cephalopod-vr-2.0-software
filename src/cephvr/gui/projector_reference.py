@@ -17,7 +17,7 @@ from cephvr.gui.grating_appearance import GratingAppearance
 from cephvr.gui.grating_motion import GratingMotion
 from cephvr.gui.icons import device_icon
 from cephvr.gui.projector_layers import layer_title, layers_for
-from cephvr.gui.reference_fields import reference_fields
+from cephvr.gui.reference_fields import chain_tab_order, reference_fields
 from cephvr.gui.reference_layers import ReferenceLayers
 from cephvr.gui.stimulus_parameters import StimulusParameters
 from cephvr.gui.stimulus_presets import FILE_TYPES
@@ -292,6 +292,9 @@ class ProjectorReference(EditingSurface):
             self.grid.addWidget(control, row + 1, col, 1, span)
             heading.setVisible(bool(title))
             control.show()
+        chain_tab_order(
+            control for _, control in columns if control is not self.caption
+        )
         empty = self.parameters.layer_index < 0
         self.actions_button.setEnabled(not empty)
         asset_grating = any(

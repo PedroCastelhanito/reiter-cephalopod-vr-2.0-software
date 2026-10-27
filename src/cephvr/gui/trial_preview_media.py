@@ -1,6 +1,7 @@
 """Bounded on-demand preview images and window-owned video decoders."""
 
 from collections import OrderedDict
+from collections.abc import Callable, Hashable
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,11 @@ from PyQt6.QtGui import QColorSpace, QImage, QImageReader
 
 from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.program_model import Program
+
+# Bounded by memory, not count: a 600-pattern sparse-noise trial must not thrash.
+IMAGE_CACHE_BYTES = 256 * 1024 * 1024
+# Generated sparse-noise patterns are deterministic, so only recent ones are kept.
+SPARSE_CACHE_ENTRIES = 32
 
 
 class PreviewMedia(QObject):
@@ -21,6 +27,8 @@ class PreviewMedia(QObject):
         self.root = Path(root).resolve()
         self.images: OrderedDict[str, QImage] = OrderedDict()
         self.image_sizes: dict[str, tuple[int, int]] = {}
+        self.image_bytes = 0
+        self.sparse_images: OrderedDict[Hashable, QImage] = OrderedDict()
         self.errors: dict[str, str] = {}
         self.videos: dict[str, tuple[Any, Any]] = {}
         self.frames: dict[str, QImage] = {}
@@ -55,9 +63,21 @@ class PreviewMedia(QObject):
             self.errors[asset] = str(error)
             image = QImage()
         self.images[asset] = image
-        if len(self.images) > 16:
-            removed, _ = self.images.popitem(last=False)
+        self.image_bytes += image.sizeInBytes()
+        while self.image_bytes > IMAGE_CACHE_BYTES and len(self.images) > 1:
+            removed, evicted = self.images.popitem(last=False)
+            self.image_bytes -= evicted.sizeInBytes()
             self.image_sizes.pop(removed, None)
+        return image
+
+    def sparse_pattern(self, key: Hashable, build: Callable[[], QImage]) -> QImage:
+        """Memoise one generated pattern; no file access is involved."""
+        if key in self.sparse_images:
+            self.sparse_images.move_to_end(key)
+            return self.sparse_images[key]
+        image = self.sparse_images[key] = build()
+        while len(self.sparse_images) > SPARSE_CACHE_ENTRIES:
+            self.sparse_images.popitem(last=False)
         return image
 
     def recipe_image(self, asset: str) -> QImage:
@@ -182,6 +202,7 @@ class PreviewMedia(QObject):
     def close(self) -> None:
         self.retain_videos(set())
         self.images.clear()
+        self.image_bytes = 0
         self.field_recipes.clear()
         self.frames.clear()
         self.arenas = None

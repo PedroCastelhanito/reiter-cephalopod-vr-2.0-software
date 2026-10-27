@@ -121,27 +121,30 @@ def relief_values(u: np.ndarray, v: np.ndarray, surface: Surface) -> np.ndarray:
     return value * relief.height_mm
 
 
-def build_geometry(
-    design: ArenaDesign, *, max_vertices: int, check: Callable[[], None] = lambda: None
-) -> list[Mesh]:
-    """Create inward-facing surface meshes; never derive movement regions."""
-    meshes: list[Mesh] = []
-    count = 0
+class _Patches:
+    """Bounded patch builder; the instance is the `patch` callable for each template."""
 
-    def patch(
+    def __init__(
+        self, design: ArenaDesign, max_vertices: int, check: Callable[[], None]
+    ) -> None:
+        self.design, self.max_vertices, self.check = design, max_vertices, check
+        self.meshes: list[Mesh] = []
+        self.count = 0
+
+    def __call__(
+        self,
         name: str,
         evaluate: Callable[..., Any],
         normal: Callable[..., Any],
         n: int,
         m: int,
     ) -> None:
-        nonlocal count
-        check()
-        surface = design.surfaces[name]
+        self.check()
+        surface = self.design.surfaces[name]
         if not surface.visible:
             return
-        count += (n + 1) * (m + 1)
-        if count > max_vertices:
+        self.count += (n + 1) * (m + 1)
+        if self.count > self.max_vertices:
             raise ValueError("Arena geometry exceeds preparation budget")
         u, v = np.meshgrid(np.linspace(0, 1, n + 1), np.linspace(0, 1, m + 1))
         positions, coordinates = evaluate(u, v)
@@ -156,7 +159,7 @@ def build_geometry(
         indices = np.stack(
             [base, base + 1, base + n + 2, base, base + n + 2, base + n + 1], axis=-1
         ).reshape(-1)
-        meshes.append(
+        self.meshes.append(
             Mesh(
                 name,
                 positions.reshape(-1, 3).astype("f4"),
@@ -165,6 +168,12 @@ def build_geometry(
             )
         )
 
+
+def build_geometry(
+    design: ArenaDesign, *, max_vertices: int, check: Callable[[], None] = lambda: None
+) -> list[Mesh]:
+    """Create inward-facing surface meshes; never derive movement regions."""
+    patch = _Patches(design, max_vertices, check)
     n = design.subdivisions
     curved = design.shape in {"circular", "torus"}
     if curved:
@@ -242,7 +251,7 @@ def build_geometry(
                     )
         _walls(polygon, design, patch, n)
     # Remove zero-area center triangles from circular disks.
-    for mesh in meshes:
+    for mesh in patch.meshes:
         tri = mesh.indices.reshape(-1, 3)
         points = mesh.positions[tri]
         valid = (
@@ -253,7 +262,7 @@ def build_geometry(
             > 1e-8
         )
         mesh.indices = tri[valid].reshape(-1)
-    return meshes
+    return patch.meshes
 
 
 def _walls(

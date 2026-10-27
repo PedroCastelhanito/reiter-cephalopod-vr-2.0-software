@@ -23,14 +23,48 @@ def apply_changes(
             target[key] = copy.deepcopy(value)
 
 
-def read_design(path: Path) -> dict[str, Any]:
+# Legacy names that authored_recipe maps onto retained field parameters.
+_RENAMED = {"line_width_mm", "element_size", "blur"}
+
+
+def conversion_notice(raw: dict[str, Any], converted: dict[str, Any]) -> str | None:
+    """Describe a legacy raster recipe converted to a physical field, else None."""
+    if raw.get("cephvr_asset_type") == "texture_field" or (
+        converted.get("cephvr_asset_type") != "texture_field"
+    ):
+        return None
+    top = raw.keys() - converted.keys() - {"cephvr_asset_type"}
+    params = raw.get("params", {}).keys() - converted["params"].keys() - _RENAMED
+    dropped = ", ".join(sorted(top) + sorted(params)) or "none"
+    return (
+        "Legacy texture converted to a physical field; dropped fields: "
+        f"{dropped}. The pattern is rendered by the seeded field algorithm and can "
+        "differ from the legacy raster. The original file is never overwritten; "
+        "save the converted design as a new file."
+    )
+
+
+def save_suggestion(previous: Path | None, legacy: bool, default: Path) -> str:
+    """Default Save as… name; a converted legacy file gets a new, suffixed name."""
+    if previous is not None and legacy:
+        return str(previous.with_name(f"{previous.stem}.converted.json"))
+    return str(previous or default)
+
+
+def load_design(path: Path) -> tuple[dict[str, Any], str | None]:
+    """Read a design plus a notice when a legacy recipe was converted on open."""
     data = json.loads(read_bytes(path, limits().max_document_bytes))
     if not isinstance(data, dict):
         raise ValueError("A design must be a JSON object")
     if data.get("kind") == "arena_design":
-        return ArenaDesign.model_validate(data).model_dump(mode="json")
+        return ArenaDesign.model_validate(data).model_dump(mode="json"), None
     validate_texture(data)
-    return authored_recipe(data)
+    design = authored_recipe(data)
+    return design, conversion_notice(data, design)
+
+
+def read_design(path: Path) -> dict[str, Any]:
+    return load_design(path)[0]
 
 
 def save_design(
@@ -53,7 +87,9 @@ def save_design(
                     "Save image recipes in the image's directory or an ancestor directory"
                 ) from error
             candidate["params"]["texture_path"] = relative
-            texture_pixels(candidate, root, recipe_directory=path.parent)
+            texture_pixels(
+                candidate, root, recipe_directory=path.parent, authored=False
+            )
     raw = json_bytes(candidate)
     if len(raw) > limits().max_document_bytes:
         raise ValueError("Design exceeds document budget")

@@ -9,7 +9,7 @@ from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.native_helper_identity import CONTROLLER_NATIVE_HELPER_ROLES
-from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
+from cephvr.visual_stimulus.identity import HELPER_ROLES as VISUAL_STIMULUS_HELPER_ROLES
 
 BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
 TOP_LEVEL_ROLES = BACKEND_ROLES | {"controller", "gui"}
@@ -62,7 +62,7 @@ def validate_plan(request: wire.PlanLaunchRequest) -> None:
         )
     if request.child.role in CONTROLLER_NATIVE_HELPER_ROLES:
         require_uuid4(request.parent_operation.command_id)
-    if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
+    if request.child.role in VISUAL_STIMULUS_HELPER_ROLES:
         if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
             "work"
         ):

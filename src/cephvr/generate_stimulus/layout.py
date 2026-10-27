@@ -2,10 +2,13 @@
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence, QResizeEvent
+import numpy as np
+from PyQt6.QtCore import QEvent, Qt, QTimer
+from PyQt6.QtGui import QAction, QImage, QKeySequence, QPixmap, QResizeEvent
 from PyQt6.QtWidgets import (
+    QGraphicsOpacityEffect,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QSizePolicy,
@@ -16,20 +19,65 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, combo, field
+from cephvr.gui.components import Card, button, combo, field, label
 from cephvr.gui.formatting import caption_caps, card_caption
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.theme import SIZES, minimal_frames, retro_console
 
+from .fields import humanize
+from .properties import FACES
 from .viewport import ArenaViewport
+
+VIEWPORT_HINT = (
+    "Drag to orbit · right-drag to pan · scroll to zoom · click a surface to select it"
+)
 
 
 class PreviewImage(QLabel):
-    resized = pyqtSignal()
+    """Aspect-preserving preview of display-ready RGB8 pixels, dimmed when stale."""
+
+    def __init__(self, text: str) -> None:
+        super().__init__(text)
+        self.pixels: np.ndarray | None = None
+        self.image: QImage | None = None
+        self.shown: tuple[int, int, int] | None = None
+        self.dimmer = QGraphicsOpacityEffect(self)
+        self.dimmer.setOpacity(0.35)
+        self.dimmer.setEnabled(False)
+        self.setGraphicsEffect(self.dimmer)
+
+    def set_pixels(self, pixels: np.ndarray) -> None:
+        self.pixels = np.ascontiguousarray(pixels)
+        height, width = self.pixels.shape[:2]
+        self.image = QImage(
+            self.pixels.tobytes(), width, height, width * 3, QImage.Format.Format_RGB888
+        ).copy()
+        self.shown = None
+        self.refresh()
+
+    def refresh(self) -> None:
+        image = self.image
+        if image is None:
+            return
+        ratio = self.devicePixelRatioF()
+        size = self.size() * ratio
+        key = (id(image), size.width(), size.height())
+        if key == self.shown:
+            return
+        self.shown = key
+        pixmap = QPixmap.fromImage(
+            image.scaled(
+                size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+        pixmap.setDevicePixelRatio(ratio)
+        self.setPixmap(pixmap)
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
-        self.resized.emit()
+        self.refresh()
 
 
 class AuthoringLayout(QMainWindow):
@@ -65,7 +113,9 @@ class AuthoringLayout(QMainWindow):
 
     def build_layout(
         self,
-        actions: list[tuple[str, Callable[[], None], QKeySequence.StandardKey | None]],
+        actions: list[
+            tuple[str, Callable[[], object], QKeySequence.StandardKey | None]
+        ],
     ) -> None:
         self.status = QStatusBar(self)
         self.status.setSizeGripEnabled(False)
@@ -90,6 +140,9 @@ class AuthoringLayout(QMainWindow):
             grid.addWidget(control, index // 2, index % 2)
             self.file_actions.append(action)
         files.body.addLayout(grid)
+        self.legacy_note = label("", "error", wrap=True)
+        self.legacy_note.hide()
+        files.body.addWidget(self.legacy_note)
         controls_layout.addWidget(files)
         self.tabs = QTabBar()
         for name in ("Textures", "Arenas"):
@@ -105,7 +158,9 @@ class AuthoringLayout(QMainWindow):
         controls_layout.addWidget(self.properties)
         controls_layout.addStretch()
         preview = Card("Preview", grow=True)
-        self.face = combo(("front", "left", "right", "bottom"))
+        self.face = combo(tuple(humanize(face) for face in FACES))
+        for row_index, face in enumerate(FACES):
+            self.face.setItemData(row_index, face)
         self.preview_mode = combo(("Tile preview", "Calibrated screen"))
         self.index = QSpinBox()
         self.index.setRange(0, 2**31 - 1)
@@ -113,23 +168,37 @@ class AuthoringLayout(QMainWindow):
         self.mode_field = field("View", self.preview_mode)
         self.index_field = field("Pattern index", self.index)
         self.preview_controls = QWidget()
-        row = QGridLayout(self.preview_controls)
-        row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(SIZES.field_x_gap)
-        row.addWidget(self.face_field, 0, 0)
-        row.addWidget(self.mode_field, 0, 1)
-        row.addWidget(self.index_field, 1, 0, 1, 2)
+        controls_rows = QVBoxLayout(self.preview_controls)
+        controls_rows.setContentsMargins(0, 0, 0, 0)
+        controls_rows.setSpacing(SIZES.body_gap)
+        # Hidden fields leave no gap, so a lone View control spans the card.
+        pair = QHBoxLayout()
+        pair.setSpacing(SIZES.field_x_gap)
+        pair.addWidget(self.face_field)
+        pair.addWidget(self.mode_field)
+        controls_rows.addLayout(pair)
+        controls_rows.addWidget(self.index_field)
         preview.body.addWidget(self.preview_controls)
+        self.preview_note = label("", "error", wrap=True)
+        self.preview_note.hide()
+        preview.body.addWidget(self.preview_note)
         self.fit_button = button("Fit arena")
         self.fit_button.clicked.connect(lambda: self.viewport.fit())
-        preview.header.addWidget(self.fit_button)
+        self.arena_controls = QWidget()
+        arena_row = QHBoxLayout(self.arena_controls)
+        arena_row.setContentsMargins(0, 0, 0, 0)
+        arena_row.setSpacing(SIZES.field_x_gap)
+        arena_row.addWidget(label(VIEWPORT_HINT, "muted", wrap=True), 1)
+        arena_row.addWidget(self.fit_button)
+        preview.body.addWidget(self.arena_controls)
         self.image = PreviewImage("Edit a recipe to preview it")
         self.image.setObjectName("AssetPreviewPixels")
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image.setMinimumSize(80, 80)
+        self.image.setMinimumSize(140, 140)
         self.image.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.viewport = ArenaViewport()
-        self.viewport.setMinimumSize(80, 80)
+        self.viewport.setMinimumSize(80, 160)
+        self.viewport.setToolTip(VIEWPORT_HINT)
         preview.body.addWidget(self.image, 1)
         preview.body.addWidget(self.viewport, 1)
         self.columns = ResponsiveColumns(controls, preview)

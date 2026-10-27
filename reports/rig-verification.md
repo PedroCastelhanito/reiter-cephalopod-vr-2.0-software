@@ -33,24 +33,30 @@
   and37°/45° orientation, circular dots, equal-width bars, crop/rotation/drift and
   field continuity beyond the former100mm boundaries. Vary valid-area extents without
   changing saved recipe bytes or overlapping seeded features. Native local
-  editor/GL inspection is not optical or multi-monitor/DPI acceptance. See the
-  [implementation report](visual_stimulus.md#offline-stimulus-authoring--2026-10-27).
+  editor/GL inspection is not optical or multi-monitor/DPI acceptance. Also verify on
+  Windows/OpenGL the Oct27 refactors that are not locally proven: Fold/field layer
+  draws and evidence, shared field programs per recipe, lazy opaque/non-opaque
+  arena viewport textures, picking and Fit, and smooth high-DPI preview scaling. See the
+  [implementation report](visual_stimulus.md#offline-stimulus-authoring--2026-10-27) and
+  [review follow-up](visual_stimulus.md#stimulus-authoring-review-follow-up--2026-10-27).
 
 <a id="sparse-noise-presentation"></a>
-- [ ] [gui] [visual_stimulus] After normal relaunch, verify Protocol → Sparse noise
-  recipe Browse/paste for each enabled projector, displayed seeds, scroll/DPI layout,
-  new-trial insertion and saved protocol reopening against actual Devices geometry.
-  Local dialog/round-trip/cancellation checks and offscreen render pass; native
-  GUI and physical presentation are not implied. Keep generated bundles intact.
-- [ ] [visual_stimulus] Prepare a sparse-noise recipe against the actual display profile,
-  load its generated program with its bundle as asset root, and verify square side
-  lengths, minimum center-to-center active spacing, background margins, polarity/color
-  calibration and per-pattern regenerated layouts. Check observed activation and
-  spatial coverage across the chosen sequence; finite sequences do not guarantee coverage. Verify requested/actual asset identity and optical onset timing at the
-  chosen pattern duration under combined recording/tracking load; preserve existing
-  readiness-hold evidence. Repeat the saved bundle and compare recorded identities.
-  Local211 tests and fixture CLI generation do not close physical acceptance.
-  [Implementation and limits](visual_stimulus.md#sparse-noise-preparation--2026-10-27).
+- [ ] [gui] [visual_stimulus] After normal relaunch, add Sparse noise layers on each
+  enabled projector, edit parameters inline (no Apply), use New seed, save and reopen
+  the protocol, and confirm the preview pattern changes with the seed. Offscreen GUI
+  checks pass; native GUI is not implied.
+- [ ] [visual_stimulus] [supervisor] Run a trial with four 300 ms sparse layers at the
+  owner's grid (2 mm squares) and check: the `visual_stimulus_sparse_noise` helper is
+  planned, contained, confirmed and resumed per trial; PrepareTrial reaches Ready with
+  the 100-pattern window inside its deadline (record helper startup and prefill time);
+  stdin EOF exit and empty-job cleanup at trial end and after an abort; no
+  `residency_hold` selections across a long sequence (thousands of patterns) under
+  combined recording/tracking load; and render-thread timing unchanged versus no
+  sparse layers. Then verify square side lengths, spacing, margins, polarity/color
+  calibration and optical onsets, and that logged pattern indices regenerate the
+  shown cells. Forcibly kill the helper once to confirm the trial fails cleanly.
+  Local pipe, ring and owner tests do not establish any of this.
+  [Implementation and limits](visual_stimulus.md#sparse-noise-runtime-generation--2026-10-28).
 
 - [ ] [gui] [acquisition] Verify the final motion-dial footer natively and complete
   remaining per-control/DPI coverage after desktop activation recovers. Reproduce

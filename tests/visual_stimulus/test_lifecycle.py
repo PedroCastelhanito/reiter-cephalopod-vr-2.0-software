@@ -2615,3 +2615,161 @@ def test_preview_rates_use_optional_exact_session_reports_and_clear_on_hide():
     revision = hidden.revision
     driver.preview_rates(60, 30, clock())
     assert reports.records[-1][1].revision == revision
+
+
+class _HelperProcess:
+    def __init__(self, feed):
+        self.feed, self.events = feed, []
+        self.failure = None
+
+    def send(self, data, *, deadline_ns):
+        self.feed.send(data, deadline_ns=deadline_ns)
+
+    def take(self):
+        return self.feed.take()
+
+    def close_stdin(self, *, deadline_ns):
+        self.events.append("eof")
+
+    def wait(self, *, deadline_ns):
+        self.events.append("wait")
+        return 0
+
+    def terminate(self, *, deadline_ns):
+        self.events.append("terminate")
+
+
+class _HelperLauncher:
+    process_factory = None
+
+    def __init__(self, process):
+        self.process, self.calls = process, []
+
+    def bind_operation(self, work, parent_operation):
+        self.calls.append(("bind", work, parent_operation))
+
+    def launch(self, argv, *, deadline_ns, role):
+        self.calls.append(("launch", tuple(argv), role))
+        return self.process
+
+    def terminate_unconfirmed(self, *, deadline_ns):
+        self.calls.append(("unconfirmed",))
+
+
+class _SparseGraphics:
+    def __init__(self):
+        from tests.visual_stimulus.test_rendering import _SparseOutput
+
+        self.output = _SparseOutput()
+        self.sparse_outputs = {"projector/main": self.output}
+        self.installed = []
+
+    def install_sparse_noise(self, ring):
+        self.installed.append(ring)
+
+
+def _sparse_owner(**program):
+    from tests.visual_stimulus.support import make_prepared_trial
+    from tests.visual_stimulus.test_rendering import _SparseFeed
+    from tests.visual_stimulus.test_resources import sparse_layer_program
+
+    from cephvr.visual_stimulus.worker.sparse_noise import NativeSparseNoise
+
+    process = _HelperProcess(_SparseFeed())
+    launcher, graphics = _HelperLauncher(process), _SparseGraphics()
+    owner = NativeSparseNoise(
+        launcher=launcher,
+        argv=lambda: ["C:/python.exe", "-m", "helper"],
+        graphics=graphics,
+        lookahead=4,
+    )
+    return (
+        make_prepared_trial(sparse_layer_program(**program)),
+        owner,
+        launcher,
+        process,
+        graphics,
+    )
+
+
+def test_sparse_owner_declares_launches_prefills_and_confirms_helper_exit():
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
+
+    plan, owner, launcher, process, graphics = _sparse_owner()
+    announced = []
+    owner.declare((plan,), lambda key, path: announced.append(key))
+    assert announced == ["sparse-noise-child:trial"]
+    command = visual_stimulus.WorkerCommand(command_id="prepare")
+    command.parent_operation.command_id = "operation"
+    owner.prepare(plan, command, deadline_ns=1 << 62)
+    assert [c[0] for c in launcher.calls] == ["bind", "launch"]
+    assert launcher.calls[0][2].command_id == "operation"
+    assert launcher.calls[1][2] == "visual_stimulus_sparse_noise"
+    ring = graphics.installed[-1]
+    assert ring.received == 8  # Four ahead for each of two layers, before Ready.
+    owner.finish(deadline_ns=1 << 62)
+    assert graphics.installed[-1] is None and process.events == ["eof", "wait"]
+    assert all(t.released for t in graphics.output.created)
+    report = owner.cleanup(deadline_ns=1 << 62)
+    assert report.released == ("sparse-noise-child:trial",) and not report.outstanding
+
+
+def test_sparse_owner_terminates_a_failed_helper_at_cleanup():
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
+
+    plan, owner, _, process, _ = _sparse_owner()
+    owner.declare((plan,), lambda key, path: None)
+    owner.prepare(plan, visual_stimulus.WorkerCommand(), deadline_ns=1 << 62)
+    process.failure = RuntimeError("helper exited early with code 1")
+    report = owner.cleanup(deadline_ns=1 << 62)
+    assert process.events == ["terminate"] and not report.outstanding
+
+
+def test_sparse_owner_skips_trials_without_sparse_layers():
+    from tests.visual_stimulus.support import make_prepared_trial
+
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
+
+    _, owner, launcher, _, graphics = _sparse_owner()
+    plain = make_prepared_trial()
+    announced = []
+    owner.declare((plain,), lambda key, path: announced.append(key))
+    owner.prepare(plain, visual_stimulus.WorkerCommand(), deadline_ns=1 << 62)
+    assert announced == [] and launcher.calls == [] and graphics.installed == []
+
+
+def test_sparse_process_reader_splits_frames_and_rejects_truncation():
+    import threading
+    from collections import deque
+
+    from cephvr.visual_stimulus.resources.sparse_noise_wire import frame_header
+    from cephvr.visual_stimulus.worker.sparse_noise import SparseNoiseProcess
+
+    class Pipe:
+        def __init__(self, chunks):
+            self.chunks = deque(chunks)
+
+        def read(self, *, deadline_ns):
+            return self.chunks.popleft() if self.chunks else None
+
+    def process(chunks, stdin_closed=False):
+        item = object.__new__(SparseNoiseProcess)
+        item.progress_pipe = Pipe(chunks)
+        item._lock, item._frames = threading.Lock(), deque()
+        item._reader_error, item._reader_drain_deadline_ns = None, None
+        item._stdin_closed, item._exit_code = stdin_closed, None
+        item.max_frame_bytes, item.clock_ns = 8, lambda: 0
+        return item
+
+    digest = b"\x01" * 32
+    data = frame_header(0, 2, digest) + b"ab" + frame_header(1, 1, digest) + b"c"
+    complete = process([data[:7], data[7:]])
+    complete._read_progress()
+    assert complete.take() == [(0, b"ab", digest), (1, b"c", digest)]
+    assert complete.failure is None
+    truncated = process([data[:-1]])
+    truncated._read_progress()
+    assert "truncated" in str(truncated.failure)
+    early = process([])
+    early._exit_code = 1
+    assert "exited early" in str(early.failure)

@@ -1329,6 +1329,162 @@ def test_live_layer_skips_unmapped_surface():
     assert not uniforms
 
 
+def _layout(instance_id, name, output_id="out", binding_id=None):
+    return NS(
+        instance_id=instance_id,
+        output_id=output_id,
+        name=name,
+        binding_id=binding_id or f"{instance_id}:{name}",
+    )
+
+
+def test_draw_layer_gl_values_match_evidence_words_and_lookups_fail_clearly():
+    from cephvr.visual_stimulus.rendering.evidence import uniform_values
+    from cephvr.visual_stimulus.rendering.layer_draw import draw_layer
+
+    class Uniform:
+        value = None
+
+        def write(self, value):
+            pass
+
+    class Program(dict):
+        def __getitem__(self, key):
+            return self.setdefault(key, Uniform())
+
+    names = ("opacity", "contrast", "grating_sharpness", "mean_rgb", "modulation_rgb")
+    names += ("frequency", "phase", "period", "clip_vertices_map")
+    layouts = tuple(_layout("layer", name) for name in names)
+    setting = NS(
+        kind="texture",
+        grating=True,
+        space=NS(kind="angular"),
+        pattern=NS(kind="sine_grating", feature_sharpness=0.25),
+        mean_linear_rgb=(0.1, 0.2, 0.3),
+        modulation_linear_rgb=(0.4, 0.5, 0.6),
+    )
+    state = (
+        ("width", 20.0),
+        ("height", 30.0),
+        ("frequency", 0.125),
+        ("phase_x", 0.5),
+        ("phase_y", 0.25),
+        ("opacity", 0.75),
+        ("contrast", 0.5),
+    )
+    snapshot = InstanceSnapshot("layer", "texture", True, state, setting)
+    artifact = NS(
+        identity=NS(resource_generation="g"),
+        display=NS(active_outputs=(NS(output_id="out"),)),
+        uniform_layouts=layouts,
+    )
+    program = Program()
+    frame = NS(
+        quad_array=NS(render=lambda mode: None),
+        layer_program=program,
+        field_programs={},
+    )
+
+    def draw(layouts_):
+        return draw_layer(
+            NS(TRIANGLE_STRIP=5),
+            frame,
+            NS(**{**vars(artifact), "uniform_layouts": layouts_}),
+            {},
+            "out",
+            "map",
+            snapshot,
+            [(-1, -1), (1, -1), (1, 1), (-1, 1)],
+        )
+
+    drawn = draw(layouts)
+    assert [item.binding_id for item in drawn] == ["layer:clip_vertices_map"]
+    recorded = uniform_values(artifact, snapshot)
+    for name in names[:-1]:
+        written = program[name].value
+        written = (written,) if isinstance(written, float) else written
+        assert recorded[f"layer:{name}"].words == float32_words(written)
+    with pytest.raises(RuntimeError, match="omits the mapped surface clip uniform"):
+        draw(layouts[:-1])
+
+
+def test_layer_cache_reuses_static_frames_and_never_serves_another_artifact(
+    monkeypatch,
+):
+    from cephvr.visual_stimulus.rendering import layer_cache
+    from cephvr.visual_stimulus.rendering.layer_cache import LayerCache
+
+    calls = []
+    monkeypatch.setattr(
+        layer_cache,
+        "screen_image_frame",
+        lambda profile: (
+            calls.append(("frame", profile.scale)) or ([(0, 0)] * 4, (8, 4))
+        ),
+    )
+    monkeypatch.setattr(
+        layer_cache,
+        "calibrated_fold_map",
+        lambda geometry, profiles, profile: (
+            calls.append(("fold", profile.scale)) or (profile.scale,) * 6
+        ),
+    )
+
+    def artifact(scale):
+        return NS(
+            uniform_layouts=(_layout("i", "clip_vertices_m"),),
+            geometric_calibration=(NS(mapping_id="m", scale=scale),),
+            display=NS(geometry=None),
+        )
+
+    first, second = artifact(1.0), artifact(2.0)
+    cache = LayerCache(first)
+    assert cache.screen_frame("m") == cache.screen_frame("m")
+    assert cache.fold_map("m") == cache.fold_map("m") == (1.0,) * 6
+    assert calls == [("frame", 1.0), ("fold", 1.0)]
+    # A new Setup yields a new artifact: the owner's old cache is ignored.
+    fresh = LayerCache.for_artifact(second, cache)
+    assert fresh is not cache and LayerCache.for_artifact(first, cache) is cache
+    assert fresh.fold_map("m") == (2.0,) * 6
+    with pytest.raises(RuntimeError, match="geometric calibration for mapping x"):
+        cache.fold_map("x")
+    with pytest.raises(RuntimeError, match="omits field_extent_mm_m"):
+        cache.layout("i", "out", "field_extent_mm_m")
+
+
+def test_field_programs_compile_once_per_distinct_recipe():
+    from cephvr.visual_stimulus.rendering.scene_resources import compile_field_programs
+    from cephvr.visual_stimulus.resources.texture_recipe import TextureRecipe
+
+    def recipe(seed):
+        return TextureRecipe("noise_binary", {"seed": seed}, 512, None, None, True)
+
+    compiled, tracked = [], []
+
+    class Context:
+        def program(self, *, vertex_shader, fragment_shader):
+            compiled.append(fragment_shader)
+            return NS(fragment=fragment_shader)
+
+        def vertex_array(self, program, content):
+            return NS(program=program, content=content)
+
+    def track(resource):
+        tracked.append(resource)
+        return resource
+
+    programs = compile_field_programs(
+        Context(),
+        {"a": recipe(1), "b": recipe(1), "c": recipe(2)},
+        "quad",
+        track,
+    )
+    assert len(compiled) == len(set(compiled)) == 2
+    assert programs["a"] is programs["b"] and programs["a"] != programs["c"]
+    assert programs["c"][0].fragment != programs["a"][0].fragment
+    assert len(tracked) == 4  # each program/array is owned (and released) once
+
+
 def test_native_submission_orders_marker_last_and_preserves_failed_attempt():
     from pathlib import Path
 
@@ -1352,13 +1508,24 @@ def test_native_submission_orders_marker_last_and_preserves_failed_attempt():
     port._glfw = GLFW()
     port._display = display
     port._outputs = {
-        marker.output_id: NS(window="marker", swap_interval=1, activate=lambda: None),
-        other.output_id: NS(window="second", swap_interval=0, activate=lambda: None),
+        marker.output_id: NS(
+            window="marker",
+            swap_interval=1,
+            activate=lambda: None,
+            context=NS(finish=lambda: events.append("finish:marker")),
+        ),
+        other.output_id: NS(
+            window="second",
+            swap_interval=0,
+            activate=lambda: None,
+            context=NS(finish=lambda: events.append("finish:second")),
+        ),
     }
     observed = port.present(
         (NS(output_id=marker.output_id), NS(output_id=other.output_id))
     )
-    assert events == ["second", "marker"]
+    # Only the VSync output drains its flip before the return timestamp.
+    assert events == ["second", "marker", "finish:marker"]
     assert observed[0].error == "VISUAL_STIMULUS_SWAP:device lost"
     assert observed[1].error is None
     assert observed[0].swap_entry_ns == observed[0].swap_return_ns == 5
@@ -1726,7 +1893,7 @@ def test_native_source_shader_preserves_pixels_with_center_crop_and_padding(
             "image",
             True,
             (("width", 999), ("height", 888)),
-            NS(kind="image", fit=fit, asset_id="asset", sparse_noise=None),
+            NS(kind="image", fit=fit, asset_id="asset"),
         )
         evidence = draw_layer(
             moderngl,
@@ -2712,7 +2879,6 @@ def test_image_schedule_unions_only_consuming_outputs_across_trials(physical):
             asset_id="image",
             instance_id="layer",
             space=space,
-            sparse_noise=None,
         )
         artifacts.append(
             NS(
@@ -4353,3 +4519,243 @@ def test_shared_grating_rejects_reflected_stimulus_maps(endpoint):
         field_on_surface(
             source, dict(x=0, y=0, rotation=0, frequency=1), target, geometry
         )
+
+
+def test_surface_unfolder_matches_direct_unfolding_and_is_not_served_stale():
+    from tests.visual_stimulus.support import _linked_texture_fixture
+
+    from cephvr.visual_stimulus.config.grating_field import (
+        SurfaceUnfolder,
+        field_on_surface,
+        unfolded_point,
+    )
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    geometry, _ = _linked_texture_fixture()
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    program = add_stimulus(blank_program(), 0, "Grating", ("Bottom",))
+    program = add_stimulus(program, 0, "Grating", ("Front",))
+    source, target = program.sequence[0].settings
+    assert isinstance(source, TextureSettings)
+    values = dict(x=3.5, y=-2.0, rotation=37.5, frequency=0.07, phase_x=0.3)
+    unfolder = SurfaceUnfolder(geometry)
+    first = field_on_surface(source, values, target, geometry, unfolder)
+    assert first == field_on_surface(source, values, target, geometry, unfolder)
+    assert first == field_on_surface(source, values, target, geometry)
+    assert unfolder.point("front", 1, 2) == unfolded_point(geometry, "front", 1, 2)
+    # A changed geometry is never answered from another geometry's unfolder.
+    moved = geometry.model_copy(
+        update={
+            "surfaces": tuple(
+                s.model_copy(update={"bottom_left_mm": (0.0, 0.0, 5.0)})
+                if s.surface_id == "front"
+                else s
+                for s in geometry.surfaces
+            )
+        }
+    )
+    assert unfolder.point("front", 1, 2) == unfolded_point(geometry, "front", 1, 2)
+    assert unfolded_point(moved, "front", 1, 2) != unfolder.point("front", 1, 2)
+    assert field_on_surface(
+        source, values, target, moved, unfolder
+    ) == field_on_surface(source, values, target, moved)
+    with pytest.raises(ValueError, match="Bottom and selected surface"):
+        unfolder.point("missing", 0, 0)
+
+
+class _SparseTexture:
+    def __init__(self, size, data=None):
+        self.size, self.data, self.released = size, data, False
+
+    def write(self, data, alignment=1):
+        self.data = bytes(data)
+
+    def release(self):
+        self.released = True
+
+
+class _SparseOutput:
+    def __init__(self):
+        self.created = []
+        self.context = self
+
+    def texture(self, size, components, data=None, dtype="f1"):
+        assert components == 4 and dtype == "f1"  # RGBA8 cells, not float32.
+        texture = _SparseTexture(size, data)
+        self.created.append(texture)
+        return texture
+
+    def activate(self):
+        pass
+
+
+class _SparseFeed:
+    """In-process stand-in for the helper: generates credited requests on demand."""
+
+    def __init__(self):
+        self.sent, self.failure, self.hold = [], None, False
+        self.layers = None
+        self.credit = self.produced = 0
+
+    def send(self, data, *, deadline_ns):
+        from cephvr.visual_stimulus.resources.sparse_noise_wire import (
+            decode_credit,
+            decode_job,
+        )
+
+        self.sent.append(data)
+        if data.startswith(b"JOB "):
+            from cephvr.visual_stimulus.resources.sparse_noise_stream import requests
+
+            self.layers = decode_job(data)
+            self._requests = requests(self.layers)
+        else:
+            self.credit = decode_credit(data)
+
+    def take(self):
+        from cephvr.visual_stimulus.resources.sparse_noise_stream import (
+            pattern_frame,
+        )
+
+        frames = []
+        while not self.hold and self.produced < self.credit:
+            request = next(self._requests)
+            frames.append(
+                (
+                    request.sequence,
+                    *pattern_frame(self.layers[request.layer], request.pattern),
+                )
+            )
+            self.produced += 1
+        return frames
+
+
+def _sparse_ring(lookahead=3, **program):
+    from tests.visual_stimulus.support import make_prepared_trial
+    from tests.visual_stimulus.test_resources import sparse_layer_program
+
+    from cephvr.visual_stimulus.rendering.sparse_noise_ring import SparseNoiseRing
+
+    plan = make_prepared_trial(sparse_layer_program(**program))
+    output, feed = _SparseOutput(), _SparseFeed()
+    ring = SparseNoiseRing(
+        plan, feed, {"projector/main": output}, lookahead=lookahead, clock_ns=lambda: 0
+    )
+    snapshots = tuple(
+        InstanceSnapshot(s.instance_id, "sparse_noise", True, (), s)
+        for s in plan.epochs[0].settings
+    )
+    return plan, ring, feed, output, snapshots
+
+
+def test_sparse_ring_prefills_one_lookahead_window_per_concurrent_layer():
+    _, ring, feed, output, _ = _sparse_ring(lookahead=3)
+    ring.start(deadline_ns=1)
+    assert ring.window == 6  # Three patterns ahead for each of two layers.
+    ring.prefill(deadline_ns=1)
+    assert ring.received == 6 and feed.sent[-1] == b"CREDIT 6\n"
+    assert all(t.size == (10, 10) for t in output.created)
+
+
+def test_sparse_ring_selects_due_patterns_holds_misses_and_recycles_textures():
+    import hashlib
+
+    from cephvr.visual_stimulus.resources.sparse_noise import GENERATOR, pattern_rgba
+    from cephvr.visual_stimulus.resources.sparse_noise_stream import pattern_texels
+
+    _, ring, feed, output, snapshots = _sparse_ring(lookahead=3)
+    ring.start(deadline_ns=1)
+    ring.prefill(deadline_ns=1)
+    first = ring.select(0, 0, snapshots, deadline_ns=1)
+    selection = first[0].image_selection
+    assert (selection.requested_image_index, selection.image_index) == (0, 0)
+    assert selection.disposition == "current" and not selection.repeated
+    assert first[0].sparse_textures[0].data == pattern_texels(ring.layers[0], 0)
+    layer = ring.layers[0]
+    assert (
+        selection.pattern_sha256
+        == hashlib.sha256(pattern_rgba(layer.recipe, layer.grid, 0)).hexdigest()
+    )
+    assert selection.pattern_generator == GENERATOR
+    # Only the first frame showing a pattern carries its hash.
+    again = ring.select(0, 1, snapshots, deadline_ns=1)[0].image_selection
+    assert again.repeated and again.pattern_sha256 is None
+    # Pattern 1 shown: pattern 0 of each layer retires and credit tops up by two.
+    ring.select(0, 300_000_000, snapshots, deadline_ns=1)
+    assert feed.sent[-1] == b"CREDIT 8\n"
+    created = len(output.created)
+    ring.select(0, 600_000_000, snapshots, deadline_ns=1)
+    assert len(output.created) == created  # Retired textures are reused.
+    # The generator falls behind: the newest due resident pattern is held and
+    # marked, and the skipped older ones retire so credit keeps flowing.
+    feed.hold = True
+    held = ring.select(0, 3_000_000_000, snapshots, deadline_ns=1)[0].image_selection
+    assert (held.requested_image_index, held.image_index) == (10, 3)
+    assert held.disposition == "residency_hold" and not held.repeated
+    assert feed.sent[-1] == b"CREDIT 12\n"
+    again = ring.select(0, 3_100_000_000, snapshots, deadline_ns=1)[0].image_selection
+    assert again.repeated
+    # Recovery: each tick jumps to the newest due pattern until it is current.
+    feed.hold = False
+    for _ in range(4):
+        caught = ring.select(0, 3_300_000_000, snapshots, deadline_ns=1)
+    selection = caught[0].image_selection
+    assert (selection.image_index, selection.disposition) == (11, "current")
+    ring.release()
+    assert all(t.released for t in output.created)
+
+
+def test_sparse_ring_without_a_first_pattern_shows_background_only():
+    _, ring, feed, output, snapshots = _sparse_ring(lookahead=2)
+    feed.hold = True
+    ring.start(deadline_ns=1)
+    with pytest.raises(TimeoutError, match="0/4"):
+        ring.prefill(deadline_ns=0)
+    selected = ring.select(0, 0, snapshots, deadline_ns=1)[0]
+    blank = selected.image_selection
+    # Recorded truthfully: no pattern was drawn, only the layer background.
+    assert blank.disposition == "background_hold" and blank.image_index is None
+    assert blank.requested_image_index == 0 and blank.pattern_sha256 is None
+    assert selected.sparse_textures[0].size == (1, 1)
+    assert selected.sparse_textures[0].data == bytes(4)  # Transparent: background.
+    assert ring.select(0, 1, snapshots, deadline_ns=1)[0].image_selection.repeated
+
+
+def test_sparse_ring_retires_a_finished_epoch_and_reports_generator_failure():
+    from cephvr.visual_stimulus.rendering.sparse_noise_ring import SparseNoiseError
+
+    plan, ring, feed, _, snapshots = _sparse_ring(
+        lookahead=2, seconds="30", count=3, epochs=2
+    )
+    ring.start(deadline_ns=1)
+    ring.prefill(deadline_ns=1)
+    ring.select(0, 0, snapshots, deadline_ns=1)
+    second = tuple(
+        InstanceSnapshot(s.instance_id, "sparse_noise", True, (), s)
+        for s in plan.epochs[1].settings
+    )
+    for _ in range(3):  # Epoch 0's remaining frames retire on the boundary.
+        ring.select(1, 0, second, deadline_ns=1)
+    assert ring.select(1, 0, second, deadline_ns=1)[0].image_selection.disposition == (
+        "current"
+    )
+    feed.failure = RuntimeError("exit 3")
+    with pytest.raises(SparseNoiseError, match="exit 3"):
+        ring.select(1, 1, second, deadline_ns=1)
+
+
+def test_sparse_noise_lookahead_matches_policy():
+    import tomllib
+    from pathlib import Path
+
+    from cephvr.visual_stimulus.worker.sparse_noise import LOOKAHEAD_PATTERNS
+
+    policy = tomllib.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "contracts/policy/visual_stimulus_policy.toml"
+        ).read_text()
+    )["sparse_noise"]
+    assert LOOKAHEAD_PATTERNS == policy["lookahead_patterns"] == 100

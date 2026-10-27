@@ -11,7 +11,8 @@ from cephvr.visual_stimulus.resources.physical_field import (
     validate_field,
 )
 from cephvr.visual_stimulus.resources.texture_recipe import TextureRecipe
-from cephvr.visual_stimulus.resources.texture_recipe_geometry import _color
+from cephvr.visual_stimulus.resources.texture_recipe_geometry import rgb_color
+from cephvr.visual_stimulus.resources.texture_recipe_patterns import PALETTE
 
 _HASH = """
 float field_hash(ivec2 p, uint seed) {
@@ -109,14 +110,12 @@ def field_glsl(recipe: TextureRecipe) -> str:
         pitch = p["line_spacing_mm"]
         body = f"""vec2 d = abs(mod(q + {f(pitch / 2)}, {f(pitch)}) - {f(pitch / 2)});
         float bright = min(d.x,d.y) <= {f(p["line_width_mm"] / 2)} && mod(d.x < d.y ? q.y : q.x, {f(p["dash_length_mm"] + p["dash_gap_mm"])}) < {f(p["dash_length_mm"])} ? 1.0 : 0.0;"""
-    a = ",".join(f(c / 255) for c in _color(p.get("color_a"), (255, 255, 255)))
-    b = ",".join(f(c / 255) for c in _color(p.get("color_b"), (0, 0, 0)))
+    a = ",".join(f(c / 255) for c in rgb_color(p.get("color_a"), (255, 255, 255)))
+    b = ",".join(f(c / 255) for c in rgb_color(p.get("color_b"), (0, 0, 0)))
     foreground = f"vec3({a})"
     if pattern == "calibration_grid":
-        from cephvr.visual_stimulus.resources.texture_recipe_patterns import _PALETTE
-
         colors = ",".join(
-            "vec3(" + ",".join(f(int(c) / 255) for c in rgb) + ")" for rgb in _PALETTE
+            "vec3(" + ",".join(f(int(c) / 255) for c in rgb) + ")" for rgb in PALETTE
         )
         body += f"\nvec3 palette[16] = vec3[16]({colors});\nint index = int(mod(floor((d.x < d.y ? q.x : q.y) / {f(p['line_spacing_mm'])} + 0.5), {f(p['color_count'])}));"
         foreground += " * palette[index]"

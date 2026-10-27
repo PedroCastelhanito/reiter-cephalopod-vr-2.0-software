@@ -9,7 +9,13 @@ from typing import TYPE_CHECKING, Any
 
 from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.program_model import VideoSettings
+from cephvr.visual_stimulus.rendering.grating_field import (
+    retain_shared_grating_phase,
+    shared_grating_snapshots,
+)
+from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
 from cephvr.visual_stimulus.rendering.state import InstanceState, TrialState
+from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
 from cephvr.visual_stimulus.rendering.types import (
     DiagnosticSnapshot,
     DisplayInitialization,
@@ -362,8 +368,6 @@ class RendererEngine:
                 break
             for live in self._state.instances.values():
                 live.advance(boundary_host_ns)
-            from .grating_field import retain_shared_grating_phase
-
             retain_shared_grating_phase(
                 self._state.instances,
                 self._prepared.artifact.display.geometry,
@@ -423,10 +427,6 @@ class RendererEngine:
                     now_ns=boundary_host_ns,
                 )
             if next_epoch is not None:
-                from cephvr.visual_stimulus.rendering.texture_links import (
-                    bind_texture_links,
-                )
-
                 bind_texture_links(
                     self._state.instances,
                     self._prepared.artifact.display.geometry,
@@ -453,14 +453,6 @@ class RendererEngine:
                     f"active instance {setting.instance_id} was not initialized"
                 )
             values = live.snapshot(now_ns=now_ns, epoch_start_ns=epoch_host_start)
-            if setting.kind == "image" and setting.sparse_noise is not None:
-                setting = setting.model_copy(
-                    update={
-                        "asset_id": setting.sparse_noise.asset_at(
-                            now_ns - epoch_host_start
-                        )
-                    }
-                )
             decoded_frame = None
             media_selection = None
             source_frame_index = source_pts = None
@@ -487,8 +479,6 @@ class RendererEngine:
                     media_selection=media_selection,
                 )
             )
-        from .grating_field import shared_grating_snapshots
-
         return scene, shared_grating_snapshots(
             tuple(snapshots), self._prepared.artifact.display.geometry
         )
@@ -497,12 +487,6 @@ class RendererEngine:
         for lease in self._video_leases:
             lease.release()
         self._video_leases.clear()
-
-    @staticmethod
-    def photodiode_level(index: int) -> bool:
-        from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
-
-        return photodiode_level(index)
 
     def render_tick(
         self, now_ns: int, feedback_batch: tuple[Any, ...] = ()
@@ -528,7 +512,8 @@ class RendererEngine:
                 "render update is at or beyond the scheduled trial cutoff"
             )
         self._apply_due_boundaries(now_ns)
-        index = 0
+        # Applied boundaries already locate the current epoch; scan only past it.
+        index = self._state.epoch_index
         while index + 1 < len(epochs) and elapsed >= epochs[index].end_ns:
             index += 1
         epoch = epochs[index]
@@ -561,11 +546,14 @@ class RendererEngine:
                 snapshots = select_images(
                     self._trial_id, epoch.occurrence_index, snapshots
                 )
+            select_sparse = getattr(self._port, "select_sparse_noise", None)
+            if select_sparse is not None:
+                snapshots = select_sparse(
+                    epoch.occurrence_index, elapsed - epoch.start_ns, snapshots
+                )
         except BaseException:
             self._release_video_leases()
             raise
-        from .photodiode import photodiode_level
-
         marker = photodiode_level(
             self._photodiode_index, self._prepared.artifact.display.photodiode_mode
         )

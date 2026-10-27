@@ -11,9 +11,12 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from collections.abc import Callable, Iterator
 
+from PyQt6.QtCore import QEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
+from cephvr.gui.review import ReviewControls
 from cephvr.gui.theme import apply_theme
+from cephvr.gui.window import DashboardWindow
 
 # Far above the slowest offscreen GUI test; turns a stalled event loop into a
 # named failure with stacks instead of a silent run.
@@ -67,3 +70,19 @@ def app() -> QApplication:
     assert isinstance(result, QApplication)
     apply_theme(result)
     return result
+
+
+@pytest.fixture
+def window(app: QApplication) -> Iterator[DashboardWindow]:
+    result = DashboardWindow(sample=True)
+    ReviewControls(result)
+    from cephvr.gui.protocol_document import review_program
+
+    result.protocol.editor.set_program(review_program())
+    result.show()
+    app.processEvents()
+    yield result
+    result.close()
+    result.deleteLater()
+    QApplication.sendPostedEvents(result, QEvent.Type.DeferredDelete)
+    app.processEvents()

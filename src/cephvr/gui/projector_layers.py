@@ -11,6 +11,7 @@ from cephvr.gui.program_editing import (
     unique_id,
     validate,
 )
+from cephvr.gui.stimulus_columns import is_sparse_noise
 from cephvr.gui.stimulus_scope import set_surfaces, surfaces
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program, Settings
 
@@ -26,7 +27,7 @@ def layer_title(program: Program, setting: Settings) -> str:
     )
     if setting.kind == "texture" and setting.uniform:
         kind = "Uniform"
-    if setting.kind == "image" and setting.sparse_noise is not None:
+    if is_sparse_noise(setting):
         kind = "Sparse noise"
     if setting.kind == "texture" and setting.grating:
         kind = "Grating"

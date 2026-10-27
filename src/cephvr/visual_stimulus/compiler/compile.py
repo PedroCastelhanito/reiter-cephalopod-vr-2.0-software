@@ -47,6 +47,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Ref,
     Settings,
     Sine,
+    SparseNoiseSettings,
     TargetTotal,
     TextureSettings,
     TrialArenaBoundaries,
@@ -54,6 +55,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     parse_program_json,
 )
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
+from cephvr.visual_stimulus.resources.sparse_noise_stream import with_grid_extent
 
 MODEL_COMPATIBILITY = "cephvr-visual-stimulus-model-v2"
 RENDERER_COMPATIBILITY = "cephvr-visual-stimulus-renderer-v1"
@@ -306,12 +308,6 @@ def _check_asset_resources(
         for settings in epoch.settings:
             if isinstance(settings, (ImageSettings, VideoSettings, ArenaSettings)):
                 add_asset(settings.asset_id)
-                if (
-                    isinstance(settings, ImageSettings)
-                    and settings.sparse_noise is not None
-                ):
-                    for asset_id in settings.sparse_noise.asset_ids:
-                        add_asset(asset_id)
             elif isinstance(settings, TextureSettings) and isinstance(
                 settings.pattern, ImageTile
             ):
@@ -419,7 +415,12 @@ def compile_trial(
             expanded, duration_result.durations_ns, duration_result.origins, strict=True
         )
     ):
-        settings = occurrence.settings
+        settings = tuple(
+            with_grid_extent(item, context.display)
+            if isinstance(item, SparseNoiseSettings)
+            else item
+            for item in occurrence.settings
+        )
         _validate_writers(settings, index)
         _check_ranges(settings, index, duration_ns)
         end = cursor + duration_ns

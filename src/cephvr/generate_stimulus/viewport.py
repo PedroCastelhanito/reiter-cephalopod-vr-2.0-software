@@ -52,6 +52,7 @@ class ArenaViewport(QOpenGLWidget):
         self.resources: list[Any] = []
         self.cached: dict[str, list[Any]] = {}
         self.dirty = False
+        self.fitted: float | None = None
         self.yaw, self.pitch = 0.8, 0.65
         self.distance = 1000.0
         self.target = np.zeros(3)
@@ -87,16 +88,17 @@ class ArenaViewport(QOpenGLWidget):
         self.doneCurrent()
 
     def set_arena(self, result: CompiledArena) -> None:
-        first = self.result is None
         self.result = result
         self.dirty = True
-        if first:
+        # Keep the user's view for small edits; reframe when the arena size changes.
+        low, high = self._bounds()
+        diagonal = max(1.0, float(np.linalg.norm(high - low)))
+        if self.fitted is None or abs(diagonal - self.fitted) > 0.05 * self.fitted:
             self.fit()
         self.update()
 
-    def fit(self) -> None:
-        if self.result is None:
-            return
+    def _bounds(self) -> tuple[np.ndarray, np.ndarray]:
+        assert self.result is not None
         points = np.concatenate(
             [
                 np.asarray(p.positions)
@@ -104,10 +106,15 @@ class ArenaViewport(QOpenGLWidget):
                 for p in n.primitives
             ]
         )
-        self.target = (points.min(0) + points.max(0)) / 2
-        self.distance = (
-            max(1, float(np.linalg.norm(points.max(0) - points.min(0)))) * 1.6
-        )
+        return points.min(0), points.max(0)
+
+    def fit(self) -> None:
+        if self.result is None:
+            return
+        low, high = self._bounds()
+        self.target = (low + high) / 2
+        self.fitted = max(1.0, float(np.linalg.norm(high - low)))
+        self.distance = self.fitted * 1.6
         self.update()
 
     def _upload(self) -> None:
@@ -115,48 +122,47 @@ class ArenaViewport(QOpenGLWidget):
         self.draws.clear()
         assert self.result is not None
         scene = self.result.scene
-        textures = []
         from cephvr.visual_stimulus.rendering.arena_gpu import configure_sampler
         from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
         from cephvr.visual_stimulus.resources.media import ImagePixels
 
-        for source in scene.textures:
-            variants = []
-            for opaque in (False, True):
-                key = hashlib.sha256(
-                    source.image
-                    + repr(
-                        (
-                            source.wrap_s,
-                            source.wrap_t,
-                            source.min_filter,
-                            source.mag_filter,
-                            opaque,
-                        )
-                    ).encode()
-                ).hexdigest()
-                existing = retained.get(key, self.cached.get(key))
-                if existing is None:
-                    with Image.open(io.BytesIO(source.image)) as image:
-                        rgba = np.asarray(image.convert("RGBA"))
-                        pixels = ImagePixels(
-                            image.width,
-                            image.height,
-                            "uint8",
-                            4,
-                            ("red", "green", "blue", "alpha"),
-                            rgba,
-                            "srgb",
-                            "straight",
-                        )
-                        raw = linear_rgba_bytes(pixels, opaque=opaque)
-                        texture = self.ctx.texture(image.size, 4, raw, dtype="f4")
-                    configure_sampler(texture, source)
-                    existing = [texture]
-                    self.resources.extend(existing)
-                retained[key] = existing
-                variants.append(existing[0])
-            textures.append(variants)
+        def texture(index: int, opaque: bool) -> Any:
+            """Upload the variant a draw needs; each draw uses one per material."""
+            source = scene.textures[index]
+            key = hashlib.sha256(
+                source.image
+                + repr(
+                    (
+                        source.wrap_s,
+                        source.wrap_t,
+                        source.min_filter,
+                        source.mag_filter,
+                        opaque,
+                    )
+                ).encode()
+            ).hexdigest()
+            existing = retained.get(key, self.cached.get(key))
+            if existing is None:
+                with Image.open(io.BytesIO(source.image)) as image:
+                    rgba = np.asarray(image.convert("RGBA"))
+                    pixels = ImagePixels(
+                        image.width,
+                        image.height,
+                        "uint8",
+                        4,
+                        ("red", "green", "blue", "alpha"),
+                        rgba,
+                        "srgb",
+                        "straight",
+                    )
+                    raw = linear_rgba_bytes(pixels, opaque=opaque)
+                    gl_texture = self.ctx.texture(image.size, 4, raw, dtype="f4")
+                configure_sampler(gl_texture, source)
+                existing = [gl_texture]
+                self.resources.extend(existing)
+            retained[key] = existing
+            return existing[0]
+
         for node in scene.nodes:
             for primitive in node.primitives:
                 points = np.asarray(primitive.positions, dtype="f4")
@@ -194,9 +200,9 @@ class ArenaViewport(QOpenGLWidget):
                         material,
                         None
                         if material.texture_index is None
-                        else textures[material.texture_index][
-                            1 if material.alpha_mode == "OPAQUE" else 0
-                        ],
+                        else texture(
+                            material.texture_index, material.alpha_mode == "OPAQUE"
+                        ),
                     )
                 )
         for key, resources in self.cached.items():

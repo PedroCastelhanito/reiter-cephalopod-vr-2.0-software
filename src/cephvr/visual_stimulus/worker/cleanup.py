@@ -6,7 +6,13 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.visual_stimulus.rendering.types import ResourceReleaseReport
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
-from .ports import EnginePort, FeedbackPort, PreparationPort, RecordingPort
+from .ports import (
+    EnginePort,
+    FeedbackPort,
+    PreparationPort,
+    RecordingPort,
+    SparseNoisePort,
+)
 from .state import DriverState
 
 
@@ -22,6 +28,7 @@ def cleanup_resources(
     engine: EnginePort,
     feedback: FeedbackPort | None,
     emit: Callable[[pb.LifecycleReport, int], None] | None,
+    sparse_noise: SparseNoisePort | None = None,
 ) -> pb.CleanupReport:
     keys: set[str] = set(state.released_threads)
     failures: list[str] = []
@@ -34,6 +41,11 @@ def cleanup_resources(
     except Exception as exc:
         failures.append(str(exc))
     operations: tuple[Callable[[], ResourceReleaseReport], ...] = (
+        lambda: (
+            sparse_noise.cleanup(deadline_ns)
+            if sparse_noise is not None
+            else ResourceReleaseReport((), ())
+        ),
         lambda: (
             feedback.close(deadline_ns)
             if feedback is not None
