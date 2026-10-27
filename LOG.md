@@ -12236,3 +12236,7 @@ owned evidence-directory cache remains. Retained diagnostics/settings snapshots
 are versioned as approved; ignored scientific recordings remain local. Concurrent
 GUI/stimulus-authoring changes were preserved outside this commit. Staged Python
 syntax and whitespace checks pass; no force push or history rewrite was used.
+
+### 2026-10-27 - [acquisition] [tracking] [gui] [visual_stimulus] Owner deferral and stale proposal correction
+
+Owner defers representative illuminated-camera scene work; move eye-tracking-source-darkness to Deferred without changing imaging settings. Review-device-layout-promotion was mistakenly re-presented as an open implementation choice. Oct19 mcu-output-card-spacing and verification-complete LOG entries, current G01/V20/V22 and shared GUI code establish that runtime I/O draft authoring and per-screen pulse support were already promoted and locally verified. Remove the stale TODO and correct the current audit recommendation. Physical input capture and native/electrical/optical acceptance retain their existing deferrals; no new implementation approved or performed. Documentation/source inspection only; no runtime test needed.

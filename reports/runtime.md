@@ -241,7 +241,9 @@ process absence. Full-load and electrical/optical timing remain unverified.
   viewer visibility, configured trigger rate and trial admission. The existing
   five-second heartbeat carries source-time measurements; explicit expiry uses
   the existing process-silence allowance, not a new heartbeat policy.
-  Remaining device-layout promotion still needs its owning scope choice.
+  Correction Oct27: device-layout promotion was completed on Oct19 under G01/V20/V22
+  (LOG: mcu-output-card-spacing verification complete); its stale TODO is removed.
+  Physical input support and remaining native/optical acceptance retain their deferrals.
 - Embedded-preview integration and off-GL-thread readback remain owner-deferred;
   this audit does not promote either alternative. Physical geometry, darkness and
   optical/electrical timing require measurements, not speculative code changes.
