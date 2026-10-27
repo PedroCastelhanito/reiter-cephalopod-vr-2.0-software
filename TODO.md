@@ -12,7 +12,6 @@ Blocked and Deferred entries name their reason.
 
 
 
-- [ ] `repo-hierarchy-audit-oct26` [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [shared] Audit dead code, simplification and performance; fix verified behavior-preserving issues, exercise GUI and bounded dummy/overload tests, triage remaining TODOs, retain owner decisions under Code to review / implement, clean expendable artifacts and commit/sync. Owner: current audit chat; PC and connected-rig permission granted Oct26. — [Runtime report](reports/runtime.md)
 
 - [ ] `preview-interaction-transitions` [gui] [acquisition] Verify restored native title-bar theme/DPI/drag/Snap and live camera FPS after restart; isolated native/icon and pixel-equality checks pass; measured8-bit preparation bottleneck fixed (Behavior35.49→6.11ms), independent reader preparation/shared native owner now passes181 local and2 native cases; final live FPS and original regression onset unverified. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26) Oct27 native idle sources30/60fps and previews approximately20fps pass; both Show toggles recover. Full-load/DPI and original onset remain open.
 
@@ -117,7 +116,7 @@ Remaining entries require native/physical execution or missing reproduction evid
 
 ## Blocked
 
-- [ ] `repo-commit-sync-oct26` [repo] Push validated cleanup c2d58130 and its sync-status record to origin/main. Owner: cleanup chat. Blocked: automatic approval review requires explicit approval of the GitHub destination and payload; local commit/checks complete. Done when origin/main equals HEAD. — [Log](LOG.md)
+- [ ] `repo-commit-sync-oct26` [repo] Sync the reviewed audit/fixes and existing local commits to origin/main. Owner: current audit chat. Blocked: automatic approval review rejected the Oct27 push; requires explicit approval of the GitHub destination and diagnostic evidence payload. Audit commit4bbd403e and local checks complete; remaining native/behavior work has individual entries. Done when origin/main equals HEAD. — [Log](LOG.md), [Audit](reports/runtime.md#hierarchical-audit--2026-10-2627)
 
 - [ ] `gui-full-rig-test` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Finish physical per-control/menu/dialog and DPI acceptance. Status:600s Gaussian/output audit, native diagnostic repair/reuse,751 GUI and805 owner tests complete; blocked because native desktop capture hangs after required recovery. Offscreen evidence is separate. New read-only issue-hunt chat01a1536e-d045-7630-af42-ffcdf3d83e98 follows under parent ownership. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md) Oct27 audit adds1085 offscreen GUI passes, six final paint cases and bounded native navigation; exhaustive controls/DPI remain untested, fresh activation timed out twice.
 
