@@ -1,0 +1,18 @@
+git diff --check
+exit=0
+warning: in the working copy of '.gitignore', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'LOG.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'TODO.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/display-profile.schema.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/examples/sparse-noise.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/prepared-trial.schema.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/program.schema.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/sparse-noise-recipe.schema.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/visual_stimulus/sparse-noise.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/visual_stimulus.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/cephvr/gui/projector_reference.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'src/cephvr/visual_stimulus/config/models/program_model.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/visual_stimulus/test_compilation.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/visual_stimulus/test_configuration.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/visual_stimulus/test_rendering.py', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/visual_stimulus/test_resources.py', CRLF will be replaced by LF the next time Git touches it

@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "source_scope": "Dirty working tree, including pre-existing and concurrent changes; no commit made.",
+  "files_sha256": {
+    "src/cephvr/gui/batch_values.py": "ca94ebc444c3e1a3578731461e1ee66a9c456fff120344db21ab9553a3d2c2e8",
+    "src/cephvr/gui/batch_variation.py": "c5d99d8ca5d37cf4266cb4bd5074631d9517f99890ec75657164588c8131904c",
+    "src/cephvr/gui/batch_create.py": "4dd0f709596a372c5e099ca1b511c280a93ad37ff94669e8f2b1eb759760e7f3",
+    "src/cephvr/gui/subgroup_editor.py": "77ebca5e9cf58205eb3a8c4ea1a7c3e0fd499dedb6ba01ae02997778312dbd73",
+    "src/cephvr/gui/subgroup_repetitions.py": "7136bd83e025a7bb5be4d11b5fcb48fc86cc99eeb28facf34f4e9de616978463",
+    "src/cephvr/gui/variation_assets.py": "dd1a450917bc959b5be7bfa1b9f2daca8fc351e053acd5ea07c480a6c299fac7",
+    "src/cephvr/visual_stimulus/config/models/repetition.py": "0eb43b9e9549196fa9b757bb05593e4856658b47da8d3a7dad5347772dbabdcd",
+    "src/cephvr/visual_stimulus/config/models/program_model.py": "e3bece84431adceefd77f73032c697afa046228b69f0b2d83561c42e57d45b55",
+    "src/cephvr/visual_stimulus/config/models/authoring.py": "a852e990f8e65f7898a46f582d3c1f813facc63579540f891336e0179a6c733e",
+    "src/cephvr/visual_stimulus/config/repetition_values.py": "c413407813b6591c7d6568e4d2fe0d545db9a68e762b5a7de010c03d6b9ecf7b",
+    "src/cephvr/visual_stimulus/config/categories.py": "2a93d6ee8fc85065361a1e2f28fcfb336908e58d561646af8102dd09f7fb7a45",
+    "tests/gui/test_dashboard.py": "41b0c07ab884b4d82ace10b97938a50424361c5227eab9dd6c39cc7a753944ca",
+    "tests/visual_stimulus/test_compilation.py": "cbef2f1ff54749a9cfa1665fe73eb8a3b77a168ded1270835dfdd49b2ecd2b1a"
+  },
+  "gui": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -m \"not windows and not rig\" -k \"variation or subgroup or random_batch or presentation\" --basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/asset-variation-gui-final-2 --timeout=45",
+    "result": "35 passed, 994 deselected",
+    "raw": "gui-final.txt"
+  },
+  "geometry_after_final_span_fix": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"asset_variations_choose_folder and Image-None\" --basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/asset-variation-geometry-final --timeout=45",
+    "result": "2 passed, 1027 deselected",
+    "raw": "geometry.txt"
+  },
+  "backend": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_compilation.py tests/visual_stimulus/test_configuration.py -q -m \"not windows and not rig\" --basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/asset-variation-backend-final --timeout=45",
+    "result": "38 passed, 3 subtests passed",
+    "raw": "backend.txt"
+  },
+  "ruff_check": {
+    "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/gui/batch_values.py src/cephvr/gui/batch_variation.py src/cephvr/gui/batch_create.py src/cephvr/gui/subgroup_editor.py src/cephvr/gui/subgroup_repetitions.py src/cephvr/gui/variation_assets.py src/cephvr/visual_stimulus/config/models/repetition.py src/cephvr/visual_stimulus/config/models/program_model.py src/cephvr/visual_stimulus/config/models/authoring.py src/cephvr/visual_stimulus/config/repetition_values.py src/cephvr/visual_stimulus/config/categories.py tests/gui/test_dashboard.py tests/visual_stimulus/test_compilation.py",
+    "result": "All checks passed"
+  },
+  "ruff_format": {
+    "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui/batch_values.py src/cephvr/gui/batch_variation.py src/cephvr/gui/batch_create.py src/cephvr/gui/subgroup_editor.py src/cephvr/gui/subgroup_repetitions.py src/cephvr/gui/variation_assets.py src/cephvr/visual_stimulus/config/models/repetition.py src/cephvr/visual_stimulus/config/models/program_model.py src/cephvr/visual_stimulus/config/models/authoring.py src/cephvr/visual_stimulus/config/repetition_values.py src/cephvr/visual_stimulus/config/categories.py tests/gui/test_dashboard.py tests/visual_stimulus/test_compilation.py",
+    "result": "13 files already formatted"
+  },
+  "mypy": {
+    "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui/batch_values.py src/cephvr/gui/batch_variation.py src/cephvr/gui/batch_create.py src/cephvr/gui/subgroup_editor.py src/cephvr/gui/subgroup_repetitions.py src/cephvr/gui/variation_assets.py src/cephvr/visual_stimulus/config/models/repetition.py src/cephvr/visual_stimulus/config/models/program_model.py src/cephvr/visual_stimulus/config/models/authoring.py src/cephvr/visual_stimulus/config/repetition_values.py src/cephvr/visual_stimulus/config/categories.py",
+    "result": "Success: no issues found in 11 source files"
+  },
+  "schemas": {
+    "command": ".venv/Scripts/python.exe contracts/visual_stimulus/generate_schemas.py --check",
+    "result": "14 schemas checked; 0 needed regeneration (two source/prepared schemas regenerated earlier)"
+  },
+  "boundaries": {
+    "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+    "result": "773 backend modules, zero violations; size advisories remain"
+  },
+  "limitations": [
+    "Offscreen Qt source/editor tests; video/image byte fixtures do not establish decode validity. Existing Setup media validation remains authoritative.",
+    "No running managed GUI restart, live video playback, hardware, optics or full-workload acceptance."
+  ]
+}

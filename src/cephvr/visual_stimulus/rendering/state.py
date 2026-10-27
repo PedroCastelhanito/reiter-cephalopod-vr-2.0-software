@@ -144,9 +144,11 @@ class InstanceState:
             item = StateField(value, "hold", None, epoch_start_ns, now_ns)
             item.bind(motions.get(name), epoch_start_ns=epoch_start_ns, now_ns=now_ns)
             values[name] = item
-        return cls(
+        state = cls(
             settings.instance_id, settings.kind, values, True, settings, epoch_start_ns
         )
+        state.apply_grating_assignments(now_ns)
+        return state
 
     def advance(self, now_ns: int) -> None:
         if self.active:
@@ -204,6 +206,22 @@ class InstanceState:
         }
         self.active = True
         self.last_epoch_start_ns = epoch_start_ns
+        self.apply_grating_assignments(now_ns)
+
+    def apply_grating_assignments(self, now_ns: int) -> None:
+        """Apply marked Grating occurrence values required by its fixed orientation."""
+        if self.settings.kind != "texture" or not getattr(
+            self.settings, "grating", False
+        ):
+            return
+        from cephvr.visual_stimulus.config.models.program_model import Time
+
+        for assignment in self.settings.assignments:
+            value = assignment.value
+            resolved = value.ns() / 1e9 if isinstance(value, Time) else _literal(value)
+            field = self.values[assignment.target]
+            field.value = resolved
+            field.anchor_ns = now_ns
 
     def apply_increment(self, target: str, amount: float, *, now_ns: int) -> None:
         if not self.active or target not in self.values or not math.isfinite(amount):

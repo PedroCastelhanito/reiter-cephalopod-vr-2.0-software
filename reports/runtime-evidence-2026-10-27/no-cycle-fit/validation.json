@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty workspace; summarized tool output; no physical validation",
+  "checks": {
+    "QT_QPA_PLATFORM=offscreen pytest tests/generate_stimulus -q -m \"not windows and not rig\" --basetemp=<visualization workspace>/no-cycle-fit --tb=short": "76 passed,2 deselected in6.07s",
+    "ruff check/format properties.py textures.py tests/generate_stimulus": "pass,4 files",
+    "mypy --platform win32 properties.py textures.py": "2 sources pass",
+    "python tools/check_backend_boundaries.py": "772 modules,0 violations"
+  }
+}

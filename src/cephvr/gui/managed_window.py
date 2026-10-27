@@ -26,6 +26,9 @@ class ManagedDashboardWindow(DashboardWindow):
     def closeEvent(self, event: QCloseEvent | None) -> None:
         if event is None:
             return
+        if not self.confirm_authoring_close():
+            event.ignore()
+            return
         if self._close_after_save:
             super().closeEvent(event)
             return

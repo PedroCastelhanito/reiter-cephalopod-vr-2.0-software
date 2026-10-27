@@ -87,6 +87,7 @@ class ProjectorPulses(ProjectorTiming):
             edit.textChanged.connect(self.edited)
         self.pulse.toggled.connect(self.refresh_summary)
         self.mode.currentIndexChanged.connect(self.refresh_summary)
+        self.photodiode_mode.currentIndexChanged.connect(self.refresh_summary)
         if local_preview:
             self.placement_button.clicked.connect(self.open_preview)
         panel.outputs_changed.connect(self.refresh_summary)

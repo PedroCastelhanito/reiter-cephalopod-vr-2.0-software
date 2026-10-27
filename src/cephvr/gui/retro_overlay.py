@@ -87,7 +87,10 @@ class CrtOverlay(QWidget):
         painter = QPainter(self)
         region = QRegion(self.rect())
         for preview in self.host.findChildren(
-            QWidget, QRegularExpression("^(ExternalPreviewSlot|TrialPreviewPixels)$")
+            QWidget,
+            QRegularExpression(
+                "^(ExternalPreviewSlot|TrialPreviewPixels|AssetPreviewPixels)$"
+            ),
         ):
             if preview.window() is self.host.window() and preview.isVisibleTo(
                 self.host

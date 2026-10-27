@@ -94,6 +94,8 @@ class PreviewSurface:
     blackout_zones: tuple[tuple[float, float, float, float], ...] = ()
     marker_rect: tuple[float, float, float, float] | None = None
     physical_corners: tuple[tuple[float, float, float], ...] = ()
+    image_pixels: tuple[int, int] | None = None
+    output_pixels: tuple[int, int] | None = None
 
 
 @dataclass(frozen=True)
@@ -141,6 +143,18 @@ class PreviewGeometry:
                 )
                 physical = corners
                 resolution = (resolutions or {}).get(face)
+                image_pixels = None
+                if resolution:
+                    from cephvr.gui.projector_extent import valid_pixels
+
+                    numeric_pixels = {
+                        f"screens.{face}.{key}": float(value) if value else None
+                        for key, value in values.items()
+                        if key not in ("flip_x", "flip_y")
+                    }
+                    image_pixels = valid_pixels(numeric_pixels, face, *resolution)
+                    if face == "Bottom":
+                        image_pixels = (image_pixels[1], image_pixels[0])
                 if resolution and any(
                     values.get(f"reference_{axis}_mm", "") for axis in ("x", "y")
                 ):
@@ -174,6 +188,8 @@ class PreviewGeometry:
                     tuple((overlays or {}).get(face, ([], None))[0]),
                     (overlays or {}).get(face, ([], None))[1],
                     physical,
+                    image_pixels,
+                    resolution,
                 )
             except (KeyError, ValueError):
                 continue
@@ -184,6 +200,64 @@ class PreviewGeometry:
         from cephvr.visual_stimulus.configuration import load_projection_settings
 
         return load_projection_settings()
+
+    def image_fold_map(self, face: str) -> tuple[float, ...]:
+        from cephvr.visual_stimulus.rendering.image_fit import valid_image_corners
+        from cephvr.visual_stimulus.rendering.image_fold import (
+            affine_output_axes,
+            fold_map,
+        )
+
+        def axes(
+            name: str,
+        ) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float]]:
+            surface = self.surfaces[name]
+            correction = surface.correction
+            if (
+                not surface.output_pixels
+                or not correction
+                or correction.error
+                or not correction.source_uv
+            ):
+                raise ValueError(
+                    "Fold requires assigned, calibrated Front and target projectors"
+                )
+            valid_image_corners(
+                correction.source_uv,
+                correction.corners,
+                correction.valid_area or (0, 0, 1, 1),
+            )
+            return affine_output_axes(
+                correction.source_uv,
+                [
+                    (x * surface.output_pixels[0], y * surface.output_pixels[1])
+                    for x, y in correction.corners
+                ],
+            )
+
+        if "Front" not in self.surfaces:
+            raise ValueError("Fold requires Front calibration")
+        _, dx, dy = axes("Front")
+        if abs(dx[0]) < 1e-12 or abs(dy[1]) < 1e-12:
+            raise ValueError("Fold Front reference requires landscape calibration axes")
+        front = self.surfaces["Front"]
+        pitch = (front.width / abs(dx[0]), front.height / abs(dy[1]))
+        surface = self.surfaces[face]
+        correction = surface.correction
+        target_axes = axes(face)
+        assert correction is not None
+        corners = valid_image_corners(
+            correction.source_uv,
+            correction.corners,
+            correction.valid_area or (0, 0, 1, 1),
+        )
+        return fold_map(
+            {name.lower(): (s.width, s.height) for name, s in self.surfaces.items()},
+            pitch,
+            face.lower(),
+            corners,
+            target_axes,
+        )
 
     def artifact(self) -> Any:
 

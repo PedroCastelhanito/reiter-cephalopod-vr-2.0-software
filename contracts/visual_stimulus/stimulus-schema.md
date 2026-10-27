@@ -12,11 +12,38 @@ Do not claim structural parsing alone is full program validation or Ready.
 
 All required fields in each selected settings variant follow V02. Empty feedback
 and assignments explicitly mean none; `hold` explicitly means no programmed writer.
-A plain image may specify `fit: contain|cover|stretch` under V04. Omitted legacy
-values preserve Stretch; new GUI Images write Contain explicitly. Fit acts within
-the authored width/height rectangle before projection, with transparent margins
-for Contain and a centered source crop for Cover. Looming remains an image with
-size animation and keeps its existing default Stretch behavior.
+A plain image offers `fit: resize|source|fold` under V04/V14. Resize fills the valid
+screen rectangle with the complete image; Source selects original pixels using
+independent per-axis centered crop/padding. For source size S and target T, the
+retained extent is min(S,T), source start floor((S-min(S,T))/2), and destination
+start floor((T-min(S,T))/2). Padding is transparent to the underlying scene; odd
+surplus goes right/bottom in top-left image coordinates. These fits override the
+authored position, extent and motion with the selected screen's fixed rectangle;
+opacity remains effective. Resolve native valid-area dimensions and source-axis
+orientation from the prepared rectangular affine calibration; reject sheared/nonlinear profiles during
+Setup. Preserve downstream calibration/masks/blackouts/color and marker processing.
+Evidence records actual mapped clip vertices and per-mapping image target pixels.
+New GUI Images write Resize. Existing `contain|cover|stretch` values retain their
+authored bounds and movement; omitted legacy values remain Stretch. Looming retains
+its existing size animation and default Stretch behavior. Source sampling uses
+original texels; the subsequent calibration/display path is not a claim of optical
+pixel equality. No source asset is rewritten, downsampled or memory-cropped.
+Fold uses one unfolded source, anchored at its top-left, with Bottom in output
+orientation below a top-aligned Left/Front/Right row, centered over Front. Net
+extents use calibrated surface millimetres, including disabled/unselected screens.
+One source pixel represents the Front output's X/Y mm-per-pixel, derived from its
+physical surface and rectangular calibration derivatives (not resolution alone).
+Each target's calibration maps its fixed valid rectangle into that shared field;
+no per-screen fit or recenter occurs. Out-of-image samples are transparent; unused
+source pixels are cropped. Front must have exactly one prepared mapping (its output
+must remain enabled, but need not show the image). Missing Front, nonrectangular
+mapping, or incompatible orientation fails preparation. Bottom uses quarter-turned
+axes; other faces and the Front reference use landscape axes. Physical preservation
+is within calibration, resampling and optical limits, not a claim of exact statistics.
+`image_fold_map_<mapping_id>` records three float32 vec2 values: source top-left-pixel
+coordinates at local quad UV=(0,0), and the increments for local U and V. The shader
+samples original image coordinates with the selected image sampling filter.
+
 A numeric condition reference is legal at a Number position only. AssetChoice also
 permits a typed asset_id column. Other structural enums, spaces, counts and scene
 membership are literal. Resolve all reachable row combinations at Setup; reject
@@ -67,6 +94,56 @@ Epoch authoring metadata includes optional `batch_label` (empty by default) and
 the latter distinguishes GUI generation actions within a parent group even when
 labels match. Neither field changes compilation order, timing or rendering. Preserve
 both in source/prepared-source JSON; individual epoch edits retain batch membership.
+
+## Direct Media layers
+
+`TextureSettings.uniform=true` declares independent stationary zero-contrast color,
+with linear `mean_linear_rgb`, an asset-free procedural pattern and opacity/fades.
+The renderer extends its physical rectangle over the selected surface.
+
+Direct `grating=true` uses `sine_grating` with positive constant `frequency=1/period_mm`
+and `feature_sharpness` in [0,1]. Center the signal at the rectangle center:
+`a=0.5+0.5*cos(2*pi*(frequency*x_centered+phase_x))`; blend `a` with a centered
+smoothstep of half-width `(1-sharpness)/2`, weighted by sharpness (sharpness 1 uses
+an exact step). Convert `2*blend-1` using the existing linear mean/modulation/contrast.
+Sharpness 0 is sinusoidal and 1 square. This centered convention applies only to
+marked direct Grating; legacy unmarked procedural patterns keep their definition.
+The epoch's absolute rotation assignment is the single bar-normal orientation;
+Cartesian speed follows that normal. Existing marked image-tile Grating remains
+asset-backed and uses its declared source interpretation.
+
+`ImageSettings.sparse_noise` contains `asset_ids`, exact positive `pattern_duration`,
+optional validated `appearance` for direct authoring, and `background_linear_rgb`.
+Its initial asset equals the first sequence member; all members are declared PNGs,
+nearest sampled with physical stretch on one surface. Select
+`min(floor(max(0, epoch_local_ns)/duration_ns), count-1)` at each evaluation; keep
+actual requested/selected image evidence through normal residency holds. The authored
+epoch is not split, so other layers' animation/video/motion clocks stay unchanged.
+The sequence starts again at each epoch occurrence; excess patterns are truncated,
+and exhaustion holds the last. Background composites inactive alpha before layer
+opacity; residual complete-grid margins retain the underlying scene.
+
+## Reference-shared grating pattern and phase
+
+A marked direct Grating may link only to another independent marked direct Grating
+on a different physical surface in the same frame. Its reference owns appearance,
+period, orientation, motion and phase; follower settings remain dormant independent
+values until unlinking. Chaining, cycles, feedback and competing follower motion fail.
+
+Use calibrated surface right/up/inward-normal bases. Unfold each surface around
+its plane intersection with Bottom by the shortest rotation of its inward normal
+to Bottom's, using Bottom's calibrated center/right/up as the common origin/basis.
+Evaluate the reference's mapped, rotated, translated centered grating coordinate at
+each follower point. Derive follower frequency, local orientation and phase from that
+affine coordinate; copy the reference waveform/color coefficients and use the same
+logical time. Reject opposite normals and singular/reflected stimulus mappings;
+output warp/flips remain independent. Bottom-edge phases agree for coincident physical
+edges. Constant spacing is preserved; arbitrary patterns can have wall/wall corner
+seams around the closed tank. No global 3D-field or projector frame-lock is implied.
+
+Resolve exact derived phase into existing follower state at epoch boundaries before
+unlink/reset handling (V07). Unlinked Gratings remain independent. These rules do not
+change the motion-only Texture drift links below.
 
 ## Reference-linked texture motion
 
@@ -297,3 +374,43 @@ uniform grid index. Independent targets use distinct streams; shared targets reu
 one stream. Expansion resolves after condition substitution and validates concrete
 settings before compilation. The rule declaration is constant-size with respect to
 repetitions; Setup's configured expanded-plan limit still applies before sampling.
+
+Asset repetition rules use `kind: uniform_asset_v1`, `parameter: Asset`, an active
+`instance_id`, and an ordered `asset_ids` list of 1–2000 distinct declared compatible
+media IDs. Every candidate is checked, including candidates not selected for the
+representative occurrence. Image/video/image-tile texture settings are supported;
+procedural patterns and arenas reject Asset rules. Other layer settings are retained.
+The seed, stream, offset and stride have the same meanings as numeric rules. Hash
+UTF-8 `cephvr.uniform-asset.v1:{seed}:{stream}:{index}` with SHA-256; seed Python
+Random from the big-endian digest and select `asset_ids[randrange(len(asset_ids))]`.
+Sampling is uniform with replacement and independent of numeric/order/duration
+streams. Source count is unchanged; concrete asset IDs appear in prepared occurrences.
+
+Non-executable variation drafts retain `folder` and `asset_ids` for GUI restoration,
+with `method: 2` for both random modes. New fields default to empty for legacy drafts.
+The folder is an authoring hint, never scanned during Setup or rendering. G01 saves
+compatible files directly in the selected folder in deterministic filename order,
+imports external sources through the normal Assets-root mechanism, and retains the
+snapshot when reopening. Asset declarations use the normal portable paths and media
+validation. Editing another rule or the repetition count preserves the existing seed
+and prefix. Missing `kind` on legacy numeric rules retains `uniform_grid_v1` semantics.
+
+### Grating stimulus
+
+A `texture` setting with `grating: true` is G01's Grating stimulus; omission/false
+preserves ordinary Texture interpretation. It requires an independent physical
+`image_tile`, `cephvr_grating_json_v1` asset references, hold phase/rotation functions
+and constant Cartesian motion. Only Asset, Orientation and nonnegative Speed are
+editable. Orientation uses current rig directions; zero speed retains the angle.
+The absolute `rotation` assignment stores the local normal to the bars and applies
+at every V07 boundary. Drift remains parallel to that normal in the selected sense;
+reject misaligned/custom/linked or feedback-driven Grating declarations.
+
+The numeric `Orientation` repetition parameter is available only for Grating. It
+updates both drift and the rotation assignment; it does not create source epochs
+or resample another rule. `uniform_asset_v1` Grating rules additionally contain
+`grating_periods_mm`: one positive finite physical period per ordered candidate ID.
+Resolution updates image-tile X/Y periods together with the chosen asset. Other
+families omit that tuple. Authoring drafts retain the same tuple for reloading.
+Missing fields on older drafts/rules retain their prior semantics. The new asset
+profile's decoding contract is in [asset lifetime](asset-lifetime.md#grating-recipe-interpretation).

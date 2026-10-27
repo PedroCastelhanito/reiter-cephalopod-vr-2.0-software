@@ -46,6 +46,319 @@ from cephvr.visual_stimulus.rendering.types import (
 )
 
 
+@pytest.mark.windows
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "grating",
+        "polar_grating",
+        "checker",
+        "dots_grid",
+        "dots_rand",
+        "noise_binary",
+        "noise_gray",
+        "filtered_noise",
+        "calibration_grid",
+        "flat",
+    ],
+)
+def test_native_physical_field_shader_matches_mm_sampler(pattern):
+    import numpy as np
+
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.rendering.field_shader import layer_fragment
+    from cephvr.visual_stimulus.rendering.shaders import _LAYER_VERTEX
+    from cephvr.visual_stimulus.resources.physical_field import raster_field
+    from cephvr.visual_stimulus.resources.texture_recipe import TextureRecipe
+
+    params = (
+        {"orientation_deg": 37.0, "spatial_period_mm": 10.0, "feature_sharpness": 0.3}
+        if pattern == "grating"
+        else {}
+    )
+    if pattern in {"noise_binary", "noise_gray"}:
+        params = {"element_size_mm": 3.0, "blur_mm": 0.4, "seed": 192}
+    if pattern == "filtered_noise":
+        params = {"seed": 534, "black_fraction": 0.3, "edge_smooth_mm": 1.2}
+    if pattern == "dots_rand":
+        params = {"seed": 2**64 - 59, "blur_mm": 0.4}
+    recipe = TextureRecipe(pattern, params, 512, None, None, True)
+    context = moderngl.create_standalone_context(require=430)
+    owned = []
+
+    def track(value):
+        owned.append(value)
+        return value
+
+    try:
+        program = track(
+            context.program(
+                vertex_shader=_LAYER_VERTEX, fragment_shader=layer_fragment(recipe)
+            )
+        )
+        buffer = track(context.buffer(struct.pack("8f", 0, 0, 1, 0, 0, 1, 1, 1)))
+        array = track(context.vertex_array(program, [(buffer, "2f", "in_uv")]))
+        flags = track(context.buffer(bytes(32)))
+        flags.bind_to_storage_buffer(3)
+        program["mode"].value = 9
+        program["mean_rgb"].value = (0.5,) * 3
+        program["modulation_rgb"].value = (0.5,) * 3
+        program["opacity"].value = program["contrast"].value = 1.0
+        program["clip_vertices"].write(struct.pack("8f", -1, -1, 1, -1, -1, 1, 1, 1))
+        for size, extent in (
+            ((160, 96), (40, 24)),
+            ((200, 80), (40, 24)),
+            ((80, 160), (40, 24)),
+            ((240, 160), (240, 160)),
+        ):
+            target = track(context.texture(size, 4, dtype="f4"))
+            fbo = track(context.framebuffer([target]))
+            fbo.use()
+            context.viewport = (0, 0, *size)
+            if "field_extent_mm" in program:
+                program["field_extent_mm"].value = extent
+            if "field_phase_mm" in program:
+                program["field_phase_mm"].value = (0.137, -0.219)
+            from cephvr.visual_stimulus.rendering.layer_draw import draw_layer
+
+            values = dict(
+                width=extent[0],
+                height=extent[1],
+                period_x=2.0,
+                period_y=3.0,
+                phase_x=0.137 / 2,
+                phase_y=-0.219 / 3,
+            )
+            setting = NS(
+                kind="texture",
+                grating=False,
+                space=NS(kind="physical_surface"),
+                pattern=NS(kind="image_tile", asset_id="field"),
+                mean_linear_rgb=(0.5,) * 3,
+                modulation_linear_rgb=(0.5,) * 3,
+            )
+            layouts = tuple(
+                NS(instance_id="field", output_id="out", name=name, binding_id=name)
+                for name in (
+                    "clip_vertices_map",
+                    "field_extent_mm_map",
+                    "field_phase_mm_map",
+                )
+            )
+            artifact = NS(
+                identity=NS(resource_generation="generation"),
+                display=NS(active_outputs=(NS(output_id="out"),)),
+                uniform_layouts=layouts,
+            )
+            frame = NS(
+                quad_array=array,
+                layer_program=program,
+                field_programs={"field": (program, array)},
+            )
+            evidence = draw_layer(
+                moderngl,
+                frame,
+                artifact,
+                {},
+                "out",
+                "map",
+                InstanceSnapshot(
+                    "field", "texture", True, tuple(values.items()), setting
+                ),
+                [(-1, -1), (1, -1), (1, 1), (-1, 1)],
+            )
+            assert {item.binding_id for item in evidence} == {
+                item.binding_id for item in layouts
+            }
+
+            actual = np.frombuffer(target.read(), dtype=np.float32).reshape(
+                size[1], size[0], 4
+            )[::-1, :, :3]
+            expected = (
+                raster_field(pattern, params, *extent, *size, offset_mm=(0.137, -0.219))
+                / 255
+            )
+            np.testing.assert_allclose(actual, expected, atol=1.1 / 255, rtol=0)
+    finally:
+        for item in reversed(owned):
+            item.release()
+        context.release()
+
+
+@pytest.mark.windows
+@pytest.mark.parametrize("deferred", [False, True])
+@pytest.mark.parametrize("width_mm,height_mm", [(20.0, 30.0), (40.0, 10.0)])
+@pytest.mark.parametrize("face", ["front", "left", "right", "bottom"])
+def test_native_prepared_physical_field_uses_calibrated_surface_and_releases(
+    deferred, width_mm, height_mm, face
+):
+    import numpy as np
+
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.config.models.program_model import Asset, ImageTile
+    from cephvr.visual_stimulus.resources.assets import (
+        PreparedAssetSet,
+        PreparedResourceBundle,
+    )
+    from cephvr.visual_stimulus.resources.media import ImagePixels
+    from cephvr.visual_stimulus.resources.physical_field import raster_field
+    from cephvr.visual_stimulus.resources.texture_recipe import TextureRecipe
+    from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
+
+    artifact = make_prepared_trial()
+    geometry = artifact.display.geometry
+    surfaces = tuple(
+        surface.model_copy(
+            update={
+                "bottom_left_mm": (-width_mm / 2, height_mm / 2, 100.0),
+                "bottom_right_mm": (width_mm / 2, height_mm / 2, 100.0),
+                "top_right_mm": (width_mm / 2, -height_mm / 2, 100.0),
+                "top_left_mm": (-width_mm / 2, -height_mm / 2, 100.0),
+            }
+        )
+        for surface in geometry.surfaces
+    )
+    display = artifact.display.model_copy(
+        update={"geometry": geometry.model_copy(update={"surfaces": surfaces})}
+    )
+    artifact = artifact.model_copy(update={"display": display})
+    constant = dict(kind="constant", value=1.0)
+    setting = (
+        artifact.epochs[0]
+        .settings[0]
+        .model_copy(
+            update={
+                "pattern": ImageTile.model_validate(
+                    dict(
+                        kind="image_tile",
+                        asset_id="field",
+                        period_x=constant,
+                        period_y=constant,
+                        sampling="linear",
+                    )
+                )
+            }
+        )
+    )
+    surface_map = setting.space.mappings[0].model_copy(update={"surface_id": face})
+    setting = setting.model_copy(
+        update={"space": setting.space.model_copy(update={"mappings": (surface_map,)})}
+    )
+    asset = Asset(
+        asset_id="field",
+        logical_path="field.json",
+        profile="cephvr1_texture_json_v1",
+        color_override=None,
+    )
+    nodes = tuple(
+        node.model_copy(update={"settings": (setting,)})
+        for node in artifact.source.sequence
+    )
+    source = artifact.source.model_copy(update={"assets": (asset,), "sequence": nodes})
+    epochs = tuple(
+        epoch.model_copy(update={"settings": (setting,)}) for epoch in artifact.epochs
+    )
+    layouts = build_uniform_layouts(source, artifact.display, frozenset({"field"}))
+    artifact = artifact.model_copy(
+        update={"source": source, "epochs": epochs, "uniform_layouts": layouts}
+    )
+    recipe = TextureRecipe(
+        "grating",
+        {"spatial_period_mm": 10.0, "orientation_deg": 37.0, "feature_sharpness": 0.2},
+        512,
+        None,
+        None,
+        True,
+    )
+    image = ImagePixels(
+        1,
+        1,
+        "uint8",
+        3,
+        ("red", "green", "blue"),
+        np.zeros((1, 1, 3), dtype=np.uint8),
+        "linear",
+        "none",
+        recipe,
+    )
+    from tests.visual_stimulus.support import _geometric_profiles
+
+    contents = _geometric_profiles(artifact.display)
+    artifact = artifact.model_copy(
+        update={"geometric_calibration": tuple(contents.values())}
+    )
+    if not deferred:
+        contents["field"] = image
+    resources = PreparedResourceBundle(
+        PreparedAssetSet((), 0),
+        artifact.manifest,
+        layouts,
+        contents,
+        {"field": NS(field_recipe=recipe)} if deferred else {},
+    )
+    context = moderngl.create_standalone_context(require=430)
+    renderer = ModernGLSceneRenderer()
+    renderer.bind_graphics_api(moderngl)
+    outputs = {
+        o.output_id: NS(
+            context=context,
+            width=o.width_px,
+            height=o.height_px,
+            bits=8,
+            activate=lambda: None,
+        )
+        for o in artifact.display.active_outputs
+    }
+    try:
+        renderer.prepare_trial(artifact, resources, outputs, {})
+        values = dict(
+            width=100.0,
+            height=100.0,
+            x=0.0,
+            y=0.0,
+            rotation=0.0,
+            period_x=1.0,
+            period_y=1.0,
+            phase_x=0.137,
+            phase_y=-0.219,
+        )
+        snapshot = InstanceSnapshot(
+            setting.instance_id, "texture", True, tuple(values.items()), setting
+        )
+        scene = artifact.source.scenes[0]
+        renderer.render_group(
+            (scene, False, 0, artifact.identity.trial_id, 0, 0, 123),
+            (snapshot,),
+            outputs,
+            {},
+        )
+        frame = renderer._outputs[artifact.identity.trial_id]["projector/main"]
+        texture = frame.surface_textures[f"map-{face}"]
+        width, height = texture.size
+        actual = np.frombuffer(texture.read(), dtype="f4").reshape(height, width, 4)[
+            ::-1, :, :3
+        ]
+        expected = (
+            raster_field(
+                recipe.pattern,
+                recipe.params,
+                width_mm,
+                height_mm,
+                width,
+                height,
+                offset_mm=(0.137, -0.219),
+            )
+            / 255
+        )
+        np.testing.assert_allclose(actual, expected, atol=1.1 / 255, rtol=0)
+    finally:
+        renderer.release()
+        assert (
+            not renderer._outputs and not renderer._resource_builder.partial_allocations
+        )
+        context.release()
+
+
 @pytest.mark.parametrize("bits", [8, 10])
 def test_projector_window_recreation_preserves_operator_cursor(bits):
     from cephvr.visual_stimulus.rendering.native_display import configure_window
@@ -86,6 +399,32 @@ def test_projector_window_recreation_preserves_operator_cursor(bits):
         assert windows.hints[windows.GREEN_BITS] == bits
         assert windows.hints[windows.BLUE_BITS] == bits
         assert windows.hints[windows.REFRESH_RATE] > 0
+
+
+def test_projector_shell_style_is_applied_while_hidden(monkeypatch):
+    from types import SimpleNamespace
+
+    from cephvr.platform.windows import window_coordinates
+    from cephvr.visual_stimulus.rendering import native_display
+
+    calls = []
+    monkeypatch.setattr(native_display.sys, "platform", "win32")
+    monkeypatch.setattr(
+        window_coordinates,
+        "blank_preview_caption",
+        lambda handle, **kwargs: calls.append(("caption", handle, kwargs)),
+    )
+    glfw = SimpleNamespace(
+        hide_window=lambda window: calls.append(("hide", window)),
+        show_window=lambda window: calls.append(("show", window)),
+        get_win32_window=lambda window: 77,
+    )
+    native_display.hide_output_shell_entry(glfw, "output")
+    assert calls == [
+        ("hide", "output"),
+        ("caption", 77, {"hide_from_taskbar": True}),
+        ("show", "output"),
+    ]
 
 
 def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
@@ -435,6 +774,7 @@ def test_wrong_adapter_rejection_requires_native_context_and_window_release(
     )
     monkeypatch.setattr(native, "attach_window_context", lambda _: context)
     monkeypatch.setattr(native, "configure_window", lambda *_: None)
+    monkeypatch.setattr(native, "hide_output_shell_entry", lambda *_: None)
     port = native.ModernGLPort(
         tmp_path, announce=lambda *_: None, monitor_resolver=lambda *_: object()
     )
@@ -525,10 +865,11 @@ def test_projected_layer_vertices_are_retained_as_exact_shader_words() -> None:
     )
 
 
+@pytest.mark.parametrize("mode", ["landmarks", "every_frame"])
 @pytest.mark.parametrize("pulse_enabled", [True, False])
 @pytest.mark.parametrize("multiple", [False, True])
 def test_engine_freezes_exact_provider_evidence_for_recording(
-    pulse_enabled, multiple
+    pulse_enabled, multiple, mode
 ) -> None:
     from dataclasses import replace
 
@@ -547,6 +888,11 @@ def test_engine_freezes_exact_provider_evidence_for_recording(
                 )
             }
         )
+    artifact = artifact.model_copy(
+        update={
+            "display": artifact.display.model_copy(update={"photodiode_mode": mode})
+        }
+    )
     display = artifact.display
     output = display.outputs[0]
     if multiple:
@@ -660,7 +1006,10 @@ def test_engine_freezes_exact_provider_evidence_for_recording(
         assert submission.marker_index == (0 if expected_marker else None)
     if not pulse_enabled:
         assert update.group.photodiode_high is None
-    stopped_idle = engine.stop_trial(1)
+    next_update = engine.render_tick(1)
+    if pulse_enabled:
+        assert next_update.group.photodiode_high == (mode == "landmarks")
+    stopped_idle = engine.stop_trial(2)
     assert {o.output_id for o in stopped_idle} == {o.output_id for o in outputs}
 
 
@@ -1223,6 +1572,206 @@ def test_image_fit_uv_spans_preserve_aspect_and_center(source, target):
     assert target * contain[1] / contain[0] == pytest.approx(source)
     assert target * cover[1] / cover[0] == pytest.approx(source)
     assert fitted_uv_scale("stretch", source, target) == (1.0, 1.0)
+
+
+@pytest.mark.parametrize(
+    "source,target,crop,pad",
+    [
+        ((3000, 3000), (1200, 800), (900, 1100, 1200, 800), (0, 0, 1200, 800)),
+        ((300, 200), (1200, 800), (0, 0, 300, 200), (450, 300, 300, 200)),
+        ((3000, 200), (1200, 800), (900, 0, 1200, 200), (0, 300, 1200, 200)),
+        ((7, 3), (4, 6), (1, 0, 4, 3), (0, 1, 4, 3)),
+    ],
+)
+def test_source_image_crop_and_padding_are_independent_per_axis(
+    source, target, crop, pad
+):
+    from cephvr.visual_stimulus.rendering.image_fit import source_rectangles
+
+    assert source_rectangles(source, target) == (crop, pad)
+
+
+@pytest.mark.parametrize("rotated", [False, True])
+def test_image_target_uses_valid_pixels_and_surface_orientation(rotated):
+    from cephvr.visual_stimulus.rendering.image_fit import valid_image_pixels
+
+    profile = NS(
+        valid_area=(0.25, 0.125, 0.75, 0.875),
+        output_width=1920,
+        output_height=1080,
+        columns=2,
+        vertices=(NS(uv=(0, 0)), NS(uv=(0, 1) if rotated else (1, 0))),
+    )
+    assert valid_image_pixels(profile) == ((810, 960) if rotated else (960, 810))
+
+
+def test_image_frame_fits_valid_crop_and_rejects_nonlinear_warp():
+    from cephvr.visual_stimulus.rendering.image_fit import valid_image_corners
+
+    uv = [(0, 0), (1, 0), (0, 1), (1, 1)]
+    assert valid_image_corners(uv, uv, (0.25, 0.25, 0.75, 0.75)) == [
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+    ]
+    rotated_uv = [(0, 1), (0, 0), (1, 1), (1, 0)]
+    assert valid_image_corners(rotated_uv, uv, (0.25, 0, 0.75, 1)) == [
+        (-1, -0.5),
+        (1, -0.5),
+        (1, 0.5),
+        (-1, 0.5),
+    ]
+    with pytest.raises(ValueError, match="affine"):
+        valid_image_corners(uv, [(0, 0), (1, 0), (0, 1), (0.8, 1)], (0, 0, 1, 1))
+    with pytest.raises(ValueError, match="rectangular"):
+        valid_image_corners(uv, [(0, 0), (0.8, 0), (0.2, 1), (1, 1)], (0, 0, 1, 1))
+
+
+@pytest.mark.windows
+@pytest.mark.parametrize(
+    "fit,face",
+    [("resize", "front"), ("source", "front"), ("fold", "front"), ("fold", "bottom")],
+)
+@pytest.mark.parametrize(
+    "size,target", [((7, 9), (4, 6)), ((3, 3), (6, 8)), ((7, 3), (4, 6))]
+)
+def test_native_source_shader_preserves_pixels_with_center_crop_and_padding(
+    size, target, fit, face
+):
+    import moderngl
+    import numpy as np
+
+    from cephvr.visual_stimulus.rendering.image_fit import source_rectangles
+    from cephvr.visual_stimulus.rendering.layer_draw import draw_layer
+    from cephvr.visual_stimulus.rendering.shaders import _LAYER_FRAGMENT, _LAYER_VERTEX
+
+    context = moderngl.create_standalone_context(require=430)
+    try:
+        program = context.program(
+            vertex_shader=_LAYER_VERTEX, fragment_shader=_LAYER_FRAGMENT
+        )
+        vertices = context.buffer(
+            np.array([0, 0, 1, 0, 0, 1, 1, 1], dtype="f4").tobytes()
+        )
+        quad = context.vertex_array(program, [(vertices, "2f", "in_uv")])
+        pixels = np.arange(size[0] * size[1] * 4, dtype="f4").reshape(
+            size[1], size[0], 4
+        )
+        pixels /= pixels.size
+        pixels[:, :, 3] = 1
+        texture = context.texture(size, 4, pixels[::-1].tobytes(), dtype="f4")
+        texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+        texture.use(0)
+        flags = context.buffer(reserve=64)
+        flags.bind_to_storage_buffer(3)
+        target_fbo = context.simple_framebuffer(target, components=4, dtype="f4")
+        target_fbo.use()
+        layouts = tuple(
+            NS(
+                instance_id="image",
+                output_id="out",
+                binding_id=name,
+                name=f"{name}_map",
+            )
+            for name in (
+                ("clip_vertices", "image_target_pixels", "image_fold_map")
+                if fit == "fold"
+                else ("clip_vertices", "image_target_pixels")
+            )
+        )
+        profile = NS(
+            mapping_id="map",
+            surface_id="front",
+            viewport=NS(x=0, y=0, width=target[0], height=target[1]),
+            valid_area=(0, 0, 1, 1),
+            output_width=target[0],
+            output_height=target[1],
+            columns=2,
+            vertices=tuple(NS(uv=uv, xy=uv) for uv in ((0, 0), (1, 0), (0, 1), (1, 1))),
+        )
+        front = NS(**vars(profile))
+        front.mapping_id = "reference"
+        if face == "bottom":
+            profile.surface_id = "bottom"
+            profile.vertices = tuple(
+                NS(uv=uv, xy=xy)
+                for uv, xy in zip(
+                    ((0, 1), (0, 0), (1, 1), (1, 0)),
+                    ((0, 0), (1, 0), (0, 1), (1, 1)),
+                    strict=True,
+                )
+            )
+        artifact = NS(
+            identity=NS(resource_generation="generation"),
+            display=NS(
+                active_outputs=(NS(output_id="out"),),
+                geometry=NS(
+                    surfaces=tuple(
+                        NS(
+                            surface_id=face,
+                            bottom_left_mm=(0, 0, 0),
+                            bottom_right_mm=(target[0], 0, 0),
+                            top_left_mm=(0, target[1], 0),
+                        )
+                        for face in ("left", "front", "right", "bottom")
+                    )
+                ),
+            ),
+            geometric_calibration=(front, profile) if face == "bottom" else (profile,),
+            uniform_layouts=layouts,
+        )
+        snapshot = InstanceSnapshot(
+            "image",
+            "image",
+            True,
+            (("width", 999), ("height", 888)),
+            NS(kind="image", fit=fit, asset_id="asset", sparse_noise=None),
+        )
+        evidence = draw_layer(
+            moderngl,
+            NS(quad_array=quad, layer_program=program),
+            artifact,
+            {"generation:asset": [texture]},
+            "out",
+            "map",
+            snapshot,
+            [(0, 0)] * 4,
+        )
+        assert {item.binding_id for item in evidence} == {
+            "clip_vertices",
+            "image_target_pixels",
+        } | ({"image_fold_map"} if fit == "fold" else set())
+        assert program["image_target_pixels"].value == (
+            target[::-1] if face == "bottom" else target
+        )
+        actual = np.frombuffer(
+            target_fbo.read(components=4, dtype="f4"), dtype="f4"
+        ).reshape(target[1], target[0], 4)[::-1]
+        expected = np.zeros_like(actual)
+        (sx, sy, w, h), (dx, dy, _, _) = source_rectangles(size, target)
+        expected[dy : dy + h, dx : dx + w] = pixels[sy : sy + h, sx : sx + w]
+        if fit == "resize":
+            xs = ((np.arange(target[0]) + 0.5) * size[0] / target[0]).astype(int)
+            ys = ((np.arange(target[1]) + 0.5) * size[1] / target[1]).astype(int)
+            expected = pixels[ys[:, None], xs]
+        if fit == "fold":
+            expected.fill(0)
+            start_x = target[0] + max(0, -(target[0] + (target[0] - target[1]) / 2))
+            for y in range(target[1]):
+                for x in range(target[0]):
+                    sx, sy = int(start_x + x + 0.5), y
+                    if face == "bottom":
+                        bx = target[0] + (target[0] - target[1]) / 2
+                        sx, sy = (
+                            int(max(0, bx) + y + 0.5),
+                            target[1] + target[0] - 1 - x,
+                        )
+                    if sx < size[0] and sy < size[1]:
+                        expected[y, x] = pixels[sy, sx]
+        np.testing.assert_array_equal(actual, expected)
+    finally:
+        context.release()
 
 
 def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
@@ -2158,7 +2707,13 @@ def test_image_schedule_unions_only_consuming_outputs_across_trials(physical):
             if physical
             else NS(kind="visual_angle", surfaces=(surface,))
         )
-        setting = NS(kind="image", asset_id="image", instance_id="layer", space=space)
+        setting = NS(
+            kind="image",
+            asset_id="image",
+            instance_id="layer",
+            space=space,
+            sparse_noise=None,
+        )
         artifacts.append(
             NS(
                 identity=NS(trial_id=trial, resource_generation=trial),
@@ -3464,7 +4019,7 @@ def test_native_gpu_rig_crops_orients_and_never_writes_source(face):
         for x, u in ((76, 0.25), (180, 0.75)):
             for y, v in ((76, 0.25), (180, 0.75)):
                 red, green, blue = pixels[(y * 256 + x) * 4 : (y * 256 + x) * 4 + 3]
-                raw_u, raw_v = (1 - v, 1 - u) if face == "bottom" else (u, v)
+                raw_u, raw_v = (1 - v, u) if face == "bottom" else (u, v)
                 assert (red > 112, green > 112) == (raw_u > 0.5, raw_v > 0.5)
                 assert blue == 64
         viewer.azimuth, viewer.elevation = 25, 25
@@ -3528,3 +4083,273 @@ def test_native_rig_window_prepares_callbacks_and_releases_shared_resources():
         if root:
             glfw.destroy_window(root)
         glfw.terminate()
+
+
+@pytest.mark.parametrize("pitch", [(0.1, 0.2), (0.2, 0.1)])
+def test_fold_uses_front_physical_scale_and_portrait_bottom(pitch):
+    from cephvr.visual_stimulus.rendering.image_fold import fold_map
+
+    extents = {
+        "left": (20.0, 10.0),
+        "front": (30.0, 10.0),
+        "right": (40.0, 10.0),
+        "bottom": (50.0, 30.0),
+    }
+    corners = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+    front = fold_map(extents, pitch, "front", corners, ((0, 0), (300, 0), (0, 100)))
+    left = fold_map(extents, pitch, "left", corners, ((17, 23), (100, 0), (0, 50)))
+    # Both represent their physical widths in the same source-pixel units.
+    assert front[2] * pitch[0] == pytest.approx(30)
+    assert left[2] * pitch[0] == pytest.approx(20)
+    assert front[0] == pytest.approx(left[0] + left[2])
+    assert front[1] == left[1] == pytest.approx(10 / pitch[1])
+    bottom = fold_map(
+        extents, pitch, "bottom", corners, ((300, 0), (0, 500), (-300, 0))
+    )
+    assert bottom == pytest.approx(
+        (50 / pitch[0], 60 / pitch[1], 0, -50 / pitch[1], -30 / pitch[0], 0)
+    )
+    # A smaller valid rectangle selects less of the field without resizing it.
+    crop = fold_map(
+        extents,
+        pitch,
+        "front",
+        [(-0.5, -0.5), (0.5, -0.5), (0.5, 0.5), (-0.5, 0.5)],
+        ((0, 0), (300, 0), (0, 100)),
+    )
+    assert crop[2] == pytest.approx(front[2] / 2)
+    assert crop[5] == pytest.approx(front[5] / 2)
+
+
+def test_fold_requires_front_calibration_and_complete_geometry():
+    from cephvr.visual_stimulus.rendering.image_fold import (
+        calibrated_fold_map,
+        fold_map,
+    )
+
+    with pytest.raises(ValueError, match="Front calibration"):
+        calibrated_fold_map(NS(), (), NS())
+    with pytest.raises(ValueError, match="four physical"):
+        fold_map({}, (1, 1), "front", [], ((0, 0), (1, 0), (0, 1)))
+
+
+@pytest.mark.parametrize("mode", ["landmarks", "every_frame"])
+def test_photodiode_modes_repeat_and_validate(mode):
+    from cephvr.visual_stimulus.rendering.photodiode import photodiode_level
+
+    expected = (
+        [True, True, True, False, False, False]
+        if mode == "landmarks"
+        else [True, False] * 3
+    )
+    assert [photodiode_level(i, mode) for i in range(6)] == expected
+    assert [photodiode_level(i, mode) for i in range(60, 66)] == expected
+    assert [photodiode_level(i, mode) for i in range(6, 60)] == [True, False] * 27
+    with pytest.raises(ValueError):
+        photodiode_level(-1, mode)
+    with pytest.raises(ValueError):
+        photodiode_level(0, "unknown")
+
+
+@pytest.mark.parametrize("angle", [0, 37, 90, 173])
+@pytest.mark.parametrize("now_ns", [0, 700_000_000, 1_900_000_000])
+def test_linked_gratings_share_bottom_edge_pattern_and_phase(angle, now_ns):
+    import math
+
+    from tests.visual_stimulus.support import _linked_texture_fixture
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import patch_setting
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+    from cephvr.visual_stimulus.rendering.grating_field import shared_grating_snapshots
+
+    geometry, _ = _linked_texture_fixture()
+    program = add_stimulus(blank_program(), 0, "Grating", ("Bottom",))
+    program = add_stimulus(program, 0, "Grating", ("Front",))
+    source, target = [s.model_dump(mode="json") for s in program.sequence[0].settings]
+    patch_setting(source, {"Orientation": str(angle), "Speed": "7"})
+    source["pattern"]["frequency"]["value"] = 1 / 13
+    source["pattern"]["feature_sharpness"] = 0.3
+    target["linked_to"] = source["instance_id"]
+    source, target = (
+        TextureSettings.model_validate_json(__import__("json").dumps(s))
+        for s in (source, target)
+    )
+    snapshots = []
+    states = {}
+    for setting in (source, target):
+        state = InstanceState.initialize(setting, now_ns=0, epoch_start_ns=0)
+        states[setting.instance_id] = state
+        snapshots.append(
+            InstanceSnapshot(
+                setting.instance_id,
+                "texture",
+                True,
+                state.snapshot(now_ns=now_ns, epoch_start_ns=0),
+                setting,
+            )
+        )
+    resolved = shared_grating_snapshots(tuple(snapshots), geometry)
+    a, b = resolved
+    av, bv = dict(a.state), dict(b.state)
+    assert b.settings.pattern.feature_sharpness == source.pattern.feature_sharpness
+    assert b.settings.mean_linear_rgb == source.mean_linear_rgb
+
+    def phase(values, x, y):
+        r = math.radians(values["rotation"])
+        return (
+            values["frequency"]
+            * ((x - values["x"]) * math.cos(r) + (y - values["y"]) * math.sin(r))
+            + values["phase_x"]
+        )
+
+    # The same physical Bottom/Front hinge, with Front's opposing local X axis.
+    for x in (-75, -12.5, 0, 43, 99):
+        assert phase(av, x, -100) == pytest.approx(phase(bv, -x, -65), abs=1e-11)
+    unlinked = target.model_copy(update={"linked_to": None})
+    original = InstanceSnapshot(
+        unlinked.instance_id, "texture", True, snapshots[1].state, unlinked
+    )
+    independent = shared_grating_snapshots((snapshots[0], original), geometry)
+    assert independent[1] == original
+
+    from cephvr.visual_stimulus.rendering.grating_field import (
+        retain_shared_grating_phase,
+    )
+
+    boundary_ns = 2_500_000_000
+    boundary = shared_grating_snapshots(
+        tuple(
+            InstanceSnapshot(
+                setting.instance_id,
+                "texture",
+                True,
+                states[setting.instance_id].snapshot(
+                    now_ns=boundary_ns, epoch_start_ns=0
+                ),
+                setting,
+            )
+            for setting in (source, target)
+        ),
+        geometry,
+    )[1]
+    expected = dict(boundary.state)["phase_x"]
+    retain_shared_grating_phase(states, geometry, boundary_ns)
+    follower = states[target.instance_id]
+    follower.transition(
+        unlinked, action="continue", epoch_start_ns=boundary_ns, now_ns=boundary_ns
+    )
+    assert follower.values["phase_x"].value == pytest.approx(expected)
+
+
+@pytest.mark.windows
+@pytest.mark.parametrize("sharpness", [0.0, 0.3, 1.0])
+def test_native_inline_grating_centered_phase_matches_waveform(sharpness):
+    import numpy as np
+
+    moderngl = pytest.importorskip("moderngl")
+    from cephvr.visual_stimulus.rendering.shaders import _LAYER_FRAGMENT, _LAYER_VERTEX
+
+    context = moderngl.create_standalone_context(require=430)
+    owned = []
+
+    def own(resource):
+        owned.append(resource)
+        return resource
+
+    try:
+        program = own(
+            context.program(
+                vertex_shader=_LAYER_VERTEX, fragment_shader=_LAYER_FRAGMENT
+            )
+        )
+        quad = own(context.buffer(struct.pack("8f", 0, 0, 1, 0, 0, 1, 1, 1)))
+        array = own(context.vertex_array(program, [(quad, "2f", "in_uv")]))
+        flags = own(context.buffer(bytes(32)))
+        flags.bind_to_storage_buffer(3)
+        output = own(context.texture((128, 16), 4, dtype="f4"))
+        fbo = own(context.framebuffer([output]))
+        fbo.use()
+        context.viewport = (0, 0, 128, 16)
+        program["mode"].value = 11
+        program["grating_sharpness"].value = sharpness
+        program["mean_rgb"].value = (0.5,) * 3
+        program["modulation_rgb"].value = (0.5,) * 3
+        program["opacity"].value = program["contrast"].value = 1
+        program["frequency"].value = (3.1, 0)
+        program["phase"].value = (0.137, 0)
+        program["clip_vertices"].write(struct.pack("8f", -1, -1, 1, -1, -1, 1, 1, 1))
+        array.render(mode=moderngl.TRIANGLE_STRIP)
+        x = (np.arange(128) + 0.5) / 128 - 0.5
+        alpha = 0.5 + 0.5 * np.cos(2 * np.pi * (3.1 * x + 0.137))
+        edge = (1 - sharpness) / 2
+        if edge:
+            t = np.clip((alpha - 0.5 + edge) / (2 * edge), 0, 1)
+            mask = t * t * (3 - 2 * t)
+        else:
+            mask = (alpha >= 0.5).astype(float)
+        expected = (1 - sharpness) * alpha + sharpness * mask
+        actual = np.frombuffer(output.read(), dtype=np.float32).reshape(16, 128, 4)
+        np.testing.assert_allclose(actual[0, :, 0], expected, atol=3e-6, rtol=0)
+    finally:
+        for resource in reversed(owned):
+            resource.release()
+        context.release()
+
+
+def test_grating_epoch_assignments_apply_on_initialize_and_compatible_transition():
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.models.program_model import Assignment
+
+    setting = (
+        add_stimulus(blank_program(), 0, "Grating", ("Front",)).sequence[0].settings[0]
+    )
+    setting = setting.model_copy(
+        update={
+            "assignments": (
+                Assignment(target="rotation", value=37.0),
+                Assignment(target="phase_x", value=0.25),
+            )
+        }
+    )
+    state = InstanceState.initialize(setting, now_ns=0, epoch_start_ns=0)
+    assert state.values["rotation"].value == 37
+    assert state.values["phase_x"].value == 0.25
+    changed = setting.model_copy(
+        update={"assignments": (Assignment(target="rotation", value=73.0),)}
+    )
+    state.transition(
+        changed, action="continue", now_ns=1_000_000_000, epoch_start_ns=1_000_000_000
+    )
+    assert state.values["rotation"].value == 73
+    assert state.values["phase_x"].value == 0.25
+
+
+@pytest.mark.parametrize("endpoint", ["source", "target"])
+def test_shared_grating_rejects_reflected_stimulus_maps(endpoint):
+    import json
+
+    from tests.visual_stimulus.support import _linked_texture_fixture
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.visual_stimulus.config.grating_field import field_on_surface
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    geometry, _ = _linked_texture_fixture()
+    program = add_stimulus(blank_program(), 0, "Grating", ("Bottom",))
+    program = add_stimulus(program, 0, "Grating", ("Front",))
+    source, target = program.sequence[0].settings
+    data = (source if endpoint == "source" else target).model_dump(mode="json")
+    data["space"]["mappings"][0]["matrix"][0][0] = -1
+    reflected = TextureSettings.model_validate_json(json.dumps(data))
+    if endpoint == "source":
+        source = reflected
+    else:
+        target = reflected
+    with pytest.raises(ValueError, match="orientation-preserving"):
+        field_on_surface(
+            source, dict(x=0, y=0, rotation=0, frequency=1), target, geometry
+        )

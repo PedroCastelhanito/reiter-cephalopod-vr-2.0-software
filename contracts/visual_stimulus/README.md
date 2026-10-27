@@ -32,7 +32,8 @@ pure validators implement only their documented subset, not every compiler oblig
 **Implementation ownership:** the experiment backend implements compilation,
 preparation, live rendering and recording, including the immutable recipe and detailed
 evidence needed for later analysis. Offline replay/export belongs to analysis software
-and is not shipped by this package. GUI authoring remains outside the current stage.
+and is not shipped by this package. The offline [stimulus authoring application](stimulus-authoring.md) creates recipes and
+static arenas separately from runtime preparation.
 See the implementation report for tested behavior and pending native acceptance.
 
 **Explicitly deferred:** physical geometry/projector assignment and photodiode values,

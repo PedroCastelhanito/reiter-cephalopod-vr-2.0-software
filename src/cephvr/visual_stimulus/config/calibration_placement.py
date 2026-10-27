@@ -5,7 +5,12 @@ from typing import Annotated, Self
 from pydantic import Field, model_validator
 
 from .calibration_adjustments import CalibrationAdjustmentRejected
-from .models.display_profile import DisplayProfile, PhotodiodePatch, PixelRect
+from .models.display_profile import (
+    DisplayProfile,
+    PhotodiodeMode,
+    PhotodiodePatch,
+    PixelRect,
+)
 from .models.schema_common import Model, OutputId, parse_json
 
 PLACEMENT_VIEWS = frozenset({"photodiode_placement", "blackout_placement"})
@@ -17,6 +22,7 @@ class PlacementOutput(Model):
 
 
 class CalibrationPlacement(Model):
+    photodiode_mode: PhotodiodeMode = "landmarks"
     outputs: Annotated[tuple[PlacementOutput, ...], Field(min_length=1, max_length=4)]
     photodiode_output_id: OutputId | None = None
     photodiode_patch: PhotodiodePatch | None = None
@@ -97,6 +103,7 @@ class CalibrationPlacement(Model):
                 PlacementOutput(output_id=o.output_id, blackout_zones=o.blackout_zones)
                 for o in display.active_outputs
             ),
+            photodiode_mode=display.photodiode_mode,
             photodiode_output_id=display.photodiode_output_id
             if display.photodiode_enabled
             else None,

@@ -3,7 +3,7 @@
 import json
 from copy import deepcopy
 
-from cephvr.gui.program_editing import NodePath, data_node, node_at
+from cephvr.gui.program_editing import NodePath, data_node, drop_unused_assets, node_at
 from cephvr.gui.protocol_document import review_program
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -12,10 +12,22 @@ from cephvr.visual_stimulus.config.models.program_model import (
 )
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
-FILE_TYPES = ("Texture", "Image", "Looming image", "Video", "3D arena")
+FILE_TYPES = (
+    "Uniform",
+    "Image",
+    "Video",
+    "Sparse noise",
+    "Grating",
+    "Texture drift",
+    "3D arena",
+)
 
 PRESETS = (
+    "Uniform",
+    "Sparse noise",
+    "Texture drift",
     "Texture",
+    "Grating",
     "Sine grating",
     "Square grating",
     "Checkerboard",
@@ -35,6 +47,8 @@ def add_stimulus(
     *,
     subject_height_mm: float = 0.0,
 ) -> Program:
+    if preset == "Texture drift":
+        preset = "Texture"
     if preset not in PRESETS:
         raise ValueError("Unknown stimulus type")
     if not isinstance(node_at(program, index), Epoch):
@@ -53,7 +67,7 @@ def add_stimulus(
     family = "texture"
     profile = None
     path = ""
-    if preset in ("Image", "Looming image", "Video"):
+    if preset in ("Image", "Looming image", "Video", "Sparse noise"):
         family = "video" if preset == "Video" else "image"
         source = {
             key: value
@@ -82,8 +96,15 @@ def add_stimulus(
             source.update(
                 initial_playback={"seconds": "0"}, end_behavior="hold_final_frame"
             )
+        if preset == "Sparse noise":
+            source["sampling"] = "nearest"
+            source["sparse_noise"] = {
+                "asset_ids": [identity],
+                "pattern_duration": {"seconds": "0.1"},
+            }
+            source["motion"] = {key: {"kind": "hold"} for key in ("x", "y", "rotation")}
         if preset == "Image":
-            source["fit"] = "contain"
+            source["fit"] = "resize"
         if preset == "Looming image":
             curve = {
                 "kind": "keyframes",
@@ -116,6 +137,11 @@ def add_stimulus(
             assignments=[],
             feedback=[],
         )
+    elif preset == "Uniform":
+        source["uniform"] = True
+        source["contrast"] = {"kind": "constant", "value": 0.0}
+        source["motion"] = {key: {"kind": "hold"} for key in ("x", "y", "rotation")}
+        source["phase_x"] = source["phase_y"] = {"kind": "hold"}
     elif preset == "Checkerboard":
         source["pattern"] = {
             "kind": "checkerboard",
@@ -124,8 +150,12 @@ def add_stimulus(
         }
     elif preset == "Square grating":
         source["pattern"]["kind"] = "square_grating"
-    elif preset in ("Image tile", "Texture"):
+    elif preset in ("Image tile", "Texture", "Grating"):
         profile, path = "png_uint_v1", "texture.png"
+        if preset == "Grating":
+            profile, path = None, ""
+            source["grating"] = True
+            source["motion"] = {key: {"kind": "hold"} for key in ("x", "y", "rotation")}
         source["pattern"] = {
             "kind": "image_tile",
             "asset_id": identity,
@@ -133,7 +163,13 @@ def add_stimulus(
             "period_y": {"kind": "constant", "value": 20.0},
             "sampling": "linear",
         }
-    if preset == "Texture":
+    if preset == "Grating":
+        source["pattern"] = {
+            "kind": "sine_grating",
+            "frequency": {"kind": "constant", "value": 0.05},
+            "feature_sharpness": 1.0,
+        }
+    if preset in ("Texture", "Grating", "Uniform", "Sparse noise"):
         source["space"] = {
             "kind": "physical_surface",
             "frame_id": "rig",
@@ -142,8 +178,15 @@ def add_stimulus(
                 for face in source["space"]["surfaces"]
             ],
         }
-        source["phase_x"] = {"kind": "hold"}
-        source["phase_y"] = {"kind": "hold"}
+        if family == "texture":
+            source["phase_x"] = {"kind": "hold"}
+            source["phase_y"] = {"kind": "hold"}
+        if preset == "Grating":
+            from cephvr.visual_stimulus.config.parameter_edits import patch_setting
+
+            patch_setting(
+                source, {"Orientation": "0", "Speed": "0"}, rig_coordinates=True
+            )
     scene = deepcopy(
         next(item for item in data["scenes"] if item["scene_id"] == node["scene_id"])
     )
@@ -172,10 +215,6 @@ def add_stimulus(
             }
         )
     node["scene_id"] = scene_id
-    if program.category == "media_presentation" and family != "arena":
-        source["motion"] = {key: {"kind": "hold"} for key in ("x", "y", "rotation")}
-        if family == "texture":
-            source["phase_x"] = source["phase_y"] = {"kind": "hold"}
     node["settings"].append(source)
     return parse_program_json(json.dumps(data), max_bytes=DEFAULT_DOCUMENT_BYTES)
 
@@ -186,7 +225,13 @@ def remove_stimulus(program: Program, index: NodePath, layer: int) -> Program:
         return program
     data = program.model_dump(mode="json")
     epoch = data_node(data, index)
-    identity = epoch["settings"].pop(layer)["instance_id"]
+    removed = epoch["settings"].pop(layer)
+    identity = removed["instance_id"]
+    old_assets = {
+        removed.get("asset_id", removed.get("pattern", {}).get("asset_id", ""))
+    }
+    if removed.get("sparse_noise"):
+        old_assets.update(removed["sparse_noise"]["asset_ids"])
     scene = deepcopy(
         next(item for item in data["scenes"] if item["scene_id"] == epoch["scene_id"])
     )
@@ -202,6 +247,7 @@ def remove_stimulus(program: Program, index: NodePath, layer: int) -> Program:
     ]
     data["scenes"].append(scene)
     epoch["scene_id"] = scene_id
+    drop_unused_assets(data, old_assets)
     return parse_program_json(json.dumps(data), max_bytes=DEFAULT_DOCUMENT_BYTES)
 
 
@@ -217,11 +263,33 @@ def add_file_stimulus(
 ) -> Program:
     from cephvr.gui.stimulus_files import resolve_stimulus_file
 
-    selected = resolve_stimulus_file(root, path, texture=preset == "Texture")
+    selected = resolve_stimulus_file(
+        root,
+        path,
+        texture=preset in ("Texture", "Texture drift", "Grating"),
+        grating=preset == "Grating",
+    )
     candidate = add_stimulus(
         program, index, preset, screens, subject_height_mm=subject_height_mm
     ).model_dump(mode="json")
     target = data_node(candidate, index)["settings"][-1]
+    if preset == "Grating":
+        identity = target["instance_id"]
+        target["pattern"] = dict(
+            kind="image_tile",
+            asset_id=identity,
+            period_x=dict(kind="constant", value=selected.tile_width_mm or 20.0),
+            period_y=dict(kind="constant", value=selected.tile_height_mm or 20.0),
+            sampling="linear",
+        )
+        candidate["assets"].append(
+            dict(
+                asset_id=identity,
+                logical_path=selected.path,
+                profile=selected.profile,
+                color_override=None,
+            )
+        )
     identity = (
         target["pattern"]["asset_id"]
         if target["kind"] == "texture"

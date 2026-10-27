@@ -277,8 +277,7 @@ class StimulusTimeline(QWidget):
             self.epoch_timeline.message = str(error)
         for index, source in enumerate(self.sources):
             color = COLORS[index % len(COLORS)]
-            if program.category != "media_presentation":
-                self.all_panels.append(self.plan.panel(source, color, prepare=False))
+            self.all_panels.append(self.plan.panel(source, color, prepare=False))
         self.rebuild_instruments()
         self.refresh()
 

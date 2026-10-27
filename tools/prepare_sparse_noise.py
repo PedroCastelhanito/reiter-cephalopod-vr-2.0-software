@@ -6,7 +6,10 @@ from pathlib import Path
 
 from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
 from cephvr.visual_stimulus.config.models.sparse_noise import parse_sparse_noise_json
-from cephvr.visual_stimulus.resources.sparse_noise import prepare_sparse_noise
+from cephvr.visual_stimulus.resources.sparse_noise import (
+    WORKING_BYTES_PER_CELL,
+    prepare_sparse_noise,
+)
 
 
 def main() -> None:
@@ -40,7 +43,7 @@ def main() -> None:
         recipe,
         display,
         args.output,
-        max_cells=limits["max_asset_cpu_bytes"] // 192,
+        max_cells=limits["max_asset_cpu_bytes"] // WORKING_BYTES_PER_CELL,
         max_patterns=limits["max_expanded_epochs"],
         max_document_bytes=document_limit,
     )

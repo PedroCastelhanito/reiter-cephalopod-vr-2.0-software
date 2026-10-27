@@ -173,6 +173,7 @@ def diagnostic_display_profile(
     photodiode_face: str | None = None,
     photodiode_patch: dict[str, Any] | None = None,
     photodiode_patches: dict[str, Any] | None = None,
+    photodiode_mode: Literal["landmarks", "every_frame"] = "landmarks",
 ) -> tuple[DisplayProfile, dict[str, GeometricProfile]]:
     """Bind four assigned faces to native interfaces and per-face correction meshes."""
     geometry_input = calibration
@@ -358,6 +359,7 @@ def diagnostic_display_profile(
             presentation_mode="all_outputs_vsync",
             photometric_mode="uncalibrated",
             idle_linear_rgb=(0.0, 0.0, 0.0),
+            photodiode_mode=photodiode_mode,
             photodiode_enabled=view == "photodiode_placement"
             and (photodiode_patch is not None or bool(photodiode_patches)),
             photodiode_output_id=f"calibration_{photodiode_face.lower()}"
@@ -397,6 +399,7 @@ def write_diagnostic_bundle(
     photodiode_face: str | None = None,
     photodiode_patch: dict[str, Any] | None = None,
     photodiode_patches: dict[str, Any] | None = None,
+    photodiode_mode: Literal["landmarks", "every_frame"] = "landmarks",
 ) -> Path:
     """Refresh one repository pattern and stage its exact bytes with runtime mappings."""
 
@@ -411,6 +414,7 @@ def write_diagnostic_bundle(
         photodiode_face=photodiode_face,
         photodiode_patch=photodiode_patch,
         photodiode_patches=photodiode_patches,
+        photodiode_mode=photodiode_mode,
     )
     step = profile.calibration_view
     if step != "frame_grid":

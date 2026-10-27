@@ -1,5 +1,31 @@
 # Acquisition status
 
+## Pre-Ready camera cleanup - 2026-10-27
+
+`pre-ready-camera-cleanup` repairs admission under [E05](../docs/architecture/experiment.md#e05),
+[E06/E08](../docs/architecture/system-contracts.md) and [A03](../docs/architecture/acquisition.md#a03).
+The retained emergency report `emergency-1109213053579600-390107a0-8afb-40ba-952a-a7e3ec008a82.json`
+records both Tracking and Behavioral worker cleanup rejection after a sibling stimulus
+missing-file failure. Source review identifies the unconditional rejection whenever
+Setup has been issued but usable-frame Ready has not arrived. This is an admission
+defect; the emergency report alone does not prove actual native release.
+
+Pre-Ready admission now uses the exact retained Setup child, allocated producer
+rings and existing transfer ledger. It requires the complete device/ring release set,
+matching worker/owner/target/transfer identities, no trial or output obligations,
+and rejects incomplete claims before changing the ledger. It confirms release without
+inventing attachment or Ready; retries remain idempotent. ARCH-002 reuses the existing
+focused evidence owner, ledger and owning parameterized tests; no dependency, process,
+policy or deadline change. Existing unrelated size advisories require no split here.
+
+Validation:986 acquisition tests pass,4 skip,3 deselect;246 focused lifecycle/integration
+cases and21 release-admission cases pass. Full-owner Ruff/format and Windows-target
+mypy pass;773-module boundary check has zero violations. Initial sandbox socket and
+temp-path failures, corrected mypy naming collision, commands and limits are retained
+in [evidence](runtime-evidence-2026-10-27/pre-ready-cleanup/validation.txt).
+Native sibling-failure cleanup/retry remains pending in the existing
+[rig checklist](rig-verification.md); the managed app was not restarted or operated.
+
 Oct26/27 hierarchical audit removes only the unread `FrameLogWriter.line_count`;
 scientific frame counts, append checks and durability remain unchanged under A07
 and ARCH-002.95 owning tests pass, with Ruff/format/Win32mypy and boundaries checked.

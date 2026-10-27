@@ -17,7 +17,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 
 class VisualStimulusConfigurationTests(unittest.TestCase):
-    def test_presentation_category_rejects_executable_motion(self) -> None:
+    def test_presentation_category_accepts_executable_motion(self) -> None:
         from copy import deepcopy
 
         from tests.visual_stimulus.support import fixture_source
@@ -46,10 +46,7 @@ class VisualStimulusConfigurationTests(unittest.TestCase):
         ):
             candidate = deepcopy(source)
             candidate["sequence"][0]["settings"][0][key] = value
-            with (
-                self.subTest(key=key),
-                self.assertRaisesRegex(ValueError, "presentation"),
-            ):
+            with self.subTest(key=key):
                 Program.model_validate_json(json.dumps(candidate))
         legacy = deepcopy(source)
         del legacy["category"]

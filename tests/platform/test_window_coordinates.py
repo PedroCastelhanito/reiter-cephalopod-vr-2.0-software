@@ -326,8 +326,10 @@ def test_preview_owner_retargets_same_process_workspace_and_hides(
         owner.close()
 
 
+@pytest.mark.parametrize("hide_from_taskbar", [False, True])
 def test_blank_preview_caption_keeps_handle_placement(
     monkeypatch: pytest.MonkeyPatch,
+    hide_from_taskbar: bool,
 ) -> None:
     import ctypes
     from contextlib import nullcontext
@@ -352,12 +354,15 @@ def test_blank_preview_caption_keeps_handle_placement(
         GetWindowThreadProcessId=process_id,
         GetWindowRect=rect,
         SetWindowTextW=lambda hwnd, text: calls.append(("text", hwnd, text)) or True,
-        GetWindowLongW=lambda *_: 0x00000100,
+        GetWindowLongW=lambda *_: 0x00040100,
         SetWindowLongW=lambda hwnd, index, style: (
             calls.append(("style", hwnd, style)) or 0x100
         ),
         SendMessageW=lambda hwnd, message, kind, icon: (
             calls.append(("icon", hwnd, kind, icon)) or 0
+        ),
+        SetClassLongPtrW=lambda hwnd, index, icon: (
+            calls.append(("class-icon", hwnd, index, icon)) or 0
         ),
         SetWindowPos=lambda hwnd, after, x, y, *_: (
             calls.append(("pos", hwnd, x, y)) or True
@@ -376,21 +381,77 @@ def test_blank_preview_caption_keeps_handle_placement(
 
     handle = coordinates.preview_window_handle("preview")
     monkeypatch.setattr(ctypes, "set_last_error", lambda _: None, raising=False)
-    coordinates.blank_preview_caption(handle)
+    coordinates.blank_preview_caption(handle, hide_from_taskbar=hide_from_taskbar)
     del titles["preview"]  # The blanked window can no longer be found by title.
     coordinates.position_preview_frame(handle, 410, 110, topmost=False)
 
     assert handle == 77
     assert calls == [
         ("text", 77, ""),
-        ("style", 77, 0x101),
+        ("style", 77, 0x180 if hide_from_taskbar else 0x40101),
         ("icon", 77, 0, 0),
         ("icon", 77, 1, 0),
+        ("class-icon", 77, -14, 0),
+        ("class-icon", 77, -34, 0),
         ("pos", 77, 0, 0),
         ("pos", 77, 400, 110),
     ]
     with pytest.raises(OSError):
         coordinates.preview_window_handle("preview")
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(sys.platform != "win32", reason="native Windows client geometry")
+def test_projector_shell_style_preserves_fullscreen_client_size():
+    import ctypes
+    from ctypes import wintypes
+
+    from cephvr.platform.windows.window_coordinates import blank_preview_caption
+
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    user.CreateWindowExW.argtypes = [
+        wintypes.DWORD,
+        wintypes.LPCWSTR,
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        wintypes.HWND,
+        wintypes.HMENU,
+        wintypes.HINSTANCE,
+        ctypes.c_void_p,
+    ]
+    user.CreateWindowExW.restype = wintypes.HWND
+    user.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    user.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+    user.DestroyWindow.argtypes = [wintypes.HWND]
+    handle = user.CreateWindowExW(
+        0x40000,
+        "STATIC",
+        "projector geometry test",
+        0x80000000,
+        0,
+        0,
+        1280,
+        720,
+        None,
+        None,
+        None,
+        None,
+    )
+    assert handle, ctypes.get_last_error()
+    try:
+        blank_preview_caption(handle, hide_from_taskbar=True)
+        rect = wintypes.RECT()
+        assert user.GetClientRect(handle, ctypes.byref(rect))
+        assert (rect.right, rect.bottom) == (1280, 720)
+        style = user.GetWindowLongW(handle, -20)
+        assert style & 0x80
+        assert not style & (0x40000 | 0x1)
+    finally:
+        assert user.DestroyWindow(handle)
 
 
 def test_preview_owner_restores_hidden_live_child_after_host_switch(native):

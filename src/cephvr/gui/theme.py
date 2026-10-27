@@ -694,6 +694,7 @@ def apply_theme(app: QApplication) -> None:
     from cephvr.gui.wheel_guard import install_wheel_guard
 
     install_wheel_guard(app)
+    app.setWindowIcon(QIcon())
     app.setStyle(EditorCursorStyle("Fusion"))
     palette = app.palette()
     palette.setColor(QPalette.ColorRole.Highlight, QColor(COLORS.selection))

@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 19
+_POLICY_VERSION = 20
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "3fb0d853862cc1a57a9a9b52e51af8e2d958eeb08a4345a51c66c3b6cee43493"
+_POLICY_SHA256 = "193ee66da1cee37d05b6a7986b18ee72df78d808e149e540be94c8d12bac619b"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -89,7 +89,7 @@ _POLICY_KEYS = frozenset(
     timing.missed_presentation_policy presentation.supported_modes
     presentation.default_mode presentation.supported_rgb_bits_per_channel
     presentation.precision_policy presentation.quantization
-    photodiode.pattern_family photodiode.pattern_version photodiode.marker_levels
+    photodiode.supported_modes photodiode.pattern_family photodiode.pattern_version photodiode.marker_levels
     photodiode.period_frames photodiode.reset_at color.working_space
     color.composition_format color.alpha color.output_correction
     color.uncalibrated_encoding photometric_calibration.supported_modes

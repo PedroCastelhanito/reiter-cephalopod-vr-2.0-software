@@ -16,11 +16,17 @@ from PyQt6.QtWidgets import QWidget
 
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.gui.theme import colors_for
+from cephvr.gui.trial_preview_image import fitted_image as fitted_image
+from cephvr.gui.trial_preview_image import folded_image
+from cephvr.gui.trial_preview_image import screen_image as screen_image
 from cephvr.gui.trial_preview_media import PreviewMedia
 from cephvr.gui.trial_preview_plan import PreviewLayer
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.visual_stimulus.rendering.color import linear_to_srgb
-from cephvr.visual_stimulus.rendering.image_fit import fitted_uv_scale
+from cephvr.visual_stimulus.rendering.image_fit import (
+    SCREEN_IMAGE_FITS,
+    valid_image_corners,
+)
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
     covering_texture,
@@ -43,39 +49,6 @@ def image_quad(image: QImage, points: list[QPointF], painter: QPainter) -> None:
     if QTransform.quadToQuad(source, QPolygonF(points), transform):
         painter.setTransform(transform, True)
         painter.drawImage(QPointF(), image)
-
-
-def fitted_image(image: QImage, fit: str, width: float, height: float) -> QImage:
-    """Preview the shader's centered fit within the authored image rectangle."""
-    sx, sy = fitted_uv_scale(fit, image.width() / image.height(), width / height)
-    if (sx, sy) == (1.0, 1.0):
-        return image
-    aspect = width / height
-    output = QImage(
-        max(1, round(512 * min(1.0, aspect))),
-        max(1, round(512 * min(1.0, 1.0 / aspect))),
-        QImage.Format.Format_ARGB32_Premultiplied,
-    )
-    output.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(output)
-    if fit == "contain":
-        target = QRectF(
-            output.width() * (1.0 - 1.0 / sx) / 2,
-            output.height() * (1.0 - 1.0 / sy) / 2,
-            output.width() / sx,
-            output.height() / sy,
-        )
-        painter.drawImage(target, image, QRectF(image.rect()))
-    else:
-        source = QRectF(
-            image.width() * (1.0 - sx) / 2,
-            image.height() * (1.0 - sy) / 2,
-            image.width() * sx,
-            image.height() * sy,
-        )
-        painter.drawImage(QRectF(output.rect()), image, source)
-    painter.end()
-    return output
 
 
 class PreviewCanvas(QWidget):
@@ -248,7 +221,15 @@ class PreviewCanvas(QWidget):
             values = {key: float(value) for key, value in snapshot.state}
         if setting.kind == "arena":
             return
-        if setting.kind == "texture":
+        uniform = setting.kind == "texture" and setting.uniform
+        inline_grating = (
+            setting.kind == "texture"
+            and setting.grating
+            and setting.pattern.kind != "image_tile"
+        )
+        if uniform or inline_grating:
+            asset = ""
+        elif setting.kind == "texture":
             if setting.pattern.kind != "image_tile":
                 raise ValueError(
                     "Prepared image textures are required for this planning preview"
@@ -256,7 +237,26 @@ class PreviewCanvas(QWidget):
             asset = str(setting.pattern.asset_id)
         else:
             asset = str(setting.asset_id)
-        if setting.kind == "video":
+        if setting.kind == "image" and setting.sparse_noise is not None:
+            asset = setting.sparse_noise.asset_at(self.local_ns)
+        if inline_grating:
+            assert setting.kind == "texture"
+            from cephvr.gui.grating_image import grating_image
+
+            image = grating_image(setting, values)
+        elif uniform:
+            assert setting.kind == "texture"
+            image = QImage(1, 1, QImage.Format.Format_RGB32)
+            image.fill(
+                QColor.fromRgbF(
+                    *(
+                        linear_to_srgb(float(c))
+                        for c in setting.mean_linear_rgb
+                        if isinstance(c, (int, float))
+                    )
+                )
+            )
+        elif setting.kind == "video":
             identity = f"{setting.instance_id}:{asset}"
             image = self.media.video(
                 identity,
@@ -266,6 +266,24 @@ class PreviewCanvas(QWidget):
             )
         else:
             image = self.media.image(asset)
+        if (
+            setting.kind == "image"
+            and setting.sparse_noise is not None
+            and not image.isNull()
+        ):
+            background = QImage(image.size(), QImage.Format.Format_ARGB32_Premultiplied)
+            background.fill(
+                QColor.fromRgbF(
+                    *(
+                        linear_to_srgb(c)
+                        for c in setting.sparse_noise.background_linear_rgb
+                    )
+                )
+            )
+            compose = QPainter(background)
+            compose.drawImage(0, 0, image)
+            compose.end()
+            image = background
         if image.isNull():
             if asset in self.media.errors:
                 raise ValueError(
@@ -274,12 +292,67 @@ class PreviewCanvas(QWidget):
             if setting.kind == "video":
                 return
             raise ValueError(f"Cannot read {self.media.paths.get(asset, asset)}")
+        if setting.kind == "image" and setting.fit in SCREEN_IMAGE_FITS:
+            surface = self.rig_geometry.surfaces.get(self.face)
+            if setting.fit == "source" and (
+                surface is None or surface.image_pixels is None
+            ):
+                raise ValueError(
+                    "Assign a projector resolution to preview Source pixels"
+                )
+            target = (
+                surface.image_pixels if surface and surface.image_pixels else (1, 1)
+            )
+            if setting.fit == "fold":
+                image = folded_image(
+                    image,
+                    self.media.image_sizes[asset],
+                    self.rig_geometry.image_fold_map(self.face),
+                    target,
+                )
+            else:
+                image = screen_image(
+                    image, setting.fit, self.media.image_sizes[asset], target
+                )
+            painter.setOpacity(max(0, min(1, values["opacity"])))
+            correction = surface.correction if surface else None
+            if correction and correction.corners and correction.source_uv:
+                corners = valid_image_corners(
+                    correction.source_uv,
+                    correction.corners,
+                    correction.valid_area or (0.0, 0.0, 1.0, 1.0),
+                )
+                points = [
+                    QPointF(
+                        rect.center().x() + x * rect.width() / 2,
+                        rect.center().y() - y * rect.height() / 2,
+                    )
+                    for x, y in corners
+                ]
+                image_quad(image, points, painter)
+            else:
+                painter.drawImage(rect, image)
+            return
         width, height = values["width"], values["height"]
         if min(width, height) <= 0:
             return
         if setting.kind == "image":
             image = fitted_image(image, setting.fit, width, height)
-        if setting.kind == "texture":
+        if setting.kind == "texture" and asset in self.media.field_recipes:
+            if setting.space.kind != "physical_surface":
+                raise ValueError(
+                    "Physical texture fields require millimetre coordinates"
+                )
+            image = self.media.field_image(
+                asset,
+                width,
+                height,
+                (
+                    values["phase_x"] * values["period_x"],
+                    values["phase_y"] * values["period_y"],
+                ),
+            )
+        elif setting.kind == "texture" and not uniform and not inline_grating:
             assert setting.pattern.kind == "image_tile"
             # Fixed resolution independent of epoch count; brush tiling never creates per-tile widgets.
             texture = QImage(512, 512, QImage.Format.Format_ARGB32_Premultiplied)

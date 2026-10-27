@@ -1,0 +1,22 @@
+Date: 2026-10-27 (Asia/Tokyo)
+Source: c7881b1f87a5d294383d310ebcb92630cd825099 with pre-existing concurrent working-tree changes and this repair.
+Method: local Windows Python 3.11 environment; command outcome summary from this chat, not raw terminal capture.
+
+python -m pytest tests/gui/test_dashboard.py -q -k trial_preview_maps_usable_pixels_to_screen_without_margins --basetemp .pytest-tmp-bottom-fix-before
+Before repair, updated no-extra-reflection expectation: 2 failed (Bottom X, both saved-flip cases),14 passed.
+python -m pytest tests/gui/test_dashboard.py -q -k "trial_preview_maps_usable_pixels_to_screen_without_margins or preview_linked_motion" --basetemp .pytest-tmp-bottom-fix-final
+Final:19 passed,1015 deselected. Includes both axes/flips and phase/direct-translation/spin retained-state replay.
+python -m pytest tests/visual_stimulus/test_rendering.py -q -k native_gpu_rig_crops_orients_and_never_writes_source --basetemp .pytest-tmp-bottom-native
+4 passed,138 deselected (native offscreen OpenGL, not physical projection).
+python -m pytest tests/visual_stimulus/test_rendering.py -q -m "not windows and not rig" --basetemp .pytest-tmp-bottom-rendering
+124 passed,18 deselected.
+python -m ruff check <two preview placement sources and two owning test files>
+Pass.
+python -m ruff format --check <same four files>
+Pass,4 already formatted after correcting initial line-ending mismatch.
+python -m mypy --platform win32 src/cephvr/gui/trial_preview_rig.py src/cephvr/visual_stimulus/rendering/preview_rig.py
+Success:2 source files.
+python tools/check_backend_boundaries.py
+777 modules,0 violations; existing unrelated source-size advisories reviewed.
+
+Physical calibration and output mappings unchanged. Running app not restarted; live preview and rig direction are not validated by these local checks.

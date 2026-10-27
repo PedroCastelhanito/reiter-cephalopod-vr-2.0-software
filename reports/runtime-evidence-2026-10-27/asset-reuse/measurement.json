@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "source_sha256": {
+    "src\\cephvr\\visual_stimulus\\resources\\assets.py": "0f172825a5202fc011f83b2af33811e98b14aed551a8f0dbbead7f4231c15b2f",
+    "src\\cephvr\\visual_stimulus\\resources\\prepare.py": "222ca0be0b18350a2d183da3d6b9970ac2b05689c65803451bf67ef5d4b61ee7",
+    "src\\cephvr\\visual_stimulus\\resources\\progress.py": "955500a4154b5c89c714783eaba0f341c610635a2d175dfc1edac0506b545ff2",
+    "src\\cephvr\\visual_stimulus\\resources\\session.py": "3f62152937debc3b8ed97d076727d9a1870f5a1b15d6f41ba4ccd08ab34167a5"
+  },
+  "scope": "Two seeded 3840x2160 RGB8 PNGs, six repeated trials; CPU preparation only. No schedule compilation, GPU upload, projection or full-workload claim.",
+  "results": [
+    {
+      "reuse": false,
+      "elapsed_seconds": 1.092456400161609,
+      "source_seconds": 0.20431679976172745,
+      "image_seconds": 0.8848161997739226,
+      "compile_seconds": 0.0,
+      "sources_hashed": 12,
+      "fingerprints_reused": 0,
+      "images_validated": 2,
+      "validations_reused": 10
+    },
+    {
+      "reuse": true,
+      "elapsed_seconds": 0.8766220000106841,
+      "source_seconds": 0.04077369975857437,
+      "image_seconds": 0.8347966999281198,
+      "compile_seconds": 0.0,
+      "sources_hashed": 2,
+      "fingerprints_reused": 10,
+      "images_validated": 2,
+      "validations_reused": 10
+    },
+    {
+      "reuse": true,
+      "elapsed_seconds": 0.8720853999257088,
+      "source_seconds": 0.038997599855065346,
+      "image_seconds": 0.8320907999295741,
+      "compile_seconds": 0.0,
+      "sources_hashed": 2,
+      "fingerprints_reused": 10,
+      "images_validated": 2,
+      "validations_reused": 10
+    },
+    {
+      "reuse": false,
+      "elapsed_seconds": 1.005022200057283,
+      "source_seconds": 0.18262450001202524,
+      "image_seconds": 0.8211463000625372,
+      "compile_seconds": 0.0,
+      "sources_hashed": 12,
+      "fingerprints_reused": 0,
+      "images_validated": 2,
+      "validations_reused": 10
+    }
+  ]
+}

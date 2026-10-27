@@ -28,6 +28,8 @@ from .schema_common import (
     portable_path,
 )
 
+PhotodiodeMode = Literal["landmarks", "every_frame"]
+
 Positive = Annotated[float, Field(gt=0)]
 
 
@@ -204,6 +206,7 @@ class DisplayProfile(Model):
     photometric_mode: Literal["calibrated", "uncalibrated"]
     idle_linear_rgb: Vec3
     photodiode_enabled: bool = True
+    photodiode_mode: PhotodiodeMode = "landmarks"
     pacing_output_id: OutputId | None = None
     photodiode_output_id: OutputId | None = None
     photodiode_patch: PhotodiodePatch | None = None

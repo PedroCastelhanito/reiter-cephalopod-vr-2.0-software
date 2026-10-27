@@ -30,7 +30,9 @@ def constant_rate(value: dict[str, Any]) -> float | None:
 def motion_numbers(
     setting: dict[str, Any], *, rig_coordinates: bool = False
 ) -> tuple[float, float, float]:
-    texture = setting["kind"] == "texture"
+    texture = setting["kind"] == "texture" and not (
+        setting.get("grating", False) and setting["pattern"]["kind"] != "image_tile"
+    )
     if texture:
         pattern = setting["pattern"]
         if pattern["kind"] != "image_tile" or any(
@@ -60,7 +62,11 @@ def motion_numbers(
     if x is None or y is None or angular is None:
         raise ValueError("Choose constant motion before varying speed/direction")
     angle = degrees(atan2(y, x)) if x or y else 0.0
-    if rig_coordinates:
+    if setting.get("grating", False):
+        from .grating import orientation
+
+        angle = orientation(setting, rig_coordinates=rig_coordinates)
+    elif rig_coordinates:
         angle = rig_direction(setting, angle) if x or y else 0.0
     return hypot(x, y), angle, angular
 
@@ -94,7 +100,11 @@ def varied_fields(
                 angle = local_direction(frame, angle)
             x, y = speed * cos(radians(angle)), speed * sin(radians(angle))
             for axis, value in (("x", x), ("y", y)):
-                if setting["kind"] == "texture" and not rig_coordinates:
+                if (
+                    setting["kind"] == "texture"
+                    and not rig_coordinates
+                    and not setting.get("grating", False)
+                ):
                     result[(f"phase_{axis}", "function", "value")] = (
                         -value / setting["pattern"][f"period_{axis}"]["value"],
                         "cycle/s",
@@ -174,6 +184,8 @@ def parameter_value(
         if value is None:
             raise ValueError("Custom angular motion")
         return value
+    if name == "Orientation" and setting.get("grating", False):
+        return motion_numbers(setting, rig_coordinates=rig_coordinates)[1]
     if name in ("Speed", "Direction"):
         return motion_numbers(setting, rig_coordinates=rig_coordinates)[
             ("Speed", "Direction", "Angular speed").index(name)
@@ -209,6 +221,11 @@ def patch_setting(
     rig_coordinates: bool = False,
     rig_angle_version: int = 2,
 ) -> None:
+    if "Orientation" in changes and not setting.get("grating", False):
+        raise ValueError("Orientation variations require Grating")
+    if setting.get("grating", False) and "Orientation" in changes:
+        changes = dict(changes)
+        changes["Direction"] = changes.pop("Orientation")
     for name in ("Longitudinal", "Lateral", "Angular"):
         if name not in changes:
             continue
@@ -240,8 +257,15 @@ def patch_setting(
         setting["end_behavior"] = choice
     if "Fit" in changes:
         fit_choice = changes["Fit"].lower()
-        if fit_choice not in {"contain", "cover", "stretch"}:
-            raise ValueError("Choose Contain, Cover or Stretch")
+        if fit_choice not in {
+            "resize",
+            "source",
+            "fold",
+            "contain",
+            "cover",
+            "stretch",
+        }:
+            raise ValueError("Choose Resize, Source or Fold")
         setting["fit"] = fit_choice
     numeric = {
         k: float(v)
@@ -266,9 +290,20 @@ def patch_setting(
         setting["motion"][key] = dict(
             kind="rate", function=dict(kind="constant", value=angular)
         )
+    grating_angle = None
+    if setting.get("grating", False) and any(
+        k in numeric for k in ("Speed", "Direction")
+    ):
+        grating_angle = numeric.get(
+            "Direction", motion_numbers(setting, rig_coordinates=rig_coordinates)[1]
+        )
     fields = varied_fields(setting, numeric, rig_coordinates=rig_coordinates)
     for path, (value, _) in fields.items():
         assign_ref(setting, path, value)
+    if grating_angle is not None:
+        from .grating import assign_orientation
+
+        assign_orientation(setting, grating_angle, rig_coordinates=rig_coordinates)
     size = {
         k: v
         for k, v in changes.items()

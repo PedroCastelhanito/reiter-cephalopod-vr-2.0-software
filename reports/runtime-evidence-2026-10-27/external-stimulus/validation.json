@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-27",
+  "task": "external-stimulus-selection",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "working_tree": "Pre-existing uncommitted changes preserved; source hashes identify checked files.",
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"external_stimulus or external_texture or texture_recipe_file_selection or stimulus_parameter_edit_invalid_guard_and_media_root or unified_subgroup_asset_edit or demo_assets_can_be_selected or trial_preview_generates_recipe\" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c10-e15c-7041-a69c-7c113180cadd/pytest-external-stimulus",
+      "outcome": "16 passed, 1003 deselected; offscreen Qt"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py -q -k \"json_texture_preparation or image_recipe_protects\" -m \"not windows and not rig\" --basetemp .pytest-tmp-external-texture-backend",
+      "outcome": "3 passed, 92 deselected"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/gui/stimulus_files.py tests/gui/test_dashboard.py",
+      "outcome": "pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui/stimulus_files.py tests/gui/test_dashboard.py",
+      "outcome": "2 files already formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui/stimulus_files.py",
+      "outcome": "pass, 1 source"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "outcome": "772 modules, zero violations; existing size advisories on unchanged modules"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass; CRLF normalization warnings only"
+    }
+  ],
+  "earlier_attempts": [
+    "GUI subset: 12 passed before added preview test",
+    "Expanded selection: 15 passed, 1 fixture error; demo assets require output outside repository",
+    "Sandbox Temp retry: 16 setup errors creating pytest child folders; resolved using authorized visualization root"
+  ],
+  "limitations": [
+    "Running app not restarted",
+    "No native picker, device or full-load acceptance"
+  ],
+  "sha256": {
+    "src/cephvr/gui/stimulus_files.py": "1feefa0126fb7b37d05febee6461176573c56f0fbd1c14d82ca9a6e7bc109a49",
+    "tests/gui/test_dashboard.py": "4293bed39103ac1a6e138fe37ca30aa8562c467fbab4e04851e0bae7e01ab0fe"
+  }
+}

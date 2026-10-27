@@ -32,6 +32,16 @@ def validate_link_geometry(
                 continue
             source = settings[target.linked_to]
             assert isinstance(source, TextureSettings)
+            if target.grating:
+                from cephvr.visual_stimulus.config.grating_field import field_on_surface
+
+                field_on_surface(
+                    source,
+                    dict(x=0.0, y=0.0, rotation=0.0, frequency=1.0),
+                    target,
+                    geometry,
+                )
+                continue
             linked_rates(source, target, geometry, source_rotation=0, target_rotation=0)
             validate_spin_pivot(source, geometry, positions.get(source.instance_id))
         for setting in epoch.settings:

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty working tree; summarized tool outputs, no physical/native acceptance",
+  "checks": {
+    "QT_QPA_PLATFORM=offscreen pytest tests/generate_stimulus -q --basetemp=<visualization workspace>/fixed-tile-tests --tb=short": "72 passed, 2 skipped in 5.72s",
+    "ruff check src/cephvr/generate_stimulus tests/generate_stimulus": "pass",
+    "ruff format --check src/cephvr/generate_stimulus tests/generate_stimulus": "16 files pass",
+    "mypy --platform win32 src/cephvr/generate_stimulus": "14 sources pass",
+    "python tools/check_backend_boundaries.py": "772 modules, 0 violations; existing size advisories",
+    "git diff --check": "pass with line-ending warnings"
+  },
+  "sha256": {
+    "src/cephvr/generate_stimulus/textures.py": "e36f981b938ef52fb5c092aa39bef7691a084063f0822263b70e5087b15c0972",
+    "src/cephvr/generate_stimulus/documents.py": "8c988b36b2f987c230b06adeb7709b7423a4935e2555d39f7b692291e2a25115",
+    "src/cephvr/generate_stimulus/properties.py": "b86de58192a2991a7f5543284bb2f16cd50d7db9366f28129c0b850ed98ec258"
+  }
+}

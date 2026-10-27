@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import secrets
 import threading
 import time
 import uuid
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -36,6 +37,7 @@ from cephvr.visual_stimulus.rendering.types import (
 )
 from cephvr.visual_stimulus.resources.assets import (
     PreparedResourceBundle,
+    ProtectedFingerprintCache,
     ProtectedSource,
     _resolve_asset_path,
 )
@@ -358,6 +360,10 @@ class NativePreparation:
         components = software_provenance(self._budget.check_cancelled_or_expired)
         artifacts: list[PreparedTrial] = []
         validated_images: dict[str, tuple[ImageSource, ImageInfo]] = {}
+        fingerprints = ProtectedFingerprintCache(self._budget)
+        from cephvr.visual_stimulus.resources.progress import PreparationMetrics
+
+        metrics = PreparationMetrics()
         try:
             for trial_number, trial in enumerate(request.session.trials, 1):
                 self._check(deadline_ns)
@@ -430,6 +436,8 @@ class NativePreparation:
                     validated_images=validated_images,
                     component_provenance=components,
                     image_progress=image_progress,
+                    fingerprints=fingerprints,
+                    metrics=metrics,
                 )
                 self._progress.update(f"{label} — Compiling stimulus schedule")
                 trial_id = trial.context.trial_id
@@ -504,6 +512,7 @@ class NativePreparation:
                     review_encoding=review_encoding,
                     saving=saving,
                 )
+                compile_started = time.perf_counter()
                 artifact = compile_trial(
                     program,
                     context,
@@ -511,6 +520,7 @@ class NativePreparation:
                     max_prepared_plan_bytes=limits.max_prepared_plan_bytes,
                     preparation_budget=self._budget,
                 )
+                metrics.compile_seconds += time.perf_counter() - compile_started
                 from cephvr.visual_stimulus.config.review_layout import review_layout
 
                 layout = review_layout(
@@ -566,6 +576,10 @@ class NativePreparation:
                 assert self.video_session is not None
                 self.video_session.register_trial(artifact, bundle)
                 artifacts.append(artifact)
+            self._progress.update(
+                f"Image validation complete: {metrics.images_validated} unique, "
+                f"{metrics.validations_reused} reused"
+            )
             if any(bundle.image_sources for bundle in self._bundles.values()):
                 from cephvr.visual_stimulus.rendering.image_residency import (
                     ImageResidency,
@@ -599,6 +613,11 @@ class NativePreparation:
             # Sources stay referenced until closure is explicitly reported. The
             # worker's registered obligations remain available through cleanup().
             raise
+        finally:
+            logging.getLogger(__name__).info(
+                "Setup preparation metrics: %s", asdict(metrics)
+            )
+            self._budget.release(owner="visual_stimulus:source-fingerprints")
 
     def _reserve_scene_gpu(self, artifact: PreparedTrial) -> None:
         """Account retained linear render surfaces before any GL allocation."""

@@ -28,6 +28,7 @@ from cephvr.visual_stimulus.rendering.native_display import (
     activate_window,
     attach_window_context,
     configure_window,
+    hide_output_shell_entry,
     idle_device_color,
     resolve_output_monitors,
     verify_framebuffer,
@@ -206,6 +207,7 @@ class ModernGLPort:
                         f"could not create output {output.output_id}"
                     )
                 self._orphan_windows[output.output_id] = window
+                hide_output_shell_entry(glfw, window)
                 glfw.make_context_current(window)
                 context = attach_window_context(self._moderngl)
                 # Register ownership immediately after context creation so any

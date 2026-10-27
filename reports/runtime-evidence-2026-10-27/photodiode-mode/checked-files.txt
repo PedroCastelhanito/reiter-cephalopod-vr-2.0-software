@@ -1,0 +1,17 @@
+src/cephvr/gui/projector_timing.py
+src/cephvr/gui/projector_pulse_files.py
+src/cephvr/gui/projectors.py
+src/cephvr/gui/projector_codec.py
+src/cephvr/gui/projector_pulses.py
+src/cephvr/gui/placement_calibration.py
+src/cephvr/gui/review_placement.py
+src/cephvr/gui/calibration_profile.py
+src/cephvr/visual_stimulus/config/models/display_profile.py
+src/cephvr/visual_stimulus/config/calibration_placement.py
+src/cephvr/visual_stimulus/rendering/photodiode.py
+src/cephvr/visual_stimulus/rendering/engine.py
+src/cephvr/visual_stimulus/rendering/display_calibration.py
+src/cephvr/visual_stimulus/configuration.py
+tests/visual_stimulus/test_rendering.py
+tests/gui/test_dashboard.py
+tests/visual_stimulus/test_display_calibration_rendering.py

@@ -194,6 +194,20 @@ def equal_row_height(*controls: QWidget) -> None:
 class SelectionBox(QComboBox):
     """Draw a consistent dropdown affordance across native widget styles."""
 
+    def showPopup(self) -> None:
+        view = self.view()
+        assert view is not None
+        view.ensurePolished()
+        # Account for themed rows before Qt sizes the popup chrome.
+        view.setMinimumHeight(
+            sum(
+                view.sizeHintForRow(index)
+                for index in range(min(self.count(), self.maxVisibleItems()))
+            )
+            + 2 * view.frameWidth()
+        )
+        super().showPopup()
+
     def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
         painter = QPainter(self)

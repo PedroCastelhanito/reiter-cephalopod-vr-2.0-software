@@ -422,12 +422,19 @@ class PreviewWorkspace(QWidget):
         self.waiting.intersection_update(self.views)
         self.refresh()
         self.reflow_toolbar()
-        for key in tuple(self.waiting):
+        camera_requested = False
+        for key in self.views:
+            if key not in self.waiting:
+                continue
             view = self.views[key]
             if view.visible:
                 self.waiting.discard(key)
             elif view.available and not view.pending:
+                # Cameras share one command slot; retain the remaining selections.
+                if key != "stimulus" and camera_requested:
+                    continue
                 self.request(key, True)
+                camera_requested |= key != "stimulus"
         self.sync_projector_visibility()
         self._close_viewers()
 

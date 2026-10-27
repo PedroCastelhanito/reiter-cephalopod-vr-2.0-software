@@ -1,15 +1,22 @@
-"""Resolve media and CephVR1 texture recipes inside one asset root."""
+"""Resolve selected media, importing external files into the protocol asset root."""
 
+import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from cephvr.gui.program_editing import NodePath, data_node
+from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.config.models.schema_common import (
     DEFAULT_DOCUMENT_BYTES,
     portable_path,
 )
-from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
+from cephvr.visual_stimulus.resources.recipe_dependencies import image_dependency
+from cephvr.visual_stimulus.resources.texture_recipe import (
+    TextureRecipe,
+    parse_texture_recipe,
+)
 
 PROFILES = {
     ".png": "png_uint_v1",
@@ -31,38 +38,79 @@ class StimulusFile:
     tile_height_mm: float | None = None
 
 
-def resolve_stimulus_file(root: str, path: str, *, texture: bool) -> StimulusFile:
+def resolve_stimulus_file(
+    root: str, path: str, *, texture: bool, grating: bool = False
+) -> StimulusFile:
     if not root:
         raise ValueError("Choose the Assets folder first")
     base = Path(root).resolve()
+    if not base.is_dir():
+        raise ValueError("Choose an existing Assets folder first")
     selected = Path(path).resolve()
-    selected.relative_to(base)
     width = height = None
+    recipe = None
     if selected.suffix.lower() == ".json":
         if not texture:
             raise ValueError("Texture designs can only be selected for a texture")
         with selected.open("rb") as stream:
             raw = stream.read(DEFAULT_DOCUMENT_BYTES + 1)
         recipe = parse_texture_recipe(raw, max_document_bytes=DEFAULT_DOCUMENT_BYTES)
-        return StimulusFile(
-            portable_path(selected.relative_to(base).as_posix()),
-            "cephvr1_texture_json_v1",
-            recipe.tile_width_mm,
-            recipe.tile_height_mm,
-        )
-    if not selected.is_file():
-        raise ValueError("Selected media file is missing")
-    suffix = selected.suffix.lower()
-    if suffix not in PROFILES:
-        raise ValueError(
-            "Select a supported image, video, GLB arena or texture JSON recipe"
-        )
+        from cephvr.visual_stimulus.config.media_profiles import GRATING_PROFILE
+        from cephvr.visual_stimulus.resources.grating_recipe import interpreted_recipe
+
+        profile = GRATING_PROFILE if grating else "cephvr1_texture_json_v1"
+        recipe = interpreted_recipe(recipe, profile)
+        width, height = recipe.tile_width_mm, recipe.tile_height_mm
+        if recipe.physical_field and width is None:
+            # One phase cycle represents one mm; appearance has no repeat period.
+            width = height = 1.0
+    else:
+        if grating:
+            raise ValueError("Grating requires a Grating texture design (.json)")
+        if not selected.is_file():
+            raise ValueError("Selected media file is missing")
+        suffix = selected.suffix.lower()
+        if suffix not in PROFILES:
+            raise ValueError(
+                "Select a supported image, video, GLB arena or texture JSON recipe"
+            )
+        profile = PROFILES[suffix]
+    if not selected.is_relative_to(base):
+        selected = _import_file(base, selected, recipe)
     return StimulusFile(
         portable_path(selected.relative_to(base).as_posix()),
-        PROFILES[suffix],
+        profile,
         width,
         height,
     )
+
+
+def _import_file(base: Path, selected: Path, recipe: TextureRecipe | None) -> Path:
+    """Keep each import isolated; preserve recipe-relative image dependencies."""
+    name = portable_path(selected.name)
+    dependency = None
+    if recipe is not None:
+        dependency = image_dependency(
+            selected.parent,
+            Asset(
+                asset_id="import",
+                logical_path=name,
+                profile="cephvr1_texture_json_v1",
+                color_override=None,
+            ),
+            recipe,
+        )
+    destination = Path(tempfile.mkdtemp(prefix="import-", dir=base))
+    try:
+        shutil.copyfile(selected, destination / name)
+        if dependency is not None:
+            target = destination / dependency.logical_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(selected.parent / dependency.logical_path, target)
+        return destination / name
+    except BaseException:
+        shutil.rmtree(destination)
+        raise
 
 
 def select_epoch_asset(

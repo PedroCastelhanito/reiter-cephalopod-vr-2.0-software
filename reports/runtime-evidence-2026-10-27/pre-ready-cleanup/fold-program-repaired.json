@@ -1,0 +1,503 @@
+{
+  "format_version": 2,
+  "category": "media_presentation",
+  "assets": [
+    {
+      "asset_id": "asset_6",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_7",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_8",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_9",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_10",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_11",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_12",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_13",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "Asset_1",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "Asset_2",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "Asset_3",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "Asset_4",
+      "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_14",
+      "logical_path": "textures/uniform/Uniform_primary_color_0.2.texture.json",
+      "color_override": null,
+      "profile": "cephvr1_texture_json_v1"
+    },
+    {
+      "asset_id": "asset_15",
+      "logical_path": "textures/uniform/Uniform_primary_color_0.2.texture.json",
+      "color_override": null,
+      "profile": "cephvr1_texture_json_v1"
+    },
+    {
+      "asset_id": "asset_16",
+      "logical_path": "textures/uniform/Uniform_primary_color_0.2.texture.json",
+      "color_override": null,
+      "profile": "cephvr1_texture_json_v1"
+    },
+    {
+      "asset_id": "asset_17",
+      "logical_path": "textures/uniform/Uniform_primary_color_0.2.texture.json",
+      "color_override": null,
+      "profile": "cephvr1_texture_json_v1"
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "stimulus_1",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_2",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_3",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_4",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_5",
+      "family": "image"
+    },
+    {
+      "instance_id": "stimulus_6",
+      "family": "image"
+    },
+    {
+      "instance_id": "stimulus_7",
+      "family": "image"
+    },
+    {
+      "instance_id": "stimulus_8",
+      "family": "image"
+    },
+    {
+      "instance_id": "Instance_1",
+      "family": "image"
+    },
+    {
+      "instance_id": "Instance_2",
+      "family": "image"
+    },
+    {
+      "instance_id": "Instance_3",
+      "family": "image"
+    },
+    {
+      "instance_id": "Instance_4",
+      "family": "image"
+    },
+    {
+      "instance_id": "stimulus_9",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_10",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_11",
+      "family": "texture"
+    },
+    {
+      "instance_id": "stimulus_12",
+      "family": "texture"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "blank",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": []
+    },
+    {
+      "scene_id": "scene_stimulus_4",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "stimulus_1",
+        "stimulus_2",
+        "stimulus_3",
+        "stimulus_4"
+      ]
+    },
+    {
+      "scene_id": "scene_stimulus_8",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "stimulus_5",
+        "stimulus_6",
+        "stimulus_7",
+        "stimulus_8"
+      ]
+    },
+    {
+      "scene_id": "blank_1",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": []
+    },
+    {
+      "scene_id": "Scene_1",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "Instance_1",
+        "Instance_2",
+        "Instance_3",
+        "Instance_4"
+      ]
+    },
+    {
+      "scene_id": "scene_stimulus_9",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "stimulus_9",
+        "Instance_2",
+        "Instance_3",
+        "Instance_4"
+      ]
+    },
+    {
+      "scene_id": "scene_stimulus_12",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "stimulus_9",
+        "stimulus_10",
+        "stimulus_11",
+        "stimulus_12"
+      ]
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "group",
+      "group_id": "Group_1",
+      "repetitions": 1,
+      "order": "as_listed",
+      "order_unit": "child_blocks",
+      "conditions": null,
+      "body": [
+        {
+          "kind": "epoch",
+          "epoch_id": "Epoch_1",
+          "batch_label": "texture",
+          "batch_id": "batch_e74935deec4344d99615b794dde21dc7",
+          "subgroup_draft": null,
+          "scene_id": "scene_stimulus_8",
+          "duration": {
+            "kind": "fixed",
+            "duration": {
+              "seconds": "300"
+            }
+          },
+          "settings": [
+            {
+              "instance_id": "stimulus_5",
+              "space": {
+                "kind": "visual_angle",
+                "frame_id": "rig",
+                "frame_to_rig_xyzw": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "surfaces": [
+                  "front"
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "image",
+              "asset_id": "asset_10",
+              "sampling": "linear",
+              "fit": "source"
+            },
+            {
+              "instance_id": "stimulus_6",
+              "space": {
+                "kind": "visual_angle",
+                "frame_id": "rig",
+                "frame_to_rig_xyzw": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "surfaces": [
+                  "left"
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "image",
+              "asset_id": "asset_11",
+              "sampling": "linear",
+              "fit": "fold"
+            },
+            {
+              "instance_id": "stimulus_7",
+              "space": {
+                "kind": "visual_angle",
+                "frame_id": "rig",
+                "frame_to_rig_xyzw": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "surfaces": [
+                  "right"
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "image",
+              "asset_id": "asset_12",
+              "sampling": "linear",
+              "fit": "fold"
+            },
+            {
+              "instance_id": "stimulus_8",
+              "space": {
+                "kind": "visual_angle",
+                "frame_id": "rig",
+                "frame_to_rig_xyzw": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "surfaces": [
+                  "bottom"
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "image",
+              "asset_id": "asset_13",
+              "sampling": "linear",
+              "fit": "fold"
+            }
+          ],
+          "repetition_rules": [],
+          "repetition_settings": []
+        }
+      ]
+    }
+  ]
+}

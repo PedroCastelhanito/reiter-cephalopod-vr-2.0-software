@@ -102,27 +102,21 @@ class VideoTransitionTests(unittest.TestCase):
             ["initialize", "pause", "resume", "restart_incompatible", "deactivate"],
         )
 
-    def test_media_links_are_preserved_in_source_but_not_executed(self):
+    def test_media_links_require_valid_references(self):
         source = json.loads(fixture_source())
         source["category"] = "media_presentation"
-        setting = source["sequence"][0]["settings"][0]
-        hold = {"kind": "hold"}
-        setting.update(
-            linked_to="unused_reference",
-            motion={axis: hold for axis in ("x", "y", "rotation")},
-            phase_x=hold,
-            phase_y=hold,
-            width={"kind": "constant", "value": 10},
-            height={"kind": "constant", "value": 10},
-            feedback=[],
-        )
+        source["sequence"][0]["settings"][0]["linked_to"] = "unused_reference"
+        with self.assertRaisesRegex(ValueError, "active texture reference"):
+            make_program(json.dumps(source))
+
+    def test_media_motion_survives_compilation_and_legacy_category_loading(self):
+        source = json.loads(fixture_source())
+        source["category"] = "texture_drift"
         encoded = json.dumps(source)
         program = make_program(encoded)
-        self.assertEqual(program.sequence[0].settings[0].linked_to, "unused_reference")
+        self.assertEqual(program.category, "media_presentation")
         plan = make_prepared_trial(encoded)
-        self.assertTrue(
-            all(s.linked_to is None for epoch in plan.epochs for s in epoch.settings)
-        )
+        self.assertEqual(plan.epochs[0].settings, program.sequence[0].settings)
 
 
 class DurationResolutionTests(unittest.TestCase):
@@ -344,6 +338,190 @@ class ExpansionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
                 expand_program(large, seed_decimal="1", max_expanded_epochs=100000)
             resolve.assert_not_called()
+
+    def test_asset_repetition_rules_snapshot_choices_and_validate_every_candidate(
+        self,
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.repetition import AssetRepetitionRule
+        from cephvr.visual_stimulus.config.repetition_values import sample_at
+
+        rule = AssetRepetitionRule(
+            instance_id="texture", asset_ids=("a", "b", "c"), seed="0" * 32
+        )
+        samples = [sample_at(rule, i) for i in range(20)]
+        self.assertEqual(set(samples), {"a", "b", "c"})
+        self.assertEqual(samples[:5], [sample_at(rule, i) for i in range(5)])
+        self.assertNotEqual(
+            samples,
+            [
+                sample_at(rule.model_copy(update={"stream": "other"}), i)
+                for i in range(20)
+            ],
+        )
+        for choices in ((), ("a", "a")):
+            with self.assertRaises(ValueError):
+                AssetRepetitionRule(
+                    instance_id="texture", asset_ids=choices, seed="0" * 32
+                )
+        payload = json.loads(fixture_source())
+        payload["assets"] = [
+            dict(
+                asset_id=identity,
+                logical_path=identity + ".png",
+                profile="png_uint_v1",
+                color_override=None,
+            )
+            for identity in rule.asset_ids
+        ]
+        original = payload["sequence"][:1]
+        original[0]["settings"][0]["pattern"] = dict(
+            kind="image_tile",
+            asset_id="a",
+            period_x=dict(kind="constant", value=10),
+            period_y=dict(kind="constant", value=10),
+            sampling="nearest",
+        )
+        original[0]["repetition_rules"] = [
+            rule.model_dump(mode="json"),
+            dict(
+                instance_id="texture",
+                parameter="Angular speed",
+                minimum="0",
+                maximum="10",
+                precision="1",
+                seed="1" * 32,
+            ),
+        ]
+        payload["sequence"] = [
+            dict(
+                kind="group",
+                group_id="repeat",
+                repetitions=20,
+                order="as_listed",
+                order_unit="child_blocks",
+                conditions=None,
+                body=original,
+            )
+        ]
+        program = self._program(payload)
+        self.assertEqual(len(program.sequence[0].body), 1)
+        result = expand_program(program, seed_decimal="1", max_expanded_epochs=20)
+        self.assertEqual([e.settings[0].pattern.asset_id for e in result], samples)
+        restored = self._program(json.loads(program.model_dump_json()))
+        self.assertEqual(
+            result, expand_program(restored, seed_decimal="2", max_expanded_epochs=20)
+        )
+        for identity, profile in (("a", "mp4_h264_sdr8_v1"), ("c", "mp4_h264_sdr8_v1")):
+            broken = deepcopy(payload)
+            next(a for a in broken["assets"] if a["asset_id"] == identity)[
+                "profile"
+            ] = profile
+            with self.assertRaisesRegex(ValueError, "wrong-family asset"):
+                self._program(broken)
+        broken = deepcopy(payload)
+        broken["assets"] = broken["assets"][:-1]
+        with self.assertRaisesRegex(ValueError, "wrong-family asset"):
+            self._program(broken)
+        broken = deepcopy(payload)
+        broken["sequence"][0]["body"][0]["repetition_rules"].append(
+            rule.model_dump(mode="json")
+        )
+        with self.assertRaisesRegex(ValueError, "distinct active"):
+            self._program(broken)
+        payload["sequence"][0]["repetitions"] = 1000000
+        large = self._program(payload)
+        with patch(
+            "cephvr.visual_stimulus.compiler.expansion.resolve_repetition"
+        ) as resolve:
+            with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
+                expand_program(large, seed_decimal="1", max_expanded_epochs=100)
+            resolve.assert_not_called()
+
+    def test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent(
+        self,
+    ) -> None:
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.visual_stimulus.config.models.repetition import (
+            AssetRepetitionRule,
+            RepetitionRule,
+        )
+        from cephvr.visual_stimulus.config.parameter_edits import (
+            motion_numbers,
+            patch_setting,
+        )
+
+        source = add_stimulus(blank_program(), 0, "Texture", ("Left",))
+        payload = grouped_program(source).model_dump(mode="json")
+        group = payload["sequence"][0]
+        group["repetitions"] = 12
+        setting = group["body"][0]["settings"][0]
+        setting["grating"] = True
+        payload["assets"][0]["profile"] = "cephvr_grating_json_v1"
+        setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
+        patch_setting(
+            setting, {"Speed": "10", "Orientation": "45"}, rig_coordinates=True
+        )
+        first = payload["assets"][0]
+        second = dict(first, asset_id="other_grating", logical_path="other.json")
+        payload["assets"].append(second)
+        choices = (first["asset_id"], second["asset_id"])
+        group["body"][0]["repetition_rules"] = [
+            AssetRepetitionRule(
+                instance_id=setting["instance_id"],
+                asset_ids=choices,
+                grating_periods_mm=(6.0, 24.0),
+                seed="0" * 32,
+            ).model_dump(mode="json"),
+            RepetitionRule(
+                instance_id=setting["instance_id"],
+                parameter="Orientation",
+                minimum="0",
+                maximum="270",
+                precision="90",
+                seed="1" * 32,
+                rig_coordinates=True,
+                rig_angle_version=2,
+            ).model_dump(mode="json"),
+        ]
+        program = self._program(payload)
+        plan = expand_program(program, seed_decimal="0", max_expanded_epochs=12)
+        self.assertEqual(len(program.sequence[0].body), 1)
+        self.assertEqual(len(plan), 12)
+        for item in plan:
+            value = item.settings[0]
+            period = 6 if value.pattern.asset_id == choices[0] else 24
+            self.assertEqual(value.pattern.period_x.value, period)
+            self.assertEqual(value.pattern.period_y.value, period)
+            speed, angle, _ = motion_numbers(
+                value.model_dump(mode="json"), rig_coordinates=True
+            )
+            self.assertAlmostEqual(speed, 10)
+            self.assertIn(angle, (0.0, 90.0, 180.0, -90.0))
+        broken = deepcopy(payload)
+        broken["assets"][0]["profile"] = "cephvr1_texture_json_v1"
+        with self.assertRaisesRegex(ValueError, "wrong-family asset"):
+            self._program(broken)
+        broken = deepcopy(payload)
+        broken["sequence"][0]["body"][0]["repetition_rules"][0][
+            "grating_periods_mm"
+        ] = []
+        with self.assertRaisesRegex(ValueError, "spatial periods"):
+            self._program(broken)
+        broken = deepcopy(payload)
+        broken["sequence"][0]["body"][0]["settings"][0]["motion"]["x"] = {
+            "kind": "hold"
+        }
+        with self.assertRaisesRegex(ValueError, "movement must follow Orientation"):
+            self._program(broken)
+        broken = deepcopy(payload)
+        broken["sequence"][0]["body"][0]["settings"][0]["phase_x"] = {
+            "kind": "rate",
+            "function": {"kind": "constant", "value": 1},
+        }
+        with self.assertRaisesRegex(ValueError, "independent physical image tile"):
+            self._program(broken)
 
     def test_batch_labels_round_trip_without_changing_expansion(self) -> None:
         payload = json.loads(fixture_source())

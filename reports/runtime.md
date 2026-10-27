@@ -1,5 +1,286 @@
 # Controller and supervisor status
 
+## Combined-tree verification — 2026-10-27
+
+Both monitored implementation chats finished and their completion/rig follow-ups
+are reconciled in TODO/LOG. Final local Visual Stimulus verification passes620 cases
+plus3 subtests (55 platform/rig cases deselected); acquisition cleanup and window
+coordinates pass71 cases (2 deselected). Full affected-owner lint,431-file format,
+406-source Win32 mypy and14 canonical schemas pass. The final settled-tree focused
+offscreen GUI selection passes32 cases (1027 deselected). The import correction and
+display-cleanup fixture correction do not change runtime behavior. Existing size
+advisories retain their owning cohesion assessments under ARCH-002.
+
+The broad serial offscreen GUI run progressed beyond79% with multiple failure
+markers, then exited1 without a final summary/traceback. Its cause and failing-case
+inventory remain unverified under `gui-suite-reconciliation`; focused feature passes
+do not establish a full-suite pass. The general non-Grating epoch-assignment gap is
+separately deferred by the owner; no broader runtime repair was authorized here.
+[Commands, intermediate results and limits](runtime-evidence-2026-10-27/repo-reconciliation/context.md).
+Physical/native acceptance remains in the [rig checklist](rig-verification.md).
+
+## Protocol Media families — 2026-10-27
+
+`protocol-media-families` implements the owner's two protocol types and six per-epoch,
+per-projector/layer choices under [G01](../docs/architecture/gui.md#g01),
+[V02](../docs/architecture/visual_stimulus.md#v02),
+[V04](../docs/architecture/visual_stimulus.md#v04) and
+[V07](../docs/architecture/visual_stimulus.md#v07). Sparse noise and new Grating author
+parameters directly without mandatory recipe files. Sparse preparation retains its
+seeded definition/resources and the unchanged epoch clock; linked Gratings share one
+reference-owned pattern/phase via the owner-selected Bottom unfolding. Unlinked
+Gratings and Texture drift remain independent under their respective rules.
+
+32 focused GUI cases, 299 backend cases plus 3 subtests, and 3 synthetic native
+waveform cases pass. Scoped Ruff/format (49 files), Win32 mypy (44 sources), 14 schemas and
+785-module boundaries/zero violations pass. Earlier broad xdist runs were interrupted
+with worker crashes/no usable completion; the monitoring chat owns combined serial
+suite results. [Evidence, commands, failures and limits](runtime-evidence-2026-10-27/protocol-media-families/context.md).
+No managed-app restart or physical/full-load acceptance. Use the
+[existing rig checks](rig-verification.md#protocol-category-previews).
+
+The required marked-Grating occurrence assignment fix is bounded to the authorized
+Grating interface. Source review also observed the broader non-Grating assignment
+path missing from renderer state; `runtime-general-epoch-assignments` remains deferred
+pending separate authorization. Legacy distinct Media/Drift schedules fail atomic
+migration with an explicit separate-import message; they are never silently combined.
+
+## Grating stimulus — 2026-10-27
+
+Earlier asset-backed verification (before the current Media increment):8 Grating GUI and5 Grating compiler/resource cases pass;
+Ruff/check/format33 files, Windows-target mypy30 sources,14 schemas and whitespace
+pass. Boundary review reports780 modules and zero violations, with size advisories.
+
+`grating-stimulus` implements [G01](../docs/architecture/gui.md#g01)'s distinct Grating
+asset-backed compatibility path with Asset, Orientation and Speed. Across-bar direction follows the
+owner-confirmed rig angle, including zero-speed orientation. The ordinary texture
+editor remains available through its existing workflow. Random Orientation/Speed and
+Asset selection reuse compact repetitions; Asset candidates retain their own periods.
+[Backend interpretation](visual_stimulus.md#grating-stimulus--2026-10-27) preserves
+source file bytes and uses shared preview/preparation semantics.
+
+69 focused offscreen GUI cases pass, including all four screens, legacy/current
+recipes, preview boundaries, save/reload and unchanged source count. The source
+validation/preparation selection passes156 cases plus3 subtests. Tests restored UTF-8
+captions after shared-file encoding damage; obsolete category/removed-selector
+assertions from the concurrent media-family migration are recorded/excluded, not
+reported as passes. ARCH-002 uses focused motion/recipe owners and existing mechanisms,
+with no dependency/process; the form assembly retains its cohesive size advisory.
+[Evidence, commands and limits](runtime-evidence-2026-10-27/grating-stimulus/context.md).
+No running-app restart/native acceptance; see the [rig checklist](rig-verification.md#protocol-category-previews).
+
+## Protocol type with incomplete rows — 2026-10-27
+
+`protocol-type-incomplete-rows` implements [G01](../docs/architecture/gui.md#g01)
+revision364: type navigation quietly attempts to commit complete edits, then uses
+the committed schedule even if rows have missing assets or invalid parameters.
+Edits that cannot apply reset on switching; committed category templates still
+restore normally. Save and preview retain their existing flush/validation gates;
+[E07](../docs/architecture/experiment.md#e07) preparation is unchanged.
+
+ARCH-002 review reuses passive validation and the existing snapshot/template owner,
+removes the duplicate navigation flush, and adds no dependency or draft-state owner.
+ProtocolPage's existing size advisory remains cohesive page/document assembly;
+tests extend the owning dashboard behavior module.
+
+Validation on 2026-10-27 (uncommitted working tree): offscreen pytest
+`tests/gui/test_dashboard.py -q -k 'protocol_type_switch or
+protocol_category_changes_are_atomic or category_first_visit or
+presentation_rows_keep or protocol_config_round_trip or complete_protocol or
+category_template'` passes10 cases/1023 deselected with an external authorized
+basetemp. Missing-asset, duration and group drafts cannot save/flush but can switch;
+valid duration edits and committed category schedules survive the round trip.
+Initial valid-edit test incorrectly used7.250 seconds, below E05's minimum;
+corrected to67.250 seconds. Scoped Ruff/check/format4 files, Win32 mypy3 sources
+and776-module boundaries pass with zero violations; existing size advisories remain.
+Scoped whitespace passes. No live GUI restart or native/rig validation performed.
+
+## Protocol type button removal — 2026-10-27
+
+`protocol-remove-sparse-button` removes the Sparse noise button and its layout row
+from Protocol type at the owner's request ([G01](../docs/architecture/gui.md#g01)
+revision363). Existing import helpers and saved-program handling remain available.
+ARCH-002 review: deletion only, no added state or dependencies; ProtocolPage retains
+its cohesive page assembly/document ownership despite the existing size advisory.
+
+Five focused offscreen GUI tests pass, including an assertion that Protocol type
+has no buttons and retained import/cancellation validation. Command:
+`.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k sparse_noise_gui`
+with `--basetemp` in this chat's authorized visualization directory. Initial run
+could not create pytest's default temporary directory; rerun with that explicit
+base passed. Scoped Ruff/check/format and Windows-target mypy pass;773-module
+boundary check reports zero violations. Initial format check caught line-ending
+normalization, corrected with the configured formatter. Whitespace check passes.
+No running-app restart, native layout or rig acceptance claimed.
+
+## Asset variation rules — 2026-10-27
+
+`protocol-asset-variation` implements [G01](../docs/architecture/gui.md#g01)'s Asset /
+Random from folder control using the shared directory picker, compatible direct-file
+snapshots and normal external-file import. [V08](../docs/architecture/visual_stimulus.md#v08)
+owns executable seeded choices; [backend evidence](visual_stimulus.md#asset-variation-rules--2026-10-27)
+records schema/compiler checks. Existing source epochs remain compact. Committed
+seed/key rebasing also fixes resampling another rule after a subsequent edit.
+
+35 focused GUI tests pass, covering all media families, Media presentation, save/load,
+independent/shared projectors, numeric-rule coexistence, undo, invalid drafts and
+locked picker closure. Two final layout cases verify full mode text and folder
+controls across four widths. Scoped Ruff/format, Windows-target mypy and boundaries
+pass. ARCH-002 extracts legacy list parsing to its existing value owner and keeps
+folder IO in a focused field; the remaining widget size advisory is cohesive layout/
+restore behavior. [Commands/raw evidence](runtime-evidence-2026-10-27/protocol-asset-variation/context.md).
+No live app restart or playback validation; outstanding native/physical checks stay
+in the [rig checklist](rig-verification.md#protocol-category-previews).
+
+## Epoch duration milliseconds — 2026-10-27
+
+`epoch-duration-milliseconds` implements [G01](../docs/architecture/gui.md#g01)
+revision360: epoch entry/default/caption and shared timeline labels show hh:mm:ss.mmm
+(e.g.00:00:03.250). Existing sub-millisecond precision is retained without rounding;
+parsing removes presentation-only trailing zeros from exact decimal seconds. Legacy
+whole-second input remains accepted. ARCH-002 reuses the existing formatter/parser
+and form controls; no dependency or timing-engine change.
+
+Validation:21 focused offscreen GUI duration/timeline/subgroup tests pass; scoped
+Ruff/check/format4 files, Windows-target mypy3 sources and773-module boundaries pass
+(zero violations). Initial21-case run had one failure because a duplicated epoch's
+20 became20.000; exact parsing normalization fixed it and the selection passed.
+Command: `.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k
+'duration or timeline or subgroup or epoch_clock'` with QT_QPA_PLATFORM=offscreen
+and an authorized external visualization basetemp. No running-GUI restart/native
+layout or physical timing claim; this is a display/input-format change.
+
+
+## Dropdown option visibility — 2026-10-27
+
+`asset-dropdown-options` fixes clipped Authoring View/Screen choices under
+[G02](../docs/architecture/gui.md#g02) revision171. Isolated native Dashboard
+reproduction had a34px viewport for two25px rows. Shared SelectionBox now reserves
+the polished row heights before Qt opens the popup, respecting maxVisibleItems.
+ARCH-002 moves the existing MotionSource fix into the shared owner and removes
+the duplicate override; no new dependency, state or custom popup.
+
+Three native Dashboard tests pass across Standard/Retro/Amber, checking both View
+selections and all four Screen choices.78 offscreen authoring cases and12 related
+shared GUI popup/motion/camera cases pass. Ruff/check/format, Windows-target mypy
+two sources and773-module boundary checks pass with zero violations; existing
+unrelated size advisories remain. Initial mypy exposed a missing Qt optional-view
+assertion during the move; restored and rechecked. Native popup screenshots were
+inspected; running managed GUI was not restarted and physical/full-load checks
+remain outside this presentation change.
+[Evidence](runtime-evidence-2026-10-27/dropdown-options/context.json).
+
+## Protocol random rules — 2026-10-27
+
+`protocol-random-rules` implements [G01](../docs/architecture/gui.md#g01): new
+protocol variations offer only Random, with Minimum, Maximum and Resolution.
+The existing [V08](../docs/architecture/visual_stimulus.md#v08) seeded rules assign
+values across repetitions while keeping source epochs compact. Saved Values/Sweep
+rules retain their original method IDs and list semantics; categorical Video At end
+is retained only for legacy lists. No new sampling policy or dependency.
+
+ARCH-002 review keeps the change in the existing variation widget, candidate builder
+and subgroup application. The widget's size advisory is a cohesive UI/restore owner;
+no runtime back-reference or separate state owner was added. Existing owning tests
+cover new controls, narrow layout, legacy reconstruction, invalid drafts, independent
+projectors and compact million-repetition edits.26 GUI and3 compiler checks pass;
+the strengthened five-repetition save/reload assertion also passes. Scoped Ruff,
+format, Windows-target mypy and772-module boundaries (zero violations) pass.
+[Evidence and earlier test-environment failures](runtime-evidence-2026-10-27/protocol-random-rules/context.md).
+No running-app restart, native live appearance or physical acceptance performed.
+
+Asset texture preview CRT exclusion (2026-10-27): `asset-preview-crt` implements
+[G02 revision170](../docs/architecture/gui.md#g02). The image widget joins the
+existing pixel-region exclusion for scanlines/vignette; surrounding UI stays styled.
+ARCH-002 reuses the existing overlay clipping rule, adding no process/dependency.
+Two focused offscreen tests pass, including white-pixel preservation across resize
+and style toggles and actual asset preview widget registration. Scoped Ruff/format4
+files, Windows-target mypy2 sources and772-module boundaries/zero violations pass.
+Existing size advisories unchanged. [Evidence](runtime-evidence-2026-10-27/preview-crt/validation.json).
+No app restart or live native visual acceptance. An initial Windows wildcard-path
+search failed harmlessly and was retried against its directory.
+
+Asset Generator bar controls and single-row RGB edits: [implementation and checks](visual_stimulus.md#bar-authoring-controls--2026-10-27).
+
+Sparse-noise Asset Generator controls now use minimum active cell distance (mm)
+and activation probability, with fresh eligible layouts per pattern. Current
+implementation and local verification are in the [Visual Stimulus report](visual_stimulus.md#sparse-spacing-and-activation--2026-10-27);
+physical GUI/projector acceptance remains pending there.
+
+## Application icon - 2026-10-27
+
+`projector-shell-icons`: G01 restores the main GUI native icon fallback. Focused
+GUI theme check passes; projector changes and validation limits are in the
+[Visual Stimulus report](visual_stimulus.md#projector-shell-icons---2026-10-27).
+Running application was not restarted.
+
+## Image fitting controls — 2026-10-27
+
+`image-resize-source` implements G01's two-choice Image fit control and compatible
+legacy loading. New protocols default to Resize; Source preview uses original image
+and native valid-area dimensions.13 focused GUI and118 preview tests pass offscreen;
+the running GUI was not restarted. Backend behavior, calibration limits and full
+validation are recorded in the [Visual Stimulus report](visual_stimulus.md#image-resizesource--2026-10-27).
+
+## Sparse-noise GUI — 2026-10-27
+
+`sparse-noise-gui`: Protocol's per-projector recipe dialog and new-trial import are
+implemented under [G01](../docs/architecture/gui.md#g01), revision340.47 focused GUI
+protocol/preview checks and215 affected backend checks pass; offscreen layout and
+static/schema/boundary checks pass. Existing trials, asset-root identity and
+per-screen recipe seeds persist; cancellation and authority/geometry changes fence
+late work. No runtime restart or device action. The owning
+[Visual Stimulus report](visual_stimulus.md#sparse-noise-gui-integration--2026-10-27)
+retains source/test evidence, cohesion review and native acceptance limits.
+
+## Preview Start selection — 2026-10-27
+
+`preview-start-selection`: source inspection found deferred camera selections were
+dispatched together when Running made both sources available, while ManagedCameras
+admits only one command at a time. The rejected second submission lost its waiting
+selection. Existing [G01](../docs/architecture/gui.md#g01) waiting-selection behavior
+now dispatches one camera per snapshot in source order and keeps camera readiness
+false while that shared command slot is occupied. Remaining selections wait; failed
+submitted Show requests are not retried. Explicit cancellation gates remain covered.
+Setup's unselected reserved frames remain distinct from viewer selection; the owner's
+exact native screenshot sequence is not yet reproduced.
+
+ARCH-002 review keeps this correction in the existing selection drain and camera
+projection, with no extra queue, dependency or ownership change. These cohesive
+owners retain existing size advisories; the regression extends the owning Dashboard
+test module. No accepted architecture rule changed. Source base83c7e81e plus concurrent
+working changes. [Check record](runtime-evidence-2026-10-27/preview-start-selection/context.md)
+records23 passing focused tests, Ruff/format, Windows-target mypy and767-module
+boundary check with zero violations. Native/live acceptance stays in the existing
+[rig checklist](rig-verification.md); the running app was not restarted.
+
+## Window title icons — 2026-10-27
+
+`window-title-icons`: owner screenshot requests removal of white title-bar icons.
+Under [G02](../docs/architecture/gui.md#g02)rev167, `apply_theme` supplies one transparent
+Qt app icon inherited by application windows. Native camera caption clearing now
+also clears HighGUI's two class-icon defaults (Microsoft documents class fallback
+when no per-window icon exists: [WM_GETICON](https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-geticon),
+[class icons](https://learn.microsoft.com/en-us/windows/win32/menurc/about-icons)).
+Native controls, caption geometry and preview ownership are retained. ARCH-002 review:
+three visual-policy lines stay in shared theme setup, native handling stays in its
+existing caption helper; no dependency, custom chrome or input handling added.
+
+Current tree, base83c7e81e: two selected Qt/native-call tests pass; full
+`python -m pytest tests/platform/test_window_coordinates.py -q
+--basetemp=.pytest_tmp_title_icons_platform_oct27`:22 passes. Existing native
+preview regression gains class-icon assertions; its full producer/viewer scenario
+was not rerun. An isolated hidden native probe creates a uniquely named OpenCV
+window under `StagedPreviewWindow`, reads both class icon handles, runs
+`blank_preview_caption`, verifies both handles zero, window still hidden and native
+system-menu/resize/minimize/maximize style bits retained, then destroys it.
+Output: `PASS: hidden HighGUI class icons cleared; native system menu/resize/minimize/maximize retained; prior icon presence: [True, True]`.
+Scoped Ruff/format (five files), Win32 mypy (two source files), boundaries767/zero
+and whitespace pass. Initial patch-context mismatch corrected before application.
+No active window, capture or recording altered. Full relaunch applies Qt inheritance;
+recreated camera previews apply the class-icon fix. Actual managed visual/DPI
+inspection remains in the [existing native caption checklist](rig-verification.md#camera-native-caption).
+
 ## Preview transition placement — 2026-10-27
 
 `preview-transition-placement`: source review of the owner's misplaced-window

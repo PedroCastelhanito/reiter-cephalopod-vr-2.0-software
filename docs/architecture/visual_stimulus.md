@@ -147,16 +147,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
-- A protocol declares Media presentation, Texture drift or 3D navigation, consistently
-  across trials. Presentation permits static 2D layers, overlays, playback and opacity
-  fades, but rejects moving layers, animated size and motion feedback, including
-  condition/repetition alternatives. Saved texture-motion links are retained but ignored
-  in Presentation: no link validation or executable binding. Fixed initialization is
-  not motion. Drift permits
-  existing 2D motion families and fades; navigation permits the existing one-arena and
-  2D-overlay composition. Canonical validation governs GUI and headless submission.
+- A protocol declares Media presentation or 3D navigation consistently across trials.
+  Media permits Uniform, Image, Video, Sparse noise, Grating and Texture drift per
+  projector/layer in each epoch, including existing 2D motion, animation, feedback,
+  fades and valid links. Navigation retains one arena with 2D overlays. Arenas require
+  navigation. Canonical validation governs GUI and headless input, including condition
+  and repetition alternatives. Legacy texture_drift maps to media_presentation while
+  preserving executable settings; links are validated and executed in Media.
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -184,16 +183,27 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   frameworks or feature-parity requirements. Define units, coordinate frames and
   conversions explicitly; angular frequency, physical texture period and
   texture-coordinate motion are not interchangeable aliases.
-- Each physical screen may retain its own image-tile texture and phase while one
+- For Texture drift, each physical screen retains its own image-tile texture and phase while one
   independent reference texture owns programmed motion for directly linked followers.
   Resolve linear direction through a common unfolded Bottom plane using calibrated
   surface axes, preserving physical speed around corners. Output corrections and
   enablement never change that geometry. Links do not promise seamless imagery.
+- Linked inline Gratings instead sample their independent reference's common pattern
+  and spatial/temporal phase at the same logical time. Unfold calibrated surface planes
+  around their intersection with Bottom into Bottom-centered physical coordinates;
+  the reference owns period, colors, sharpness, orientation and retained motion/phase.
+  Preserve physical spacing; arbitrary directions need not match at every wall/wall
+  corner of the closed tank. No phase sharing applies to unlinked Gratings or Texture
+  drift. Require single-screen physical endpoints, one independent Grating reference,
+  an invertible orientation-preserving mapping, and normals not opposite Bottom;
+  reject chains/cycles, incompatible references and competing follower motion. Output
+  warp/reflection stays separate. Software field agreement is not optical seam or
+  projector frame-lock acceptance.
 - G01 rig-direction authoring encodes constant whole-layer translation in the
   existing mapped X/Y fields, independent of texture rotation; legacy phase drift
   remains supported. Linked references accept either translation or phase drift,
   never both. Followers retain their existing phase-rate binding.
-- Linked motion supports constant drift or constant rotation in separate epochs,
+- Texture-drift linked motion supports constant drift or constant rotation in separate epochs,
   single-screen instances, constant independent tile dimensions and uniform-scale,
   orientation-preserving surface maps. Reject chains/cycles, inactive references,
   competing motion/period feedback or assignments, custom/combined drift-and-spin
@@ -279,18 +289,32 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 21
+**Status:** Accepted · **Revision:** 34
 
-- Sparse-noise preparation expands an explicit seeded recipe into V02/V03 timed
-  image programs and compact grid assets before Setup. Density selects a fixed
-  rounded count of distinct cells per pattern; active cells independently choose
-  black/white with equal probability. Stable physical screen identities derive
-  independent reproducible sequences. Use V14/V15 calibrated millimetre sizes,
-  centered complete cells with background residual margins, and nearest sampling;
-  retain recipe/seed, generator provenance, resolved grids and exact generated assets
-  under the [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
-  Reuse existing image admission, clocks, readiness holds and V13 evidence; invalid
-  recipes, inactive selected outputs or exceeded bounds fail preparation.
+- G01's directly authored Grating uses the existing physical procedural texture
+  pipeline with positive constant period, sharpness from sinusoidal to square,
+  linear color coefficients and one absolute bar-normal orientation. Cartesian
+  translation follows that orientation at the selected nonnegative speed; zero speed
+  retains it. V02 owns reference-shared pattern/phase. Existing asset-backed Grating
+  retains its versioned interpretation: ignore intrinsic recipe angle without rewriting
+  source bytes, preserve period/colors/sharpness, and use the epoch Orientation.
+  Uniform uses a stationary zero-contrast procedural layer with linear mean RGB,
+  covering its selected projector without an external file.
+- Sparse-noise rows retain their explicit validated appearance/seed and timing in
+  the authored protocol. Apply reuses the seeded grid generator off the GUI thread
+  to prepare compact nearest-sampled image resources and provenance before Setup.
+  One layer selects floor(epoch-local-time / pattern-duration), holds the last pattern
+  at exhaustion, and restarts its indexed sequence at each epoch occurrence. Other
+  layers keep the unchanged epoch clock. Each layer retains its own background;
+  transparent inactive cells composite onto that linear background within the complete
+  centered grid extent; residual surface margins expose the underlying composition.
+  All sequence resources enter normal protected admission, image residency and actual
+  image-selection evidence. The complete sequence working set must fit admission;
+  readiness misses retain actual-image evidence without advancing the trial clock.
+  Short layer sequences are allowed inside an E05-valid trial. Standalone imported
+  sparse trials keep E05's minimum duration and matching-background rules. The
+  [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md) owns scientific
+  generation, limits and provenance; no render-loop randomness or new process is added.
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -305,6 +329,28 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Validate actual content/features, preserve supported source precision and reject
   unsupported profiles explicitly; no silent conversion or discarded required
   appearance.
+- The offline `generate_stimulus` editor authors texture and sparse-noise recipes using
+  the same bounded generators as preparation. Assets contain appearance/seed only;
+  Protocol owns presentation timing, motion, sequence count and screen assignment.
+  Legacy full sparse recipes may supply appearance without importing their timing.
+  New procedural texture recipes define a field in physical coordinates, independent
+  of raster size, repeat-tile dimensions, screen names and calibration. Sample the
+  field over the requested preview or presentation extent; changing that extent
+  must not fit, rescale, rotate or introduce repeating image boundaries. Retain
+  physical feature sizes, grating period/orientation and seeds in the asset, with
+  sample extents confined to consumers. Versioned field files contain no raster;
+  live fragment sampling uses physical millimetres through each output's independent
+  calibrated X/Y mapping, without a repeated intermediate image. Compile validated
+  field shaders during preparation; retain their exact source/interpretation and
+  physical-coordinate shader evidence under existing resource ownership. Legacy recipes and existing prepared
+  protocols retain their versioned interpretation. New polar assets are centred
+  on the field origin. Seeded random fields preserve the same features in
+  overlapping views: random-dot density and filtered-noise black fraction are
+  statistical field properties, never exact counts/fractions recomputed per view.
+  Legacy polar runtime interpretation remains unchanged. Sparse-noise
+  appearance previews use a fixed independent sample extent; Protocol preparation
+  resolves actual screen grids and the existing per-screen seed derivation. Optional
+  calibrated previews are inspection context only.
 - Accept CephVR1 texture-design JSON by content, including plain `.json`, optional
   legacy tags and `params`/`pattern_params`. Protect/hash the original recipe and
   referenced images; deterministically generate its pixels during bounded
@@ -324,11 +370,27 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Display geometry/calibration stays separate from V02's authored content. V15 owns
   off-axis surface projection, V14 coordinate spaces, V20 pacing and V21 output
   range. Projector assignments and measured calibration values remain rig inputs.
-- Images fit centrally within their authored 2D bounds before V15 projection:
-  Contain preserves proportions with transparent margins, Cover preserves
-  proportions with a centered crop, and Stretch fills the bounds. New GUI Images
-  choose Contain; legacy omitted `fit` means Stretch. Texture tiling, Video playback
-  and default Looming size animation keep their existing semantics.
+- New Images select Resize, Source or Fold in the calibrated valid screen rectangle.
+  Fold uses a fixed physical unfolded net matching the preview arrangement: Bottom
+  in output orientation below a top-aligned Left/Front/Right row, centered over Front.
+  One source pixel represents Front's measured X/Y output pixel pitch; other screens
+  sample the same physical field through their calibration, cropping valid areas.
+  Source top-left anchors the net bounding rectangle; excess source is unused and
+  missing source is transparent. Selection/enablement never repacks the net.
+  Fold requires one prepared Front reference mapping even when Front has no image
+  layer; unavailable reference or incompatible rectangular calibration fails Setup.
+  Its source-coordinate map is retained in per-mapping shader evidence.
+  Resize scales the complete image to fill both axes; Source uses original pixel
+  dimensions, independently center-cropping larger axes and padding smaller axes
+  with the underlying scene. Odd surplus goes right/bottom. These fixed-screen fits
+  use output pixel counts with calibrated flips/quarter-turns; authored 2D position,
+  extent and motion do not alter their rectangle. Opacity remains active. Require
+  rectangular affine valid-area calibration at Setup; sheared/nonlinear warps cannot establish this
+  pixel relationship. Preserve V15 masks, output correction and V22 markers.
+  New GUI Images default to Resize. Saved Contain/Cover/Stretch retain their finite
+  authored bounds and existing motion; omitted legacy `fit` remains Stretch.
+  Video, Texture and default Looming behavior are unchanged. Planning previews use
+  original image dimensions and native target dimensions, not thumbnail sizes.
 - The existing Visual Stimulus implementation (GLB arenas, shader textures, observer/projection
   transforms) is a capability reference only; its code, defaults, timing/fallback
   policies and resource handling are not automatically accepted.
@@ -345,7 +407,14 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Still images use bounded CPU/GPU residency owned by the renderer's resource
   subsystem. Setup decodes every required unique image under E07 using bounded
   scratch memory, retains validation/identity facts and prepares initial content;
-  it need not retain every decoded image. Complete initial decoding and GPU
+  it need not retain every decoded image. Within one Setup,
+  reuse a streamed source fingerprint only while an earlier write/delete-excluding
+  Windows handle remains live and a newly acquired handle verifies the same file
+  identity. Keep every consumer's registered protection/cleanup obligation; a closed
+  backing handle requires rehashing. Reuse compatible image-validation facts across
+  trials, retain bounded sequential scratch storage, and report cumulative unique/reused
+  counts plus source, successful image-validation and compilation preparation times.
+  Complete initial decoding and GPU
   uploads (including completion fences) during Setup before Ready. Report stages
   and completed validation/residency counts through E08's bounded operator
   progress path while waiting. Share compatible immutable resources;
@@ -454,12 +523,16 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v07"></a>
 ### V07 — Stimulus state continuity and trial initialization
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 6
 
 - Retain live state automatically for the same compatible instance across adjacent
   epochs unless the program explicitly resets or sets it. Instance identity is
   distinct from shared asset identity. New/incompatible instances initialize from
   their declared starting state; the GUI shows that restart.
+- Before leaving a shared-Grating epoch, resolve the follower's phase at the exact
+  boundary from the reference and retain it in the existing state fields. Unlinking
+  restores independent pattern/motion controls and follows the ordinary reset and
+  explicit-assignment rules; skipped render submissions do not change boundary phase.
 - Static and drifting presentations of a texture are one stimulus type with
   different motion parameters. Drifting-to-static keeps the phase, texture offset and
   orientation reached at the boundary and zeroes the relevant motion rates. Under
@@ -493,7 +566,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v08"></a>
 ### V08 — Group ordering and repetition
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 9
 
 - New GUI variation rules declare rig coordinates under G01. Missing/false
   `rig_coordinates` preserves legacy local speed/direction sampling, including saved
@@ -515,10 +588,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   separate from V06's duration sampler. A fresh shuffle may coincidentally repeat an
   earlier order. The prepared epoch plan retains the resolved occurrence order;
   rendering and reconnect never reshuffle it.
-- An epoch may store compact `uniform_grid_v1` repetition rules for numeric settings.
+- An epoch may store compact `uniform_grid_v1` numeric and `uniform_asset_v1`
+  Asset repetition rules. Asset rules draw uniformly with replacement from a
+  persisted ordered candidate list, validated for every target's media family;
+  folder scanning/import is authoring-only under G01.
+  Grating Orientation samples jointly set its across-bar drift direction and absolute
+  rotation under V04, including stationary occurrences. Grating Asset candidate lists
+  also retain their positive physical periods, applied with the selected asset;
+  changing only a rule's candidate period cannot silently retain another asset's scale.
+
   Resolve each rule by its immediate group's repetition index and source-member
   stride/offset, independently of shuffled visit order. A persisted seed and target
-  stream select reproducible precision-grid values; shared projector rules use the
+  stream select reproducible parameter values; shared projector rules use the
   same stream. Rule seeds are separate from ordering/duration seeds. Check the
   configured expanded-plan limit before resolving samples; compile the concrete
   chosen settings into prepared occurrences. Rendering never samples.
@@ -727,13 +808,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v14"></a>
 ### V14 — Explicit stimulus coordinate spaces
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 7
 
 - Physical-surface image-tile textures cover the entire calibrated screen in runtime
   and planning preview. Extend their field by whole tiles at composition time,
   preserving tile periods, phase anchor, position and rotation; saved layer dimensions
-  remain loadable without file migration. Images, videos and angular stimuli retain
-  their explicit finite extents.
+  remain loadable without file migration. Videos and legacy image fits retain
+  their explicit finite extents. V04's explicit Resize/Source/Fold image fits instead use
+  each selected screen's valid pixel rectangle; their space still selects surfaces,
+  but saved object position/extent/motion are inactive for those fits.
 - 2D stimuli support physical-surface and observer-centered visual-angle
   coordinates. Each stimulus explicitly selects its space; the GUI shows matching
   units and the versioned program retains the selection. No implicit default or
@@ -898,11 +981,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v18"></a>
 ### V18 — Externally prepared arena assets
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
-- Arenas are generated beforehand in an external authoring workflow and loaded as
-  prepared assets. CephVR loads, validates and renders them; no general parametric
-  generation or modeling editor. A dedicated offline calibration exporter may use
+- Arenas are prepared before Setup, including through the independent
+  `cephvr.generate_stimulus` module and GUI. Its versioned editable designs generate
+  five static arena templates, surface textures, seeded relief and seeded GLB object
+  scattering. Export validates a self-contained unlit GLB through the production
+  importer and publishes a new bundle with design and provenance; it owns no
+  experiment services, projector outputs, protocol timing or movement boundaries.
+  Existing bundles are never overwritten. Legacy design conversion and dynamic
+  lighting are excluded. The [authoring contract](../../contracts/visual_stimulus/stimulus-authoring.md)
+  binds the offline workflow. A dedicated offline calibration exporter may use
   G01's saved tank and four screen dimensions to author a static GLB containing
   a clean physical screen grid, border and simple face name under G01. It creates an asset for V01's
   manually controlled diagnostic presentation through V15, not a timed trial,
@@ -1029,7 +1118,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v22"></a>
 ### V22 — Photodiode frame alternation with landmarks
 
-**Status:** Accepted · **Revision:** 8
+**Status:** Accepted · **Revision:** 9
 
 - Pulse enablement and target/rectangle are operator settings independent of V20
   pacing. When disabled, retain placement but require neither target participation
@@ -1048,9 +1137,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   evaluates the sequence once; per-output submission evidence records the index,
   intended state and actual swap outcome independently. This does not imply
   simultaneous scanout or an optical result on any other screen.
-- Each 60-submission cycle starts with six marker frames (three bright, then three
-  dark), then alternates bright/dark for the other 54 frames. Restart at trial index
-  zero, not at epoch changes; physical placement/levels remain unset.
+- The operator selects `landmarks` (the legacy/default mode: each60-submission cycle
+  starts with three bright then three dark frames, followed by54 alternating frames)
+  or `every_frame` (bright on even submission indices, dark on odd indices).
+  Both restart bright at trial index zero, not at epoch changes. Saved profiles
+  without a mode retain landmarks; physical placement/levels remain unset.
 - V01 photodiode placement repeats this same pattern with a separate diagnostic submission index, starting at zero on Open. Live target/Frame/Pulse edits preserve that index. Advance only after successful all-output submission; Unknown/Close stops repetition. It emits no trial marker evidence or recording and establishes no optical timing guarantee.
 - The renderer owns the patch and sequence, synchronized with that output's submitted
   image under V20 and independent of epoch changes and video frame holds.

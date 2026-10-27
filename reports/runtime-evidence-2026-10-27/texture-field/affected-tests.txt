@@ -1,0 +1,7 @@
+COMMAND: ['C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests/visual_stimulus/test_resources.py', 'tests/visual_stimulus/test_rendering.py', 'tests/visual_stimulus/test_configuration.py', '-q', '-m', 'not windows and not rig', '--timeout=60', '--basetemp=C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17c63-c157-7eb1-af71-3d5243620475\\affected-tests-final']
+
+........................................................................ [ 26%]
+........................................................................ [ 52%]
+........................................................................ [ 79%]
+........................................................              [100%]
+272 passed, 44 deselected, 3 subtests passed in 2.46s

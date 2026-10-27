@@ -1,0 +1,32 @@
+[
+  {
+    "name": "backend",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "tests/visual_stimulus/test_rendering.py",
+      "tests/visual_stimulus/test_resources.py",
+      "tests/visual_stimulus/test_compilation.py",
+      "tests/visual_stimulus/test_evidence_contract.py",
+      "-q",
+      "-m",
+      "not windows and not rig",
+      "--basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17be5-29ee-7eb1-a2d8-5c345f8c7894/fold-backend-final"
+    ],
+    "exit_code": 1
+  },
+  {
+    "name": "native",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "tests/visual_stimulus/test_rendering.py",
+      "-q",
+      "-k",
+      "fold or native_source_shader"
+    ],
+    "exit_code": 0
+  }
+]

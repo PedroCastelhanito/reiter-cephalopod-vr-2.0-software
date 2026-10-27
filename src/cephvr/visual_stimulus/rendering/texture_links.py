@@ -24,6 +24,7 @@ def bind_texture_links(
             not target.active
             or not isinstance(setting, TextureSettings)
             or setting.linked_to is None
+            or setting.grating
         ):
             continue
         source = instances[setting.linked_to]

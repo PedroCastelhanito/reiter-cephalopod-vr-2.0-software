@@ -1,0 +1,27 @@
+2026-10-27; source revision: see asset-assessment.json; working-tree fix.
+Scope: E05/E06/E08 and A03 exact pre-Ready camera cleanup. No native fault/rig execution.
+
+Commands/outcomes (summarized from tool output):
+.venv/Scripts/python.exe -m pytest tests/acquisition/test_cleanup_aggregation.py -q -k worker_cleanup_before_setup --basetemp .test-tmp/pre-ready-cleanup
+21 passed, 28 deselected. Existing owning parameterized test extended by 8 cases.
+.venv/Scripts/python.exe -m pytest tests/acquisition/test_cleanup_aggregation.py tests/acquisition/test_coordinator.py tests/acquisition/test_session_preparation.py -q -m "not windows and not rig" --basetemp .test-tmp/pre-ready-integration
+246 passed with loopback permission.
+.venv/Scripts/python.exe -m pytest tests/acquisition -q -m "not windows and not rig" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c4c-b59a-7fd1-8960-69a6d37f2758/pre-ready-owner -x
+986 passed, 4 skipped, 3 deselected; 6 dependency deprecation warnings, loopback permission enabled.
+.venv/Scripts/python.exe -m ruff check src/cephvr/acquisition tests/acquisition
+Pass.
+.venv/Scripts/python.exe -m ruff format --check src/cephvr/acquisition tests/acquisition
+213 files already formatted.
+.venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition
+Pass, 188 source files.
+.venv/Scripts/python.exe tools/check_backend_boundaries.py
+773 modules; zero violations, pre-existing unrelated size/cohesion advisories. Changed owner stays cohesive and below advisory size.
+git diff --check
+Initial whole-tree check reports unrelated pre-existing contracts/visual_stimulus/stimulus-schema.md blank line at EOF. Scoped final check recorded in LOG.
+
+Attempts/limits:
+Initial unprivileged async tests stalled in Python socket._fallback_socketpair accept while asyncio initialized its Windows self-pipe (15-second faulthandler trace); both runs interrupted, then loopback-authorized run passed.
+Initial full suite using workspace basetemp: 892 passed, 4 skipped, 3 deselected, 94 temp-path fixture errors; external authorized basetemp rerun passes above.
+Initial focused mypy found a local ResourceRecord/optional variable-name collision; renamed allocation loop variable, then focused and full-owner checks pass.
+Read-only searches for guessed controller/capture/resource filenames and Windows shell wildcard paths failed; actual experiment/worker/state owners were then located and read. No missing-file result treated as a successful read.
+No runtime configuration, external source, device, running app or emergency-report file changed. Corrected protocol artifact removes only five missing unused declarations and passes program parsing/file-existence/unchanged-non-assets assertions.

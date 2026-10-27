@@ -3,7 +3,7 @@
 Governing rule: [V22](../../docs/architecture/visual_stimulus.md#v22). Presentation follows
 [V20](presentation.md), recording/replay [V13](replay.md), and physical alignment
 [SYS-004](../../architecture.md#sys-004). The frame-alternation/periodic-landmark
-strategy and the six-frame marker every 60 submitted frames are accepted.
+strategy and selectable plain every-frame alternation are accepted.
 Physical optical timing validation remains a rig obligation.
 
 The operator may disable the pulse independently of pacing. Disabled pulses keep
@@ -13,7 +13,13 @@ still requires an active output. Enabled pulses validate target and rectangle at
 
 ## Sequence definition
 
-Pattern version 1 uses two symbolic levels, H (bright) and L (dark). Let `i` be
+`photodiode_mode` selects `landmarks` (default when absent) or `every_frame`.
+The latter emits H for even trial-relative submission indices and L for odd indices,
+without landmarks. Both modes reset bright at trial start and use the same
+submission-index/evidence ownership. The selected mode is retained in the display
+profile/prepared trial for reconstruction; placement uses the mode selected at Open.
+
+The `landmarks` pattern version 1 uses two symbolic levels, H (bright) and L (dark). Let `i` be
 its zero-based, trial-relative photodiode-output submission index and `p = i % 60`.
 For `p < 3`, emit H; for `3 <= p < 6`, emit L; otherwise emit H on even `p`
 and L on odd `p`. The six marker frames are included in the 60-frame period,

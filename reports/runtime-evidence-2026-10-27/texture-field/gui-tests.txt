@@ -1,0 +1,558 @@
+COMMAND: ['C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests/gui/test_dashboard.py', '-q', '-m', 'not windows and not rig', '-k', 'physical_field_import or trial_preview or texture_drift_preserves or compact_texture_picker or grating', '--timeout=60', '--basetemp=C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17c63-c157-7eb1-af71-3d5243620475\\gui-tests-retained']
+
+..................................FFFFFFFF.                              [100%]
+================================== FAILURES ===================================
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Left-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A58F372050>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta0')
+face = 'Left', modern = False
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Left-True] __
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A59313FB50>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta1')
+face = 'Left', modern = True
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Front-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A58F8D2C20>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta2')
+face = 'Front', modern = False
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Front-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A58F8D83A0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta3')
+face = 'Front', modern = True
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Right-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A591BAC3A0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta4')
+face = 'Right', modern = False
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Right-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A59095E050>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta5')
+face = 'Right', modern = True
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A591BA7400>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta6')
+face = 'Bottom', modern = False
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002A58F8B3D00>
+app = <PyQt6.QtWidgets.QApplication object at 0x000002A58CD0C8B0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c63-c157-7eb1-af71-3d5243620475/gui-tests-retained/test_grating_has_asset_orienta7')
+face = 'Bottom', modern = True
+
+    @pytest.mark.parametrize("modern", [False, True])
+    @pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+    def test_grating_has_asset_orientation_speed_and_compact_variations(
+        window, app, tmp_path, face, modern
+    ):
+        import json
+    
+        from cephvr.gui.grating_motion import GratingMotion
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.rig_parameter_edits import motion_numbers
+        from cephvr.gui.trial_preview_media import PreviewMedia
+        from cephvr.gui.trial_preview_plan import PreviewPlan
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        raw = json.dumps(
+            {
+                "pattern": "grating",
+                "params": {
+                    "spatial_period_mm": 12,
+                    "orientation_deg": 73,
+                    "feature_sharpness": 1,
+                    "texture_resolution": 64,
+                    "tile_width_mm": 100,
+                    "tile_height_mm": 100,
+                    "fit_cycles_to_tile": False,
+                },
+            }
+        ).encode()
+        if modern:
+            from cephvr.generate_stimulus.textures import new_texture
+    
+            design = new_texture("grating")
+            design["params"].update(
+                spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+            )
+            raw = json.dumps(design).encode()
+        path = tmp_path / "bars.texture.json"
+        path.write_bytes(raw)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens((face,))
+        editor.set_program(grouped_program(blank_program()))
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        form.composer.add_file("Grating", str(path), face)
+        reference = form.composer.rows[face]
+        assert reference.stimulus.currentData() == "Grating"
+>       assert [
+            title
+            for title, _ in reference.columns
+            if title and title not in ("Layer", "Stimulus")
+        ] == ["Asset", "Orientation (�)", "Speed (mm/s)"]
+E       AssertionError: assert ['Asset', 'Mo...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E         
+E         At index 1 diff: 'Motion source' != 'Orientation (�)'
+E         Left contains 2 more items, first extra item: 'Orientation (�)'
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:26782: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Left-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Left-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Front-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Front-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Right-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Right-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-True]
+8 failed, 35 passed, 1011 deselected in 14.13s

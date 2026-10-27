@@ -1,6 +1,7 @@
 """Family-specific parameters with atomic canonical-model commits."""
 
 import json
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,8 @@ from cephvr.gui.components import Card, button, equal_row_height, field, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
 from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
+from cephvr.gui.grating_appearance import GratingAppearance
+from cephvr.gui.grating_motion import GratingMotion
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.initial_pose import initial_pose_fields
 from cephvr.gui.looming_size import LoomingSize
@@ -31,6 +34,7 @@ from cephvr.gui.notices import FormNotice
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import NodePath, data_node, node_at
 from cephvr.gui.projector_layers import projector_edit
+from cephvr.gui.sparse_noise_layer import SparseNoiseLayer
 from cephvr.gui.stimulus_fades import StimulusFades
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
@@ -40,6 +44,7 @@ from cephvr.gui.stimulus_files import (
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.gui.stimulus_scope import set_surfaces
 from cephvr.gui.theme import SIZES
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.parameter_catalogue import parameter_units
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -68,13 +73,21 @@ class StimulusParameters(QWidget):
         self.program: Program | None = None
         self.dirty = False
         self.asset_root = ""
+        self.sparse_geometry: Callable[[], Geometry] | None = None
+        self.sparse_layer: SparseNoiseLayer | None = None
         self.file_dialog: QFileDialog | None = None
         self.node_index: NodePath = 0
         self.layer_index = 0
         self.duration_override: Fixed | None = None
         self.projector = ""
         self.forms: list[
-            ValueEditor | EpochMotion | LoomingSize | ArenaMovement | ImageParameters
+            ValueEditor
+            | EpochMotion
+            | GratingMotion
+            | GratingAppearance
+            | LoomingSize
+            | ArenaMovement
+            | ImageParameters
         ] = []
         self.asset_forms: dict[str, PathEdit] = {}
         self.pending_profiles: dict[str, str] = {}
@@ -127,16 +140,14 @@ class StimulusParameters(QWidget):
         self.closed_loop = closed and self.tracking_available
         if self.feedback is not None:
             self.feedback.setVisible(self.tracking_available)
-            self.feedback.set_closed_loop(
-                self.closed_loop
-                and (
-                    self.program is None
-                    or self.program.category != "media_presentation"
-                )
-            )
+            self.feedback.set_closed_loop(self.closed_loop)
 
     def show_more(self, checked: bool) -> None:
-        self.advanced.setVisible(checked)
+        grating = any(
+            isinstance(form, GratingMotion) for form in self.forms
+        ) and not any(isinstance(form, GratingAppearance) for form in self.forms)
+        self.more.setVisible(not grating and not self.compact)
+        self.advanced.setVisible(checked and not grating)
 
     def mark_changed(self) -> None:
         self.dirty = True
@@ -167,6 +178,8 @@ class StimulusParameters(QWidget):
             self.apply()
 
     def close_file_dialog(self) -> None:
+        if self.sparse_layer is not None:
+            self.sparse_layer.close_dialog()
         if self.file_dialog is not None:
             self.file_dialog.reject()
 
@@ -190,6 +203,9 @@ class StimulusParameters(QWidget):
                 item = layout.takeAt(1 if layout is self.extra_body else 0)
                 if item is not None and (widget := item.widget()) is not None:
                     widget.deleteLater()
+        if self.sparse_layer is not None:
+            self.sparse_layer.close_dialog()
+            self.sparse_layer = None
         self.dirty = False
         self.program, self.node_index, self.layer_index = (
             program,
@@ -229,8 +245,10 @@ class StimulusParameters(QWidget):
         looming = values["kind"] == "image" and any(
             values[k]["kind"] == "keyframes" for k in ("width", "height")
         )
+        uniform = values["kind"] == "texture" and values.get("uniform", False)
+        sparse = values["kind"] == "image" and values.get("sparse_noise") is not None
         for name, fields in SECTIONS:
-            if name == "Motion" and program.category == "media_presentation":
+            if uniform or sparse:
                 continue
             if name == "Motion" and values["kind"] == "image" and not looming:
                 continue
@@ -243,9 +261,13 @@ class StimulusParameters(QWidget):
             ]
             if not keys:
                 continue
-            form: ValueEditor | EpochMotion | ArenaMovement
+            form: ValueEditor | EpochMotion | GratingMotion | ArenaMovement
             if name == "Motion":
-                form = EpochMotion(motion_values, schema, definitions)
+                form = (
+                    GratingMotion(motion_values)
+                    if values.get("grating", False)
+                    else EpochMotion(motion_values, schema, definitions)
+                )
             else:
                 form = ValueEditor(
                     {
@@ -257,7 +279,9 @@ class StimulusParameters(QWidget):
                 )
             form.changed.connect(self.mark_changed)
             self.forms.append(form)
-            if isinstance(form, EpochMotion):
+            if isinstance(form, GratingMotion):
+                self.primary.addWidget(form)
+            elif isinstance(form, EpochMotion):
                 form.extra.hide()
                 if not looming and values["kind"] not in ("video", "arena"):
                     self.primary.addWidget(form)
@@ -266,6 +290,45 @@ class StimulusParameters(QWidget):
                     form.hide()
             elif name == "Playback":
                 self.primary.addWidget(form)
+        if values.get("grating", False) and values["pattern"]["kind"] != "image_tile":
+            grating_appearance = GratingAppearance(values)
+            grating_appearance.changed.connect(self.mark_changed)
+            self.forms.append(grating_appearance)
+            self.primary.addWidget(grating_appearance)
+        if uniform:
+            color = ValueEditor(
+                {
+                    "type": "object",
+                    "properties": {
+                        "mean_linear_rgb": schema["properties"]["mean_linear_rgb"]
+                    },
+                },
+                {"mean_linear_rgb": values["mean_linear_rgb"]},
+                definitions,
+            )
+            color.changed.connect(self.mark_changed)
+            self.forms.append(color)
+            self.primary.addWidget(color)
+        if sparse:
+            self.sparse_layer = SparseNoiseLayer(
+                program,
+                node_index,
+                layer_index,
+                self.asset_root,
+                self.projector,
+                self.sparse_geometry,
+                lambda: (
+                    self.isEnabled()
+                    and self.program == program
+                    and self.property("activeProjector") is not False
+                    and self.asset_root == self.sparse_layer.root
+                    if self.sparse_layer is not None
+                    else False
+                ),
+            )
+            self.sparse_layer.committed.connect(self.accept_sparse)
+            self.sparse_layer.edited.connect(self.mark_changed)
+            self.extra_body.addWidget(self.sparse_layer)
         if values["kind"] == "arena":
             movement = ArenaMovement(values)
             movement.changed.connect(self.mark_changed)
@@ -295,8 +358,7 @@ class StimulusParameters(QWidget):
                 self.duration_override or node.duration,
                 allow_link=not self.compact
                 and not looming
-                and values["kind"] != "video"
-                and program.category != "media_presentation",
+                and values["kind"] != "video",
             )
             self.linked_to, self.fades = appearance.linked_to, appearance.fades
             self.linked_to.currentIndexChanged.connect(self.update_link_controls)
@@ -322,27 +384,20 @@ class StimulusParameters(QWidget):
             center.changed.connect(self.mark_changed)
             self.forms.append(center)
             self.extra_body.addWidget(center_field)
-        if values["kind"] == "image" and not looming:
+        if values["kind"] == "image" and not looming and not sparse:
             image = ImageParameters(motion_values, schema, definitions)
             image.changed.connect(self.mark_changed)
             self.forms.append(image)
             self.extra_body.addWidget(image)
-            if program.category == "media_presentation":
-                angular_parent = image.motion.angular.parentWidget()
-                if angular_parent is not None:
-                    angular_parent.hide()
             if not self.compact:
                 self.primary.addWidget(field("Fit", image.fit))
-                if program.category != "media_presentation":
-                    self.primary.addWidget(image.motion.basic)
+                self.primary.addWidget(image.motion.basic)
         self.feedback = FeedbackMappings(
             setting,
             [channel.model_dump(mode="json") for channel in program.input_channels],
         )
         self.feedback.setVisible(self.tracking_available)
-        self.feedback.set_closed_loop(
-            self.closed_loop and program.category != "media_presentation"
-        )
+        self.feedback.set_closed_loop(self.closed_loop)
         self.feedback.changed.connect(self.mark_changed)
         self.extra_body.addWidget(self.feedback)
         assets = (
@@ -352,7 +407,7 @@ class StimulusParameters(QWidget):
             else set()
         )
         for asset in program.assets:
-            if asset.asset_id in assets:
+            if asset.asset_id in assets and not sparse:
                 path_control = PathEdit(filename_only=self.compact)
                 path_control.setText(asset.logical_path)
                 path_control.setAccessibleName("Stimulus file")
@@ -372,8 +427,19 @@ class StimulusParameters(QWidget):
                 self.file_rows.append(file_row)
                 self.media.addWidget(file_row)
                 self.asset_forms[asset.asset_id] = path_control
+        if values.get("grating", False):
+            self.more.setChecked(False)
         self.show_more(self.more.isChecked())
         self.bound.emit()
+
+    def accept_sparse(self, program: Program) -> None:
+        assert self.program is not None
+        program, selected = projector_edit(
+            self.program, program, self.node_index, self.layer_index, self.projector
+        )
+        self.committed.emit(program)
+        self.bind(program, self.node_index, selected, self.projector)
+        self.media_selected.emit()
 
     def show_units(self, setting: Settings) -> None:
         units = parameter_units(setting)
@@ -390,6 +456,11 @@ class StimulusParameters(QWidget):
     def update_link_controls(self) -> None:
         linked = self.linked_to.currentData() is not None
         for form in self.forms:
+            if isinstance(form, (GratingMotion, GratingAppearance)):
+                form.setEnabled(not linked)
+                if isinstance(form, GratingMotion):
+                    form.orientation.setEnabled(not linked)
+                    form.speed.setEnabled(not linked)
             if isinstance(form, EpochMotion):
                 form.setEnabled(not linked)
                 for control in (form.speed, form.direction, form.angular):
@@ -398,16 +469,24 @@ class StimulusParameters(QWidget):
                     "Movement follows the selected reference screen" if linked else ""
                 )
 
-    def candidate(self) -> dict[str, Any]:
+    def candidate(self, *, replacing_asset: str | None = None) -> dict[str, Any]:
         assert self.program is not None
         if self.motion_source is not None:
             self.motion_source.validate()
+        if self.sparse_layer is not None and (
+            self.sparse_layer.dirty or self.sparse_layer.running
+        ):
+            raise ValueError(
+                "Apply the sparse-noise parameters before saving the epoch"
+            )
         candidate = self.program.model_dump(mode="json")
         setting = data_node(candidate, self.node_index)["settings"][self.layer_index]
         for form in self.forms:
             setting.update(form.read())
         for asset in tuple(candidate["assets"]):
             identity = asset["asset_id"]
+            if identity == replacing_asset:
+                continue  # The picker validates and applies this replacement atomically.
             if identity in self.asset_forms:
                 path = self.asset_forms[identity].text()
                 if self.compact and not path:
@@ -428,6 +507,7 @@ class StimulusParameters(QWidget):
                             else Path(self.asset_root) / source
                         ),
                         texture=setting["kind"] == "texture",
+                        grating=setting.get("grating", False),
                     )
                     path, profile = selected.path, selected.profile
                     apply_texture_dimensions(setting, selected)
@@ -441,10 +521,7 @@ class StimulusParameters(QWidget):
                 )
         if self.fades is not None:
             setting["opacity"] = self.fades.read()
-            if (
-                setting["kind"] == "texture"
-                and self.program.category != "media_presentation"
-            ):
+            if setting["kind"] == "texture":
                 setting["linked_to"] = self.linked_to.currentData()
                 if setting["linked_to"] is not None:
                     setting["phase_x"] = {"kind": "hold"}
@@ -543,10 +620,13 @@ class StimulusParameters(QWidget):
             assert isinstance(node, Epoch)
             settings = node.settings[self.layer_index]
             selected = resolve_stimulus_file(
-                self.asset_root, path, texture=settings.kind == "texture"
+                self.asset_root,
+                path,
+                texture=settings.kind == "texture",
+                grating=settings.kind == "texture" and settings.grating,
             )
             if selected.tile_width_mm is not None:
-                candidate = self.candidate()
+                candidate = self.candidate(replacing_asset=asset_id)
                 target = data_node(candidate, self.node_index)["settings"][
                     self.layer_index
                 ]

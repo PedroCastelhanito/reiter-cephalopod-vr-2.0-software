@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import SelectionBox, button, combo, equal_row_height, label
 from cephvr.gui.editing_card import EditingSurface
+from cephvr.gui.grating_appearance import GratingAppearance
+from cephvr.gui.grating_motion import GratingMotion
 from cephvr.gui.icons import device_icon
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.reference_fields import reference_fields
@@ -292,7 +294,14 @@ class ProjectorReference(EditingSurface):
             control.show()
         empty = self.parameters.layer_index < 0
         self.actions_button.setEnabled(not empty)
-        self.actions_button.setVisible(bool(self.face) or not empty)
+        asset_grating = any(
+            isinstance(form, GratingMotion) for form in self.parameters.forms
+        ) and not any(
+            isinstance(form, GratingAppearance) for form in self.parameters.forms
+        )
+        self.actions_button.setVisible(
+            (bool(self.face) or not empty) and not asset_grating
+        )
         self.parameters.more.hide()
         self.grid.setAlignment(Qt.AlignmentFlag.AlignTop)
         QTimer.singleShot(0, self.align_advanced)
@@ -312,7 +321,10 @@ class ProjectorReference(EditingSurface):
             - self.parameters.mapTo(self, QPoint()).x(),
         )
         margins = self.parameters.advanced_layout.contentsMargins()
-        asset = next(control for title, control in self.columns if title == "Asset")
+        asset = next(
+            (control for title, control in self.columns if title == "Asset"),
+            self.stimulus,
+        )
         right = max(
             0,
             self.parameters.width()
@@ -398,17 +410,14 @@ class ProjectorReference(EditingSurface):
             kind, kind
         )
         self.stimulus.blockSignals(True)
+        if self.stimulus.findData(kind) < 0:
+            self.stimulus.addItem(kind, kind)
         model = self.stimulus.model()
         if isinstance(model, QStandardItemModel):
             for i in range(self.stimulus.count()):
                 item = model.item(i)
                 if item is not None:
-                    item.setEnabled(
-                        not (
-                            program.category == "media_presentation"
-                            and self.stimulus.itemData(i) == "Looming image"
-                        )
-                    )
+                    item.setEnabled(self.stimulus.itemData(i) in ("None", *FILE_TYPES))
         self.stimulus.setCurrentIndex(max(0, self.stimulus.findData(kind)))
         self.stimulus.blockSignals(False)
         self.parameters.bind(program, 0, selected, self.face)

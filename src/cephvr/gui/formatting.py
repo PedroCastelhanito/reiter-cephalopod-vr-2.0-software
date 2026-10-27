@@ -9,6 +9,13 @@ def caption_caps(text: str) -> str:
     return re.sub(r"[^()]+(?![^(]*\))", lambda part: part[0].upper(), text)
 
 
+def card_caption(text: str, *, retro: bool, phosphor: bool, nested: bool) -> str:
+    """Shared card heading treatment for runtime and offline windows."""
+    if phosphor:
+        return f"| {text.upper()} |" if nested else f"< {text.upper()} >"
+    return text.upper() if retro else text
+
+
 def parse_clock_duration(value: str) -> str:
     """Convert an epoch clock entry to exact decimal seconds."""
     parts = value.strip().split(":")
@@ -18,28 +25,28 @@ def parse_clock_duration(value: str) -> str:
         or not re.fullmatch(r"[0-9]{2}", parts[1])
         or not re.fullmatch(r"[0-9]{2}(?:\.[0-9]{1,9})?", parts[2])
     ):
-        raise ValueError("Use duration hh:mm:ss (fractional seconds are allowed)")
+        raise ValueError(
+            "Use duration hh:mm:ss.mmm (milliseconds; finer precision is allowed)"
+        )
     hours, minutes, seconds = parts
     try:
         second = Decimal(seconds)
     except InvalidOperation as error:
         raise ValueError(
-            "Use duration hh:mm:ss (fractional seconds are allowed)"
+            "Use duration hh:mm:ss.mmm (milliseconds; finer precision is allowed)"
         ) from error
     if not second.is_finite() or not 0 <= int(minutes) < 60 or not 0 <= second < 60:
-        raise ValueError("Use duration hh:mm:ss with minutes and seconds below 60")
-    return str(Decimal(hours) * 3600 + Decimal(minutes) * 60 + second)
+        raise ValueError("Use duration hh:mm:ss.mmm with minutes and seconds below 60")
+    result = format(Decimal(hours) * 3600 + Decimal(minutes) * 60 + second, "f")
+    return result.rstrip("0").rstrip(".") if "." in result else result
 
 
 def clock_duration(seconds: str | float) -> str:
     total = Decimal(str(seconds))
     hours, remainder = divmod(total, 3600)
     minutes, second = divmod(remainder, 60)
-    second_text = (
-        f"{int(second):02d}." + format(second, "f").partition(".")[2]
-        if second % 1
-        else f"{int(second):02d}"
-    )
+    fraction = format(second, "f").partition(".")[2].ljust(3, "0")
+    second_text = f"{int(second):02d}.{fraction}"
     return f"{int(hours):02d}:{int(minutes):02d}:{second_text}"
 
 

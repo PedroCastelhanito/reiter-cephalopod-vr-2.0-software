@@ -1,0 +1,34 @@
+[
+  {
+    "name": "backend-tests",
+    "exit_code": 1,
+    "elapsed_s": 5.53,
+    "tail": [
+      "2 failed, 602 passed, 52 deselected, 3 subtests passed in 4.85s"
+    ]
+  },
+  {
+    "name": "authoring-tests",
+    "exit_code": 0,
+    "elapsed_s": 9.27,
+    "tail": [
+      "95 passed, 6 deselected in 8.92s"
+    ]
+  },
+  {
+    "name": "gui-tests",
+    "exit_code": 1,
+    "elapsed_s": 14.58,
+    "tail": [
+      "8 failed, 35 passed, 1011 deselected in 14.13s"
+    ]
+  },
+  {
+    "name": "native-tests",
+    "exit_code": 0,
+    "elapsed_s": 3.03,
+    "tail": [
+      "39 passed, 164 deselected in 2.60s"
+    ]
+  }
+]

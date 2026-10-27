@@ -109,14 +109,8 @@ class WorkerCleanupEvidence:
         if worker.setup_ready is None and (
             worker.context.work != session.work
             or worker.context.camera not in session.required_cameras
-            or worker.setup_operation is not None
             or session.trial is not None
-            or session.expected_attachments.get(worker.context.camera)
             or cleanup.outputs
-            or any(
-                resource.attachment.buffer.producer == worker.launch.worker
-                for resource in self.resources.values()
-            )
         ):
             raise ValueError("pre-Ready cleanup has unresolved Setup ownership")
         releases: dict[str, control.ResourceRelease] = {}
@@ -130,10 +124,43 @@ class WorkerCleanupEvidence:
                 worker.setup_ready.attached_resources if worker.setup_ready else ()
             )
         }
+        if worker.setup_ready is None:
+            operation = worker.setup_operation
+            child = (
+                worker.child_operations.get(operation.command_id)
+                if operation is not None
+                else None
+            )
+            if operation is not None and (
+                child is None
+                or child.kind != "setup_session"
+                or child.work != session.work
+                or child.camera != worker.context.camera
+            ):
+                raise ValueError("pre-Ready cleanup lacks its exact Setup command")
+            # Ready confirms usability, not the existence of Setup transfer obligations.
+            for resource_id, allocation in self.resources.items():
+                attachment = allocation.attachment
+                if attachment.buffer.producer != worker.launch.worker:
+                    continue
+                if (
+                    operation is None
+                    or attachment.buffer.owner != worker.launch.owner
+                    or attachment.sync.target != worker.launch.worker
+                    or not attachment.sync.transfer_id
+                ):
+                    raise ValueError("pre-Ready cleanup has unresolved Setup ownership")
+                expected[resource_id] = attachment.sync.transfer_id
+            if set(expected) != session.expected_attachments.get(
+                worker.context.camera, set()
+            ):
+                raise ValueError("pre-Ready cleanup differs from allocated Setup rings")
         device_key = f"camera-device:{worker.launch.worker.generation}"
         expected[device_key] = ""
-        if worker.setup_ready is None and set(releases) != {device_key}:
-            raise ValueError("pre-Ready cleanup requires only its exact camera release")
+        if worker.setup_ready is None and set(releases) != set(expected):
+            raise ValueError(
+                "pre-Ready cleanup requires its exact device/ring releases"
+            )
         for resource_id in expected:
             release_claim = releases.get(resource_id)
             if (
@@ -173,7 +200,7 @@ class WorkerCleanupEvidence:
             if not any(
                 item.peer_instance_id == worker.launch.worker.generation
                 and item.transfer_id == transfer_id
-                and item.attached
+                and (item.attached or worker.setup_ready is None)
                 for item in self.resource_ledger.snapshot(resource.ledger_key).transfers
             ):
                 raise ValueError(

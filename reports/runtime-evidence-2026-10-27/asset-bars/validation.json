@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty workspace; tool-output summaries; no native GUI restart or physical validation",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/generate_stimulus -q --basetemp=<visualization workspace>/bars-tests --tb=short",
+      "result": "60 passed, 2 skipped in 3.98s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/generate_stimulus tests/generate_stimulus",
+      "result": "pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/generate_stimulus tests/generate_stimulus",
+      "result": "16 files already formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/generate_stimulus",
+      "result": "14 sources pass"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "772 modules, 0 violations; existing size advisories"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass; line-ending warnings"
+    }
+  ],
+  "sha256": {
+    "src/cephvr/generate_stimulus/textures.py": "0d78291eef4b38a821195ffb55d10a8312f7625c274d81eb485aae4b63be8dc1",
+    "src/cephvr/generate_stimulus/properties.py": "18df9dbc33b8341100a0c0d47c01d9554522d50b9578710a54d0bb61d7429f11",
+    "src/cephvr/generate_stimulus/window.py": "37211ec2f2c9e1417cfe004d353d67f44a8f518f987799868b605344f504f359",
+    "src/cephvr/generate_stimulus/documents.py": "e21178b391d8c54bbd08223fa00d2cc4f6dc17f621a5b1a98ca2a5c01232de16"
+  }
+}

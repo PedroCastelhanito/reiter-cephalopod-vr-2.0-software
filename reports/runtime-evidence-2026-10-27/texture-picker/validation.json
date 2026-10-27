@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "working_tree": "Uncommitted task and concurrent changes",
+  "source_sha256": "9a6c91634c50c8e079e80af2aec04c19c87c09c290fe0944f74e66803cf65291",
+  "checks": [
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "tests/gui/test_dashboard.py",
+        "-q",
+        "-k",
+        "compact_texture_picker or external_texture_picker or external_stimulus or external_texture or prepared_texture_bundle or prepared_file_change",
+        "--basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17be5-29ee-7eb1-a2d8-5c345f8c7894/texture-picker-final"
+      ],
+      "exit_code": 0,
+      "output": "................                                                         [100%]\n16 passed, 1007 deselected in 3.51s\n"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src/cephvr/gui/stimulus_parameters.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/gui/stimulus_parameters.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "2 files already formatted\n"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr/gui/stimulus_parameters.py"
+      ],
+      "exit_code": 0,
+      "output": "Success: no issues found in 1 source file\n"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output": "REVIEW src\\cephvr\\acquisition\\camera\\basler.py: 668 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\cleanup.py: 560 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\manual_devices.py: 570 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\manual_preview.py: 697 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\trial_lifecycle.py: 510 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\trial_termination.py: 505 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\coordinator\\workers.py: 537 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\preview\\highgui.py: 512 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\recording\\frame_log.py: 519 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\recording\\session.py: 646 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\runtime.py: 658 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\worker\\capture_runtime.py: 668 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\worker\\execution.py: 522 lines; review cohesion\nREVIEW src\\cephvr\\acquisition\\worker\\service.py: 553 lines; review cohesion\nREVIEW src\\cephvr\\controller\\assembly.py: 680 lines; review cohesion\nREVIEW src\\cephvr\\controller\\device\\camera.py: 626 lines; review cohesion\nREVIEW src\\cephvr\\controller\\device\\display_calibration.py: 765 lines; review cohesion\nREVIEW src\\cephvr\\controller\\device\\tracking_diagnostic.py: 797 lines; review cohesion\nREVIEW src\\cephvr\\controller\\lifecycle\\interruption.py: 584 lines; review cohesion\nREVIEW src\\cephvr\\controller\\metadata\\reservation.py: 546 lines; review cohesion\nREVIEW src\\cephvr\\controller\\microcontroller\\device.py: 517 lines; review cohesion\nREVIEW src\\cephvr\\controller\\microcontroller\\owner.py: 602 lines; review cohesion\nREVIEW src\\cephvr\\controller\\projections.py: 571 lines; review cohesion\nREVIEW src\\cephvr\\controller\\runtime.py: 590 lines; review cohesion\nREVIEW src\\cephvr\\controller\\service.py: 661 lines; review cohesion\nREVIEW src\\cephvr\\gui\\batch_variation.py: 507 lines; review cohesion\nREVIEW src\\cephvr\\gui\\cameras.py: 681 lines; review cohesion\nREVIEW src\\cephvr\\gui\\consoles.py: 504 lines; review cohesion\nREVIEW src\\cephvr\\gui\\main.py: 995 lines; review cohesion\nREVIEW src\\cephvr\\gui\\managed_cameras.py: 561 lines; review cohesion\nREVIEW src\\cephvr\\gui\\microcontroller.py: 604 lines; review cohesion\nREVIEW src\\cephvr\\gui\\preview_timeline.py: 558 lines; review cohesion\nREVIEW src\\cephvr\\gui\\previews.py: 651 lines; review cohesion\nREVIEW src\\cephvr\\gui\\projectors.py: 938 lines; review cohesion\nREVIEW src\\cephvr\\gui\\protocol.py: 572 lines; review cohesion\nREVIEW src\\cephvr\\gui\\protocol_editor.py: 590 lines; review cohesion\nREVIEW src\\cephvr\\gui\\protocol_timeline.py: 553 lines; review cohesion\nREVIEW src\\cephvr\\gui\\stimulus_parameters.py: 589 lines; review cohesion\nREVIEW src\\cephvr\\gui\\theme.py: 706 lines; review cohesion\nREVIEW src\\cephvr\\gui\\tracking.py: 559 lines; review cohesion\nREVIEW src\\cephvr\\supervisor\\acquisition_worker.py: 507 lines; review cohesion\nREVIEW src\\cephvr\\supervisor\\registry.py: 573 lines; review cohesion\nREVIEW src\\cephvr\\supervisor\\shutdown.py: 540 lines; review cohesion\nREVIEW src\\cephvr\\tracking\\processing\\diagnostics.py: 504 lines; review cohesion\nREVIEW src\\cephvr\\tracking\\processing\\session.py: 659 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\config\\models\\program_model.py: 774 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\coordinator\\reports.py: 649 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\recording\\native.py: 954 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\rendering\\engine.py: 701 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\rendering\\native.py: 870 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\rendering\\scene_resources.py: 542 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\resources\\prepare.py: 530 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\resources\\session.py: 785 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\resources\\texture_recipe_patterns.py: 619 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\resources\\video.py: 512 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\worker\\display_calibration.py: 623 lines; review cohesion\nREVIEW src\\cephvr\\visual_stimulus\\worker\\lifecycle.py: 730 lines; review cohesion\nChecked 773 backend modules; 0 boundary violations.\n"
+    }
+  ]
+}

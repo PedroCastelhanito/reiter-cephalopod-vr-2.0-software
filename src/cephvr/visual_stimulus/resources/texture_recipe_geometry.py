@@ -59,27 +59,45 @@ def _mix(
 def _polar_grating(
     params: dict[str, object], size: int, raw_corners: Mapping[str, object]
 ) -> np.ndarray:
-    corners = _validated_corners(raw_corners)
-    origin_face = _face(params.get("origin_screen", params.get("origin_face", "front")))
-    target_face = _face(
-        params.get("target_screen", params.get("target_face", origin_face))
-    )
-    origin = corners[origin_face]
-    target = corners[target_face]
-    bl, br, tr, tl = target
-    u = ((np.arange(size, dtype=np.float32) + 0.5) / size)[None, :]
-    v = (1 - ((np.arange(size, dtype=np.float32) + 0.5) / size))[:, None]
-    bottom = bl[None, None, :] * (1 - u[:, :, None]) + br[None, None, :] * u[:, :, None]
-    top = tl[None, None, :] * (1 - u[:, :, None]) + tr[None, None, :] * u[:, :, None]
-    points = bottom * (1 - v[:, :, None]) + top * v[:, :, None]
-    center = np.mean(origin, axis=0)
-    obl, obr, _otr, otl = origin
-    ua, va = obr - obl, otl - obl
-    ua /= np.linalg.norm(ua)
-    va /= np.linalg.norm(va)
-    relative = points - center
-    axis_a = np.tensordot(relative, ua, axes=([2], [0]))
-    axis_b = np.tensordot(relative, va, axes=([2], [0]))
+    if params.get("tile_local", False):
+        width = _num(params.get("tile_width_mm"), 100)
+        height = _num(params.get("tile_height_mm"), width)
+        if min(width, height) <= 0:
+            raise ValueError("Polar tile dimensions must be positive")
+        axis_a = (((np.arange(size, dtype=np.float32) + 0.5) / size) - 0.5)[
+            None, :
+        ] * width
+        axis_b = (0.5 - ((np.arange(size, dtype=np.float32) + 0.5) / size))[
+            :, None
+        ] * height
+    else:
+        corners = _validated_corners(raw_corners)
+        origin_face = _face(
+            params.get("origin_screen", params.get("origin_face", "front"))
+        )
+        target_face = _face(
+            params.get("target_screen", params.get("target_face", origin_face))
+        )
+        origin = corners[origin_face]
+        target = corners[target_face]
+        bl, br, tr, tl = target
+        u = ((np.arange(size, dtype=np.float32) + 0.5) / size)[None, :]
+        v = (1 - ((np.arange(size, dtype=np.float32) + 0.5) / size))[:, None]
+        bottom = (
+            bl[None, None, :] * (1 - u[:, :, None]) + br[None, None, :] * u[:, :, None]
+        )
+        top = (
+            tl[None, None, :] * (1 - u[:, :, None]) + tr[None, None, :] * u[:, :, None]
+        )
+        points = bottom * (1 - v[:, :, None]) + top * v[:, :, None]
+        center = np.mean(origin, axis=0)
+        obl, obr, _otr, otl = origin
+        ua, va = obr - obl, otl - obl
+        ua /= np.linalg.norm(ua)
+        va /= np.linalg.norm(va)
+        relative = points - center
+        axis_a = np.tensordot(relative, ua, axes=([2], [0]))
+        axis_b = np.tensordot(relative, va, axes=([2], [0]))
     radius = np.sqrt(axis_a * axis_a + axis_b * axis_b)
     angle = np.degrees(np.arctan2(axis_b, axis_a))
     count = max(1, _num(params.get("bar_count"), 24))

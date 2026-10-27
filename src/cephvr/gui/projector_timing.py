@@ -19,6 +19,7 @@ from cephvr.gui.projector_blackouts import BlackoutZones
 from cephvr.gui.projector_geometry import FACES
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
+from cephvr.visual_stimulus.config.models.display_profile import PhotodiodeMode
 
 MODE_LABELS = {
     "free_run": "Free run (no VSync)",
@@ -36,6 +37,9 @@ class ProjectorTiming(EditingCard):
         super().__init__("Photodiode")
         self.pulse = QCheckBox("Enable photodiode pulse")
         self.body.addWidget(self.pulse)
+        self.photodiode_mode = combo(("60-frame landmarks", "Every frame"))
+        self.photodiode_mode.setAccessibleName("Photodiode mode")
+        self.body.addWidget(field("PHOTODIODE MODE", self.photodiode_mode))
         self.target = combo(())
         self.target.setPlaceholderText("Select display")
         self.mode = combo(tuple(MODE_LABELS.values()))
@@ -83,6 +87,13 @@ class ProjectorTiming(EditingCard):
         self.refresh_controls()
 
     @property
+    def pulse_mode(self) -> PhotodiodeMode:
+        return ("landmarks", "every_frame")[self.photodiode_mode.currentIndex()]
+
+    def set_pulse_mode(self, mode: str) -> None:
+        self.photodiode_mode.setCurrentIndex(("landmarks", "every_frame").index(mode))
+
+    @property
     def presentation_mode(self) -> str:
         return next(
             key for key, name in MODE_LABELS.items() if name == self.mode.currentText()
@@ -112,6 +123,7 @@ class ProjectorTiming(EditingCard):
     def refresh_controls(self) -> None:
         self.mode.setEnabled(self.can_edit)
         self.pulse.setEnabled(self.can_edit)
+        self.photodiode_mode.setEnabled(self.can_edit)
         self.options.setEnabled(self.can_edit and self.pulse.isChecked())
         self.blackouts.setEnabled(self.can_edit)
 

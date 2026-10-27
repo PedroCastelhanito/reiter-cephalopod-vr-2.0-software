@@ -3,23 +3,35 @@
 from __future__ import annotations
 
 import hashlib
+import time
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, BinaryIO, Literal, Protocol
 
-from cephvr.platform.windows.protected_source import ProtectedWindowsSource
+from cephvr.platform.windows.protected_source import (
+    ProtectedSourceError,
+    ProtectedWindowsSource,
+)
+from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.artifact_models import ResourceManifest
 from cephvr.visual_stimulus.config.models.evidence_model import UniformLayout
 from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
+from cephvr.visual_stimulus.resources.progress import PreparationMetrics
 
 if TYPE_CHECKING:
     from cephvr.visual_stimulus.resources.image_source import ImageSource
 
 RELOADABLE_IMAGE_PROFILES = frozenset(
-    ("png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1")
+    (
+        "png_uint_v1",
+        "tiff_uint_v1",
+        "jpeg8_v1",
+        "cephvr1_texture_json_v1",
+        "cephvr_grating_json_v1",
+    )
 )
 
 
@@ -51,6 +63,44 @@ class PreparedAsset:
     byte_count: int
     source: ProtectedSource
     data: bytes | None
+
+
+class ProtectedFingerprintCache:
+    """Setup-local fingerprints backed by live, write/delete-excluding handles."""
+
+    def __init__(self, budget: PreparationBudget) -> None:
+        self.budget = budget
+        self.entries: dict[
+            tuple[int, int, int], tuple[ProtectedWindowsSource, str, int]
+        ] = {}
+
+    def get(self, source: ProtectedSource) -> tuple[str, int] | None:
+        if not isinstance(source, ProtectedWindowsSource):
+            return None
+        identity = source.identity
+        entry = self.entries.get(identity)
+        if entry is None:
+            return None
+        previous, digest, count = entry
+        try:
+            if previous.identity != identity:
+                return None
+        except ProtectedSourceError:
+            # A released handle no longer proves immutability, even at the same path.
+            del self.entries[identity]
+            return None
+        self.entries[identity] = (source, digest, count)
+        return digest, count
+
+    def put(self, source: ProtectedSource, digest: str, count: int) -> None:
+        if isinstance(source, ProtectedWindowsSource):
+            identity = source.identity
+            self.budget.reserve(
+                owner="visual_stimulus:source-fingerprints",
+                cpu_bytes=1024 * (len(self.entries) + (identity not in self.entries)),
+                gpu_bytes=0,
+            )
+            self.entries[identity] = (source, digest, count)
 
 
 @dataclass(slots=True)
@@ -116,6 +166,8 @@ def prepare_assets(
     path_overrides: Mapping[str, Path] | None = None,
     max_document_bytes: int | None = None,
     defer_images: bool = False,
+    fingerprints: ProtectedFingerprintCache | None = None,
+    metrics: PreparationMetrics | None = None,
 ) -> PreparedAssetSet:
     """Protect and fingerprint every declared asset before any consuming provider opens it.
 
@@ -130,6 +182,7 @@ def prepare_assets(
     prepared: list[PreparedAsset] = []
     total_bytes = 0
     seen: set[str] = set()
+    started = time.perf_counter()
     try:
         for asset in program.assets:
             budget.check_cancelled_or_expired()
@@ -144,7 +197,7 @@ def prepare_assets(
             key = f"asset:{asset.asset_id}"
             asset_limit = (
                 min(snapshot_limit_bytes, max_document_bytes)
-                if asset.profile == "cephvr1_texture_json_v1"
+                if asset.profile in TEXTURE_RECIPE_PROFILES
                 and max_document_bytes is not None
                 else snapshot_limit_bytes
             )
@@ -155,6 +208,33 @@ def prepare_assets(
                     "mp4_h264_sdr8_v1",
                     "matroska_ffv1_v3_uint_v1",
                 } or (defer_images and asset.profile in RELOADABLE_IMAGE_PROFILES)
+                cached = (
+                    fingerprints.get(source) if streaming and fingerprints else None
+                )
+                if cached is not None:
+                    digest_hex, count = cached
+                    if (
+                        asset.profile in TEXTURE_RECIPE_PROFILES
+                        and max_document_bytes is not None
+                        and count > max_document_bytes
+                    ):
+                        raise ValueError(
+                            "texture recipe exceeds its document byte limit"
+                        )
+                    prepared.append(
+                        PreparedAsset(
+                            asset.asset_id,
+                            asset.logical_path,
+                            asset.profile,
+                            digest_hex,
+                            count,
+                            source,
+                            None,
+                        )
+                    )
+                    if metrics is not None:
+                        metrics.fingerprints_reused += 1
+                    continue
                 with source.independent_reader() as reader:
                     stream_chunk_bytes = 1024 * 1024
                     deferred_image = (
@@ -207,7 +287,7 @@ def prepare_assets(
                             break
                         count += len(chunk)
                         if (
-                            asset.profile == "cephvr1_texture_json_v1"
+                            asset.profile in TEXTURE_RECIPE_PROFILES
                             and max_document_bytes is not None
                             and count > max_document_bytes
                         ):
@@ -240,7 +320,7 @@ def prepare_assets(
                                 digest.update(chunk)
                                 count += len(chunk)
                                 if (
-                                    asset.profile == "cephvr1_texture_json_v1"
+                                    asset.profile in TEXTURE_RECIPE_PROFILES
                                     and max_document_bytes is not None
                                     and count > max_document_bytes
                                 ):
@@ -273,6 +353,10 @@ def prepare_assets(
                     data = None
                 if data is not None and len(data) != count:
                     raise OSError("protected asset snapshot length changed")
+                if streaming and fingerprints is not None:
+                    fingerprints.put(source, digest.hexdigest(), count)
+                if metrics is not None:
+                    metrics.sources_hashed += 1
                 prepared.append(
                     PreparedAsset(
                         asset.asset_id,
@@ -295,3 +379,6 @@ def prepare_assets(
         budget.release(owner=f"{owner_prefix}:asset-snapshots")
         budget.release(owner=f"{owner_prefix}:asset-read-buffer")
         raise
+    finally:
+        if metrics is not None:
+            metrics.source_seconds += time.perf_counter() - started

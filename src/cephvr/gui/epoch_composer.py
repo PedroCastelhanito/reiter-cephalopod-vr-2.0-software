@@ -1,6 +1,7 @@
 """One reference epoch with independent, visible per-projector editors."""
 
 import json
+from collections.abc import Callable
 from math import isfinite
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -18,6 +19,7 @@ from cephvr.gui.reference_draft import reference_mode, replace_reference
 from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_presets import add_file_stimulus, remove_stimulus
 from cephvr.gui.theme import SIZES
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
 
@@ -30,6 +32,7 @@ class EpochComposer(QWidget):
         self.screens: tuple[str, ...] = ()
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
+        self.sparse_geometry: Callable[[], Geometry] | None = None
         self.closed_loop = False
         self.tracking_available = True
         self.subject_height_mm: float | None = 0.0
@@ -40,7 +43,7 @@ class EpochComposer(QWidget):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.body.setSpacing(16)
-        self.duration = QLineEdit("00:01:00")
+        self.duration = QLineEdit("00:01:00.000")
         self.mode = combo(("Per-projector stimuli", "3D arena"))
         self.batch_label = QLineEdit()
         self.batch_label.setPlaceholderText("Optional · e.g. Adaptation")
@@ -143,6 +146,7 @@ class EpochComposer(QWidget):
                 face + (" (inactive)" if not active else "") if face else "Rig-wide"
             )
             if face:
+                row.parameters.setProperty("activeProjector", active)
                 row.add.setEnabled(active)
                 row.stimulus.setEnabled(active)
         self.message.status(
@@ -154,6 +158,7 @@ class EpochComposer(QWidget):
     def refresh_rows(self, face: str = "", preferred: int | None = None) -> None:
         self.mode.setEnabled(self.program.category in (None, "navigation_3d"))
         for name, row in self.rows.items():
+            row.parameters.sparse_geometry = self.sparse_geometry
             row.bind(self.program, preferred if face == name else None)
         self.show_rows()
 
@@ -264,10 +269,7 @@ class EpochComposer(QWidget):
     def change_type(self, face: str, kind: str) -> None:
         if not self.isEnabled():
             return
-        if self.program.category == "media_presentation" and kind in (
-            "3D arena",
-            "Looming image",
-        ):
+        if self.program.category == "media_presentation" and kind == "3D arena":
             return
         row = self.rows[face]
         try:
@@ -305,7 +307,7 @@ class EpochComposer(QWidget):
                         scene["layer_instance_ids"][position] = identity
                 self.program = validate(data)
             self.pending_assets.discard(old_id)
-            if selected >= 0:
+            if selected >= 0 and kind not in ("Uniform", "Grating"):
                 epoch = self.program.sequence[0]
                 assert isinstance(epoch, Epoch)
                 self.pending_assets.add(epoch.settings[selected].instance_id)

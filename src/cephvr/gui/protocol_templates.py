@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from cephvr.gui.notices import passive_validation
 from cephvr.gui.protocol_document import blank_program
 from cephvr.visual_stimulus.config.categories import Category, suggested_category
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
@@ -22,13 +23,16 @@ def switch_category(page: ProtocolPage, category: Category) -> None:
     current = editor.program.category
     if current == category:
         return
-    snapshot = capture_protocol(page)
+    # Navigation keeps committed content even when unfinished row edits cannot apply.
+    with passive_validation():
+        editor.flush_parameters()
+    snapshot = capture_protocol(page, flush=False)
     templates = dict(page.category_templates)
     if current is None:
         suggestions = {suggested_category(draft.program) for draft in editor.drafts}
         current = next(
             candidate
-            for candidate in ("navigation_3d", "texture_drift", "media_presentation")
+            for candidate in ("navigation_3d", "media_presentation")
             if candidate in suggestions
         )
         snapshot["trials"] = [

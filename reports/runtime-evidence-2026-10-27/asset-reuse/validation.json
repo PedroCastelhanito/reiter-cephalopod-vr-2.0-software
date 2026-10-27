@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27",
+  "task": "stimulus-setup-asset-reuse",
+  "source_context": "Concurrent working tree; measured source revision and hashes are in measurement.json.",
+  "checks": [
+    {"command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus -q -m \"not windows and not rig\" --basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17bc1-5f1e-7153-bda7-7b44f3b60586/asset-reuse-suite", "result": "545 passed, 14 deselected, 3 subtests passed; permitted loopback/external temporary storage"},
+    {"command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_windows_resources.py -q --basetemp=.pytest-tmp-asset-reuse-native-final", "result": "8 passed; real native protected-file handles, no devices"},
+    {"command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus", "result": "169 source files passed"},
+    {"command": ".venv/Scripts/python.exe -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus", "result": "passed; final changed-file check also passed"},
+    {"command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus", "result": "185 files formatted; final changed-file check also passed"},
+    {"command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py", "result": "769 modules; 0 violations; existing size advisories reviewed in backend report"},
+    {"command": "git diff --check", "result": "passed"}
+  ],
+  "earlier_attempts": [
+    "Native pytest default sandbox temp allocation: 1 passed, 4 fixture errors; workspace basetemp resolved access.",
+    "First new image fixture omitted explicit color metadata: 4 passed, 1 failed; fixture corrected with sRGB metadata.",
+    "Sandboxed broad suite stalled after 37 progress dots and was interrupted; no pass claimed.",
+    "Permitted broad suite with repository-local temp: 542 passed, 3 demo-asset fixture errors; final external-temp run passed."
+  ],
+  "limits": "No GPU upload, optical timing, tracking/recording workload or 30-minute rig run. Parallel decode and persistent caches are not introduced."
+}

@@ -1,10 +1,52 @@
 # Rig verification — outstanding checks
 
+<a id="photodiode-mode-selector"></a>
+- [ ] [gui] [visual_stimulus] After normal relaunch verify Devices/Projectors/Sync
+  Photodiode mode save/load and placement with actual assigned outputs. Measure
+  both60-frame landmarks and plain every-frame alternation in the physical trace,
+  including trial reset, video holds and combined-load timing. Local fake-GL and
+  intended-sequence evidence does not prove optical presentation. See the
+  [implementation report](visual_stimulus.md#photodiode-mode-selector--2026-10-27).
+
+<a id="image-resize-source"></a>
+- [ ] [gui] [visual_stimulus] After normal GUI relaunch, select Resize/Source on each
+  enabled projector with actual valid-area calibration. Use a pixel-labelled image
+  larger than the valid area, a smaller image and a mixed-axis case; verify complete
+  Resize framing, Source center crop/padding, Bottom orientation, flips, background,
+  preview agreement and requested/actual image identities. Compare physical output
+  timing under the existing full workload; local shader pixel equality does not prove
+  optical equality. Retain existing timing/recording deferrals. See the
+  [implementation evidence](visual_stimulus.md#image-resizesource--2026-10-27).
+  Also verify Fold with a labelled unfolded image (Bottom below Left/Front/Right),
+  Front reference scale, unequal measured X/Y pitches, ROI offsets/flips and Bottom
+  orientation. Measure repeated feature dimensions across screens; confirm source
+  boundaries show background and selecting fewer screens does not repack the field.
+  Keep Front enabled for reference calibration; confirm missing reference fails Setup.
+  Compare preview and actual output and retain per-mapping Fold coordinate evidence.
+
+<a id="stimulus-authoring"></a>
+- [ ] [gui] [visual_stimulus] After normal main-GUI relaunch, launch Generate stimulus
+  with actual Assets/calibration; save and select a texture, sparse-noise recipe and
+  generated arena through existing protocol workflows. Verify physical dimensions,
+  seeded repetition, colors/cutouts, projection and full-load behavior. For physical
+  fields, use unequal measured X/Y pitch on all four projectors: verify10mm periods
+  and37°/45° orientation, circular dots, equal-width bars, crop/rotation/drift and
+  field continuity beyond the former100mm boundaries. Vary valid-area extents without
+  changing saved recipe bytes or overlapping seeded features. Native local
+  editor/GL inspection is not optical or multi-monitor/DPI acceptance. See the
+  [implementation report](visual_stimulus.md#offline-stimulus-authoring--2026-10-27).
+
 <a id="sparse-noise-presentation"></a>
+- [ ] [gui] [visual_stimulus] After normal relaunch, verify Protocol → Sparse noise
+  recipe Browse/paste for each enabled projector, displayed seeds, scroll/DPI layout,
+  new-trial insertion and saved protocol reopening against actual Devices geometry.
+  Local dialog/round-trip/cancellation checks and offscreen render pass; native
+  GUI and physical presentation are not implied. Keep generated bundles intact.
 - [ ] [visual_stimulus] Prepare a sparse-noise recipe against the actual display profile,
   load its generated program with its bundle as asset root, and verify square side
-  lengths, background margins, polarity/color calibration and independent screen
-  patterns. Verify requested/actual asset identity and optical onset timing at the
+  lengths, minimum center-to-center active spacing, background margins, polarity/color
+  calibration and per-pattern regenerated layouts. Check observed activation and
+  spatial coverage across the chosen sequence; finite sequences do not guarantee coverage. Verify requested/actual asset identity and optical onset timing at the
   chosen pattern duration under combined recording/tracking load; preserve existing
   readiness-hold evidence. Repeat the saved bundle and compare recorded identities.
   Local211 tests and fixture CLI generation do not close physical acceptance.
@@ -77,7 +119,11 @@ This does not close the remaining fault, physical or full-workload checks below.
   recording-reenable variants remain open.
 
 <a id="protocol-category-previews"></a>
-- [ ] `protocol-category-previews` [gui] [visual_stimulus] On the rig, verify media
+- [ ] `protocol-category-previews` [gui] [visual_stimulus] After normal relaunch, verify
+  the two protocol types, six projector/layer choices, inline Uniform/Sparse noise/Grating,
+  seeded sparse timing/hold, linked-Grating shared pattern/phase and unlinked independence.
+  Check measured Bottom-edge agreement, acknowledged wall-corner seams, optical phase
+  and projector timing separately from synthetic software tests. On the rig, verify media
   overlays/layer selection/fades, texture drift/fades and shared-observer arena previews
   with cameras visible. Check Combined's single GPU screen-plane rig view, left-drag
   rotation, elevation limits, double-click home and repeated Per-projector switches,
@@ -94,6 +140,16 @@ This does not close the remaining fault, physical or full-workload checks below.
   with the protocol rig view. Measure Combined versus four Per-projector viewers'
   preview cadence and GPU cost under full recording/projection load; local checks do
   not prove native resource behavior, optical timing or throughput.
+  After relaunch, also verify Asset / Random from folder Browse/paste, compatible
+  direct-file subsets, save/reopen, independent/shared projector choices and Asset +
+  numeric rules across actual group repetitions. Confirm unchanged source count,
+  chosen real media/decoding and playback under normal load.
+  [Asset-rule local evidence](runtime.md#asset-variation-rules--2026-10-27).
+  Verify Grating exposes Asset/Orientation/Speed only; test0/90/180/-90deg movement
+  normal to bars on every face, stationary angle, unchanged source files, correct
+  physical period after Asset variation, repetition boundary orientation, and agreement
+  between planning preview and projection. Include legacy/current grating JSON designs.
+  [Grating local evidence](visual_stimulus.md#grating-stimulus--2026-10-27).
   [Implementation/evidence](runtime.md#protocol-category-and-preview-design--2026-10-23).
 
 - [ ] `gui-startup-splash` [gui] [launcher] Verify physical alternate-monitor and

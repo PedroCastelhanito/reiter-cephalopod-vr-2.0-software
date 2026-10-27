@@ -1,0 +1,4 @@
+COMMAND: ['C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests/gui/test_dashboard.py', '-q', '-m', 'not windows and not rig', '-k', 'physical_field_import or trial_preview or texture_drift_preserves or compact_texture_picker', '--timeout=60', '--basetemp=C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17c63-c157-7eb1-af71-3d5243620475\\gui-field-tests-final']
+
+...............................                                          [100%]
+31 passed, 1024 deselected in 6.11s

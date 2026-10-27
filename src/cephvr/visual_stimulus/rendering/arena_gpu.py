@@ -120,7 +120,7 @@ def upload_arena(
                     False,
                     partial(_retain_texture_variant, variants, "premultiplied"),
                 )
-                _configure_sampler(variants.premultiplied, _texture)
+                configure_sampler(variants.premultiplied, _texture)
 
                 variants.opaque = upload_texture(
                     output_id,
@@ -129,7 +129,7 @@ def upload_arena(
                     True,
                     partial(_retain_texture_variant, variants, "opaque"),
                 )
-                _configure_sampler(variants.opaque, _texture)
+                configure_sampler(variants.opaque, _texture)
             for node in scene.nodes:
                 for primitive in node.primitives:
                     values = _interleaved_vertices(node.matrix, primitive)
@@ -199,7 +199,7 @@ def _retain_texture_variant(
         raise ValueError("unknown arena texture variant")
 
 
-def _configure_sampler(texture: Any, sampler: Any) -> None:
+def configure_sampler(texture: Any, sampler: Any) -> None:
     """Apply the bounded glTF sampler values directly to the GL texture."""
     try:
         from OpenGL import GL

@@ -47,18 +47,306 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 
 
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "grating",
+        "polar_grating",
+        "checker",
+        "dots_grid",
+        "dots_rand",
+        "noise_binary",
+        "noise_gray",
+        "filtered_noise",
+        "calibration_grid",
+        "flat",
+    ],
+)
+def test_physical_fields_preserve_overlap_across_extents(pattern):
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.physical_field import raster_field
+
+    small = raster_field(pattern, {}, 40, 24, 80, 48)
+    large = raster_field(pattern, {}, 80, 48, 160, 96)
+    assert np.array_equal(small, large[24:72, 40:120])
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+def test_physical_field_exact_grating_period_and_anisotropic_pixels(axis):
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.physical_field import (
+        raster_field,
+        sample_field,
+    )
+
+    # A projector with X=0.1 mm/pixel and Y=0.25 mm/pixel.
+    p = {"spatial_period_mm": 10.0, "orientation_deg": 0.0 if axis == "x" else 90.0}
+    pixels = raster_field("grating", p, 40, 30, 400, 120)
+    line = pixels[0, :, 0] if axis == "x" else pixels[:, 0, 0]
+    period = 100 if axis == "x" else 40
+    assert np.array_equal(line[:-period], line[period:])
+    p["orientation_deg"] = 45.0
+    x = np.arange(-110, 110, 0.31)
+    y = np.full(x.shape, 0.123)
+    shift = 10 / np.sqrt(2)
+    a = sample_field("grating", p, x, y)
+    b = sample_field("grating", p, x + shift, y + shift)
+    assert np.array_equal(a, b)
+
+
+def test_physical_field_version_and_raster_parameters_rejected():
+    from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
+
+    doc = dict(
+        cephvr_asset_type="texture_field",
+        format_version=1,
+        kind="texture",
+        pattern="grating",
+        params={"spatial_period_mm": 10.0},
+    )
+    recipe = parse_texture_recipe(json.dumps(doc).encode())
+    assert recipe.physical_field and recipe.tile_width_mm is None
+    for key in (
+        "texture_resolution",
+        "tile_width_mm",
+        "fit_cycles_to_tile",
+        "screen_width_mm",
+    ):
+        changed = {**doc, "params": {**doc["params"], key: 10}}
+        with pytest.raises(ValueError):
+            parse_texture_recipe(json.dumps(changed).encode())
+    for version in (0, 2, True, "1"):
+        with pytest.raises(ValueError, match="version"):
+            parse_texture_recipe(
+                json.dumps({**doc, "format_version": version}).encode()
+            )
+    legacy = parse_texture_recipe(
+        json.dumps({**doc, "cephvr_asset_type": "texture_design"}).encode()
+    )
+    assert not legacy.physical_field
+
+
+@pytest.mark.parametrize("deferred", [False, True])
+def test_physical_field_preparation_protects_recipe_without_rasterizing(
+    tmp_path, monkeypatch, deferred
+):
+    import hashlib
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    raw = json.dumps(
+        dict(
+            cephvr_asset_type="texture_field",
+            format_version=1,
+            kind="texture",
+            pattern="dots_rand",
+            params={"seed": 173},
+        )
+    ).encode()
+    (tmp_path / "field.json").write_bytes(raw)
+    sources = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            assert not self.closed
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Live physical fields must not be rasterized during preparation")
+
+    monkeypatch.setattr(
+        "cephvr.visual_stimulus.resources.texture_recipe.generate_texture_recipe",
+        forbidden,
+    )
+    monkeypatch.setattr(
+        "cephvr.visual_stimulus.resources.recipe_preparation.generate_texture_recipe",
+        forbidden,
+    )
+    asset = Asset(
+        asset_id="field",
+        logical_path="field.json",
+        profile="cephvr1_texture_json_v1",
+        color_override=None,
+    )
+    budget = BoundedBudget(cpu_limit=50_000, gpu_limit=1000)
+    bundle = prepare_resources(
+        SimpleNamespace(assets=(asset,), instances=(), sequence=()),
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=10000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=1000,
+        source_factory=Source,
+        defer_images=deferred,
+    )
+    try:
+        resource = bundle.manifest.resources[0]
+        assert resource.fingerprint.sha256 == hashlib.sha256(raw).hexdigest()
+        content = (
+            bundle.image_sources["field"]
+            if deferred
+            else bundle.prepared_content["field"]
+        )
+        assert content.field_recipe.physical_field
+        assert content.field_recipe.params["seed"] == 173
+        assert content.width == content.height == 1
+        if deferred:
+            assert len(content.load(lambda: None)) == 16
+        assert (tmp_path / "field.json").read_bytes() == raw
+    finally:
+        assert bundle.asset_set.close() == ()
+    assert all(source.closed for source in sources)
+
+
+def test_physical_field_requires_physical_texture_placement():
+    from types import SimpleNamespace as NS
+
+    from cephvr.visual_stimulus.resources.physical_field import validate_field_uses
+
+    for kind, space in (("image", "physical_surface"), ("texture", "visual_angle")):
+        setting = NS(
+            kind=kind,
+            space=NS(kind=space),
+            asset_id="field",
+            pattern=NS(asset_id="field"),
+        )
+        group = NS(kind="group", body=(NS(kind="epoch", settings=(setting,)),))
+        with pytest.raises(ValueError, match="physical-surface"):
+            validate_field_uses((group,), {"field"})
+
+
+def test_seeded_field_statistics_and_full_seed_range():
+    import math
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.physical_field import sample_field
+
+    rng = np.random.default_rng(172)
+    x, y = rng.uniform(-10000, 10000, (2, 60000))
+    seed = 2**64 - 59
+    dots = sample_field(
+        "dots_rand",
+        {"density_per_cm2": 1.0, "dot_diameter_mm": 1.0, "seed": seed},
+        x,
+        y,
+    )
+    assert abs(np.mean(dots[:, 0] > 0) - math.pi / 400) < 0.002
+    noise = sample_field("filtered_noise", {"black_fraction": 0.3, "seed": seed}, x, y)
+    assert abs(np.mean(noise[:, 0] == 0) - 0.3) < 0.02
+    other = sample_field("noise_binary", {"seed": seed - 2**32}, x, y)
+    first = sample_field("noise_binary", {"seed": seed}, x, y)
+    assert not np.array_equal(other, first)
+
+
+@pytest.mark.parametrize("consumed", [False, True])
+def test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles(
+    tmp_path, monkeypatch, consumed
+):
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        GeometricProfile,
+        Vertex,
+    )
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+    from cephvr.visual_stimulus.resources import prepare
+    from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
+
+    # The regular profile validator permits this nonlinear, nondegenerate quad.
+    profile = GeometricProfile(
+        format_version=1,
+        calibration_id="test",
+        mapping_id="mapped",
+        surface_id="front",
+        output_id="front",
+        output_width=100,
+        output_height=100,
+        viewport=PixelRect(x=0, y=0, width=100, height=100),
+        rows=2,
+        columns=2,
+        vertices=tuple(
+            Vertex(uv=uv, xy=xy)
+            for uv, xy in zip(
+                ((0, 0), (1, 0), (0, 1), (1, 1)),
+                ((0, 0), (1, 0), (0, 1), (0.8, 1)),
+                strict=True,
+            )
+        ),
+        orientation="preserving",
+        diagonal="bottom_left_to_top_right",
+        mask=None,
+        weight=None,
+        overlap_group=None,
+        valid_area=(0, 0, 1, 1),
+        intended_coverage=((0, 0), (1, 0), (0.8, 1), (0, 1)),
+        coverage_tolerance=0.01,
+        triangle_area_tolerance=0.0001,
+    )
+    monkeypatch.setattr(
+        prepare,
+        "prepare_calibration",
+        lambda *args, **kwargs: PreparedCalibration((), (), {"mapped": profile}),
+    )
+    monkeypatch.setattr(
+        prepare,
+        "build_uniform_layouts",
+        lambda *args: (
+            SimpleNamespace(
+                name="image_target_pixels_mapped"
+                if consumed
+                else "image_target_pixels_other"
+            ),
+        ),
+    )
+    budget = BoundedBudget(cpu_limit=10000, gpu_limit=10000)
+
+    def run():
+        return prepare.prepare_resources(
+            SimpleNamespace(assets=(), sequence=(), instances=()),
+            tmp_path,
+            budget,
+            announce=lambda *_: None,
+            snapshot_limit_bytes=1000,
+            video_index_limit_bytes=1000,
+            glb_element_limit=100,
+            display=SimpleNamespace(),
+            component_provenance=(),
+        )
+
+    if consumed:
+        with pytest.raises(ValueError, match="affine"):
+            run()
+    else:
+        assert run().asset_set.close() == ()
+    assert budget.usage.cpu_bytes == 0
+
+
 def _sparse_recipe(**changes):
     from cephvr.visual_stimulus.config.models.sparse_noise import (
         parse_sparse_noise_json,
     )
 
     fields = {
-        "format_version": 1,
+        "format_version": 2,
         "kind": "sparse_noise",
         "seed": 12345,
         "surfaces": ["front", "left"],
         "square_size_mm": 10.0,
-        "active_density": 0.2,
+        "min_active_cell_distance_mm": 0.0,
+        "active_probability": 0.2,
         "background_linear": 0.5,
         "pattern_count": 3,
         "pattern_duration": {"seconds": "20"},
@@ -77,6 +365,70 @@ def _prepare_sparse(tmp_path, recipe=None, **changes):
     return prepare_sparse_noise(
         recipe or _sparse_recipe(), make_compile_context().display, tmp_path, **limits
     )
+
+
+def test_sparse_noise_selection_preserves_per_screen_recipe_seeds_and_root(tmp_path):
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.visual_stimulus.resources.sparse_noise_selection import (
+        prepare_sparse_noise_selection,
+    )
+
+    recipes = {
+        "front": _sparse_recipe(seed=7),
+        "left": _sparse_recipe(seed=8, active_probability=0.75),
+    }
+    path = prepare_sparse_noise_selection(
+        recipes,
+        make_compile_context().display.geometry,
+        tmp_path / "combined",
+        max_cells=10000,
+        max_patterns=100,
+        max_document_bytes=100000,
+        check=lambda: None,
+    )
+    data = json.loads(path.read_text())
+    assert len(data["sequence"]) == 3
+    assert len(data["instances"]) == 2
+    for asset in data["assets"]:
+        assert (path.parent / asset["logical_path"]).is_file()
+    for face, recipe in recipes.items():
+        provenance = json.loads((path.parent / face / "provenance.json").read_text())
+        assert provenance["recipe"]["seed"] == recipe.seed
+        assert provenance["recipe"]["surfaces"] == [face]
+        assert provenance["recipe"]["active_probability"] == recipe.active_probability
+        assert all(0 <= p["active_count"] <= 4 for p in provenance["patterns"])
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"pattern_count": 4},
+        {"pattern_duration": {"seconds": "21"}},
+        {"background_linear": 0.4},
+    ],
+)
+def test_sparse_noise_selection_rejects_incompatible_schedules_before_writing(
+    tmp_path, change
+):
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.visual_stimulus.resources.sparse_noise_selection import (
+        prepare_sparse_noise_selection,
+    )
+
+    destination = tmp_path / "invalid"
+    with pytest.raises(ValueError, match="matching"):
+        prepare_sparse_noise_selection(
+            {"front": _sparse_recipe(), "left": _sparse_recipe(**change)},
+            make_compile_context().display.geometry,
+            destination,
+            max_cells=10000,
+            max_patterns=100,
+            max_document_bytes=100000,
+            check=lambda: None,
+        )
+    assert not destination.exists()
 
 
 def test_sparse_noise_bundle_uses_reproducible_independent_screen_patterns(tmp_path):
@@ -106,7 +458,10 @@ def test_sparse_noise_bundle_uses_reproducible_independent_screen_patterns(tmp_p
         grid = grids[surface]
         pixels = image.pixels
         assert image.width == grid["columns"] and image.height == grid["rows"]
-        assert np.count_nonzero(pixels[:, :, 3]) == grid["active_count"]
+        record = next(
+            p for p in provenance["patterns"] if p["path"] == asset.logical_path
+        )
+        assert np.count_nonzero(pixels[:, :, 3]) == record["active_count"]
         assert set(np.unique(pixels[:, :, :3])).issubset({0, 255})
         assert (first.parent / asset.logical_path).read_bytes() == (
             second.parent / asset.logical_path
@@ -118,8 +473,8 @@ def test_sparse_noise_bundle_uses_reproducible_independent_screen_patterns(tmp_p
         hashes.append(hashlib.sha256(pixels.tobytes()).hexdigest())
     # A tiny grid can legitimately repeat; these reference pixels pin seed semantics.
     assert hashes[:2] == [
-        "cab68808dd74adb0accd7adb91ea49d17c8bc7281f0c57fa5cbcd6117cb202c9",
-        "11a9a2fb3cb66146fa6e703de533c3f386cda2eb4120c8faf8a19a36555e8247",
+        "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+        "34885ea2ef8490886fae553c8ce7ffb5a27563825e5f6ce02784875d1ace0e47",
     ]
     assert any(
         (first.parent / asset.logical_path).read_bytes()
@@ -142,8 +497,13 @@ def test_sparse_noise_bundle_uses_reproducible_independent_screen_patterns(tmp_p
         {"seed": -1},
         {"seed": 1.5},
         {"seed": 2**64},
-        {"active_density": -0.1},
-        {"active_density": 1.1},
+        {"active_probability": -0.1},
+        {"active_probability": 1.1},
+        {"min_active_cell_distance_mm": -1},
+        {"min_active_cell_distance_mm": float("inf")},
+        {"active_probability": float("nan")},
+        {"active_density": 0.2},
+        {"format_version": 1},
         {"square_size_mm": 0},
         {"square_size_mm": float("inf")},
         {"surfaces": ["front", "front"]},
@@ -189,7 +549,7 @@ def test_sparse_noise_does_not_overwrite_and_cancellation_never_publishes(tmp_pa
     assert not (destination / "program.json").exists()
 
 
-def test_sparse_noise_full_cells_density_rounding_and_transparent_background(tmp_path):
+def test_sparse_noise_full_cells_probability_and_transparent_background(tmp_path):
     import math
 
     import numpy as np
@@ -198,7 +558,7 @@ def test_sparse_noise_full_cells_density_rounding_and_transparent_background(tmp
     from cephvr.visual_stimulus.resources.sparse_noise import resolve_grids
 
     display = make_compile_context().display
-    recipe = _sparse_recipe(square_size_mm=13.0, active_density=0.0)
+    recipe = _sparse_recipe(square_size_mm=13.0, active_probability=0.0)
     grids = resolve_grids(recipe, display, max_cells=10000)
     for grid in grids:
         surface = next(
@@ -210,17 +570,121 @@ def test_sparse_noise_full_cells_density_rounding_and_transparent_background(tmp
             - grid.width_mm
             < 13
         )
-        assert grid.active_count == 0
     path = _prepare_sparse(tmp_path / "blank", recipe)
     from PIL import Image
 
     with Image.open(path.parent / "noise-front-0.png") as image:
         assert not np.asarray(image)[:, :, 3].any()
-    with pytest.raises(ValueError, match="rounds to zero"):
-        resolve_grids(_sparse_recipe(active_density=1e-10), display, max_cells=10000)
+    assert resolve_grids(
+        _sparse_recipe(active_probability=1e-10), display, max_cells=10000
+    )
 
 
-def test_sparse_noise_runs_through_resource_compiler_and_image_schedule(tmp_path):
+def test_sparse_spacing_regenerates_layout_and_probability_is_independent():
+    import math
+
+    from cephvr.visual_stimulus.resources.sparse_noise import (
+        eligible_cells,
+        grid_for_extent,
+        pattern_rgba,
+    )
+
+    recipe = _sparse_recipe(
+        pattern_count=30, min_active_cell_distance_mm=25.0, active_probability=1.0
+    )
+    grid = grid_for_extent(recipe, "front", 100, 100, max_cells=1000)
+    layouts = []
+    counts = []
+    for index in range(30):
+        layout = eligible_cells(recipe, grid, index)
+        layouts.append(frozenset(layout))
+        assert len(layout) == len(set(layout))
+        for i, a in enumerate(layout):
+            for b in layout[i + 1 :]:
+                assert (
+                    math.hypot(
+                        a % grid.columns - b % grid.columns,
+                        a // grid.columns - b // grid.columns,
+                    )
+                    * recipe.square_size_mm
+                    >= 25.0
+                )
+        # Every excluded cell is blocked by an eligible cell: the greedy layout is maximal.
+        for cell in set(range(grid.columns * grid.rows)) - set(layout):
+            assert any(
+                math.hypot(
+                    cell % grid.columns - other % grid.columns,
+                    cell // grid.columns - other // grid.columns,
+                )
+                * 10
+                < 25
+                for other in layout
+            )
+        full = pattern_rgba(recipe, grid, index)
+        assert {i for i, alpha in enumerate(full[3::4]) if alpha} == set(layout)
+        low = recipe.model_copy(update={"active_probability": 0.25})
+        high = recipe.model_copy(update={"active_probability": 0.75})
+        assert (
+            eligible_cells(low, grid, index)
+            == layout
+            == eligible_cells(high, grid, index)
+        )
+        low_pixels, high_pixels = (
+            pattern_rgba(low, grid, index),
+            pattern_rgba(high, grid, index),
+        )
+        active_low = {i for i, alpha in enumerate(low_pixels[3::4]) if alpha}
+        active_high = {i for i, alpha in enumerate(high_pixels[3::4]) if alpha}
+        assert active_low <= active_high <= set(layout)
+        assert all(
+            low_pixels[i * 4 : i * 4 + 4] == high_pixels[i * 4 : i * 4 + 4]
+            for i in active_low
+        )
+        counts.append(len(active_low))
+    assert len(set(layouts)) > 1
+    assert len(set(counts)) > 1
+    assert not any(
+        pattern_rgba(recipe.model_copy(update={"active_probability": 0.0}), grid, 0)
+    )
+    assert pattern_rgba(recipe, grid, 2) == pattern_rgba(recipe, grid, 2)
+
+
+@pytest.mark.parametrize("distance,expected", [(0.0, 100), (10.0, 100), (1000.0, 1)])
+def test_sparse_spacing_boundaries(distance, expected):
+    from cephvr.visual_stimulus.resources.sparse_noise import (
+        eligible_cells,
+        grid_for_extent,
+    )
+
+    recipe = _sparse_recipe(min_active_cell_distance_mm=distance)
+    grid = grid_for_extent(recipe, "front", 100, 100, max_cells=1000)
+    assert len(eligible_cells(recipe, grid, 0)) == expected
+
+
+def test_sparse_layout_observes_cancellation():
+    from cephvr.visual_stimulus.resources.sparse_noise import (
+        eligible_cells,
+        grid_for_extent,
+    )
+
+    recipe = _sparse_recipe(min_active_cell_distance_mm=25.0)
+    grid = grid_for_extent(recipe, "front", 500, 500, max_cells=10000)
+    calls = 0
+
+    def check():
+        nonlocal calls
+        calls += 1
+        if calls == 3:
+            raise InterruptedError("cancelled during layout")
+
+    with pytest.raises(InterruptedError, match="during layout"):
+        eligible_cells(recipe, grid, 0, check=check)
+
+
+@pytest.mark.parametrize("single_epoch", [False, True])
+def test_sparse_noise_runs_through_resource_compiler_and_image_schedule(
+    tmp_path, single_epoch
+):
     from tests.visual_stimulus.support import make_compile_context, make_program
 
     from cephvr.visual_stimulus.compiler import compile_trial
@@ -229,6 +693,18 @@ def test_sparse_noise_runs_through_resource_compiler_and_image_schedule(tmp_path
 
     path = _prepare_sparse(tmp_path / "noise")
     source = path.read_text()
+    if single_epoch:
+        data = json.loads(source)
+        epochs = data["sequence"]
+        first = epochs[0]
+        for index, setting in enumerate(first["settings"]):
+            setting["sparse_noise"] = dict(
+                asset_ids=[epoch["settings"][index]["asset_id"] for epoch in epochs],
+                pattern_duration=dict(seconds="20"),
+            )
+        first["duration"]["duration"]["seconds"] = "60"
+        data["sequence"] = [first]
+        source = json.dumps(data)
     program = make_program(source)
     context = make_compile_context(source)
     closed = []
@@ -263,14 +739,23 @@ def test_sparse_noise_runs_through_resource_compiler_and_image_schedule(tmp_path
             max_expanded_epochs=100,
             max_prepared_plan_bytes=1_000_000,
         )
-        assert [epoch.start_ns for epoch in plan.epochs] == [
-            0,
-            20_000_000_000,
-            40_000_000_000,
-        ]
+        assert (
+            [epoch.start_ns for epoch in plan.epochs]
+            == [
+                0,
+                20_000_000_000,
+                40_000_000_000,
+            ]
+            if not single_epoch
+            else [0]
+        )
         schedule = ImageSchedule.build((plan,), {plan.identity.trial_id: bundle})
         assert len(schedule.first) == 2
-        assert len(schedule.epochs[plan.identity.trial_id]) == 3
+        assert len(schedule.epochs[plan.identity.trial_id]) == (
+            1 if single_epoch else 3
+        )
+        if single_epoch:
+            assert len(schedule.epochs[plan.identity.trial_id][0]) == 6
         for image in schedule.sources.values():
             assert len(image.load(lambda: None)) == image.width * image.height * 16
     finally:
@@ -728,14 +1213,19 @@ def test_recipe_image_source_is_deterministic_and_preserves_dependency_dimension
     assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
 
 
-def test_polar_recipe_image_source_key_includes_explicit_surface_geometry():
+@pytest.mark.parametrize("tile_local", [False, True])
+def test_polar_recipe_image_source_key_includes_explicit_surface_geometry(tile_local):
     import hashlib
     from types import SimpleNamespace
 
     from cephvr.visual_stimulus.resources.assets import PreparedAsset
     from cephvr.visual_stimulus.resources.image_source import validate_image_source
 
-    raw = b'{"pattern":"polar_grating","params":{"size":8,"bar_count":6}}'
+    raw = (
+        b'{"pattern":"polar_grating","params":{"size":8,"bar_count":6,"tile_local":'
+        + (b"true" if tile_local else b"false")
+        + b"}}"
+    )
     asset = Asset(
         asset_id="polar",
         logical_path="polar.json",
@@ -783,7 +1273,9 @@ def test_polar_recipe_image_source_key_includes_explicit_surface_geometry():
         max_document_bytes=1000,
         display=changed_display,
     )
-    assert first.key != second.key
+    assert (first.key == second.key) is tile_local
+    if tile_local:
+        assert first.load(lambda: None) == second.load(lambda: None)
     assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
 
 
@@ -1232,7 +1724,7 @@ def test_arena_bundle_subresource_ids_validate_and_bind_gpu_textures(
         uploaded.append(pixels)
         return Allocation()
 
-    monkeypatch.setattr(arena_gpu, "_configure_sampler", lambda *_: None)
+    monkeypatch.setattr(arena_gpu, "configure_sampler", lambda *_: None)
     owner = arena_gpu.upload_arena(
         bundle.prepared_content[asset_id],
         {"front": SimpleNamespace(context=Context())},
@@ -2142,3 +2634,171 @@ def test_setup_progress_throttles_counts_but_emits_stage_and_completion():
         "Decoding textures: 100/100",
         "Uploading initial textures: 0/20",
     ]
+
+
+@pytest.mark.parametrize("reference", [False, True])
+def test_fold_preparation_requires_front_even_for_left_only(reference):
+    from types import SimpleNamespace
+
+    from tests.visual_stimulus.support import _geometric_profiles
+
+    from cephvr.visual_stimulus.resources.uniforms import validate_image_layouts
+
+    artifact = make_prepared_trial()
+    profiles = _geometric_profiles(artifact.display)
+    content = {"map-left": profiles["map-left"]}
+    layouts = tuple(
+        SimpleNamespace(name=name)
+        for name in ("image_target_pixels_map-left", "image_fold_map_map-left")
+    )
+    if reference:
+        content["map-front"] = profiles["map-front"]
+        validate_image_layouts(layouts, artifact.display, content)
+    else:
+        with pytest.raises(ValueError, match="Front calibration"):
+            validate_image_layouts(layouts, artifact.display, content)
+
+
+def test_fold_layout_and_evidence_bind_the_mapped_coordinates():
+    from cephvr.visual_stimulus.config.models.program_model import ImageSettings
+    from cephvr.visual_stimulus.rendering.evidence import uniform_values
+    from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+
+    artifact = make_prepared_trial()
+    epoch = artifact.source.sequence[0]
+    data = epoch.settings[0].model_dump(include=set(ImageSettings.model_fields))
+    data.update(kind="image", asset_id="image", sampling="linear", fit="fold")
+    image = ImageSettings.model_validate(data)
+    program = artifact.source.model_copy(
+        update={"sequence": (epoch.model_copy(update={"settings": (image,)}),)}
+    )
+    layouts = build_uniform_layouts(program, artifact.display)
+    mapped = [item for item in layouts if item.name.startswith("image_fold_map_")]
+    assert mapped and all(item.shape == (3, 2) for item in mapped)
+    recorded = uniform_values(
+        artifact.model_copy(update={"uniform_layouts": layouts}),
+        InstanceSnapshot(image.instance_id, "image", True, (), image),
+    )
+    assert all(item.binding_id not in recorded for item in mapped)
+
+
+@pytest.mark.parametrize("modern", [False, True])
+@pytest.mark.parametrize("deferred", [False, True])
+def test_grating_recipe_preparation_ignores_saved_angle_and_keeps_original_bytes(
+    tmp_path, deferred, modern
+):
+    import hashlib
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.grating_recipe import interpreted_recipe
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        generate_texture_recipe,
+        parse_texture_recipe,
+    )
+
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "orientation_deg": 73,
+                "spatial_period_mm": 12,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "texture_resolution": 8,
+                "feature_sharpness": 1,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.json"
+    path.write_bytes(raw)
+    opened = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            opened.append(self)
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    asset = Asset(
+        asset_id="bars",
+        logical_path="bars.json",
+        profile="cephvr_grating_json_v1",
+        color_override=None,
+    )
+    program = SimpleNamespace(assets=(asset,), instances=(), sequence=())
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=10000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=1000,
+        source_factory=Source,
+        defer_images=deferred,
+    )
+    try:
+        resource = bundle.manifest.resources[0]
+        assert resource.profile_id == asset.profile
+        assert resource.fingerprint.sha256 == hashlib.sha256(raw).hexdigest()
+        if deferred:
+            source = bundle.image_sources["bars"]
+            pixels = np.frombuffer(source.load(lambda: None), dtype=np.float32).reshape(
+                source.height, source.width, 4
+            )
+        else:
+            pixels = bundle.prepared_content["bars"].pixels
+        if modern:
+            field = (
+                bundle.image_sources["bars"].field_recipe
+                if deferred
+                else bundle.prepared_content["bars"].field_recipe
+            )
+            assert field.physical_field and field.params["orientation_deg"] == 0
+            pixels = generate_texture_recipe(field)
+        else:
+            assert pixels.shape[:2] == (8, 8)
+        assert np.array_equal(pixels, np.repeat(pixels[:1], pixels.shape[0], axis=0))
+        assert np.ptp(pixels[..., 0]) > 0
+        recipe = parse_texture_recipe(raw)
+        normalized = interpreted_recipe(recipe, asset.profile)
+        assert recipe.params["orientation_deg"] == 73
+        assert normalized.tile_width_mm == normalized.tile_height_mm == 12
+        other = json.loads(raw)
+        other["params"]["orientation_deg"] = 11
+        assert np.array_equal(
+            generate_texture_recipe(normalized),
+            generate_texture_recipe(
+                interpreted_recipe(
+                    parse_texture_recipe(json.dumps(other).encode()), asset.profile
+                )
+            ),
+        )
+        with pytest.raises(ValueError, match="Grating texture design"):
+            interpreted_recipe(
+                parse_texture_recipe(b'{"pattern":"checker","params":{}}'),
+                asset.profile,
+            )
+        assert path.read_bytes() == raw
+    finally:
+        bundle.asset_set.close()
+    assert all(s.closed for s in opened)

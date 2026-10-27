@@ -24,6 +24,7 @@ from cephvr.gui.notices import StatusEvent
 from cephvr.gui.preview_placement import PreviewSlot
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
+from cephvr.gui.stimulus_authoring import StimulusAuthoringPage
 from cephvr.gui.theme import SIZES, load_terminal_font
 from cephvr.gui.tracking import TrackingPage
 from cephvr.gui.trial_preview import TrialPreview
@@ -31,7 +32,7 @@ from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.gui.view import DashboardView, Phase
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 
-PAGES = ("Dashboard", "Protocol", "Devices", "Tracking")
+PAGES = ("Dashboard", "Protocol", "Devices", "Tracking", "Generate assets")
 
 
 class DashboardWindow(QMainWindow):
@@ -71,7 +72,8 @@ class DashboardWindow(QMainWindow):
         for index, name in enumerate(PAGES):
             control = button(name, "navigation")
             control.setProperty(
-                "iconName", ("dashboard", "protocol", "devices", "tracking")[index]
+                "iconName",
+                ("dashboard", "protocol", "devices", "tracking", "protocol")[index],
             )
             control.setIconSize(QSize(20, 20))
             control.setCheckable(True)
@@ -81,6 +83,7 @@ class DashboardWindow(QMainWindow):
         self.page_buttons[0].setChecked(True)
         self.page_buttons[3].setVisible(tracking_available)
         sidebar_layout.addStretch()
+        self.generate_stimulus_button = self.page_buttons[4]
         sidebar_layout.addWidget(label("VERSION 2.0", "muted"))
         layout.addWidget(sidebar)
         page = QWidget()
@@ -123,6 +126,7 @@ class DashboardWindow(QMainWindow):
         self.protocol = ProtocolPage(
             self.recordings, sample=sample, tracking_available=tracking_available
         )
+        self.protocol.sparse_geometry = self.stimulus_geometry
         subject_height = self.devices.projectors.rig_editor.fields["subject_z"]
         composer = self.protocol.editor.subgroup.composer
         subject_height.textChanged.connect(composer.set_subject_height)
@@ -147,6 +151,8 @@ class DashboardWindow(QMainWindow):
         self.stack.addWidget(self.devices)
         self.tracking = TrackingPage(self.devices.cameras)
         self.stack.addWidget(self.tracking)
+        self.authoring_page = StimulusAuthoringPage()
+        self.stack.addWidget(self.authoring_page)
         self.snapshots = GuiSnapshot(
             SnapshotPages(
                 self.dashboard,
@@ -187,8 +193,19 @@ class DashboardWindow(QMainWindow):
             section.rail.set_navigation_active(self.stack.currentIndex() == index)
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
+        if event is None:
+            return
+        if not self.confirm_authoring_close():
+            event.ignore()
+            return
+        self.authoring_page.shutdown()
+        if self.protocol.sparse_dialog is not None:
+            self.protocol.sparse_dialog.reject()
         self.tracking.annotation.close()
         super().closeEvent(event)
+
+    def confirm_authoring_close(self) -> bool:
+        return self.authoring_page.confirm_close()
 
     def customEvent(self, event: QEvent | None) -> None:
         if isinstance(event, StatusEvent):
@@ -200,6 +217,9 @@ class DashboardWindow(QMainWindow):
         if index == 3 and not self.tracking_available:
             return
         if index != 0 and self.dashboard.view.phase in RUNTIME_PHASES:
+            self.page_buttons[self.stack.currentIndex()].setChecked(True)
+            return
+        if index == 4 and not self.prepare_stimulus_authoring():
             self.page_buttons[self.stack.currentIndex()].setChecked(True)
             return
         self.stack.setCurrentIndex(index)
@@ -312,15 +332,8 @@ class DashboardWindow(QMainWindow):
             timeline.clear("Current trial program unavailable.")
             return
         draft = editor.drafts[index]
-        projectors = self.devices.projectors
         try:
-            profile = projectors.calibration_files.profile
-            payload = (
-                projectors.rig_editor.geometry_payload(projectors.screen_editor.drafts)
-                if projectors._geometry_dirty or profile is None
-                else profile.get("geometry")
-            )
-            geometry = Geometry.model_validate_json(json.dumps(payload))
+            geometry = self.stimulus_geometry()
         except (ValueError, TypeError):
             geometry = None
         timeline.set_program(
@@ -338,6 +351,34 @@ class DashboardWindow(QMainWindow):
             running=(view.connected or view.sample)
             and view.phase in {Phase.RUNNING, Phase.STOPPING},
         )
+
+    def stimulus_geometry(self) -> Geometry:
+        projectors = self.devices.projectors
+        profile = projectors.calibration_files.profile
+        payload = (
+            projectors.rig_editor.geometry_payload(projectors.screen_editor.drafts)
+            if projectors._geometry_dirty or profile is None
+            else profile.get("geometry")
+        )
+        return Geometry.model_validate_json(json.dumps(payload))
+
+    def open_stimulus_authoring(self) -> None:
+        self.select_page(4)
+
+    def prepare_stimulus_authoring(self) -> bool:
+        from pathlib import Path
+
+        try:
+            try:
+                geometry = self.stimulus_geometry()
+            except ValueError:
+                geometry = None
+            root = Path(self.protocol.assets.folders["root"].editor.text() or ".")
+            self.authoring_page.open_editor(root, geometry)
+            return True
+        except (OSError, RuntimeError, ImportError) as error:
+            QMessageBox.warning(self, "Cannot open stimulus authoring", str(error))
+            return False
 
     def apply_view(self, view: DashboardView) -> None:
         self.dashboard.apply_view(view)

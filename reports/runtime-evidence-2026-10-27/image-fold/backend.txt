@@ -1,0 +1,143 @@
+........................................................................ [ 29%]
+........................................................................ [ 58%]
+........................................................................ [ 87%]
+............................F...                                         [100%]
+================================== FAILURES ===================================
+______ test_published_recipe_retains_analysis_inputs_without_source_file ______
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17be5-29ee-7eb1-a2d8-5c345f8c7894/fold-backend-final/test_published_recipe_retains_0')
+
+    def test_published_recipe_retains_analysis_inputs_without_source_file(
+        tmp_path: Path,
+    ) -> None:
+        from tests.visual_stimulus.support import make_prepared_trial
+    
+        from cephvr.visual_stimulus.config.models.artifact_models import (
+            ComponentProvenance,
+            Fingerprint,
+            PreparedTrial,
+            Resource,
+            ResourceManifest,
+        )
+        from cephvr.visual_stimulus.recording.recipe import prepare_recipe, publish_recipe
+        from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
+    
+        artifact = make_prepared_trial()
+        geometry = Resource(
+            fingerprint=Fingerprint(
+                resource_id="geometry-front",
+                logical_path="geometry/front.json",
+                subresource=None,
+                sha256=hashlib.sha256(b"external calibration bytes").hexdigest(),
+                bytes=26,
+            ),
+            kind="geometry",
+            profile_id="geometry-v1",
+            dependencies=(),
+            interpretation=None,
+            cpu_bytes=26,
+            gpu_bytes=32,
+            provider_compatibility="geometry-v1",
+        )
+        artifact = artifact.model_copy(
+            update={
+                "uniform_layouts": build_uniform_layouts(artifact.source, artifact.display),
+                "manifest": ResourceManifest(
+                    format_version=1,
+                    resources=(geometry,),
+                    provenance=(
+                        ComponentProvenance(
+                            role="renderer",
+                            implementation="test-renderer",
+                            version="1",
+                            content_sha256=None,
+                        ),
+                    ),
+                ),
+            }
+        )
+        recipe = prepare_recipe(artifact, max_bytes=1_000_000)
+        path = tmp_path / "trial_stimulus_LOG.json"
+>       reference = publish_recipe(
+            path,
+            path.name,
+            recipe,
+            expected_sha256=recipe.sha256,
+            expected_byte_length=recipe.byte_length,
+            trial_start_host_ns=10,
+            now_host_ns=10,
+        )
+
+tests\visual_stimulus\test_evidence_contract.py:289: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('//?/C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17be5-29ee-7eb1-a2d8-5c345f8c7894/fold-backend-final/test_published_recipe_retains_0/trial_stimulus_LOG.json')
+relative_path = 'trial_stimulus_LOG.json'
+recipe = PreparedRecipe(data=b'{"arena_boundaries":{"bindings":[],"format_version":1},"boundaries":[{"after":0,"before":null,"o...:"cephvr-linear-scene-v1","shape":[2]}]}\n', sha256='68228d4f468f98b6b1db289d25859d44dc26cd8138ef7bc75076bf890ab96489')
+expected_sha256 = '68228d4f468f98b6b1db289d25859d44dc26cd8138ef7bc75076bf890ab96489'
+expected_byte_length = 10606, trial_start_host_ns = 10, now_host_ns = 10
+schema_id = 'cephvr.visual_stimulus.prepared_trial.v2', sync_file = None
+
+    def publish_recipe(
+        path: Path,
+        relative_path: str,
+        recipe: PreparedRecipe,
+        *,
+        expected_sha256: str,
+        expected_byte_length: int,
+        trial_start_host_ns: int,
+        now_host_ns: int,
+        schema_id: str = RECIPE_SCHEMA_ID,
+        sync_file: Callable[[BinaryIO], None] | None = None,
+    ) -> ArtifactRef:
+        """Publish precomputed recipe bytes exclusively at/after released trial T.
+    
+        The temporary file is created beside the reservation, synced, then hard-linked
+        into the absent reserved destination so a concurrent writer cannot be replaced.
+        The directory entry is synced where the host supports directory fsync.
+        """
+        if now_host_ns < trial_start_host_ns:
+            raise ValueError("recipe cannot be published before released trial onset")
+        digest = recipe.sha256
+        if (
+            digest != expected_sha256
+            or len(recipe.data) != expected_byte_length
+            or len(recipe.data) != recipe.byte_length
+        ):
+            raise ValueError("prepared recipe bytes do not match Setup identity")
+        if sys.platform == "win32":
+            from cephvr.platform.windows.paths import extended_path
+    
+            path = Path(extended_path(path))
+        else:
+            path = Path(path)
+        if not path.parent.is_dir():
+            raise FileNotFoundError(
+                f"reserved output directory is not prepared: {path.parent}"
+            )
+        if path.exists():
+            raise FileExistsError(f"reserved stimulus recipe already exists: {path}")
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+        tmp = Path(tmp_name)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(recipe.data)
+                stream.flush()
+                if sync_file is not None:
+                    sync_file(stream)
+                elif sys.platform == "win32":
+                    from cephvr.platform.windows.file_sync import WindowsFrameLogSync
+    
+                    WindowsFrameLogSync().sync(stream)
+                else:
+                    os.fsync(stream.fileno())
+            # Hard-link is atomic and fails rather than replacing an unexpected file.
+>           os.link(tmp, path)
+E           PermissionError: [WinError 5] Access is denied: '\\\\?\\C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17be5-29ee-7eb1-a2d8-5c345f8c7894\\fold-backend-final\\test_published_recipe_retains_0\\.trial_stimulus_LOG.json.d9a69lp7.tmp' -> '\\\\?\\C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17be5-29ee-7eb1-a2d8-5c345f8c7894\\fold-backend-final\\test_published_recipe_retains_0\\trial_stimulus_LOG.json'
+
+src\cephvr\visual_stimulus\recording\recipe.py:102: PermissionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_evidence_contract.py::test_published_recipe_retains_analysis_inputs_without_source_file
+1 failed, 247 passed, 18 deselected in 2.79s

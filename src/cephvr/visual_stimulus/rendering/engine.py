@@ -362,6 +362,13 @@ class RendererEngine:
                 break
             for live in self._state.instances.values():
                 live.advance(boundary_host_ns)
+            from .grating_field import retain_shared_grating_phase
+
+            retain_shared_grating_phase(
+                self._state.instances,
+                self._prepared.artifact.display.geometry,
+                boundary_host_ns,
+            )
             next_epoch = (
                 self._prepared.epochs[boundary.after]
                 if boundary.after is not None
@@ -446,6 +453,14 @@ class RendererEngine:
                     f"active instance {setting.instance_id} was not initialized"
                 )
             values = live.snapshot(now_ns=now_ns, epoch_start_ns=epoch_host_start)
+            if setting.kind == "image" and setting.sparse_noise is not None:
+                setting = setting.model_copy(
+                    update={
+                        "asset_id": setting.sparse_noise.asset_at(
+                            now_ns - epoch_host_start
+                        )
+                    }
+                )
             decoded_frame = None
             media_selection = None
             source_frame_index = source_pts = None
@@ -472,7 +487,11 @@ class RendererEngine:
                     media_selection=media_selection,
                 )
             )
-        return scene, tuple(snapshots)
+        from .grating_field import shared_grating_snapshots
+
+        return scene, shared_grating_snapshots(
+            tuple(snapshots), self._prepared.artifact.display.geometry
+        )
 
     def _release_video_leases(self) -> None:
         for lease in self._video_leases:
@@ -545,7 +564,11 @@ class RendererEngine:
         except BaseException:
             self._release_video_leases()
             raise
-        marker = self.photodiode_level(self._photodiode_index)
+        from .photodiode import photodiode_level
+
+        marker = photodiode_level(
+            self._photodiode_index, self._prepared.artifact.display.photodiode_mode
+        )
         # Marker is passed with the scene envelope so the GL owner can composite it
         # after geometric mapping and before per-output photometric correction.
         frame_scene = (

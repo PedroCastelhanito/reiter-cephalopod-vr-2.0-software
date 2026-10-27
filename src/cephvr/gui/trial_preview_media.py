@@ -7,6 +7,7 @@ from typing import Any
 from PyQt6.QtCore import QObject, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColorSpace, QImage, QImageReader
 
+from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.program_model import Program
 
 
@@ -19,10 +20,12 @@ class PreviewMedia(QObject):
         self.paths = {a.asset_id: a.logical_path for a in program.assets}
         self.root = Path(root).resolve()
         self.images: OrderedDict[str, QImage] = OrderedDict()
+        self.image_sizes: dict[str, tuple[int, int]] = {}
         self.errors: dict[str, str] = {}
         self.videos: dict[str, tuple[Any, Any]] = {}
         self.frames: dict[str, QImage] = {}
         self.arenas: Any = None
+        self.field_recipes: dict[str, Any] = {}
 
     def path(self, asset: str) -> Path:
         path = (self.root / self.paths[asset]).resolve()
@@ -34,11 +37,13 @@ class PreviewMedia(QObject):
             self.images.move_to_end(asset)
             return self.images[asset]
         try:
-            if self.assets[asset].profile == "cephvr1_texture_json_v1":
+            if self.assets[asset].profile in TEXTURE_RECIPE_PROFILES:
                 image = self.recipe_image(asset)
+                self.image_sizes[asset] = (image.width(), image.height())
             else:
                 reader = QImageReader(str(self.path(asset)))
                 size = reader.size()
+                self.image_sizes[asset] = (size.width(), size.height())
                 if size.width() * size.height() > 64_000_000:
                     raise ValueError("Preview image exceeds 64 megapixels")
                 size.scale(1024, 1024, Qt.AspectRatioMode.KeepAspectRatio)
@@ -51,7 +56,8 @@ class PreviewMedia(QObject):
             image = QImage()
         self.images[asset] = image
         if len(self.images) > 16:
-            self.images.popitem(last=False)
+            removed, _ = self.images.popitem(last=False)
+            self.image_sizes.pop(removed, None)
         return image
 
     def recipe_image(self, asset: str) -> QImage:
@@ -65,7 +71,17 @@ class PreviewMedia(QObject):
 
         with self.path(asset).open("rb") as stream:
             raw = stream.read(DEFAULT_DOCUMENT_BYTES + 1)
-        recipe = parse_texture_recipe(raw, max_texture_pixels=1024 * 1024)
+        from cephvr.visual_stimulus.resources.grating_recipe import interpreted_recipe
+
+        recipe = interpreted_recipe(
+            parse_texture_recipe(raw, max_texture_pixels=1024 * 1024),
+            self.assets[asset].profile,
+        )
+        if recipe.physical_field:
+            override = self.assets[asset].color_override
+            if override is not None and override.transfer != "linear":
+                raise ValueError("Physical texture fields require linear color")
+            self.field_recipes[asset] = recipe
         pixels = generate_texture_recipe(recipe)
         height, width, _ = pixels.shape
         image = QImage(
@@ -86,6 +102,28 @@ class PreviewMedia(QObject):
                 else QColorSpace.NamedColorSpace.SRgb
             )
         )
+        return image.convertedToColorSpace(
+            QColorSpace(QColorSpace.NamedColorSpace.SRgb)
+        )
+
+    def field_image(
+        self, asset: str, width: float, height: float, phase_mm: tuple[float, float]
+    ) -> QImage:
+        from cephvr.visual_stimulus.resources.texture_recipe import (
+            generate_texture_recipe,
+        )
+
+        recipe = self.field_recipes[asset]
+        pixels = generate_texture_recipe(
+            recipe,
+            extent_mm=(width, height),
+            sample_size=(512, 512),
+            offset_mm=phase_mm,
+        )
+        image = QImage(
+            pixels.tobytes(), 512, 512, 512 * 3, QImage.Format.Format_RGB888
+        ).copy()
+        image.setColorSpace(QColorSpace(QColorSpace.NamedColorSpace.SRgbLinear))
         return image.convertedToColorSpace(
             QColorSpace(QColorSpace.NamedColorSpace.SRgb)
         )
@@ -144,5 +182,6 @@ class PreviewMedia(QObject):
     def close(self) -> None:
         self.retain_videos(set())
         self.images.clear()
+        self.field_recipes.clear()
         self.frames.clear()
         self.arenas = None

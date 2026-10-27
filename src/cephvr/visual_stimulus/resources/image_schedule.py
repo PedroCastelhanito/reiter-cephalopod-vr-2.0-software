@@ -53,7 +53,12 @@ class ImageSchedule:
                 len(bundle.image_sources) for bundle in bundles.values()
             )
             settings_count = sum(
-                len(epoch.settings)
+                sum(
+                    len(s.sparse_noise.asset_ids)
+                    if s.kind == "image" and s.sparse_noise is not None
+                    else 1
+                    for s in epoch.settings
+                )
                 for artifact in artifacts
                 for epoch in artifact.epochs
             )
@@ -85,25 +90,32 @@ class ImageSchedule:
             for epoch in artifact.epochs:
                 row = []
                 for setting in epoch.settings:
-                    selected_asset = image_asset(setting)
-                    if (
-                        selected_asset is not None
-                        and (trial, selected_asset) in aliases
-                    ):
-                        row.append((setting.instance_id, selected_asset))
-                        first.setdefault((trial, setting.instance_id), selected_asset)
-                        assert setting.kind in ("image", "texture")
-                        surfaces = (
-                            {item.surface_id for item in setting.space.mappings}
-                            if setting.space.kind == "physical_surface"
-                            else set(setting.space.surfaces)
-                        )
-                        key = aliases[(trial, selected_asset)]
-                        used_outputs.setdefault(key, set()).update(
-                            mapping.output_id
-                            for mapping in artifact.display.active_mappings
-                            if mapping.surface_id in surfaces
-                        )
+                    assets = (
+                        setting.sparse_noise.asset_ids
+                        if setting.kind == "image" and setting.sparse_noise is not None
+                        else (image_asset(setting),)
+                    )
+                    for selected_asset in assets:
+                        if (
+                            selected_asset is not None
+                            and (trial, selected_asset) in aliases
+                        ):
+                            row.append((setting.instance_id, selected_asset))
+                            first.setdefault(
+                                (trial, setting.instance_id), selected_asset
+                            )
+                            assert setting.kind in ("image", "texture")
+                            surfaces = (
+                                {item.surface_id for item in setting.space.mappings}
+                                if setting.space.kind == "physical_surface"
+                                else set(setting.space.surfaces)
+                            )
+                            key = aliases[(trial, selected_asset)]
+                            used_outputs.setdefault(key, set()).update(
+                                mapping.output_id
+                                for mapping in artifact.display.active_mappings
+                                if mapping.surface_id in surfaces
+                            )
                 rows.append(tuple(row))
             epochs[trial] = tuple(rows)
         for key, outputs in used_outputs.items():

@@ -1,30 +1,21 @@
 """Explicit scientific inputs for sparse-noise program preparation."""
 
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
 from .program_model import Time
 from .schema_common import (
     MINIMUM_TRIAL_DURATION_NS,
-    U64,
-    Model,
     PositiveInt,
     SurfaceId,
-    UnitValue,
-    Version1,
     parse_json,
 )
+from .sparse_noise_appearance import SparseNoiseAppearance as SparseNoiseAppearance
 
 
-class SparseNoiseRecipe(Model):
-    format_version: Version1
-    kind: Literal["sparse_noise"]
-    seed: U64
+class SparseNoisePatternRecipe(SparseNoiseAppearance):
     surfaces: Annotated[tuple[SurfaceId, ...], Field(min_length=1, max_length=4)]
-    square_size_mm: Annotated[float, Field(gt=0)]
-    active_density: UnitValue
-    background_linear: UnitValue
     pattern_count: PositiveInt
     pattern_duration: Time
 
@@ -35,10 +26,36 @@ class SparseNoiseRecipe(Model):
         total = self.pattern_count * self.pattern_duration.ns()
         if self.pattern_duration.ns() == 0:
             raise ValueError("sparse-noise pattern duration must be positive")
-        if not MINIMUM_TRIAL_DURATION_NS <= total <= (1 << 63) - 1:
+        if not 0 < total <= (1 << 63) - 1:
+            raise ValueError("sparse-noise trial duration is outside E05/int64 bounds")
+        return self
+
+
+class SparseNoiseRecipe(SparseNoisePatternRecipe):
+    @model_validator(mode="after")
+    def trial_duration(self) -> Self:
+        if self.pattern_count * self.pattern_duration.ns() < MINIMUM_TRIAL_DURATION_NS:
             raise ValueError("sparse-noise trial duration is outside E05/int64 bounds")
         return self
 
 
 def parse_sparse_noise_json(source: str, *, max_bytes: int) -> SparseNoiseRecipe:
     return parse_json(SparseNoiseRecipe, source, max_bytes=max_bytes)
+
+
+def parse_sparse_noise_appearance(
+    source: str, *, max_bytes: int
+) -> SparseNoiseAppearance:
+    """Accept appearance assets and validate full v2 recipes before stripping timing."""
+    import json
+
+    if len(source.encode("utf-8")) > max_bytes:
+        raise ValueError("Sparse-noise document exceeds byte budget")
+    data = json.loads(source)
+    if isinstance(data, dict) and any(
+        key in data for key in ("surfaces", "pattern_count", "pattern_duration")
+    ):
+        recipe = parse_sparse_noise_json(source, max_bytes=max_bytes)
+        data = {key: getattr(recipe, key) for key in SparseNoiseAppearance.model_fields}
+        return SparseNoiseAppearance.model_validate(data)
+    return parse_json(SparseNoiseAppearance, source, max_bytes=max_bytes)

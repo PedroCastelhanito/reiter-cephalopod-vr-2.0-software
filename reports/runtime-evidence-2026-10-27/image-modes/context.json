@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "working_tree": "Concurrent uncommitted GUI/authoring and earlier asset-reuse work preserved; hashes identify tested source.",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/config/models/program_model.py": "16e05e36b13be43bd266087ec5213b430feb7c26302a4074e240fc793b1f99c4",
+    "src/cephvr/visual_stimulus/config/parameter_edits.py": "9c6937e900385314a560506bd14fa38133f44424154e5895cbff6e83494709c0",
+    "src/cephvr/visual_stimulus/rendering/image_fit.py": "0476269cbdc2a770a0217652786bbf39fdf94578883d3e78797b40c17b0d5b99",
+    "src/cephvr/visual_stimulus/rendering/layer_draw.py": "29c772aab56afd9502f8b5475c72b4cb8371112b8535c3af711156c09c25f626",
+    "src/cephvr/visual_stimulus/rendering/scene.py": "291361cd69217595519c4ae66c023a40d1e9c5d5867138ac70d84d05b833ff3c",
+    "src/cephvr/visual_stimulus/rendering/shaders.py": "f13bfa032aba4dba57f62f2007f7b54d3ac0067a47d114169e445f62e236614f",
+    "src/cephvr/visual_stimulus/rendering/evidence.py": "9822cdc6cd2ad65deb287a1b01f737e3dd84de251e04c0dfc15bba91a0985d0c",
+    "src/cephvr/visual_stimulus/resources/prepare.py": "88512a53a14593f622cce8d691ccdce5b37be785fc727de7237e3f39add0dbc1",
+    "src/cephvr/visual_stimulus/resources/uniforms.py": "b87144ce872fb2e44ddb6e2eb71a7f37d1854df47df470984e1121f67622b933",
+    "src/cephvr/gui/image_parameters.py": "74139892c08ada77a5d90cfdc7fe6486d4e099f95f6a1630936be9d2dfc7b3c9",
+    "src/cephvr/gui/reference_fields.py": "0e9451790045c31c119168855a61ea77725fb3ec4932ceabccf574c58e85ed83",
+    "src/cephvr/gui/stimulus_presets.py": "43d917254c169495a4c89ede3e4d26fec4b59bb38dc24ccfda576a9cae89cc01",
+    "src/cephvr/gui/trial_preview_canvas.py": "884b245322542be45462b7abd890341aff89faa0b28dea5ca256139b8143ec65",
+    "src/cephvr/gui/trial_preview_media.py": "24585d0f5820970c418f82ec5caf173ae88b84e35605e75f8ef503af037126e7",
+    "src/cephvr/gui/trial_preview_surfaces.py": "3bea3a60168f492a0773ce4170455f0e0544a8969077f0977a7c86234917a059"
+  }
+}

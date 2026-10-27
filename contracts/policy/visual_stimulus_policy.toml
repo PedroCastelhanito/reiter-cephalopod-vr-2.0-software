@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 19
+policy_version = 20
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -88,6 +88,7 @@ precision_policy = "explicit_per_output_require_framebuffer_match"
 quantization = "nearest_integer_half_up"
 
 [photodiode]
+supported_modes = ["landmarks", "every_frame"]
 pattern_family = "frame_alternation_with_periodic_landmarks"
 pattern_version = 1
 marker_levels = ["high", "high", "high", "low", "low", "low"]

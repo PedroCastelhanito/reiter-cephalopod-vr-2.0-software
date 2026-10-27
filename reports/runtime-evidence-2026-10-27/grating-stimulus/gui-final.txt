@@ -1,0 +1,998 @@
+..............F..........................FFFFFFFF............FFFFFFFF    [100%]
+================================== FAILURES ===================================
+______ test_stationary_texture_speed_variation_defaults_toward_rig_right ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B91A4AE170>
+
+    def test_stationary_texture_speed_variation_defaults_toward_rig_right(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group, motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        assert motion_numbers(
+            editor.program.sequence[0].settings[0].model_dump(mode="json")
+        )[:2] == (0.0, 0.0)
+        grouped, _ = make_group(
+            editor.program, (), 0, 0, 1, False, (Variation((0,), 0, "Speed", (10.0,)),)
+        )
+        expanded = expand_program(grouped, seed_decimal="0", max_expanded_epochs=10)
+        assert expanded[0].settings[0].motion.x.function.value < 0
+        assert motion_numbers(expanded[0].settings[0].model_dump(mode="json"))[:2] == (
+            10.0,
+            0.0,
+        )
+        from cephvr.gui.protocol_nodes import edit_epoch_metadata
+    
+        editor.commit(
+            edit_epoch_metadata(
+                editor.program, editor.path, editor.program.sequence[0].epoch_id, "70"
+            )
+        )
+>       assert editor.sequence_summary.text() == "1 epoch · 1 block · 00:01:10.000"
+E       AssertionError: assert '1 epoch � 1 ... 00:01:10.000' == '1 epoch · 1... 00:01:10.000'
+E         
+E         - 1 epoch · 1 block · 00:01:10.000
+E         ?         -          -
+E         + 1 epoch � 1 block � 00:01:10.000
+
+tests\gui\test_dashboard.py:10951: AssertionError
+_ test_reference_motion_source_switches_controls_and_requires_target[False-False-1400] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 1400
+amber = False, bind_locked = False
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[False-False-720] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 720
+amber = False, bind_locked = False
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[False-True-1400] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 1400
+amber = True, bind_locked = False
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[False-True-720] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 720
+amber = True, bind_locked = False
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[True-False-1400] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 1400
+amber = False, bind_locked = True
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[True-False-720] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 720
+amber = False, bind_locked = True
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[True-True-1400] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 1400
+amber = True, bind_locked = True
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_reference_motion_source_switches_controls_and_requires_target[True-True-720] _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>, width = 720
+amber = True, bind_locked = True
+
+    @pytest.mark.parametrize("width", [1400, 720])
+    @pytest.mark.parametrize("amber", [False, True])
+    @pytest.mark.parametrize("bind_locked", [False, True])
+    def test_reference_motion_source_switches_controls_and_requires_target(
+        app, width, amber, bind_locked
+    ):
+        from PyQt6.QtTest import QTest
+    
+        from cephvr.gui.epoch_composer import EpochComposer
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.gui.theme import (
+            PHOSPHOR_COLORS,
+            phosphor_stylesheet,
+            retro_stylesheet,
+        )
+    
+        composer = EpochComposer()
+        composer.setEnabled(not bind_locked)
+        if amber:
+            composer.setStyleSheet(
+                retro_stylesheet(PHOSPHOR_COLORS) + phosphor_stylesheet()
+            )
+        composer.set_screens(("Bottom", "Left"))
+        program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+        program = add_stimulus(program, 0, "Texture", ("Left",))
+        composer.program = program
+        composer.refresh_rows()
+        composer.resize(width, 900)
+        composer.show()
+        app.processEvents()
+        row = composer.rows["Left"]
+        panel = row.parameters
+        source = panel.motion_source
+        assert source is not None
+        if bind_locked:
+            assert not source.isEnabled()
+            composer.setEnabled(True)
+            app.processEvents()
+            assert source.isEnabled()
+        assert [source.itemText(i) for i in range(source.count())] == ["Self", "Linked"]
+        controls = dict(row.columns)
+        assert source.currentText() == "Self"
+        path = next(iter(panel.asset_forms.values()))
+>       last = controls["Rotation (°/s)"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Rotation (°/s)'
+
+tests\gui\test_dashboard.py:18437: KeyError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Left-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B918ECF520>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta0')
+face = 'Left', modern = False
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Left-True] __
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B91467EF80>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta1')
+face = 'Left', modern = True
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Front-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B9102DC040>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta2')
+face = 'Front', modern = False
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Front-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B91DF8E170>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta3')
+face = 'Front', modern = True
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Right-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B91FBEE320>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta4')
+face = 'Right', modern = False
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Right-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B918E0D120>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta5')
+face = 'Right', modern = True
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-False] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B920261F30>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta6')
+face = 'Bottom', modern = False
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+_ test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-True] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B919BDA560>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001B90FF165F0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final-2/test_grating_has_asset_orienta7')
+face = 'Bottom', modern = True
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+    
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+    
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+>   motion.orientation.setText("45")
+E   AssertionError: assert ['Asset', 'Or...Speed (mm/s)'] == ['Asset', 'Or...Speed (mm/s)']
+E     
+E     At index 1 diff: 'Orientation (�)' != 'Orientation (°)'
+E     Use -v to get more diff
+
+tests\gui\test_dashboard.py:26796: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_stationary_texture_speed_variation_defaults_toward_rig_right
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[False-False-1400]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[False-False-720]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[False-True-1400]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[False-True-720]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[True-False-1400]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[True-False-720]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[True-True-1400]
+FAILED tests/gui/test_dashboard.py::test_reference_motion_source_switches_controls_and_requires_target[True-True-720]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Left-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Left-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Front-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Front-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Right-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Right-True]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-False]
+FAILED tests/gui/test_dashboard.py::test_grating_has_asset_orientation_speed_and_compact_variations[Bottom-True]
+17 failed, 52 passed, 978 deselected in 67.96s (0:01:07)

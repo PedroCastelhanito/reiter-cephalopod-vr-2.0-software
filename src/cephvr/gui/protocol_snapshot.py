@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
 from cephvr.gui.configuration_files import JSON, envelope, fields, text
@@ -39,7 +40,7 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
     keys = {"mode", "asset_root", "trials", "selected_trial"}
     if isinstance(value, dict) and "category_templates" in value:
         keys.add("category_templates")
-    data = envelope(value, FORMAT, keys)
+    data = deepcopy(envelope(value, FORMAT, keys))
     if data["mode"] not in ("Not set", "Open-loop", "Closed-loop"):
         raise ValueError("Unknown protocol mode")
     text(data["asset_root"], "Asset folder")
@@ -50,6 +51,41 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
         selected == -1 if not data["trials"] else 0 <= selected < len(data["trials"])
     ):
         raise ValueError("Selected trial is outside the schedule")
+    templates = data.get("category_templates", {})
+    if isinstance(templates, dict):
+        legacy_active = any(
+            isinstance(trial, dict)
+            and isinstance(trial.get("program"), dict)
+            and trial["program"].get("category") == "texture_drift"
+            for trial in data["trials"]
+        )
+
+        def canonical_trials(trials: Any) -> Any:
+            if not isinstance(trials, list):
+                return trials
+            result = deepcopy(trials)
+            for trial in result:
+                if isinstance(trial, dict) and isinstance(trial.get("program"), dict):
+                    trial["program"] = parse_program_json(
+                        json.dumps(trial["program"]), max_bytes=DEFAULT_DOCUMENT_BYTES
+                    ).model_dump(mode="json")
+            return result
+
+        if "media_presentation" in templates:
+            old_media = templates["media_presentation"]
+            other = templates.get("texture_drift", {"trials": data["trials"]})
+            if ("texture_drift" in templates or legacy_active) and (
+                not isinstance(old_media, dict)
+                or not isinstance(other, dict)
+                or canonical_trials(old_media.get("trials"))
+                != canonical_trials(other.get("trials"))
+            ):
+                raise ValueError(
+                    "This legacy file contains separate Media presentation and Texture drift schedules; "
+                    "import each schedule separately before combining them. The file has not been changed."
+                )
+        if "texture_drift" in templates:
+            templates["media_presentation"] = templates.pop("texture_drift")
     categories: set[str | None] = set()
     for number, raw in enumerate(data["trials"], 1):
         trial = fields(raw, TRIAL_KEYS, f"Trial {number}")
@@ -58,6 +94,7 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
         program = parse_program_json(
             json.dumps(trial["program"]), max_bytes=DEFAULT_DOCUMENT_BYTES
         )
+        trial["program"] = program.model_dump(mode="json")
         categories.add(program.category)
         if len(categories) > 1:
             raise ValueError("All trials must use the same protocol category")
@@ -78,6 +115,7 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
             {key: item for key, item in data.items() if key != "category_templates"}
             | template
         )
+        template["trials"] = checked["trials"]
         if any(
             trial["program"].get("category") != category for trial in checked["trials"]
         ):
@@ -85,8 +123,8 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
     return data
 
 
-def capture_protocol(page: ProtocolPage) -> JSON:
-    if not page.editor.flush_parameters():
+def capture_protocol(page: ProtocolPage, *, flush: bool = True) -> JSON:
+    if flush and not page.editor.flush_parameters():
         raise ValueError("Finish or correct the current trial edit before saving")
     return {
         "format": FORMAT,

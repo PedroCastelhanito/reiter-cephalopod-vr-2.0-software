@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty working tree; summarized tool outputs; no native/physical acceptance",
+  "checks": {
+    "QT_QPA_PLATFORM=offscreen pytest tests/generate_stimulus -q -m \"not windows and not rig\" --basetemp=<visualization workspace>/preview-cleanup-tests --tb=short": "76 passed, 2 deselected in 5.57s",
+    "ruff check/format --check layout.py window.py test_gui.py": "pass,3 files formatted",
+    "mypy --platform win32 layout.py window.py": "2 sources pass",
+    "python tools/check_backend_boundaries.py": "772 modules,0 violations; existing size advisories",
+    "git diff --check": "pass with line-ending warnings"
+  },
+  "sha256": {
+    "src/cephvr/generate_stimulus/layout.py": "7e1204648c65a4b4c87713342319dbf5f959fd881742977bc0e3dace9851ab4a",
+    "src/cephvr/generate_stimulus/window.py": "9cc1d8bae1e9186dc1dc472b8c400ab8ec52ebc8f4408f25540401999a7b066c",
+    "tests/generate_stimulus/test_gui.py": "75a704edfb71ac0b768d632db58f83c152b223abad08600f3089d2275948b443"
+  }
+}

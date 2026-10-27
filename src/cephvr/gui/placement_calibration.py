@@ -58,6 +58,7 @@ def refresh_placement_controls(panel: "ProjectorsPanel", *, editable: bool) -> N
     timing.setEnabled(editable or placement)
     timing.mode.setEnabled(editable)
     timing.pulse.setEnabled(editable)
+    timing.photodiode_mode.setEnabled(editable)
     timing.options.setEnabled(
         (editable and timing.pulse.isChecked())
         or (live and view == "photodiode_placement")
@@ -113,6 +114,7 @@ def placement_snapshot(panel: "ProjectorsPanel", view: str) -> CalibrationPlacem
     if view == "photodiode_placement" and not patches:
         raise ValueError("Select a display and complete the pulse rectangle")
     result = CalibrationPlacement(
+        photodiode_mode=panel.timing.pulse_mode,
         outputs=tuple(
             PlacementOutput(
                 output_id=f"calibration_{face.lower()}",

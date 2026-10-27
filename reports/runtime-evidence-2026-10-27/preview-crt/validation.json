@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty working tree; offscreen pixel checks, not native/live acceptance",
+  "checks": {
+    "QT_QPA_PLATFORM=offscreen pytest tests/gui/test_dashboard.py tests/generate_stimulus/test_gui.py -q -k \"phosphor_popups_and_owned_windows_get_scanline_film or preview_worker_completes_without_viewport\" --basetemp=<visualization workspace>/preview-crt --tb=short": "2 passed,1038 deselected in6.03s",
+    "ruff check/format retro_overlay.py layout.py test_dashboard.py test_gui.py": "pass,4 files",
+    "mypy --platform win32 retro_overlay.py layout.py": "2 sources pass",
+    "python tools/check_backend_boundaries.py": "772 modules,0 violations"
+  }
+}

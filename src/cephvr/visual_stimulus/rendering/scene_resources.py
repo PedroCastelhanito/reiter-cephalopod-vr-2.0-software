@@ -64,6 +64,7 @@ class PreparedSceneOutput:
     warp_mask_textures: dict[str, Any]
     warp_weight_textures: dict[str, Any]
     lut_texture: Any
+    field_programs: dict[str, tuple[Any, Any]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -121,6 +122,17 @@ class SceneOutputBuilder:
             for resource in artifact.manifest.resources
             if f"{generation}:{resource.fingerprint.resource_id}" in gpu_resources
         }
+        from cephvr.visual_stimulus.resources.physical_field import validate_field_uses
+
+        field_recipes = {
+            asset_id: recipe
+            for asset_id, content in {
+                **resource_content,
+                **getattr(resources, "image_sources", {}),
+            }.items()
+            if (recipe := getattr(content, "field_recipe", None)) is not None
+        }
+        validate_field_uses(artifact.epochs, set(field_recipes))
         trial_outputs = output_target
         for output_id, output in outputs.items():
             output.activate()
@@ -175,6 +187,22 @@ class SceneOutputBuilder:
             quad_array = track(
                 context.vertex_array(layer_program, [(quad_buffer, "8x 2f", "in_uv")])
             )
+            from cephvr.visual_stimulus.rendering.field_shader import layer_fragment
+
+            field_programs = {}
+            for field_asset_id, recipe in field_recipes.items():
+                fragment = layer_fragment(recipe)
+                field_program = track(
+                    context.program(
+                        vertex_shader=shaders._LAYER_VERTEX, fragment_shader=fragment
+                    )
+                )
+                field_array = track(
+                    context.vertex_array(
+                        field_program, [(quad_buffer, "8x 2f", "in_uv")]
+                    )
+                )
+                field_programs[field_asset_id] = (field_program, field_array)
             output_quad_array = track(
                 context.vertex_array(
                     output_program, [(quad_buffer, "2f 2f", "in_position", "in_uv")]
@@ -275,6 +303,7 @@ class SceneOutputBuilder:
                 warp_mask_textures,
                 warp_weight_textures,
                 lut,
+                field_programs,
             )
             del self.partial_allocations[(trial_id, output_id)]
         return scoped_gpu_resources

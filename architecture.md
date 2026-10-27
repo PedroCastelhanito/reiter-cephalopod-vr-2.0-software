@@ -64,8 +64,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 29 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 26 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 339 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 168 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 369 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 171 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |
@@ -79,7 +79,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 18 |
 | <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 26 |
 | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 32 |
-| <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 215 |
+| <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 216 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 21 |
 | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 35 |
@@ -93,27 +93,27 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 76 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 54 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 36 |
-| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 17 |
+| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 18 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 13 |
-| <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 21 |
+| <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 34 |
 | <a id="v05"></a>[V05](docs/architecture/visual_stimulus.md#v05) | Declarative parameter animation | Accepted | 6 |
 | <a id="v06"></a>[V06](docs/architecture/visual_stimulus.md#v06) | Epoch durations and trial duration | Accepted | 5 |
-| <a id="v07"></a>[V07](docs/architecture/visual_stimulus.md#v07) | Stimulus state continuity and trial initialization | Accepted | 5 |
-| <a id="v08"></a>[V08](docs/architecture/visual_stimulus.md#v08) | Group ordering and repetition | Accepted | 7 |
+| <a id="v07"></a>[V07](docs/architecture/visual_stimulus.md#v07) | Stimulus state continuity and trial initialization | Accepted | 6 |
+| <a id="v08"></a>[V08](docs/architecture/visual_stimulus.md#v08) | Group ordering and repetition | Accepted | 9 |
 | <a id="v09"></a>[V09](docs/architecture/visual_stimulus.md#v09) | Video clip completion | Accepted | 4 |
 | <a id="v10"></a>[V10](docs/architecture/visual_stimulus.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
 | <a id="v11"></a>[V11](docs/architecture/visual_stimulus.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |
 | <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 20 |
 | <a id="v13"></a>[V13](docs/architecture/visual_stimulus.md#v13) | Trial replay from program and actual render evidence | Accepted | 13 |
-| <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 5 |
+| <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 7 |
 | <a id="v15"></a>[V15](docs/architecture/visual_stimulus.md#v15) | Four calibrated off-axis surface views | Accepted | 22 |
 | <a id="v16"></a>[V16](docs/architecture/visual_stimulus.md#v16) | Explicit simple arena movement boundaries | Accepted | 5 |
 | <a id="v17"></a>[V17](docs/architecture/visual_stimulus.md#v17) | Unlit arena appearance | Accepted | 4 |
-| <a id="v18"></a>[V18](docs/architecture/visual_stimulus.md#v18) | Externally prepared arena assets | Accepted | 3 |
+| <a id="v18"></a>[V18](docs/architecture/visual_stimulus.md#v18) | Externally prepared arena assets | Accepted | 4 |
 | <a id="v19"></a>[V19](docs/architecture/visual_stimulus.md#v19) | Uniform Idle background | Accepted | 7 |
 | <a id="v20"></a>[V20](docs/architecture/visual_stimulus.md#v20) | Configurable projector presentation pacing | Accepted | 11 |
 | <a id="v21"></a>[V21](docs/architecture/visual_stimulus.md#v21) | Output-range clipping with evidence | Accepted | 3 |
-| <a id="v22"></a>[V22](docs/architecture/visual_stimulus.md#v22) | Photodiode frame alternation with landmarks | Accepted | 8 |
+| <a id="v22"></a>[V22](docs/architecture/visual_stimulus.md#v22) | Photodiode frame alternation with landmarks | Accepted | 9 |
 | <a id="v23"></a>[V23](docs/architecture/visual_stimulus.md#v23) | Explicit photometric calibration mode | Accepted | 3 |
 | <a id="v24"></a>[V24](docs/architecture/visual_stimulus.md#v24) | Explicit feedback parameter mappings | Accepted | 8 |
 | <a id="v25"></a>[V25](docs/architecture/visual_stimulus.md#v25) | Hold feedback-driven state during invalid input | Accepted | 4 |

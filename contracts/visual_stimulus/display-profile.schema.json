@@ -501,6 +501,15 @@
       "title": "Photodiode Enabled",
       "type": "boolean"
     },
+    "photodiode_mode": {
+      "default": "landmarks",
+      "enum": [
+        "landmarks",
+        "every_frame"
+      ],
+      "title": "Photodiode Mode",
+      "type": "string"
+    },
     "pacing_output_id": {
       "anyOf": [
         {

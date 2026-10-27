@@ -441,6 +441,7 @@
             "tiff_uint_v1",
             "jpeg8_v1",
             "cephvr1_texture_json_v1",
+            "cephvr_grating_json_v1",
             "mp4_h264_sdr8_v1",
             "matroska_ffv1_v3_uint_v1",
             "glb2_static_unlit_v1"
@@ -471,6 +472,80 @@
         "logical_path"
       ],
       "title": "AssetRef",
+      "type": "object"
+    },
+    "AssetRepetitionRule": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "uniform_asset_v1",
+          "default": "uniform_asset_v1",
+          "title": "Kind",
+          "type": "string"
+        },
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "parameter": {
+          "const": "Asset",
+          "default": "Asset",
+          "title": "Parameter",
+          "type": "string"
+        },
+        "asset_ids": {
+          "items": {
+            "maxLength": 128,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "maxItems": 2000,
+          "minItems": 1,
+          "title": "Asset Ids",
+          "type": "array"
+        },
+        "grating_periods_mm": {
+          "default": [],
+          "items": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "maxItems": 2000,
+          "title": "Grating Periods Mm",
+          "type": "array"
+        },
+        "seed": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Seed",
+          "type": "string"
+        },
+        "stream": {
+          "default": "",
+          "maxLength": 128,
+          "title": "Stream",
+          "type": "string"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "stride": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Stride",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "instance_id",
+        "asset_ids",
+        "seed"
+      ],
+      "title": "AssetRepetitionRule",
       "type": "object"
     },
     "Assignment": {
@@ -1201,6 +1276,15 @@
           "title": "Photodiode Enabled",
           "type": "boolean"
         },
+        "photodiode_mode": {
+          "default": "landmarks",
+          "enum": [
+            "landmarks",
+            "every_frame"
+          ],
+          "title": "Photodiode Mode",
+          "type": "string"
+        },
         "pacing_output_id": {
           "anyOf": [
             {
@@ -1373,7 +1457,14 @@
         "repetition_rules": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/RepetitionRule"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/RepetitionRule"
+              },
+              {
+                "$ref": "#/$defs/AssetRepetitionRule"
+              }
+            ]
           },
           "title": "Repetition Rules",
           "type": "array"
@@ -1958,6 +2049,13 @@
     "Grating": {
       "additionalProperties": false,
       "properties": {
+        "feature_sharpness": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Feature Sharpness",
+          "type": "number"
+        },
         "kind": {
           "enum": [
             "sine_grating",
@@ -2349,6 +2447,17 @@
           "title": "Feedback",
           "type": "array"
         },
+        "sparse_noise": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SparseNoiseSequence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "kind": {
           "const": "image",
           "title": "Kind",
@@ -2378,6 +2487,9 @@
         "fit": {
           "default": "stretch",
           "enum": [
+            "resize",
+            "source",
+            "fold",
             "contain",
             "cover",
             "stretch"
@@ -3574,7 +3686,6 @@
             {
               "enum": [
                 "media_presentation",
-                "texture_drift",
                 "navigation_3d"
               ],
               "type": "string"
@@ -3847,6 +3958,7 @@
           "enum": [
             "Speed",
             "Direction",
+            "Orientation",
             "Angular speed",
             "Start size",
             "End size",
@@ -4357,6 +4469,124 @@
       "title": "Sine",
       "type": "object"
     },
+    "SparseNoiseAppearance": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 2,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "sparse_noise",
+          "title": "Kind",
+          "type": "string"
+        },
+        "seed": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "square_size_mm": {
+          "exclusiveMinimum": 0,
+          "title": "Square Size Mm",
+          "type": "number"
+        },
+        "min_active_cell_distance_mm": {
+          "minimum": 0,
+          "title": "Min Active Cell Distance Mm",
+          "type": "number"
+        },
+        "active_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Active Probability",
+          "type": "number"
+        },
+        "background_linear": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Background Linear",
+          "type": "number"
+        }
+      },
+      "required": [
+        "format_version",
+        "kind",
+        "seed",
+        "square_size_mm",
+        "min_active_cell_distance_mm",
+        "active_probability",
+        "background_linear"
+      ],
+      "title": "SparseNoiseAppearance",
+      "type": "object"
+    },
+    "SparseNoiseSequence": {
+      "additionalProperties": false,
+      "properties": {
+        "appearance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SparseNoiseAppearance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "asset_ids": {
+          "items": {
+            "maxLength": 128,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "title": "Asset Ids",
+          "type": "array"
+        },
+        "pattern_duration": {
+          "$ref": "#/$defs/Time"
+        },
+        "background_linear_rgb": {
+          "default": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          ],
+          "title": "Background Linear Rgb",
+          "type": "array"
+        }
+      },
+      "required": [
+        "asset_ids",
+        "pattern_duration"
+      ],
+      "title": "SparseNoiseSequence",
+      "type": "object"
+    },
     "SubgroupDraft": {
       "additionalProperties": false,
       "properties": {
@@ -4700,6 +4930,16 @@
           ],
           "default": null,
           "title": "Linked To"
+        },
+        "grating": {
+          "default": false,
+          "title": "Grating",
+          "type": "boolean"
+        },
+        "uniform": {
+          "default": false,
+          "title": "Uniform",
+          "type": "boolean"
         },
         "kind": {
           "const": "texture",
@@ -5253,6 +5493,32 @@
           },
           "maxItems": 32000,
           "title": "Samples",
+          "type": "array"
+        },
+        "folder": {
+          "default": "",
+          "maxLength": 4096,
+          "title": "Folder",
+          "type": "string"
+        },
+        "asset_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "maxItems": 2000,
+          "title": "Asset Ids",
+          "type": "array"
+        },
+        "grating_periods_mm": {
+          "default": [],
+          "items": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "maxItems": 2000,
+          "title": "Grating Periods Mm",
           "type": "array"
         }
       },

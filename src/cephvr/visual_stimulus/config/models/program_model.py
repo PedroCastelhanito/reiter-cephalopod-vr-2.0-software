@@ -16,7 +16,7 @@ from cephvr.visual_stimulus.config.categories import Category, validate_category
 
 from .authoring import SubgroupDraft
 from .parameter_catalogue import ConditionUnit, InputUnit, validate_settings_units
-from .repetition import RepetitionRule
+from .repetition import AssetRepetitionRule, Repetition
 from .schema_common import (
     MINIMUM_TRIAL_DURATION_NS,
     FrameId,
@@ -31,6 +31,7 @@ from .schema_common import (
 )
 from .schema_common import ProgramId as Id
 from .schema_common import SurfaceId as Surface
+from .sparse_noise_appearance import SparseNoiseAppearance
 
 Finite = float
 Family = Literal["image", "video", "texture", "arena"]
@@ -247,12 +248,50 @@ class LayerBase(Model):
     feedback: tuple[Feedback, ...]
 
 
+class SparseNoiseSequence(Model):
+    appearance: SparseNoiseAppearance | None = None
+    asset_ids: Annotated[tuple[Id, ...], Field(min_length=1, max_length=1000000)]
+    pattern_duration: Time
+    background_linear_rgb: tuple[
+        Annotated[float, Field(ge=0, le=1)],
+        Annotated[float, Field(ge=0, le=1)],
+        Annotated[float, Field(ge=0, le=1)],
+    ] = (0.5, 0.5, 0.5)
+
+    @model_validator(mode="after")
+    def valid_sequence(self) -> Self:
+        if not 0 < self.pattern_duration.ns() * len(self.asset_ids) <= (1 << 63) - 1:
+            raise ValueError("Sparse-noise pattern duration must be positive")
+        return self
+
+    def asset_at(self, local_ns: int) -> str:
+        return self.asset_ids[
+            min(max(0, local_ns) // self.pattern_duration.ns(), len(self.asset_ids) - 1)
+        ]
+
+
 class ImageSettings(LayerBase):
+    sparse_noise: SparseNoiseSequence | None = None
     kind: Literal["image"]
     asset_id: AssetChoice
     sampling: Literal["nearest", "linear"]
+
+    @model_validator(mode="after")
+    def sparse_source(self) -> Self:
+        if self.sparse_noise is not None and (
+            self.asset_id != self.sparse_noise.asset_ids[0]
+            or self.sampling != "nearest"
+            or self.fit != "stretch"
+            or not isinstance(self.space, PhysicalSpace)
+            or len(self.space.mappings) != 1
+        ):
+            raise ValueError(
+                "Sparse noise requires its first frame, nearest sampling and physical stretch"
+            )
+        return self
+
     # Preserve the appearance of programs authored before image fitting existed.
-    fit: Literal["contain", "cover", "stretch"] = "stretch"
+    fit: Literal["resize", "source", "fold", "contain", "cover", "stretch"] = "stretch"
 
 
 class VideoSettings(LayerBase):
@@ -264,6 +303,7 @@ class VideoSettings(LayerBase):
 
 
 class Grating(Model):
+    feature_sharpness: Annotated[float, Field(ge=0, le=1)] = 0.0
     kind: Literal["sine_grating", "square_grating"]
     frequency: Function
 
@@ -287,6 +327,8 @@ Pattern = Annotated[Grating | Checkerboard | ImageTile, Field(discriminator="kin
 
 class TextureSettings(LayerBase):
     linked_to: Id | None = None
+    grating: bool = False
+    uniform: bool = False
     kind: Literal["texture"]
     pattern: Pattern
     initial_phase_x_cycles: Number
@@ -296,6 +338,57 @@ class TextureSettings(LayerBase):
     mean_linear_rgb: tuple[Number, Number, Number]
     modulation_linear_rgb: tuple[Number, Number, Number]
     contrast: Function
+
+    @model_validator(mode="after")
+    def grating_source(self) -> Self:
+        if self.uniform and (
+            self.grating
+            or not isinstance(self.pattern, Grating)
+            or self.linked_to is not None
+            or not isinstance(self.contrast, Constant)
+            or self.contrast.value != 0
+            or any(
+                not isinstance(m, Hold)
+                for m in (
+                    self.phase_x,
+                    self.phase_y,
+                    self.motion.x,
+                    self.motion.y,
+                    self.motion.rotation,
+                )
+            )
+            or any(binding.target != "opacity" for binding in self.feedback)
+        ):
+            raise ValueError(
+                "Uniform requires zero contrast and stationary independent color"
+            )
+        if self.grating and (
+            not isinstance(self.pattern, (ImageTile, Grating))
+            or not isinstance(self.space, PhysicalSpace)
+            or not isinstance(self.phase_x, Hold)
+            or not isinstance(self.phase_y, Hold)
+            or not isinstance(self.motion.rotation, Hold)
+        ):
+            raise ValueError(
+                "Grating requires an independent physical image tile with fixed orientation"
+            )
+        if (
+            self.grating
+            and isinstance(self.pattern, Grating)
+            and (
+                not isinstance(self.pattern.frequency, Constant)
+                or not isinstance(self.pattern.frequency.value, (int, float))
+                or self.pattern.frequency.value <= 0
+            )
+        ):
+            raise ValueError(
+                "Inline Grating requires a positive constant spatial frequency"
+            )
+        if self.grating and self.linked_to is None:
+            from cephvr.visual_stimulus.config.grating import validate_motion
+
+            validate_motion(self.model_dump(mode="json"))
+        return self
 
 
 class Pose(Model):
@@ -354,6 +447,7 @@ class Asset(Model):
         "tiff_uint_v1",
         "jpeg8_v1",
         "cephvr1_texture_json_v1",
+        "cephvr_grating_json_v1",
         "mp4_h264_sdr8_v1",
         "matroska_ffv1_v3_uint_v1",
         "glb2_static_unlit_v1",
@@ -471,7 +565,7 @@ class Epoch(Model):
     scene_id: Id
     duration: Duration
     settings: tuple[Settings, ...]
-    repetition_rules: tuple[RepetitionRule, ...] = ()
+    repetition_rules: tuple[Repetition, ...] = ()
     repetition_settings: Annotated[
         tuple[tuple[Settings, ...], ...], Field(max_length=2000)
     ] = ()
@@ -518,6 +612,12 @@ def refs(value: object) -> Iterator[Ref]:
 class Program(Model):
     format_version: Version2
     category: Category | None = None
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def legacy_category(cls, value: object) -> object:
+        return "media_presentation" if value == "texture_drift" else value
+
     assets: tuple[Asset, ...]
     instances: tuple[Instance, ...]
     scenes: Annotated[tuple[Scene, ...], Field(min_length=1)]
@@ -595,8 +695,7 @@ class Program(Model):
                 from cephvr.visual_stimulus.config.texture_links import validate_links
 
                 for settings in settings_sets:
-                    if self.category != "media_presentation":
-                        validate_links(settings)
+                    validate_links(settings)
                     ids = [x.instance_id for x in settings]
                     unique(ids)
                     if set(ids) != active:
@@ -613,10 +712,45 @@ class Program(Model):
                     sources = []
                     if isinstance(block, (ImageSettings, VideoSettings, ArenaSettings)):
                         sources.append((block.asset_id, block.kind))
+                        if (
+                            isinstance(block, ImageSettings)
+                            and block.sparse_noise is not None
+                        ):
+                            sources.extend(
+                                (aid, "image") for aid in block.sparse_noise.asset_ids
+                            )
                     if isinstance(block, TextureSettings) and isinstance(
                         block.pattern, ImageTile
                     ):
                         sources.append((block.pattern.asset_id, "image"))
+                    for rule in node.repetition_rules:
+                        if (
+                            isinstance(rule, AssetRepetitionRule)
+                            and rule.instance_id == block.instance_id
+                        ):
+                            if block.kind == "arena" or not sources:
+                                raise ValueError(
+                                    "Asset variations require an image, video or image-tile texture"
+                                )
+                            if (
+                                isinstance(block, ImageSettings)
+                                and block.sparse_noise is not None
+                            ):
+                                raise ValueError(
+                                    "Sparse-noise pattern resources cannot use Asset variations"
+                                )
+                            if isinstance(block, TextureSettings) and block.grating:
+                                if len(rule.grating_periods_mm) != len(rule.asset_ids):
+                                    raise ValueError(
+                                        "Grating Asset choices require their spatial periods"
+                                    )
+                            elif rule.grating_periods_mm:
+                                raise ValueError(
+                                    "Asset spatial periods require Grating"
+                                )
+                            sources.extend(
+                                (aid, sources[0][1]) for aid in rule.asset_ids
+                            )
                     for aid, kind in sources:
                         allowed = {
                             "image": {
@@ -624,10 +758,18 @@ class Program(Model):
                                 "tiff_uint_v1",
                                 "jpeg8_v1",
                                 "cephvr1_texture_json_v1",
+                                "cephvr_grating_json_v1",
                             },
                             "video": {"mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"},
                             "arena": {"glb2_static_unlit_v1"},
                         }[kind]
+                        if (
+                            isinstance(block, ImageSettings)
+                            and block.sparse_noise is not None
+                        ):
+                            allowed = {"png_uint_v1"}
+                        if isinstance(block, TextureSettings) and block.grating:
+                            allowed = {"cephvr_grating_json_v1"}
                         if isinstance(aid, Ref):
                             table = scope.get(aid.group_id)
                             if table is None:

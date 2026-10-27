@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Button, Card, Console, FittedConsole, StatusColumn
 from cephvr.gui.dashboard import Dashboard
-from cephvr.gui.formatting import caption_caps
+from cephvr.gui.formatting import caption_caps, card_caption
 from cephvr.gui.icons import device_icon
 from cephvr.gui.retro_instruments import FocusBrackets, TabMarkers
 from cephvr.gui.retro_overlay import (
@@ -207,6 +207,19 @@ class DashboardAppearance(QObject):
             chrome_control.setProperty("retroPalette", palette_name)
             chrome_control.updateGeometry()
             chrome_control.update()
+        sidebar = self.window.page_buttons[0].parentWidget()
+        if sidebar is not None:
+            # Include the phosphor markers, icon, gaps and sidebar margins.
+            navigation_width = max(
+                control.fontMetrics().horizontalAdvance(control.text()) + 124
+                for control in self.window.page_buttons
+                if not control.isHidden()
+            )
+            sidebar.setFixedWidth(
+                max(SIZES.sidebar_width, navigation_width)
+                if phosphor
+                else SIZES.sidebar_width
+            )
         self.dashboard.log_console.setPlaceholderText(
             "-- NO ENTRIES --" if retro else ""
         )
@@ -314,11 +327,12 @@ class DashboardAppearance(QObject):
 
     def card_title(self, title: str, card: Card | None = None) -> str:
         """Display-only card caption for the selected style; stored titles stay."""
-        if self.name == "amber_phosphor":
-            if card is not None and card.property("nestedCard") is True:
-                return f"| {title.upper()} |"
-            return f"< {title.upper()} >"
-        return title.upper() if self.retro else title
+        return card_caption(
+            title,
+            retro=self.retro,
+            phosphor=self.name == "amber_phosphor",
+            nested=card is not None and card.property("nestedCard") is True,
+        )
 
     @property
     def retro(self) -> bool:

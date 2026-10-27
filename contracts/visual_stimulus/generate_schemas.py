@@ -7,8 +7,10 @@ from artifact_models import PreparedTrial, ResourceManifest, GeometricProfile
 from display_profile import DisplayProfile
 from photometric_profile import PhotometricProfile
 from evidence_model import EvidenceRecord, ReplayRequest, ReplayReport, ExportIndex
-from cephvr.visual_stimulus.config.models.sparse_noise import SparseNoiseRecipe
+from cephvr.visual_stimulus.config.models.sparse_noise import SparseNoiseAppearance, SparseNoiseRecipe
+from cephvr.generate_stimulus.models import ArenaDesign
 MODELS = {
+    'arena-design': ArenaDesign,
     'program': Program, 'arena-boundaries': TrialArenaBoundaries,
     'prepared-trial': PreparedTrial, 'resource-manifest': ResourceManifest,
     'geometric-profile': GeometricProfile, 'display-profile': DisplayProfile,
@@ -16,6 +18,7 @@ MODELS = {
     'replay-request': ReplayRequest, 'replay-report': ReplayReport,
     'export-index': ExportIndex,
     'sparse-noise-recipe': SparseNoiseRecipe,
+    'sparse-noise-appearance': SparseNoiseAppearance,
 }
 
 def main():

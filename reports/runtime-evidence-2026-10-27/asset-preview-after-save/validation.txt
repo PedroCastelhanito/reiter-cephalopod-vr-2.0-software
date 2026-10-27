@@ -1,0 +1,17 @@
+2026-10-27; source revision c7881b1f87a5d294383d310ebcb92630cd825099 plus working tree.
+Regression method: offscreen Qt property controls, actual generated texture pixels and actual JSON saves; destination dialog mocked. Existing owning GUI test module extended, no new fixture/module.
+Before fix:
+QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/generate_stimulus/test_gui.py -q -k edits_after_save --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c4c-b59a-7fd1-8960-69a6d37f2758/asset-preview-before
+2 failed,26 deselected: setting visible texture period to80 after saving leaves current document12; setting arena width to80 leaves document500.
+After fix:
+QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/generate_stimulus -q -m "not windows and not rig" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c4c-b59a-7fd1-8960-69a6d37f2758/asset-preview-after-save
+82 passed,5 deselected in7.29s.
+.venv/Scripts/python.exe -m ruff check src/cephvr/generate_stimulus/window.py tests/generate_stimulus/test_gui.py
+All checks passed.
+.venv/Scripts/python.exe -m ruff format --check src/cephvr/generate_stimulus/window.py tests/generate_stimulus/test_gui.py
+2 files already formatted.
+.venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/generate_stimulus/window.py
+Success: no issues found in1 source file.
+.venv/Scripts/python.exe tools/check_backend_boundaries.py
+773 modules;0 violations. Existing unrelated source-size advisories. Changed authoring window remains cohesive and below the advisory threshold.
+Scope: post-save control/document ownership and preview scheduling under G01; no native managed app restart, real dialog interaction, physical or full-load test. Historical files not changed or repaired.

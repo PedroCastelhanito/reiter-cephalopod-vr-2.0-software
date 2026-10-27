@@ -1,0 +1,46 @@
+....F..............................                                      [100%]
+================================== FAILURES ===================================
+______ test_stationary_texture_speed_variation_defaults_toward_rig_right ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001B1AB84A290>
+
+    def test_stationary_texture_speed_variation_defaults_toward_rig_right(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group, motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        assert motion_numbers(
+            editor.program.sequence[0].settings[0].model_dump(mode="json")
+        )[:2] == (0.0, 0.0)
+        grouped, _ = make_group(
+            editor.program, (), 0, 0, 1, False, (Variation((0,), 0, "Speed", (10.0,)),)
+        )
+        expanded = expand_program(grouped, seed_decimal="0", max_expanded_epochs=10)
+        assert expanded[0].settings[0].motion.x.function.value < 0
+        assert motion_numbers(expanded[0].settings[0].model_dump(mode="json"))[:2] == (
+            10.0,
+            0.0,
+        )
+        from cephvr.gui.protocol_nodes import edit_epoch_metadata
+    
+        editor.commit(
+            edit_epoch_metadata(
+                editor.program, editor.path, editor.program.sequence[0].epoch_id, "70"
+            )
+        )
+>       assert editor.sequence_summary.text() == "1 epoch � 1 block � 00:01:10"
+E       AssertionError: assert '1 epoch � 1 ... 00:01:10.000' == '1 epoch � 1 block � 00:01:10'
+E         
+E         - 1 epoch � 1 block � 00:01:10
+E         + 1 epoch � 1 block � 00:01:10.000
+E         ?                             ++++
+
+tests\gui\test_dashboard.py:10944: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_stationary_texture_speed_variation_defaults_toward_rig_right
+1 failed, 34 passed, 994 deselected in 31.44s

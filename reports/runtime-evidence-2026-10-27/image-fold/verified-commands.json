@@ -1,0 +1,110 @@
+[
+  {
+    "name": "gui",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "tests/gui/test_dashboard.py",
+      "-q",
+      "-k",
+      "fold or image_fit or source_preview or batch_image_fit",
+      "--basetemp=C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17be5-29ee-7eb1-a2d8-5c345f8c7894/fold-gui-verified"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "lint",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "src/cephvr/visual_stimulus/rendering/image_fold.py",
+      "src/cephvr/visual_stimulus/rendering/image_fit.py",
+      "src/cephvr/visual_stimulus/rendering/layer_draw.py",
+      "src/cephvr/visual_stimulus/rendering/shaders.py",
+      "src/cephvr/visual_stimulus/rendering/evidence.py",
+      "src/cephvr/visual_stimulus/resources/prepare.py",
+      "src/cephvr/visual_stimulus/resources/uniforms.py",
+      "src/cephvr/visual_stimulus/config/models/program_model.py",
+      "src/cephvr/visual_stimulus/config/parameter_edits.py",
+      "src/cephvr/gui/image_parameters.py",
+      "src/cephvr/gui/trial_preview_image.py",
+      "src/cephvr/gui/trial_preview_canvas.py",
+      "src/cephvr/gui/trial_preview_surfaces.py",
+      "tests/visual_stimulus/test_rendering.py",
+      "tests/visual_stimulus/test_resources.py",
+      "tests/gui/test_dashboard.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "format",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "format",
+      "--check",
+      "src/cephvr/visual_stimulus/rendering/image_fold.py",
+      "src/cephvr/visual_stimulus/rendering/image_fit.py",
+      "src/cephvr/visual_stimulus/rendering/layer_draw.py",
+      "src/cephvr/visual_stimulus/rendering/shaders.py",
+      "src/cephvr/visual_stimulus/rendering/evidence.py",
+      "src/cephvr/visual_stimulus/resources/prepare.py",
+      "src/cephvr/visual_stimulus/resources/uniforms.py",
+      "src/cephvr/visual_stimulus/config/models/program_model.py",
+      "src/cephvr/visual_stimulus/config/parameter_edits.py",
+      "src/cephvr/gui/image_parameters.py",
+      "src/cephvr/gui/trial_preview_image.py",
+      "src/cephvr/gui/trial_preview_canvas.py",
+      "src/cephvr/gui/trial_preview_surfaces.py",
+      "tests/visual_stimulus/test_rendering.py",
+      "tests/visual_stimulus/test_resources.py",
+      "tests/gui/test_dashboard.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "typing",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "--platform",
+      "win32",
+      "src/cephvr/visual_stimulus/rendering/image_fold.py",
+      "src/cephvr/visual_stimulus/rendering/image_fit.py",
+      "src/cephvr/visual_stimulus/rendering/layer_draw.py",
+      "src/cephvr/visual_stimulus/rendering/shaders.py",
+      "src/cephvr/visual_stimulus/rendering/evidence.py",
+      "src/cephvr/visual_stimulus/resources/prepare.py",
+      "src/cephvr/visual_stimulus/resources/uniforms.py",
+      "src/cephvr/visual_stimulus/config/models/program_model.py",
+      "src/cephvr/visual_stimulus/config/parameter_edits.py",
+      "src/cephvr/gui/image_parameters.py",
+      "src/cephvr/gui/trial_preview_image.py",
+      "src/cephvr/gui/trial_preview_canvas.py",
+      "src/cephvr/gui/trial_preview_surfaces.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "schema",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "contracts/visual_stimulus/generate_schemas.py",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "boundaries",
+    "command": [
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+      "tools/check_backend_boundaries.py"
+    ],
+    "exit_code": 0
+  }
+]

@@ -52,6 +52,11 @@ def reference_mode(program: Program, arena: bool) -> Program:
         s.get("asset_id", s.get("pattern", {}).get("asset_id"))
         for s in node["settings"]
     }
+    asset_ids.update(
+        asset
+        for setting in node["settings"]
+        for asset in (setting.get("sparse_noise") or {}).get("asset_ids", ())
+    )
     data["instances"] = [i for i in data["instances"] if i["instance_id"] in identities]
     data["assets"] = [a for a in data["assets"] if a["asset_id"] in asset_ids]
     data["scenes"] = [scene]

@@ -19,7 +19,17 @@ def layer_title(program: Program, setting: Settings) -> str:
     data = setting.model_dump(mode="json")
     asset = data.get("asset_id", data.get("pattern", {}).get("asset_id"))
     source = next((a.logical_path for a in program.assets if a.asset_id == asset), "")
-    kind = "3D arena (rig-wide)" if setting.kind == "arena" else setting.kind.title()
+    kind = (
+        "3D arena (rig-wide)"
+        if setting.kind == "arena"
+        else ("Texture drift" if setting.kind == "texture" else setting.kind.title())
+    )
+    if setting.kind == "texture" and setting.uniform:
+        kind = "Uniform"
+    if setting.kind == "image" and setting.sparse_noise is not None:
+        kind = "Sparse noise"
+    if setting.kind == "texture" and setting.grating:
+        kind = "Grating"
     if setting.kind == "image" and setting.width.kind == "keyframes":
         kind = "Looming"
     return f"{kind} · {PurePosixPath(source).name}" if source else kind

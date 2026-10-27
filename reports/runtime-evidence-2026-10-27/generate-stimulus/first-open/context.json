@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "worktree": "Concurrent uncommitted changes present; hashes identify checked files",
+  "sources": {
+    "src/cephvr/gui/stimulus_authoring.py": "b8d65bff29fce7f7e69c956a7cea477343a003e28ded54c5f3457cc52ffb2476",
+    "tests/generate_stimulus/test_gui.py": "9d07b36c3a63ae8863ceab7eedf3dcb476565bff164922913e0b0cd09f3fdf7e"
+  },
+  "baseline": {
+    "command": "QT_QPA_PLATFORM=windows python -m pytest tests/generate_stimulus/test_gui.py -q -k first_embedded",
+    "result": "1 failed, 11 deselected",
+    "observation": "First insertion changed native HWND from 6425952 to 6491488"
+  },
+  "fixed_native": {
+    "command": "QT_QPA_PLATFORM=windows python -m pytest tests/generate_stimulus/test_gui.py -q -k first_embedded",
+    "result": "2 passed, 11 deselected",
+    "scope": "Bare stacked host and actual DashboardWindow navigation button; stable HWND and no Hide/Close/WinIdChange events across first/repeat open and arena activation; no viewport error"
+  },
+  "regressions": {
+    "command": "QT_QPA_PLATFORM=offscreen python -m pytest tests/generate_stimulus -q -m \"not windows and not rig\"",
+    "result": "47 passed, 2 deselected"
+  },
+  "static": "Ruff check/format two files; Win32 mypy one source; boundaries 771 modules, zero violations",
+  "limits": "Isolated windows only; running managed app untouched, no hardware/optical/full-load acceptance",
+  "reference": "https://doc.qt.io/qt-6/qopenglwidget.html#limitations-and-other-considerations"
+}

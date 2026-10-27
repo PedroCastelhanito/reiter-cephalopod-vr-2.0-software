@@ -39,7 +39,22 @@ class AdvancedAppearance(QWidget):
                 and source.linked_to is None
                 and source.space.kind == "physical_surface"
                 and len(source.space.mappings) == 1
-                and source.pattern.kind == "image_tile"
+                and (
+                    source.pattern.kind == "image_tile"
+                    or (
+                        setting.grating
+                        and source.grating
+                        and source.pattern.kind in ("sine_grating", "square_grating")
+                    )
+                )
+                and (
+                    not setting.grating
+                    or (
+                        source.grating
+                        and source.pattern.kind != "image_tile"
+                        and setting.pattern.kind != "image_tile"
+                    )
+                )
                 and source.space.mappings[0].surface_id
                 not in surfaces(setting.model_dump(mode="json"))
             ):
@@ -54,12 +69,14 @@ class AdvancedAppearance(QWidget):
             isinstance(setting, TextureSettings)
             and setting.space.kind == "physical_surface"
             and len(setting.space.mappings) == 1
-            and setting.pattern.kind == "image_tile"
+            and (setting.pattern.kind == "image_tile" or setting.grating)
+            and (not setting.grating or setting.pattern.kind != "image_tile")
         )
         if isinstance(setting, TextureSettings) and setting.linked_to is not None:
             self.linked_to.setCurrentIndex(self.linked_to.findData(setting.linked_to))
         self.linked_to.setEnabled(supported)
         self.linked_to.setToolTip(
+            "Linked Grating shares the reference pattern and phase using Bottom-based unfolding; corner seams may remain. "
             "Follow another screen’s texture motion using calibrated geometry. Your texture, scale and phase remain independent. Use drift or rotation in separate epochs; custom/Tracking motion cannot own a link."
         )
         self.link_field = field("Linked to", self.linked_to)

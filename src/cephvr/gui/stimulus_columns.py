@@ -4,6 +4,12 @@ from cephvr.visual_stimulus.config.models.program_model import Settings
 
 
 def stimulus_columns(setting: Settings) -> tuple[tuple[str, str], ...]:
+    if setting.kind == "texture" and setting.uniform:
+        return ()
+    if setting.kind == "image" and setting.sparse_noise is not None:
+        return ()
+    if setting.kind == "texture" and setting.grating:
+        return (("Orientation (°)", "Orientation"), ("Speed (mm/s)", "Speed"))
     if setting.kind == "arena":
         return (
             ("Longitudinal", "Longitudinal"),

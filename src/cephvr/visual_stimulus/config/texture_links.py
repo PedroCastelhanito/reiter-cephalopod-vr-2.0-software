@@ -31,6 +31,48 @@ def validate_links(settings: Sequence[Settings], *, resolved: bool = False) -> N
             raise ValueError(
                 "Linked textures must follow an independent reference; chains/cycles are invalid"
             )
+        if target.grating:
+            from .models.program_model import Grating
+
+            if (
+                not source.grating
+                or not isinstance(source.pattern, Grating)
+                or not isinstance(target.pattern, Grating)
+            ):
+                raise ValueError(
+                    "Shared grating links require inline Grating on both screens"
+                )
+            for item in (source, target):
+                if (
+                    item.space.kind != "physical_surface"
+                    or len(item.space.mappings) != 1
+                ):
+                    raise ValueError(
+                        "Shared grating needs one physical screen per layer"
+                    )
+                if item.feedback:
+                    raise ValueError("Shared grating owns its pattern and motion")
+            assert source.space.kind == target.space.kind == "physical_surface"
+            if (
+                source.space.frame_id != target.space.frame_id
+                or source.space.mappings[0].surface_id
+                == target.space.mappings[0].surface_id
+            ):
+                raise ValueError(
+                    "Shared grating requires different screens in the same physical frame"
+                )
+            if any(
+                m.kind != "hold"
+                for m in (
+                    target.motion.x,
+                    target.motion.y,
+                    target.motion.rotation,
+                    target.phase_x,
+                    target.phase_y,
+                )
+            ):
+                raise ValueError("Linked grating motion belongs to its reference")
+            continue
         for item in (source, target):
             if (
                 item.space.kind != "physical_surface"

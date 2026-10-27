@@ -427,6 +427,7 @@ class ManagedCameras(QObject):
                     rates_observed_ns=device.rates.observed_monotonic_ns,
                     pending=reconnecting,
                     available=assigned
+                    and not self.pending
                     and bool(device.preview_running or session_preview),
                     active=assigned,
                     reason="Assign this camera in controller configuration"

@@ -42,10 +42,16 @@ def epoch_paths(program: Program) -> tuple[tuple[int, ...], ...]:
 
 
 def family(setting: Any) -> str:
+    if setting.kind == "texture" and setting.uniform:
+        return "Uniform"
+    if setting.kind == "image" and setting.sparse_noise is not None:
+        return "Sparse noise"
+    if setting.kind == "texture" and setting.grating:
+        return "Grating"
     if setting.kind == "image" and setting.width.kind == "keyframes":
         return "Looming image"
     return {
-        "texture": "Texture",
+        "texture": "Texture drift",
         "image": "Image",
         "video": "Video",
         "arena": "3D arena",
@@ -115,7 +121,10 @@ def apply_batch(
             )
             if "Asset" in changes:
                 selected_file = resolve_stimulus_file(
-                    asset_root, changes["Asset"], texture=setting["kind"] == "texture"
+                    asset_root,
+                    changes["Asset"],
+                    texture=setting["kind"] == "texture",
+                    grating=setting.get("grating", False),
                 )
                 apply_texture_dimensions(setting, selected_file)
                 identity = setting.get(

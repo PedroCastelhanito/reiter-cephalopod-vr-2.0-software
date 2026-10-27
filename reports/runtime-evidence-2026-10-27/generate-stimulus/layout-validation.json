@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "worktree": "dirty; concurrent work preserved",
+  "scope": "local offline authoring UI; no rig acceptance",
+  "checks": {
+    "authoring_suite": "42 passed",
+    "final_authoring_and_managed_selection": "37 passed,1008 deselected",
+    "broad_gui_selection": "85 passed,2 failures,956 deselected",
+    "isolated_failures": "6 failures: variation focus and splash top-level Show assertions, all three styles",
+    "previous_appearance_comparison": "both standard-style failures reproduce using HEAD appearance module loaded in memory; other worktree code unchanged",
+    "ruff": "18 files pass",
+    "mypy_win32": "16 sources pass",
+    "boundaries": "769 modules,zero violations",
+    "native": "1440x960 embedded,1280x850 standalone,720x700 stacked;100% and QT_SCALE_FACTOR=1.25; screenshots inspected"
+  }
+}

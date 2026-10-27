@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import struct
 from collections.abc import Sequence
 from typing import Any
 
@@ -14,10 +13,10 @@ from cephvr.visual_stimulus.config.models.artifact_models import (
 from cephvr.visual_stimulus.config.models.program_model import Scene
 from cephvr.visual_stimulus.rendering.arena import effective_arena_pose
 from cephvr.visual_stimulus.rendering.evidence import (
-    clip_vertex_components,
-    float32_words,
     uniform_values,
 )
+from cephvr.visual_stimulus.rendering.image_fit import SCREEN_CORNERS, SCREEN_IMAGE_FITS
+from cephvr.visual_stimulus.rendering.layer_draw import draw_layer
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
     covering_texture,
@@ -280,7 +279,10 @@ class ModernGLSceneRenderer:
                     continue
             elif mapping.surface_id not in settings.space.surfaces:
                 continue
-            if surface_map is not None:
+            if settings.kind == "image" and settings.fit in SCREEN_IMAGE_FITS:
+                normalized = list(SCREEN_CORNERS)
+                uniforms_by_id.update(uniform_values(artifact, snapshot))
+            elif surface_map is not None:
                 snapshot = covering_texture(artifact, snapshot, mapping.surface_id)
                 normalized = physical_corners(
                     artifact, snapshot, mapping.surface_id, surface_map
@@ -289,7 +291,8 @@ class ModernGLSceneRenderer:
             else:
                 normalized = angular_corners(artifact, snapshot, mapping.surface_id)
                 uniforms_by_id.update(uniform_values(artifact, snapshot))
-            clip_uniform = self._draw_layer(
+            layer_uniforms = draw_layer(
+                self._moderngl,
                 frame,
                 artifact,
                 gpu_resources,
@@ -298,7 +301,7 @@ class ModernGLSceneRenderer:
                 snapshot,
                 normalized,
             )
-            uniforms_by_id[clip_uniform.binding_id] = clip_uniform
+            uniforms_by_id.update((item.binding_id, item) for item in layer_uniforms)
 
     def _draw_arena(
         self,
@@ -319,126 +322,6 @@ class ModernGLSceneRenderer:
             surface_id=surface_id,
             snapshot=snapshot,
             gpu_resources=gpu_resources,
-        )
-
-    def _draw_layer(
-        self,
-        frame: _OutputScene,
-        artifact: PreparedTrial,
-        gpu_resources: dict[str, Any],
-        output_id: str,
-        mapping_id: str,
-        snapshot: InstanceSnapshot,
-        normalized: list[tuple[float, float]],
-    ) -> Any:
-        settings = snapshot.settings
-        if settings is None:
-            raise RuntimeError("prepared instance snapshot has no settings")
-        assert self._moderngl is not None
-        values = dict(snapshot.state)
-        array = frame.quad_array
-        program = frame.layer_program
-        mode = 0
-        texture = None
-        if settings.kind in ("image", "video"):
-            if settings.kind == "image":
-                mode = {"stretch": 0, "contain": 5, "cover": 6}[settings.fit]
-            asset_id = settings.asset_id
-            if settings.kind == "video":
-                asset_id = settings.asset_id
-                if not isinstance(asset_id, str):
-                    raise RuntimeError(
-                        "prepared video instance has no resolved asset id"
-                    )
-                texture = frame.video_textures.get((snapshot.instance_id, asset_id))
-            else:
-                textures = gpu_resources.get(
-                    f"{artifact.identity.resource_generation}:{asset_id}"
-                )
-                if textures is None:
-                    raise RuntimeError(
-                        f"prepared GPU texture {asset_id} is unavailable"
-                    )
-                texture = textures[self._output_index(artifact, output_id)]
-            if texture is None:
-                raise RuntimeError(f"prepared GPU texture {asset_id} is unavailable")
-        else:
-            if settings.kind != "texture":
-                raise RuntimeError("arena settings cannot be drawn as a 2D layer")
-            pattern = settings.pattern
-            if pattern.kind == "sine_grating":
-                mode = 1
-            elif pattern.kind == "square_grating":
-                mode = 2
-            elif pattern.kind == "checkerboard":
-                mode = 3
-            else:
-                mode = 4
-                texture = gpu_resources[
-                    f"{artifact.identity.resource_generation}:{pattern.asset_id}"
-                ][self._output_index(artifact, output_id)]
-        program["mode"].value = mode
-        program["mean_rgb"].value = _vector(
-            values.get("mean_rgb"),
-            getattr(settings, "mean_linear_rgb", (0.0, 0.0, 0.0)),
-        )
-        program["modulation_rgb"].value = _vector(
-            values.get("modulation_rgb"),
-            getattr(settings, "modulation_linear_rgb", (0.0, 0.0, 0.0)),
-        )
-        program["contrast"].value = float(values.get("contrast", 1.0))
-        program["opacity"].value = float(values.get("opacity", 1.0))
-        pattern_obj = settings.pattern if settings.kind == "texture" else None
-        frequency_pair = (
-            float(values.get("frequency", 0.0)) * float(values.get("width", 1.0)),
-            0.0,
-        )
-        if pattern_obj is not None and pattern_obj.kind == "checkerboard":
-            frequency_pair = (
-                float(values.get("frequency_x", 0.0)) * float(values["width"]),
-                float(values.get("frequency_y", 0.0)) * float(values["height"]),
-            )
-        period_pair = (
-            float(values.get("width", 1.0)) / float(values.get("period_x", 1.0)),
-            float(values.get("height", 1.0)) / float(values.get("period_y", 1.0)),
-        )
-        program["frequency"].value = _vector(values.get("frequency"), frequency_pair)
-        program["period"].value = _vector(values.get("period"), period_pair)
-        program["phase"].value = _vector(
-            values.get("phase"),
-            (
-                float(values.get("phase_x", 0.0)),
-                float(values.get("phase_y", 0.0)),
-            ),
-        )
-        components = clip_vertex_components(normalized)
-        program["clip_vertices"].write(struct.pack("8f", *components))
-        program["image_tex"].value = 0
-        if texture is not None:
-            texture.use(0)
-        array.render(mode=self._moderngl.TRIANGLE_STRIP)
-        from cephvr.visual_stimulus.rendering.types import UniformSnapshot
-
-        layout = next(
-            (
-                item
-                for item in artifact.uniform_layouts
-                if item.instance_id == snapshot.instance_id
-                and item.output_id == output_id
-                and item.name == f"clip_vertices_{mapping_id}"
-            ),
-            None,
-        )
-        if layout is None:
-            raise RuntimeError(
-                "prepared shader layout omits the mapped surface clip uniform"
-            )
-        return UniformSnapshot(layout.binding_id, float32_words(components))
-
-    @staticmethod
-    def _output_index(artifact: PreparedTrial, output_id: str) -> int:
-        return tuple(item.output_id for item in artifact.display.active_outputs).index(
-            output_id
         )
 
     def _bind_warp_profile(
@@ -564,12 +447,6 @@ class ModernGLSceneRenderer:
         self._artifacts.clear()
         self._resources.clear()
         self._gpu_resources.clear()
-
-
-def _vector(value: Any, fallback: Sequence[float]) -> tuple[float, ...]:
-    if isinstance(value, (tuple, list)):
-        return tuple(float(component) for component in value)
-    return tuple(float(component) for component in fallback)
 
 
 def _release_owned(resources: list[Any], label: str) -> list[str]:

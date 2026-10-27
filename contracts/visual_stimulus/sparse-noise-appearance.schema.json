@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "const": 2,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "kind": {
+      "const": "sparse_noise",
+      "title": "Kind",
+      "type": "string"
+    },
+    "seed": {
+      "maximum": 18446744073709551615,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "square_size_mm": {
+      "exclusiveMinimum": 0,
+      "title": "Square Size Mm",
+      "type": "number"
+    },
+    "min_active_cell_distance_mm": {
+      "minimum": 0,
+      "title": "Min Active Cell Distance Mm",
+      "type": "number"
+    },
+    "active_probability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Active Probability",
+      "type": "number"
+    },
+    "background_linear": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Background Linear",
+      "type": "number"
+    }
+  },
+  "required": [
+    "format_version",
+    "kind",
+    "seed",
+    "square_size_mm",
+    "min_active_cell_distance_mm",
+    "active_probability",
+    "background_linear"
+  ],
+  "title": "SparseNoiseAppearance",
+  "type": "object"
+}

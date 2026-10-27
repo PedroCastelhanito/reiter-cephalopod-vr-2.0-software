@@ -12086,6 +12086,58 @@ scaling implementation and Astra reviews the telemetry interface and lifecycle.
 Preserve configured trigger/preview rates, exact pixel outputs and existing
 physical/scientific deferrals. Working tree was clean at start.
 
+### 2026-10-27 - [gui] Hide app and native preview title icons
+
+`window-title-icons`: G02rev167 adds transparent Qt application-icon inheritance
+and clears both HighGUI class-icon fallbacks in the existing native caption helper.
+No custom chrome, input or device behavior added; native window controls retained.
+Two selected Qt/platform regressions and all22 platform window-coordinate cases
+pass. Hidden, isolated native OpenCV probe confirms both original class icons were
+present and now clear, while hidden state and system-menu/resize/minimize/maximize
+style bits remain; probe window destroyed afterward. Full native producer/viewer
+test was extended but not rerun. Scoped Ruff/format5, Win32 mypy2, boundaries767/zero
+and whitespace pass. One initial patch-context mismatch corrected without partial
+application. Source base83c7e81e plus working changes; concurrent edits retained.
+Local task complete. Running experiment/window untouched; normal relaunch and
+recreated previews activate changes, with managed visual/DPI acceptance still pending.
+
+### 2026-10-27 - [gui] Preview selections at Start
+
+`preview-start-selection`: repaired deferred camera Show dispatch under existing
+G01: one source per snapshot, with remaining selections retained while the shared
+camera command slot is occupied. No retries of failed submitted commands. ARCH-002
+review kept the existing drain/projection owners, no new queue or dependency.
+23 focused GUI checks, scoped Ruff/format and Win32 mypy pass; boundaries767/zero
+and whitespace pass. Initial regression fixture accidentally invoked review-mode
+callbacks (2 failures); isolated managed fixture corrected and10 checks then passed.
+Evidence: reports/runtime-evidence-2026-10-27/preview-start-selection/context.md.
+Preserved concurrent changes. Native owner screenshot sequence/relaunch remains
+open in TODO; Setup placeholder visibility is distinct from actual selection.
+
+
+### 2026-10-27 - [gui] [visual_stimulus] Per-projector sparse-noise recipe picker
+
+`sparse-noise-gui`: owner requested GUI integration. G01rev340/V04rev22 add Protocol
+Sparse noise action, independent per-enabled-screen recipe selection and summaries,
+background preparation and new-trial import. Current validated Devices geometry,
+asset root and authority are captured/fenced; original trials remain unchanged.
+Save/reload restores recipe selections through retained bundle paths. Seed/density/
+square size may differ; counts, duration and background must match. No runtime RNG,
+new dependency, process or device command. ARCH-002 separates dialog/file preparation/
+backend composition and reuses the current trial/history transaction owner; reviewed
+Protocol page572-line cohesion advisory. Existing geometry parsing is shared.
+
+47 GUI protocol/preview checks and215 backend checks pass (6 native/rig excluded);
+final5 GUI checks pass after layout refinement. Scoped Ruff/format8, Win32mypy6,
+12-schema drift and boundaries767/zero pass. Offscreen720x760 and480x620 renders
+inspected with registered application font. Initial mypy method-name collision and
+isolated fontless rendering were corrected; atomic patch-context failures corrected.
+Scoped whitespace passes; whole-worktree check reports another chat's acquisition
+EOF whitespace, left untouched. Contract links and G01/V04 register agree.
+Evidence/source hashes: reports/runtime-evidence-2026-10-27/sparse-noise-gui/context.json.
+Local implementation complete; no native app restart, rig or optical pass claimed.
+Remaining GUI/native/physical checks extend the existing sparse-noise-rig task.
+
 ### 2026-10-27 - [gui] [shared] [acquisition] Receipt HUD and scaling verification
 
 `camera-acquisition-rate-readback`: GUI projects exact run/device receipt rates,
@@ -12185,6 +12237,19 @@ match existing A07/V12 contracts, preserving Interrupted and deletion protection
 241 focused backend checks and root295 integrated checks pass. No native acceptance
 yet for this new edge-case repair, and historical failed files remain Unconfirmed.
 
+### 2026-10-27 - [gui] [visual_stimulus] Offline authoring implementation
+
+`generate-stimulus`: implemented the approved standalone editor/core, texture and
+sparse-noise recipes, five arena templates, relief/scatter, self-contained GLB
+bundles and detached main-GUI launcher. G01rev341/V04rev23/V18rev4 and the new
+authoring contract/schema record offline ownership. ARCH-002 reuse separates
+headless generation/publication, widgets and the cancellable preview worker.
+251 authoring/backend and47 existing GUI cases pass; native editor/OpenGL preview
+was inspected and clipped controls corrected. Initial temp-path and unsupported
+BLEND attempts failed truthfully; authorized external temp and explicit OPAQUE/MASK
+controls resolved them. Final static/package/scale checks remain in progress;
+physical projection and full-load checks remain rig work.
+
 ### 2026-10-27 - [gui] [visual_stimulus] Stimulus authoring completed
 
 `generate-stimulus` completed:254 authoring/backend cases (6 rig/native excluded),
@@ -12245,6 +12310,19 @@ Owner defers representative illuminated-camera scene work; move eye-tracking-sou
 
 Reconciled the current queue with the owner decision: camera-scene work resumes only on explicit owner request with representative scene/illumination available. The dependent stimulus-review-encoding-cost comparison is also Deferred until that prerequisite is reopened. The completed device-layout promotion remains absent from TODO; physical input capture and outstanding native/optical acceptance retain their existing status. No runtime, device settings or concurrent task ownership changed.
 
+### 2026-10-27 - [gui] [visual_stimulus] Managed authoring DLL startup repaired
+
+`stimulus-authoring-dll-launch` completed. Reproduced owner-reported QtGui import
+failure with direct cephvr-python.exe; authoring now uses the existing verified
+interpreter resolver/module_arguments/python_entry path to retain child DLL search
+registrations. This implements G01 using the existing Windows runtime mechanism;
+no Conda activation, global PATH edit or new process owner is required. Eight GUI
+regressions, scoped Ruff/format, Win32 mypy and769-module boundary checks pass.
+A bounded fresh managed-interpreter run imported Qt, opened the actual authoring
+window and exited0. First probe had a harness-only QApplication.exec argument
+error, corrected before the successful run. Main GUI left running unchanged;
+normal relaunch is required to load the repaired launcher.
+
 ### 2026-10-27 - [repo] [gui] [visual_stimulus] Decision queue verified
 
 Read current TODO, architecture, owning reports and completion/deferral history; independent Astra review agrees no pair of non-deferred critical software decisions is established. Device-layout promotion was completed Oct19. Camera-scene/representative encoding, Tracking and other explicit deferrals stay closed to implementation. The active physical-speed mismatch still needs equal-distance physical travel measurements and current-session identity, not a new policy choice. Existing MCU latency and native acceptance work remains investigation under accepted rules. No new decision tasks or speculative settings changes added; no runtime/hardware test performed for this read-only audit.
@@ -12252,6 +12330,31 @@ Read current TODO, architecture, owning reports and completion/deferral history;
 ### 2026-10-27 - [gui] [visual_stimulus] Physical comparison deferred; autonomous follow-up
 
 Owner deferred `stimulus-physical-speed-mismatch`; moved the existing task to Deferred and updated its owning assessment. Retained recorded-pixel evidence and unresolved optical cause; no calibration or live output changed. Began bounded dead-code and dummy no-output software reviews under existing accepted rules. Concurrent authoring GUI changes and the active runtime are preserved.
+
+### 2026-10-27 - [gui] [visual_stimulus] Shared authoring tab and standalone window
+
+`stimulus-authoring-tab` completed under owner-requested G01 revision342. Main-GUI
+navigation lazily embeds the same authoring window used by standalone launch;
+drafts/undo survive tab changes, editor shortcuts stay scoped, runtime navigation
+gates apply and unsaved designs veto main/managed/Review shutdown before its normal
+close sequence. Removed the detached-launch helper; the prior DLL-launch repair is
+superseded for this entry point. Local viewport format supports an existing Qt app.
+Initial regression exposed QMainWindow forcing top-level flags in its constructor;
+explicit post-construction Widget flags fixed it.48 focused tests and2 managed-close
+cases pass. Ruff/format20 files, Windows-target mypy17 sources and769-module boundary
+checks pass; existing cohesion warnings reviewed without adding another owner.
+Bounded native1440x960 embedded arena rendered successfully and screenshot inspected;
+evidence retained alongside prior authoring captures. Running managed GUI untouched;
+normal restart and actual rig/Assets/calibration acceptance remain pending.
+
+### 2026-10-27 - [gui] [visual_stimulus] Generate assets label
+
+`generate-assets-label` completed: renamed the main navigation tab and standalone
+window title to Generate assets at owner request (G01 revision343). Updated the
+contract, report, register and existing navigation assertion; module entry point
+remains cephvr.generate_stimulus. ARCH-002 review: text-only change, no dependency
+or ownership changes. Focused navigation test passes; scoped Ruff/format pass.
+Running GUI not restarted; no new native or rig verification required for this label.
 
 ### 2026-10-27 - [repo] [controller] [supervisor] [acquisition] [visual_stimulus] [gui] Remaining autonomous review and queue repair
 
@@ -12262,3 +12365,914 @@ Reconciled idle-shutdown-ordering with the existing guarded Configuration shutdo
 Current validation at base8dccc4b1 with concurrent worktree edits: pytest tests/controller/test_planning.py -q:11 passed; pytest tests/controller/test_lifecycle_commands.py tests/acquisition/test_session_preparation.py tests/visual_stimulus/test_recording.py -q -m "not windows and not rig" --basetemp=.pytest-tmp-dummy-validation:160 passed; pytest tests/controller/test_shutdown_handoff.py tests/supervisor/test_shutdown.py -q -m "not windows and not rig":25 passed. The first restricted dummy-suite attempt emitted errors/stalled and was stopped; permitted Windows loopback/temp rerun passed without assertion changes. Scoped Ruff across controller/acquisition/supervisor/launcher/shared source/tests passes; backend boundaries769 modules/zero violations, existing cohesive size advisories retained. These are local results, not new rig acceptance.
 
 Removed only this run's resolved workspace .pytest-tmp-dummy-validation directory after tests completed; scientific outputs, historical failure evidence and concurrent .authoring-dist artifacts were preserved. Documentation whitespace checks pass.
+
+### 2026-10-27 - [visual_stimulus] Repeated-asset Setup preparation completed
+
+`stimulus-setup-asset-reuse` complete under V04 revision24 and ARCH-002. Retained the
+session-wide image-validation cache and added bounded native-identity fingerprint
+reuse across streamed asset references; each consumer still acquires registered
+write/delete-excluding protection. Closed backing handles force rehashing. Setup
+logs source, successful image-validation and compilation times plus reuse counts;
+operator progress summarizes unique/reused validations. No new dependency, worker
+pool, persistent cache, timing policy or GPU owner was introduced.
+
+Two seeded 4K RGB8 PNGs across six repeated trial preparations reduced hash reads
+12 to2; successful validations remain2. Reversed-order local samples measured CPU
+preparation1.005–1.092s baseline versus0.872–0.877s with reuse. Raw measurements,
+source hashes, reproducible method and check results are retained under
+reports/runtime-evidence-2026-10-27/asset-reuse/; reports/visual_stimulus.md records
+scope and cohesion review. This excludes schedule compilation, GPU uploads and
+full-load/optical rig acceptance; existing rig follow-ups remain unchanged.
+
+Validation:545 local stimulus tests pass with14 deselections and3 subtests;8 native
+file-protection/cache cases pass. Ruff/format185 files, Windows-target mypy169 and
+769-module boundary checks pass, zero violations; scoped final checks also pass.
+Initial sandbox temp errors, missing color metadata in the new fixture, sandboxed
+broad-suite stall and repository-local demo-fixture rejection were resolved without
+weakening assertions; the final broad suite used permitted loopback/external temp.
+Concurrent GUI/authoring edits and task ownership were preserved.
+
+### 2026-10-27 - [gui] [visual_stimulus] Generate assets shared layout
+
+`generate-assets-layout` completed under G01rev344/G02rev169. Replaced the generic
+menu-like toolbar/forms with shared cards, buttons, labeled fields, dropdowns and
+responsive scrolling columns in both embedded and standalone hosts. Extracted
+presentation into layout.py, reused shared caption formatting, preserved document,
+undo/export and phase ownership; no new dependencies. Standalone reads saved style.
+Amber sidebar now fits full navigation labels. Native narrow preview overflow found
+and fixed by fitting pixels on image resize and permitting smaller preview bounds.
+42 owner tests and37 final selected integration cases pass; Ruff/format18 files,
+Win32 mypy16 sources and769-module boundaries pass. Native100%/125% embedded and
+standalone captures inspected, with no arena viewport errors. Broad GUI run85 pass/
+2 failures; isolated focus/splash checks fail six style variants, and Standard failures
+also reproduce with pre-change HEAD appearance loaded in memory. Root cause remains
+open in TODO/report, not credited as validation. One concurrent documentation write
+failed with Invalid argument, then a focused patch succeeded; concurrent work retained.
+Evidence: reports/runtime-evidence-2026-10-27/generate-stimulus/layout-validation.json.
+Running managed GUI not restarted; physical/full-load checks remain pending.
+
+### 2026-10-27 - [gui] [visual_stimulus] Appearance-only asset recipes
+
+`asset-appearance-only` completed under G01 revision344 / V04 revision25: sparse
+assets retain only appearance/seed; Protocol supplies projector assignment, count
+and decimal-string duration and saves those settings with selection paths. Legacy
+full recipes remain readable and normalize to appearance on authoring Save.
+Shared appearance fields and existing generators avoid duplicate pixel algorithms;
+no dependency/process added. Updated contracts, generated appearance/full schemas,
+architecture register and owning report; concurrent changes preserved.
+
+Validation: pytest tests/visual_stimulus/test_resources.py tests/generate_stimulus
+-q -m "not windows and not rig":122 passed; pytest tests/gui/test_dashboard.py
+-q -k sparse_noise:5 passed, using offscreen Qt and external visualization temp.
+Initial combined selection:63 passed/4 failed from a stale summary access and
+worker test signatures; fixed and GUI cases rerun. Scoped Ruff/check/format pass,
+Windows-target mypy17 sources passes, generate_schemas.py --check passes14 schemas,
+backend boundaries769 modules/zero violations and git diff --check passes.
+An initial documentation edit hit Windows default-decoding failure; rerun with
+explicit UTF-8. No runtime restart, native visual or rig acceptance performed.
+
+### 2026-10-27 - [gui] [visual_stimulus] Projector-independent texture assets
+
+`asset-projector-independent` completed under G01 revision345 / V04 revision26.
+Generated polar recipes use physical tile coordinates without origin/target screens;
+legacy runtime recipes keep their interpretation, while authoring Open/Save converts
+them to the independent variant. Default previews need no calibration and hide
+projector selection; sparse appearance uses an illustrative100x100mm sample with
+actual screen grids/streams still resolved in Protocol. Optional calibrated
+inspection remains available without writing screen selection into assets.
+Static arenas accept tile-local polar materials; prepared polar pixel/cache identity
+is independent of display geometry. ARCH-002 reused polar formulas and extracted
+existing bounded grid sizing; no dependency or alternate RNG introduced.
+
+Validation: pytest tests/generate_stimulus tests/visual_stimulus/test_resources.py
+ tests/visual_stimulus/test_rendering.py -q -m "not windows and not rig":240 passed,
+6 deselected (offscreen Qt, external visualization temp). Scoped Ruff/check/format21
+files and Windows-target mypy18 sources pass; generate_schemas.py --check14 schemas,
+backend boundaries769 modules/zero violations and git diff --check pass. Initial
+lint command used unsupported PowerShell brace expansion; explicit paths passed.
+Updated contracts, report and decision register; local links/anchors checked.
+Running managed GUI not restarted; no native/physical acceptance claimed.
+
+### 2026-10-27 - [gui] [visual_stimulus] Image Resize/Source completed
+
+`image-resize-source` implements the owner's two modes under G01rev346, V04rev27
+and V14rev6. New Images default to Resize; Source uses original pixel dimensions
+with independent centered crop/padding on each axis. Target dimensions and image
+bounds come from each valid-area calibration, including Bottom quarter-turns.
+Saved legacy fits remain loadable without appearance changes; the GUI offers only
+the two new choices and disables inactive object pose/movement for these fixed-screen
+modes. Previews retain original image dimensions alongside bounded thumbnails.
+Canonical/program-prepared schemas, batch edits and mapped uniform evidence agree.
+Consumed sheared/nonlinear mappings fail preparation, while unrelated profiles are
+not rejected. Existing output correction, masking, markers and timing remain owned.
+
+ARCH-002 extracted existing layer drawing from scene.py into focused layer_draw.py;
+no dependency, process or GPU-ownership change.555 local backend cases pass with20
+native/rig deselections and3 subtests.13 final focused render cases include6 native
+OpenGL pixel comparisons through actual layer drawing;13 focused GUI and118 preview
+cases pass offscreen. Ruff/format193 files, Windows-target mypy176 sources,14-schema
+drift and770-module boundaries/zero violations pass. The initial nonexistent compiler
+module invocation ran no tests; lint import/loop-index findings were fixed. Source
+hashes, commands, raw final backend output and scope are retained in
+reports/runtime-evidence-2026-10-27/image-modes/ and the owning report.
+
+Running GUI not restarted; source texture memory remains full-size. Native texel
+selection is not physical/optical equality. The single rig checklist and
+image-resize-source-rig retain actual projector/DPI/full-load acceptance. Concurrent
+asset-authoring and earlier asset-reuse work were preserved.
+
+### 2026-10-27 - [gui] [visual_stimulus] Asset generator first-open window continuity
+
+`asset-first-open-window` completed under G01. Reproduced native handle replacement
+on first lazy QOpenGLWidget insertion (6425952 ->6491488). A hidden GL child now
+selects composition before the Dashboard is shown; editor creation remains lazy
+and the anchor has no GL context. ARCH-002 keeps the fix in the small owning page
+without new dependencies or broad window-lifecycle changes. Existing owner tests
+cover first/repeat opening and actual arena activation.
+
+Native pytest tests/generate_stimulus/test_gui.py -q -k first_embedded with Windows
+Qt: baseline1 failure, fixed2 passes including actual Dashboard button navigation;
+no handle change or Hide/Close/WinIdChange after first show. Offscreen pytest
+ tests/generate_stimulus -q -m "not windows and not rig":47 passed,2 deselected.
+Ruff/check/format2 files, Windows-target mypy1 source, backend boundaries771 modules/
+zero violations pass; one test import-order finding fixed. Updated owning report,
+evidence context/source hashes and queue. Running managed GUI not restarted; no
+hardware/full-load acceptance claimed. Concurrent work preserved.
+
+
+## 2026-10-27 - projector-shell-icons [gui] [visual_stimulus]
+
+Implemented G01rev347: remove physical projector window icons/taskbar entries and
+restore the main GUI native application icon. Reused Windows caption handling and
+kept output cleanup registration before shell changes.146 rendering/platform tests
+and3 focused caption/theme tests pass; Ruff/format, four-source Windows-target mypy,
+772-module boundaries (zero violations), and diff whitespace checks pass. Initial
+sandbox temp errors resolved using workspace basetemp; GPU cleanup test doubles
+updated for the new native boundary. Initial documentation encoding failure retried
+with UTF-8. Reports updated; source task complete. Running GUI not restarted and
+native Explorer/projector acceptance remains unverified.
+
+
+## 2026-10-27 - projector-shell-icons geometry correction [gui] [visual_stimulus] [controller]
+
+Owner screenshot and retained renderer emergency report show calibration_front1274x714.
+Found prior icon helper added WS_EX_DLGMODALFRAME to fullscreen output. Removed this
+flag from the projector branch while preserving camera caption behavior, taskbar
+exclusion and main GUI icon. Added native1280x720 client-size/style regression to the
+owning platform test module.166 rendering/platform cases including native checks pass;
+Ruff/format, Windows-target mypy,772-module boundaries/zero violations pass. No managed
+restart or projector retry performed. Report corrects earlier validation limitations;
+projector-shell-retry tracks live confirmation and the unresolved interruption IDENTITY
+warning separately. No architecture rule changed; this repairs G01 implementation.
+
+### 2026-10-27 - [gui] [visual_stimulus] Fold images with Front reference scale
+
+`image-fold` completed under G01rev347/V04rev28/V14rev7. The owner selected the
+preview net and Front projector as reference. Added the Fold selector, common
+physical source-coordinate mapping, preparation validation, shader/evidence binding,
+and matching planning preview. Source top-left anchors the net; valid areas crop,
+missing source shows background and target selection does not repack. Front must
+remain enabled to retain its prepared reference; no image layer on Front is required.
+Updated schemas/contracts/current report and the existing rig checklist. ARCH-002
+extracted preview fitting and preparation image validation; no dependency/process,
+asset mutation or additional texture copy. Concurrent work preserved.
+
+Final backend selection247 passed/one sandbox hard-link denial/18 deselected; the
+unchanged denied evidence case passed outside sandbox. Rendering15 passed includes
+12 native GL pixel comparisons (six Fold Front/Bottom); offscreen GUI11 passed.
+Scoped Ruff/format16 files, Windows-target mypy13 sources,14-schema drift and772-module
+boundaries/zero violations pass. Early nonexistent test path, default-temp permission
+errors, strict-model fixture failure and formatting/Windows text-decoding issue were
+corrected; original UTF-8 restored and GUI checks rerun. Evidence and source hashes:
+reports/runtime-evidence-2026-10-27/image-fold/. Running GUI not restarted; physical
+scale/optics/full-load remain under image-resize-source-rig, now including Fold.
+
+
+### 2026-10-27 — sparse-spacing-probability [gui] [visual_stimulus]
+
+Implemented owner-requested per-pattern regenerated eligible layouts, minimum
+center-to-center distance in mm and independent activation probability instead of
+density. V04 revision 29 and root register, version-2 models/schemas/example,
+Asset Generator decimal controls/preview, Protocol selection summary, CLI and shared
+preparation now agree. Independent seeded layout/activation/polarity streams preserve
+replay and layout when probability changes. Retain actual counts per pattern;
+512-byte/cell scratch admission is shared. Old density recipes require explicit
+updates; existing generated protocols remain executable. ARCH-002 uses the existing
+focused generator and property controls without new dependencies or state owners.
+
+Final authoring/resource selection:143 passed,2 deselected; focused Protocol GUI:
+5 passed. Scoped Ruff/format, Windows-target mypy19 sources,14-schema drift and
+772-module boundaries/zero violations pass; git diff --check passes. Initial shell
+brace syntax failed before execution; a before-validator broke strict tuple JSON
+parsing and was removed; updated obsolete pixel goldens after invariant tests.
+Formatting failures were corrected and checks rerun. Current evidence and limits:
+reports/runtime-evidence-2026-10-27/sparse-spacing/validation.json and owning visual
+report. No physical presentation, full-load timing or running-app restart performed.
+Greedy layouts ensure spacing, not uniform coverage; rig checklist remains open.
+Concurrent image/display work preserved. Implementation task complete.
+
+
+### 2026-10-27 — external-stimulus-selection [gui] [visual_stimulus]
+
+Completed owner-requested texture/media selection from any location under G01rev348,
+retaining E07 root-relative protocols. Shared picker resolver imports external files
+into isolated Assets folders, preserving recipe-relative image dependencies and
+originals; copy failures remove partial imports. Existing in-root selection stays
+unchanged. ARCH-002 reuses focused resolver/dependency validation, with no new library
+or runtime changes. Preserved concurrent work; updated owning decision/register/report.
+
+16 focused offscreen GUI checks and 3 backend recipe-preparation regressions pass;
+Ruff/check/format two files, Windows-target mypy one source, 772-module boundaries
+(zero violations) and git diff --check pass. Initial demo fixture failed because its
+output was inside the repository; sandbox Temp retry could not create pytest child
+folders. Final GUI run passes using authorized external visualization root. Evidence:
+reports/runtime-evidence-2026-10-27/external-stimulus/validation.json. Implementation
+complete; no managed restart, native picker or physical/full-load validation performed.
+
+### 2026-10-27 - [gui] [visual_stimulus] Fold test image
+
+Created Desktop/CephVR_Fold_Test.png (2815x1753) from the saved runtime_gui.json
+calibration: labelled unfolded regions, orientation marks,10mm grid and10mm circles
+in Front-reference physical coordinates. Used deterministic drawing for exact geometry;
+PNG decode/visual inspection and Desktop-copy hash equality pass. Calibration hash and
+source-region metadata remain in the chat visualization directory. No protocol or
+calibration settings changed; physical verification remains under image-resize-source-rig.
+
+
+### 2026-10-27 — asset-bars-controls [gui] [visual_stimulus]
+
+Completed shared bar width (mm), blur and two colors as the only horizontal/vertical
+bar controls; spatial period and square tile derive as twice width with a fixed512
+raster. All asset RGB(A) channels share one row. G01rev349/register and authoring
+contract record behavior, including legacy bars adopting line width in the editor
+without modifying source files until Save. ARCH-002 reuses existing normalizer,
+backend rasterizer and focused UI/test modules; no new dependency or runtime policy.
+60 authoring tests pass,2 platform tests skip; Ruff/format16 files, Windows-target
+mypy14 sources,772-module boundaries/zero violations and whitespace pass. Initial
+Windows glob search failed harmlessly and was retried; import/format fixes applied.
+Evidence: reports/runtime-evidence-2026-10-27/asset-bars/validation.json. Existing
+rig authoring checks remain pending; no running GUI restart or physical projection.
+Concurrent changes preserved. Task complete.
+
+### 2026-10-27 — asset-file-buttons [gui]
+
+Removed New, Export, Undo, Redo, Assets folder and Calibration from the shared
+Generate assets action list; Open/Save occupy one row with unchanged handlers.
+Updated G01rev350/register and the owning Visual Stimulus report. ARCH-002 review
+uses deletion and the existing grid with no new state/dependency; concurrent edits
+preserved.14 offscreen authoring GUI tests pass,2 native cases deselected, and a
+direct Qt assertion confirms exactly Open/Save buttons/actions. Scoped Ruff/check,
+format, Windows-target mypy and772-module boundaries pass (zero violations;
+existing unrelated size advisories). Initial pytest hit sandbox Temp creation
+errors; explicit writable visualization basetemp rerun passes. Whitespace check
+passes. No running GUI restart/native/physical acceptance. Task complete.
+
+### 2026-10-27 — asset-grating-selector [gui]
+
+Removed separate horizontal/vertical bars from Generate assets pattern choices;
+Grating retains orientation. Saved bar recipes remain readable with their existing
+controls and a saved-recipe placeholder, without a selectable bar option. Updated
+G01rev351/register, authoring contract and owning report. ARCH-002 review keeps
+existing catalogue/backend parsing and Qt controls; no dependency or conversion.
+60 authoring tests pass,2 native cases deselected; scoped Ruff/check/format,
+Windows-target mypy and772-module boundary check pass with zero violations and
+existing unrelated size advisories. Whitespace passes. No native restart or physical
+checks. Concurrent work preserved; task complete.
+
+
+### 2026-10-27 — asset-fixed-tile [gui] [visual_stimulus]
+
+Removed Tile width and Phase cycles controls; all selectable texture patterns use
+100 × 100 mm, grating phase zero. Shared authoring normalization applies on Open,
+preview and Save; related noise/dot derived scales use the shared size. Concurrent
+selector refinement preserved: saved-only legacy bars retain width-derived tiles.
+Updated G01rev352/register, authoring contract and owning report. ARCH-002 reuses
+focused normalizer/property form and existing tests, removes conditional Open
+normalization, adds no dependency/backend algorithm.72 authoring tests pass,2
+platform cases skip; Ruff/format16 files, Windows-target mypy14 sources,772-module
+boundaries/zero violations and whitespace pass. Evidence:
+reports/runtime-evidence-2026-10-27/fixed-tile/validation.json. No app restart or
+physical projection; rig checks remain open. Task complete.
+
+### 2026-10-27 — asset-parameter-columns [gui]
+
+Paired simple authoring parameters in equal-width two-column rows; colors, paths,
+seeds and nested groups span both columns. RGB(A) channels stay in one row.
+ARCH-002 review reused the existing property owner and Qt grid, with a small local
+placement helper and no dependencies/state changes. Updated G01rev353/register,
+authoring contract and owning report; preserved concurrent fixed-tile work.
+74 authoring tests pass,2 native cases deselected;300/620px layout/edit checks pass.
+Initial narrow case exposed wrapped-caption top misalignment, fixed with AlignTop.
+Scoped Ruff/check/format, Windows-target mypy and772-module boundary checks pass
+with zero violations and unrelated size advisories; whitespace passes. Offscreen
+screenshot geometry inspected in chat visualization directory, but fallback glyphs
+prevent typography validation. No app restart/native themed or physical checks.
+Task complete.
+
+
+### 2026-10-27 — asset-preview-cleanup [gui] [visual_stimulus]
+
+Removed preview footer text, Cancel generation action/button and routine preview
+status messages; kept errors/Save feedback and automatic worker cancellation.
+Source review confirmed previews already use in-memory pixel/mesh/compiled data;
+no preview-file writes existed. New regression blocks writes during texture/arena
+preview, then verifies Save creates the design file. ARCH-002 removes unused UI
+wiring/caption calculation without a new dependency/state owner. Updated G01rev354,
+register, authoring contract and report.76 authoring tests pass,2 native/rig cases
+deselected; scoped Ruff/format3 files, Windows-target mypy2 sources,772-module
+boundaries/zero violations and whitespace pass. Evidence:
+reports/runtime-evidence-2026-10-27/preview-cleanup/validation.json. No app restart,
+native or physical acceptance. Concurrent extent/parameter changes preserved.
+Task complete; existing authoring rig checks remain open.
+
+
+### 2026-10-27 — asset-remove-cycle-fit [gui] [visual_stimulus]
+
+Removed Fit cycles to tile from the property form and set authored grating fitting
+false on Open/preview/Save, implementing the existing G01 rule. Direct backend
+loading unchanged; concurrent extent/seam work preserved and remains open.
+ARCH-002: two focused changes, existing test extensions, no new dependencies.
+76 authoring tests pass,2 native/rig deselected; Ruff/format4 files, Windows-target
+mypy2 sources and772-module boundaries/zero violations pass. Evidence:
+reports/runtime-evidence-2026-10-27/no-cycle-fit/validation.json. No app restart or
+physical validation. Task complete.
+
+### 2026-10-27 — asset-parameter-order [gui]
+
+Moved color parameters last and hid texture resolution; Grating now starts with
+spatial period/orientation, then sharpness. Hidden resolution retains saved values
+and default512 behavior. ARCH-002 review uses stable ordering and an existing
+hidden-field list without data mutation/dependencies. Updated G01rev355/register,
+authoring contract and report.76 authoring tests pass,2 native cases deselected;
+300/620px geometry cases verify ordering, RGB, edits and retained1024 resolution.
+Scoped Ruff/check/format, Windows-target mypy and772-module boundaries pass with
+zero violations and existing unrelated size advisories; whitespace passes.
+Concurrent extent/preview work preserved. No app restart/native/physical checks.
+Task complete.
+
+
+### 2026-10-27 — asset-preview-crt [gui]
+
+Excluded Asset Generator texture pixel widget from existing CRT scanline/vignette
+film; surrounding style unchanged. G02rev170/register and runtime report updated.
+ARCH-002 reuses shared clipping with a widget identity, no new dependency/state.
+Two offscreen checks pass across resize/style toggles; scoped Ruff/format4 files,
+Windows-target mypy2 sources and772-module boundaries/zero violations pass.
+Evidence: reports/runtime-evidence-2026-10-27/preview-crt/validation.json. Initial
+Windows glob search failed harmlessly and was retried. No running-app restart or
+native live appearance check. Concurrent work preserved; task complete.
+
+
+### 2026-10-27 — texture-independent-extent [gui] [visual_stimulus]
+
+Recorded owner clarification in G01rev355/V04rev30, root register and authoring
+contract: every procedural texture is independent of preview/presentation extent;
+exact grating period/angle, stable seeded overlap, average random-dot density and
+statistical filtered-noise black fraction. This supersedes fixed100mm asset tiles.
+Concurrent preview cleanup, parameter order and CRT work preserved; G01 revision355
+includes the intervening cleanup/parameter changes. Source review identifies100mm
+preview wrapping and runtime image-tile import as the seam/scale coupling. Updated
+owning report and retained implementation task; no runtime fix or coding completion
+claimed. ARCH-002 review favors one focused sampler shared by consumers with existing
+resource/lifecycle owners; no new dependency or process selected.
+
+Validation: inline Python Markdown check passes854 local links/anchors across six
+changed documents; git diff --check passes with existing CRLF normalization warnings.
+Initial link-check attempt incorrectly rejected directory links; corrected to exists()
+and reran successfully. An amendment patch encountered a concurrent G01 revision
+change and was reread/rebased; no concurrent content removed. HEAD provenance:
+c7881b1f87a5d294383d310ebcb92630cd825099 plus dirty working tree. Source investigation
+included two nonexistent guessed test paths and unsupported Windows wildcard paths;
+retried with rg discovery. No implementation tests, running-app restart or rig checks.
+Implementation remains open in TODO; accepted design is distinct from implemented
+and validated behavior.
+
+### 2026-10-27 — asset-fixed-resolution [gui] [visual_stimulus]
+
+Fixed authoring texture resolution at512 via the existing recipe normalizer and
+one shared constant; direct runtime loading remains unchanged. Confirmed Save
+writes recipe JSON only, with generated pixels in memory and no companion PNG.
+Updated G01rev356/register, authoring contract and report. ARCH-002 keeps existing
+state/output ownership and dependencies.76 authoring tests pass,2 native cases
+deselected; catalogue tests verify32→512 normalization on Save, unchanged inputs,
+pixel agreement and absence of companion PNGs. Scoped Ruff/check/format,
+Windows-target mypy and772-module boundaries pass with zero violations and existing
+unrelated size advisories; whitespace passes. Concurrent extent work preserved.
+No app restart/native/physical checks. Task complete.
+
+### 2026-10-27 — asset-remove-resolution [gui] [visual_stimulus]
+
+Removed resolution from new authoring documents and saved recipe JSON; Open/Save
+strip params.texture_resolution and legacy params/root size aliases. Removed the
+redundant authoring constant; raster generation uses the existing backend default.
+Direct runtime parsing is unchanged. G01rev358/register and authoring contract
+replace the earlier persisted512 rule; owning report updated in place. ARCH-002
+review reuses the normalizer with no new dependency or output path.76 authoring
+tests pass,2 native cases deselected; all catalogue roundtrips check stripped fields,
+unchanged source documents, pixel equality and no companion PNG. Scoped Ruff/check,
+format, Windows-target mypy and772-module boundaries pass with zero violations and
+existing unrelated size advisories; whitespace passes. Concurrent protocol/extent
+work preserved. No running-app restart/native/physical checks. Task complete.
+
+### 2026-10-27 — protocol-random-rules [gui]
+
+New Protocol variation rules offer only Random with Minimum/Maximum/Resolution;
+existing V08 seeded declarations vary repetitions without adding source epochs.
+Stable method data IDs preserve saved Values/Sweep lists, including categorical
+legacy rules. G01/register amended; runtime report/evidence updated. ARCH-002
+reuses existing focused owners, no dependency/compiler/ownership change; widget
+size advisory reviewed as cohesive UI/restore behavior. Existing tests now restore
+legacy list drafts explicitly and focus visible random controls after deferred UI
+updates.26 GUI and3 compiler cases pass; strengthened single-source/five-repetition
+save/reload assertion passes separately. Scoped Ruff/format, three-source Windows
+mypy,772-module boundaries/zero violations and whitespace pass. Initial temp-path
+and demo-asset-location failures resolved with external writable basetemp; initial
+legacy/focus assertions and line endings corrected. Failed Windows glob searches
+retried with directory searches. Full commands/outcomes/limits in
+reports/runtime-evidence-2026-10-27/protocol-random-rules/context.md.
+No running-app restart/native/rig acceptance. Concurrent changes preserved; task complete.
+
+### 2026-10-27 - [gui] [visual_stimulus] Correct Fold Bottom source placement
+
+`image-fold-bottom-layout` completed under V04rev31. Owner screenshot exposed
+Front/Bottom source-region mixing after only the dummy image had been rearranged.
+Corrected the shared Fold map: side row at source Y=0, Bottom beneath its maximum
+height; preserved Front scale and orientation. Updated contract/register/report/rig
+checklist. Existing helper and behavior tests reused under ARCH-002; no dependency.
+219 backend tests pass/18 deselected;15 focused rendering cases include12 native
+GL comparisons;two GUI tests check all four distinct regions with flips. Actual
+Desktop Bottom_Below PNG and saved calibration produce four correct face colours
+in local preview. Scoped Ruff/format3 files, Windows-target mypy1 source and772-module
+boundaries pass (zero violations). Raw checks: image-fold/bottom-layout-checks.json.
+No running GUI restart or physical/full-workload acceptance; use corrected Bottom_Below
+file after reload, not the earlier vertically flipped image.
+
+### 2026-10-27 — asset-preview-1080p [gui] [visual_stimulus]
+
+Raised texture previews to fit1920×1080 with physical aspect preserved: square
+1080×1080,16:9 1920×1080. Source procedural raster resolution follows the longest
+preview dimension in an ephemeral document, preserving saved files and source state.
+ARCH-002 reuses backend generation/limits and existing preview sampler without new
+dependencies/state. G01rev359/register, contract and owning report updated.
+78 authoring tests pass,2 native cases deselected; square/landscape/portrait/source
+sampling and unchanged saved-document checks pass. Initial sparse-margin assertion
+used a fixed640px crop; now checks the same physical fraction at the higher size.
+Scoped Ruff/check/format, Windows-target mypy and772-module boundaries pass with
+zero violations and unrelated size advisories; whitespace passes. Initial policy
+search used an unsupported glob/nonexistent guessed path, retried successfully.
+Concurrent work preserved. No app restart/native/physical checks. Task complete.
+
+### 2026-10-27 - [gui] [visual_stimulus] First texture selection in an empty row
+
+`texture-picker-empty-row` completed: reproduced Choose an asset for checker and
+Gaussian recipes when compact rows cleared preset placeholder paths. Candidate
+validation now skips only the asset being replaced by the already resolved picker
+selection; existing commit, epoch isolation and other-field validation remain intact.
+No architecture change (G01 external-file/atomic-edit rules), dependency or new state.
+16 focused GUI cases pass, including invalid-motion rollback. All eight actual
+Desktop/Pedro Gaussian recipes select/apply offscreen with byte-identical imported
+copies and unchanged originals. Ruff/format2 files, Windows-target mypy1 source and
+773-module boundaries pass/zero violations; whitespace checked. Initial two regression
+cases failed as expected before the fix. Evidence: reports/runtime-evidence-2026-10-27/texture-picker/.
+Running GUI not restarted; native picker/physical presentation remain unverified.
+
+### 2026-10-27 — asset-dropdown-options [gui]
+
+Fixed clipped authoring View/Screen dropdowns by moving the existing MotionSource
+minimum-height fix into shared SelectionBox, bounded by maxVisibleItems. Native
+Dashboard reproduction showed34px viewport for two25px rows; corrected viewport
+shows both rows. ARCH-002 reuses the existing mechanism and removes its duplicate
+override; no dependency/state/custom popup added. G02rev171/register and owning
+runtime report updated. Three native Standard/Retro/Amber cases,78 offscreen
+authoring cases and12 shared popup/motion/camera regressions pass. Scoped Ruff/check/
+format, Win32 mypy two sources and773-module boundaries pass/zero violations;
+whitespace passes, unrelated size advisories remain. Initial mypy optional-view
+assert restored; exploratory QListView/delegate alternatives did not fix sizing
+and were discarded. A transient architecture-file write failed and a fresh-read
+retry succeeded; concurrent entries preserved. Native before/after screenshots
+inspected; evidence: reports/runtime-evidence-2026-10-27/dropdown-options/context.json.
+Running managed GUI not restarted; no physical/full-load checks. Task complete.
+
+### 2026-10-27 - [gui] Epoch durations show milliseconds
+
+`epoch-duration-milliseconds` completed under G01rev360. Entry/default/caption and
+timeline labels use hh:mm:ss.mmm, with finer existing precision retained. Exact
+parser strips only presentation trailing zeros; legacy whole-second entries remain
+valid. Shared formatting reused under ARCH-002 without dependencies or engine changes.
+21 focused duration/timeline/subgroup GUI cases pass (offscreen, external basetemp);
+initial duplication assertion exposed20 versus20.000 and passed after normalization.
+Ruff/check/format4 files, Windows-target mypy3 sources and773-module boundaries
+pass/zero violations. Register and runtime report updated; running GUI not restarted.
+
+
+### 2026-10-27 - pre-ready-camera-cleanup [acquisition] [visual_stimulus]
+
+Owner diagnostics and retained emergency report identify Tracking/Behavioral cleanup
+rejection after missing-PNG Setup failure. E05/E06/E08/A03 repair accepts exact
+pre-Ready device/ring release proofs using retained Setup and transfer identities;
+no fabricated attachment/Ready or relaxed missing-proof rejection. ARCH-002 reuses
+the existing evidence owner/ledger and parameterized tests; no dependency/deadline
+change.986 acquisition tests pass/4 skip/3 deselect,246 focused integration and21
+admission cases pass. Full-owner Ruff/format and Win32 mypy188 sources pass;
+773-module boundaries have zero violations/unrelated size advisories. Initial async
+socket stalls interrupted/rerun with loopback permission;94 workspace temp fixture
+errors pass with external authorized basetemp. Initial mypy variable collision fixed.
+Five missing unused asset declarations found in saved configuration; corrected offline
+protocol removes only these and passes parser/existence/unchanged-non-assets checks.
+Reports/evidence updated. Report-maintenance script text-decoding errors corrected
+using byte-preserving tracking edits. Whole-tree whitespace reports unrelated
+stimulus-schema EOF blank line; scoped edited-file check passes. No live configuration,
+external source, device or app changed/restarted. Local fix complete; native failure/
+retry acceptance remains in TODO and existing rig scope.
+
+### 2026-10-27 — protocol-asset-variation [gui] [visual_stimulus]
+
+Implemented Asset / Random from folder for image/video/image-tile layers. Uses
+compatible direct-file snapshots, existing external import, persisted candidate IDs
+and V08 seeded per-repetition resolution with unchanged source epochs. G01rev361 /
+V08rev8, register, source contract and generated source/prepared schemas updated.
+Fixed candidate restoration against canonical source assets and editing-row seed/key
+rebasing so adding another rule preserves committed choices. ARCH-002 moves legacy
+list parsing to its existing value owner; folder IO stays in a focused field. No new
+dependency/process. Widget/reference-model size advisories reviewed as cohesive.
+35 GUI and38 backend cases (plus3 subtests) pass;2 final mode/folder geometry cases
+pass at four widths. Scoped Ruff/check/format13 files, Windows-target mypy11 sources,
+14-schema drift and773-module boundaries pass/zero violations. Initial candidate/
+seed regressions, import/type checks and a concurrent milliseconds expectation were
+corrected; dated failure and final raw evidence retained together. Guessed missing
+source paths retried with actual files. Reports and existing rig checklist updated;
+no live app restart/media decoding/physical/full-load acceptance claimed. Evidence:
+reports/runtime-evidence-2026-10-27/protocol-asset-variation/context.md.
+Concurrent work preserved; local implementation task complete.
+Final verification: six added-context links/anchors and G01/V08 register consistency pass; initial whitespace check found an extra source-contract EOF blank line, removed before the final check.
+
+
+### 2026-10-27 - asset-save-as [gui] [visual_stimulus]
+
+Generate assets Save now always opens Save As, including Ctrl+S and texture export.
+Previous destination is suggested; choosing a new path preserves earlier files and
+cancellation preserves draft/saved/path state. Action renamed Save as. G01rev362,
+root register and authoring contract updated. ARCH-002 removes one dialog bypass,
+reuses existing dependency rebasing/atomic write and owning tests; no new state or
+dependency.80 authoring tests pass/5 deselected; texture and arena repeat-save/cancel
+cases verify actual file bytes. Scoped Ruff/format, Win32 mypy and773-module boundaries
+pass/zero violations; unrelated size advisories retained. Initial invalid regression
+seed fields blocked in a warning dialog; interrupted and replaced with valid fields,
+with unexpected warnings failing tests. Evidence: asset-save-as/validation.txt in the
+Oct27 runtime evidence directory. No running app restart or native/physical acceptance.
+Local task complete; normal relaunch needed to use changed behavior.
+
+### 2026-10-27 — texture orientation variation investigation [gui] [visual_stimulus]
+
+Read-only source review for the owner's linked-orientation/direction question:
+recipe grating orientation is baked into generated pixels; its x*cos(theta)+y*sin(theta)
+axis is normal to the bars. Current numeric repetition rules do not expose texture
+orientation. G01 keeps rig translation independent of rotation, so coupling requires
+an explicit opt-in rule, coordinate conversion and defined Direction-rule precedence.
+Recommend a focused orientation override with optional derived movement direction,
+resolved with the existing seeded repetition plan. This is an unaccepted proposal,
+not implementation authority or a recorded architecture amendment. No runtime checks
+performed; one guessed catalogue path was absent, followed by source rg discovery.
+
+
+### 2026-10-27 - asset-preview-after-save [gui] [visual_stimulus]
+
+Reproduced post-save control ownership defect in both texture/arena GUI tests:
+save_design returns a copy while existing callbacks retained old dictionaries.
+Visible80 left current texture period12/arena width500. Successful Save now uses
+the existing rebuild operation to bind controls to the normalized document and
+schedule preview generation with the current path. G01 behavior repair; no policy
+amendment. ARCH-002 reuses existing focused owners/tests, no dependency/state/helper.
+Both regressions fail before/pass after;82 authoring tests pass/5 deselect, including
+actual changed pixels, next saved JSON values, history and repeated-save editing.
+Scoped Ruff/format, Win32 mypy and773-module boundaries pass/zero violations;
+existing unrelated size advisories remain. Report and dated evidence updated.
+Scoped whitespace check passes. No live app restart/native/physical/full-load pass;
+historical files unchanged and affected saved values need review. Local task complete.
+
+
+### 2026-10-27 — protocol-remove-sparse-button [gui]
+
+Removed the Sparse noise button from Protocol type per owner request; recorded
+G01rev363 and updated the root register/runtime report. Retained existing import
+helpers and adapted their owning test to call the helper and verify no panel
+buttons. ARCH-002 review chose deletion with no new dependency/state or extraction.
+Five focused GUI tests pass; initial default pytest-temp failure resolved with
+explicit authorized basetemp. Scoped Ruff/check/format, Win32 mypy and773-module
+boundaries pass (zero violations; existing cohesion advisories). Initial format
+line-ending mismatch corrected; whitespace passes. No live restart/native/rig
+validation. Local task complete.
+
+
+### 2026-10-27 — bottom-linked-translation-direction [visual_stimulus] [gui]
+
+Investigated owner-reported Bottom/wall direction opposition under V02. Source
+review distinguishes direct source translation from intentionally negative follower
+phase rates (shader UV plus phase); no confirmed sign defect. Existing synthetic
+linked-translation test passes1/23 deselected; actual protocol/calibration and
+physical versus preview context remain unidentified. Recorded unresolved finding
+in current report/TODO; no implementation/config/live device changes. Two Windows
+wildcard rg attempts failed and were replaced with directory searches. No rig pass.
+
+### 2026-10-27 — protocol-type-incomplete-rows [gui]
+
+Allowed protocol type changes despite missing assets/invalid row parameters under
+G01rev364; root register and runtime report updated. Complete edits apply quietly,
+otherwise navigation retains the committed category schedule and resets unfinished
+edits. Save/preview/E07 validation remains unchanged. ARCH-002 reuses existing
+passive validation and snapshot/template owners, removes duplicate flush and adds
+no dependency/state owner; existing ProtocolPage size advisory reviewed as cohesive.
+10 focused offscreen GUI cases pass/1023 deselected; scoped Ruff/check/format4 files,
+Win32 mypy3 sources and776-module boundaries pass/zero violations. Initial valid
+duration fixture used7.250s below E05 minimum; corrected to67.250s after diagnostic
+reruns. Scoped whitespace passes. One wildcard search failed and was retried against
+the directory. Concurrent work preserved. No live app restart/native/rig acceptance;
+normal relaunch needed. Local task complete.
+
+
+### 2026-10-27 — bottom-linked-translation-direction clarification [gui] [visual_stimulus]
+
+Owner identifies preview rather than physical output. PreviewRig corner placement
+reflects Bottom surface X after portrait correction; G01 defines that axis along
+tank front/back and currently requires folded optical compensation. Existing
+owning test explicitly expects reflection:16 pass/1017 deselected. Updated report
+and pending task to distinguish confirmed preview mapping from unverified physical
+correctness. No code/configuration changes; actual protocol/live app not inspected.
+One Windows wildcard search failed; subsequent directory/file reads succeeded.
+
+
+### 2026-10-27 — bottom-linked-translation-direction fix [gui] [visual_stimulus]
+
+Owner authorizes removing preview reflection while retaining physical calibration.
+G01rev365/register now specifies portrait undo only for planning/native rig previews;
+both focused placement owners corrected without changing calibrated outputs, saved
+flips or motion rates. ARCH-002 review: no dependency/state/extraction needed;
+extended existing behavior tests. Updated GUI expectation fails2 Bottom-X cases
+before/pass16 afterward; phase/direct-translation/spin replay gives19 focused GUI
+passes. Four native offscreen GPU cases and124 non-Windows rendering cases pass;
+Ruff/check/format4 files, Win32 mypy2 and777-module boundaries pass/zero violations.
+Initial doc read used default encoding and failed; retried UTF-8. Initial format
+check found line endings; formatter applied and final check passes. One Windows
+wildcard search failed; explicit reads supplied context. Report/evidence updated;
+local task complete, no managed-app restart/live preview/physical acceptance.
+
+
+### 2026-10-27 — texture-independent-extent [gui] [visual_stimulus]
+
+Owner authorizes completing raster-independent recipes and per-projector X/Y physical scaling under G01/V04/V15. ARCH-002 review selects one focused physical-field sampler and existing protected resource/GL lifetimes; legacy recipes retain their raster interpretation. No dependencies or processes added. Implementation and validation in progress; concurrent Grating work is preserved. Initial log edit hit Windows default encoding; corrected explicitly to UTF-8.
+
+
+### 2026-10-27 — protocol-media-families started [gui] [visual_stimulus]
+
+Owner authorizes two protocol categories and six per-projector/layer epoch families, including architecture amendments. Source review found category motion/link restrictions and sparse preparation limited to whole trials. ARCH-002 review reuses existing seeded sparse generator, protected image preparation/residency and row editors; no new dependency or process. Existing concurrent Grating/physical-field changes are preserved. Implementation and focused verification underway.
+
+
+### 2026-10-27 — repo-disposable-cleanup [repo] [visual_stimulus]
+
+Owner-requested cleanup removed 1,994 disposable files (71,416,745 bytes)
+from 122 root test/cache/build and source/test/tool/contract bytecode directories,
+plus the tracked 148,658-byte protocols/dummy_bottom_direction_95s.json.
+Native PowerShell deletion verified workspace containment, no reparse points and
+no tracked content in recursively removed directories. Added authoring build/dist
+ignore entries and repaired the current Visual Stimulus report's dummy-protocol
+reference; tracked history and dated validation remain. Kept the separately
+owner-requested three-trial Gaussian protocol, environment/SDK/native bindings,
+operator settings, source changes and all reports/recordings/emergency evidence
+under GOV-001. No evidence-age purge or cleanup tool introduced.
+
+Deletion inventory shows only the intended tracked dummy protocol removed.
+Root disposable test/build absence, retained protocol JSON parsing, report reference
+and both ignore rules pass; scoped git diff --check passes. Initial absence
+assertion caught pytest/Ruff caches recreated during concurrent development; these
+new active caches are left alone and the scoped verification passes. CIM process
+inspection was unavailable; Get-Process returned no Python/tool matches at that
+instant, which does not establish ongoing inactivity. No runtime tests needed for
+file cleanup; no runtime/rig acceptance claimed. Concurrent TODO/LOG/source work
+preserved. Task complete.
+
+### 2026-10-27 — photodiode-mode-selector investigation [gui] [visual_stimulus]
+
+Owner requests two photodiode modes in Devices/Projectors/Sync. Reviewed V22/G01,
+shared rules, current queue/report and renderer/editor persistence paths. Existing
+V22 is alternating frames with HHHLLL every60 submissions, whereas request says60s;
+asked owner to distinguish seconds from preserving the existing frame-count mode.
+No runtime changes until this experiment-timing choice is resolved. ARCH-002 review
+favors the existing shared pattern helper and focused editor/file/model owners,
+without dependencies or a separate timing loop. Concurrent source work preserved.
+One Windows wildcard search failed; directory searches recovered the references.
+
+### 2026-10-27 — grating-stimulus implementation checks [gui] [visual_stimulus]
+
+Grating now has Asset, Orientation and Speed, with owner-confirmed across-bar drift.
+New numeric orientation shares canonical rotation assignments and Cartesian motion;
+stationary orientation persists, and compact Asset choices retain candidate periods.
+Specialized recipe interpretation ignores saved angles without rewriting source files;
+legacy one-period rasters and concurrent physical-field recipes both pass GUI and
+protected eager/deferred preparation checks.8 projector/version GUI and4 protected
+resource cases pass; source type/reference validation and static checks are in progress.
+Initial resource assertion compared two same-colour columns; changed to a full
+contrast check. Concurrent protocol-media-families changes removed Looming's selector
+and permit Media motion: broader tests currently fail obsolete Looming-selection,
+Media asset-only parameter-count, motion-rejection and ignored-link assertions.
+The Asset test now checks its own invariant (Asset remains selectable). Preserving
+that chat's workflow changes; full raw output is in the dated grating-stimulus evidence.
+No runtime restart or native/physical acceptance. Final focused verification and
+reports/decisions remain in progress; no task completion claimed yet.
+
+
+### 2026-10-27 — photodiode-mode-selector complete [gui] [visual_stimulus]
+
+Owner confirmed existing60-frame landmarks plus plain every-frame alternation.
+Implemented Sync selector, legacy defaults, saved/runtime/prepared mode retention,
+trial and placement rendering; mode is fixed during active placement. Updated
+G01rev366/V22rev9/E14rev216/register, policy version20/digest and canonical schemas.
+ARCH-002 reuses existing focused helpers with explicit assembly handoffs and no
+new dependencies/state/processes; oversized assembly/engine cohesion assessed in
+owning report.33 focused tests and144 broader backend tests (3 subtests) pass;
+Ruff/check/format17 files, Win32 mypy14,14 schemas and780-module boundaries pass.
+Initial temp-path errors recovered with workspace basetemp; two type issues fixed.
+Earlier concurrent media/image test failures no longer reproduce. Concurrent
+schema drift regenerated/rechecked; source work preserved. Raw evidence and current
+assessment are linked in reports/visual_stimulus.md. Native UI, detector trace and
+full-load acceptance remain in the rig checklist; running app was not restarted.
+Local requested implementation complete; no physical validation claimed.
+
+### 2026-10-27 — grating-stimulus complete [gui] [visual_stimulus]
+
+Implemented the owner-confirmed Grating type with Asset, Orientation and Speed only.
+Across-bar rig direction and absolute rotation assignments stay coupled; zero speed
+retains orientation. Shared versioned recipe interpretation ignores saved angles in
+memory, retains original bytes and supports legacy periodic rasters/current physical
+fields. Numeric and Asset repetitions remain compact; selected Asset periods follow
+candidate identities. Updated G01/V04/V08/register, source/lifetime contracts and
+canonical schemas; runtime/Visual Stimulus reports and single rig checklist updated.
+ARCH-002 uses focused motion/recipe/validation helpers with existing sampler,
+source-protection, preparation and transition owners; no new dependencies/processes.
+Remaining source/model/preparation size advisories assessed as cohesive assembly.
+69 GUI and156 compiler/config/resource cases plus3 subtests pass in scoped regression
+selections. Final later-snapshot checks pass8 Grating GUI and5 Grating backend cases;
+Ruff/check/format33 files, Windows-target mypy30 sources,14 schemas,780-module
+boundaries/zero violations and whitespace pass. Five new links/anchors and three
+register entries agree. Earlier concurrent category/removed-selector assertions are
+retained as excluded migration evidence, not passes. Restored160 mojibake character
+sequences in the shared GUI test file without changing assertions; later source
+caption-local shadowing, import/format and schema drift were corrected and rechecked.
+Raw outcomes/commands/hashes and earlier attempt limits are in
+reports/runtime-evidence-2026-10-27/grating-stimulus/context.md. No managed-app restart,
+physical projection, optical timing or full-load acceptance. Concurrent media-family,
+physical-field and photodiode work preserved; local requested task complete.
+
+### 2026-10-27 — repo-chat-reconcile-sync started [repo]
+
+Owner requested monitoring all active chats, routine decision handling, deferral of
+new runtime behavior/logic decisions, TODO/LOG reconciliation, cleanup, commit and
+sync. Inventory found Update protocol stimulus types and Clarify projector texture
+scaling active in this shared workspace; both notified of the coordination boundary.
+The scaling chat hit a model-capacity error and was asked to resume its remaining
+validation/documentation. Initial Python TODO write failed with Invalid argument;
+the patch tool successfully recorded this task instead. Existing changes and raw
+evidence are preserved; no implementation or rig pass claimed by this step.
+
+### 2026-10-27 — repo-chat-reconcile-sync regression checks [gui] [visual_stimulus] [acquisition] [repo]
+
+Fetched origin with authorized elevated access after sandbox FETCH_HEAD denial;
+HEAD and origin/main match. Acquisition cleanup/window-coordinate checks pass71
+cases (2 platform cases deselected) with loopback permission; the initial sandbox
+run stalled after21 cases and was interrupted, not counted as a pass. The texture
+chat's broader run exposed a stale display-cleanup fixture: fake GLFW creation did
+not isolate the added Windows shell operation. ARCH-002 review selects one owning
+test monkeypatch beside existing window mocks; no runtime code, logic, dependency
+or cleanup assertion changed. All31 display-calibration rendering tests pass;
+scoped Ruff/check/format pass. Native/rig acceptance remains open under E15.
+
+
+### 2026-10-27 — texture-independent-extent completed locally [gui] [visual_stimulus]
+
+Implemented the owner's raster-independent texture request under G01/V04/V14/V15:
+versioned physical-field files, shared CPU sampling, protected/deferred resource
+preparation, direct per-output GL evaluation in mm, Protocol import/planning preview,
+per-mapping physical-coordinate evidence, and physical arena baking. Legacy runtime
+recipes remain compatible; existing finite images retain their pixels. Corrected
+glTF Y origin in authoring preview and clamped baked field boundaries. ARCH-002 uses
+focused field/shader modules and existing allocation/cleanup owners; no dependency
+or process added. G01/V04 refinements and the root register are recorded; concurrent
+subsequent revisions are preserved. Contract/report/rig checklist updated in place.
+
+Final retained results:272 affected backend cases plus3 subtests,20 authenticated
+communication cases,95 authoring cases,31 selected GUI cases and39 offscreen native
+GL cases pass. Scoped Ruff/check/format26 files, Win32 mypy21 sources and785-module
+boundaries pass/zero violations; global whitespace passes. Native checks cover every
+screen identity with unequal axis pitch, both loading paths and large field windows.
+Raw commands, results, scope and source hashes:reports/runtime-evidence-2026-10-27/texture-field/context.md.
+
+Initial runs exposed superseded tile assertions, native fake settings missing new
+concurrent model fields, and two minimal fixture-shape assumptions in the new builder
+path; corrected with owning tests unchanged in strength and focused resource records.
+First log edit used Windows default encoding; corrected to UTF-8. A repository-local
+pytest temp root conflicted with demo-asset containment; final tests use the authorized
+external visualization root. Combined authoring/GUI theme setup crashed; isolated
+suites pass. Full owner runs initially stalled in Windows asyncio socketpair setup;
+permitted loopback tests pass. Earlier broad results retain two backend/eight Grating
+GUI failures from concurrent migration/display work; no full-suite green claim.
+
+Local field work complete. Managed app not restarted; actual projector optics,
+physical size measurements, mixed DPI and full-load acceptance remain in the existing
+rig task. No commit/sync performed; the monitoring chat owns repository reconciliation.
+
+
+### 2026-10-27 — texture-independent-extent final documentation [gui] [visual_stimulus]
+
+Reconciled the completed field task, retained457 scoped passing cases plus3 subtests,
+raw broader migration/display failures, source hashes and offscreen context identity.
+The final contract/context local-link check passes26 targets/anchors; whitespace
+passes. The monitor identified the display failure's missing fake shell boundary and
+owns its later recheck; original evidence remains truthful. Existing rig handoff stays
+open. No further runtime behavior decision, commit or sync performed.
+
+
+### 2026-10-27 — protocol-media-families integration [gui] [visual_stimulus]
+
+Owner extensions forwarded by the clarification chat authorize inline Sparse noise
+and Grating parameters, shared pattern/phase only for linked Gratings, and architecture
+updates. Owner explicitly selected Bottom-based unfolding with possible wall-corner
+seams. Direct fields reuse procedural rendering; sparse rows retain appearance/seed
+and reuse bounded cancellable image generation. G01/V02/V04/V07 updated alongside
+contracts. Source review found a pre-existing V07 runtime gap: renderer state ignored
+explicit epoch assignments while planning preview applied them. A new regression
+fails at initialization (37-degree assignment remained zero); shared InstanceState
+now applies resolved assignments after initialization/compatible transition and
+preview reuses that owner. This repairs the required grating orientation guarantee,
+not a new policy choice. Validation ongoing; no native/optical acceptance claimed.
+
+
+### 2026-10-27 — protocol-media-families runtime scope clarification [visual_stimulus] [gui]
+
+The monitoring chat forwards the owner's deferral of new runtime decisions. The
+required orientation repair is therefore restricted to marked Grating occurrence
+assignments, within the explicitly authorized Grating behavior, not a general runtime
+assignment rollout. The briefly implemented generic application is replaced by that
+narrow guard; non-Grating renderer behavior remains unchanged and preview retains
+its existing non-Grating assignment handling. The broader observed source gap is
+recorded as runtime-general-epoch-assignments for separately authorized work. No
+new runtime policy is inferred from the generic defect. Focused checks will cover
+the guarded behavior and shared Grating phase retention.
+
+
+### 2026-10-27 — protocol-media-families completed locally [gui] [visual_stimulus]
+
+Implemented two protocol categories and six per-projector/layer epoch choices,
+inline Uniform/Sparse noise/Grating, and owner-approved linked-Grating shared
+pattern/phase with Bottom-centered unfolding. Independent Gratings and existing
+Texture drift motion links retain their separate rules. Sparse rows preserve the
+epoch clock and exact seeded appearance/resources, with cancellation and actual
+image evidence. G01rev369/V02rev18/V04rev34/V07rev6, register, contracts and generated
+schemas updated; reports and single rig checklist reconciled. Marked-Grating-only
+assignment repair passes its previously failing 37-degree initialization regression;
+non-Grating runtime assignment rollout is explicitly deferred. Observed pre-existing
+Grating profile policy inventory omission is separately queued as a declaration
+consistency follow-up; no runtime failure or policy change is claimed there.
+
+Final focused evidence:32 GUI cases,299 backend cases plus3 subtests,3 synthetic
+native waveform cases; Ruff/check/format49 files, Win32 mypy44 sources,14 schema
+checks,785-module boundaries/zero violations,261 local link/anchor targets and
+whitespace pass. ARCH-002 uses focused inline/geometry owners with existing mechanisms;
+remaining source-model/form/lifecycle size advisories were reviewed as cohesive.
+Early failed assertions/fixtures, callback exception, interim static/indentation
+errors and interrupted xdist runs remain described in the dated evidence; no broad
+suite pass is claimed. Broad serial integration and git commit/sync belong to the
+monitoring chat. Source hashes, commands, limits and raw callback failure are retained
+in reports/runtime-evidence-2026-10-27/protocol-media-families/. Normal app relaunch,
+optical seams/projector timing, mixed DPI and scientific full load remain rig work.
+Requested local implementation complete; no managed-app restart or git action.
+
+Final protocol-media-families verification correction: the last format audit caught
+CRLF in the recently edited shared-field geometry helper. Ruff normalized that one
+file; all49 scoped lint/format and44-source Win32 mypy checks then pass again.
+Source hashes refreshed; this was a formatting correction, with no behavior change.
+
+
+### 2026-10-27 — repo-chat-reconcile-sync validation and cleanup [repo] [gui] [visual_stimulus] [acquisition]
+
+Both monitored chats are idle/completed; texture fields and media families have
+recorded local completion and retained rig follow-ups. New general non-Grating
+epoch-assignment changes remain Deferred. The accepted-profile inventory follow-up
+remains Next; no new policy choice is made here. Moved two stale preview acceptance
+entries from In progress to Next, removed excess blank lines, corrected the resolved
+display-fixture status, and added gui-suite-reconciliation for the incomplete broad
+serial run. The full GUI process exited1 after failure markers beyond79%, without a
+summary/traceback; cause and individual failures are unverified, not a pass.
+
+Final settled tree:620 Visual Stimulus cases plus3 subtests pass (55 deselected);
+32 focused offscreen GUI cases pass (1027 deselected). Earlier monitor checks pass71
+acquisition/window cases and31 display cases. Full affected-owner Ruff/check/format
+(431 files), Win32 mypy406 sources,14 schemas,785-module boundaries/zero violations
+and whitespace pass. Fixed only the stale test shell boundary and direct defining-
+module import; ARCH-002 reuse preserves runtime behavior. Source hashes and commands
+are in reports/runtime-evidence-2026-10-27/repo-reconciliation/.
+
+The implementation chat already retained its callback diagnostic in dated evidence
+and removed its root scratch files. Removed this monitor's disposable display test
+fixture after absolute workspace-containment/reparse checks. Earlier broad cleanup
+is retained in LOG; no emergency report, experiment output or evidence-age purge.
+No managed-app restart or rig acceptance. Reconciliation is ready for the requested
+commit and sync; git completion will be recorded after successful publication.

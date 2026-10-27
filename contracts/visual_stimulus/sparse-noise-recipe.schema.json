@@ -20,7 +20,7 @@
   "additionalProperties": false,
   "properties": {
     "format_version": {
-      "const": 1,
+      "const": 2,
       "title": "Format Version",
       "type": "integer"
     },
@@ -34,6 +34,28 @@
       "minimum": 0,
       "title": "Seed",
       "type": "integer"
+    },
+    "square_size_mm": {
+      "exclusiveMinimum": 0,
+      "title": "Square Size Mm",
+      "type": "number"
+    },
+    "min_active_cell_distance_mm": {
+      "minimum": 0,
+      "title": "Min Active Cell Distance Mm",
+      "type": "number"
+    },
+    "active_probability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Active Probability",
+      "type": "number"
+    },
+    "background_linear": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Background Linear",
+      "type": "number"
     },
     "surfaces": {
       "items": {
@@ -50,23 +72,6 @@
       "title": "Surfaces",
       "type": "array"
     },
-    "square_size_mm": {
-      "exclusiveMinimum": 0,
-      "title": "Square Size Mm",
-      "type": "number"
-    },
-    "active_density": {
-      "maximum": 1,
-      "minimum": 0,
-      "title": "Active Density",
-      "type": "number"
-    },
-    "background_linear": {
-      "maximum": 1,
-      "minimum": 0,
-      "title": "Background Linear",
-      "type": "number"
-    },
     "pattern_count": {
       "exclusiveMinimum": 0,
       "title": "Pattern Count",
@@ -80,10 +85,11 @@
     "format_version",
     "kind",
     "seed",
-    "surfaces",
     "square_size_mm",
-    "active_density",
+    "min_active_cell_distance_mm",
+    "active_probability",
     "background_linear",
+    "surfaces",
     "pattern_count",
     "pattern_duration"
   ],

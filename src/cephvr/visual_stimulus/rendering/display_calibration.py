@@ -225,7 +225,9 @@ class DisplayCalibrationRenderer:
                     display.calibration_view,
                     output_id,
                     self.placement,
-                    photodiode_level(self.photodiode_index),
+                    photodiode_level(
+                        self.photodiode_index, self.placement.photodiode_mode
+                    ),
                 )
                 continue
             if display.calibration_view == "reference_bars":

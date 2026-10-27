@@ -384,6 +384,7 @@ class ProjectorsPanel(DevicePanel):
         }
         self.loading = True
         self.timing.pulse.setChecked(profile.get("photodiode_enabled", True) is True)
+        self.timing.set_pulse_mode(profile.get("photodiode_mode", "landmarks"))
         self.timing.set_presentation_mode(
             profile.get("presentation_mode", "photodiode_only_vsync")
         )
@@ -505,6 +506,7 @@ class ProjectorsPanel(DevicePanel):
             assignments=self.assignments,
             participation=self.participation,
             pulse_enabled=self.timing.pulse.isChecked(),
+            photodiode_mode=self.timing.pulse_mode,
             pulse_output_identity=(
                 str(pulse_output_identity)
                 if pulse_output_identity is not None
@@ -734,6 +736,7 @@ class ProjectorsPanel(DevicePanel):
                 rows,
                 monitors,
                 view=view,
+                photodiode_mode=self.timing.pulse_mode,
                 photodiode_patches=initial_photodiode_patches(self)
                 if view == "photodiode_placement"
                 else None,

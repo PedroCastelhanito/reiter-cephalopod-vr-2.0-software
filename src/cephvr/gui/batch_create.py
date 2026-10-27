@@ -97,7 +97,7 @@ class BatchCreate(QWidget):
         self.insert.currentIndexChanged.connect(self.arrange_insertion)
         for caption, control in (
             ("Stimulus mode", self.composer.mode),
-            ("Duration (hh:mm:ss)", self.composer.duration),
+            ("Duration (hh:mm:ss.mmm)", self.composer.duration),
             ("Copies" if append_only else "Repetitions", self.repetitions),
             ("Batch label", self.composer.batch_label),
             ("Insert", self.insert),
@@ -256,7 +256,8 @@ class BatchCreate(QWidget):
             targets,
             projectors,
             node.settings,
-            presentation=reference.category == "media_presentation",
+            presentation=False,
+            random_only=self.compact_random,
         )
         self.rule_ids[row] = [s.instance_id for s in node.settings]
         row.remove.clicked.connect(lambda: self.remove_variation(row))
@@ -283,7 +284,7 @@ class BatchCreate(QWidget):
         if not 1 <= repetitions <= 999:
             raise ValueError("Use 1–999 repetitions in the authoring editor")
         active_rows = self.rows
-        random_rows = [row for row in active_rows if row.method.currentIndex() == 2]
+        random_rows = [row for row in active_rows if row.method.currentData() == 2]
         rules = tuple(
             rule
             for row in active_rows
@@ -317,6 +318,11 @@ class BatchCreate(QWidget):
         node = program.sequence[0]
         assert isinstance(node, Epoch)
         for row in active_rows:
+            if (
+                row.parameter.currentData() == "Asset"
+                and not row.asset_folder.editor.text().strip()
+            ):
+                raise ValueError("Choose a folder for the Asset variation")
             for index in row.target_indices():
                 layer = row.targets[index][2]
                 if (

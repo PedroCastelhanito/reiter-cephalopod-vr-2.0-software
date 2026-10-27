@@ -37,6 +37,155 @@ from cephvr.gui.view import DashboardView, Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
 
 
+def _sparse_gui_recipe(root, name, seed):
+    import json
+
+    data = {
+        "format_version": 2,
+        "kind": "sparse_noise",
+        "seed": seed,
+        "surfaces": ["bottom"],
+        "square_size_mm": 5.0,
+        "min_active_cell_distance_mm": 0.0,
+        "active_probability": 0.2,
+        "background_linear": 0.5,
+        "pattern_count": 3,
+        "pattern_duration": {"seconds": "20"},
+    }
+    path = root / name
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+def test_sparse_noise_gui_adds_independent_recipes_and_round_trips(window, tmp_path):
+    import json
+    import time
+
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.gui.protocol_snapshot import capture_protocol, restore_protocol
+
+    page = window.protocol
+    page.assets.folders["root"].editor.setText(str(tmp_path))
+    page.sparse_geometry = lambda: make_compile_context().display.geometry
+    page.editor.timeline.set_screens(("Front", "Left"))
+    before = [draft.program for draft in page.editor.drafts]
+    _sparse_gui_recipe(tmp_path, "front.json", 123)
+    left = _sparse_gui_recipe(tmp_path, "left.json", 456)
+    appearance = json.loads(left.read_text())
+    for key in ("surfaces", "pattern_count", "pattern_duration"):
+        del appearance[key]
+    left.write_text(json.dumps(appearance))
+    assert not page.program_card.findChildren(QPushButton)
+    page.open_sparse_noise()
+    dialog = page.sparse_dialog
+    assert dialog is not None
+    assert tuple(dialog.fields) == ("front", "left")
+    dialog.pattern_count.setValue(3)
+    dialog.pattern_duration.setText("25")
+    for face in dialog.fields:
+        dialog.fields[face].editor.setText(f"{face}.json")
+        dialog.describe(face)
+    assert "Seed 123" in dialog.summaries["front"].text()
+    assert "Seed 456" in dialog.summaries["left"].text()
+    dialog.prepare_button.click()
+    deadline = time.monotonic() + 10
+    while page.sparse_dialog is not None and time.monotonic() < deadline:
+        QTest.qWait(10)
+    assert page.sparse_dialog is None
+    assert [draft.program for draft in page.editor.drafts[:-1]] == before
+    assert page.editor.drafts[-1].name == "Sparse noise"
+    draft = page.editor.drafts[-1]
+    assert len(draft.exported_program.sequence) == 3
+    for asset in draft.exported_program.assets:
+        assert (tmp_path / asset.logical_path).is_file()
+    provenance = Path(draft.path).parent
+    assert (
+        json.loads((provenance / "front/provenance.json").read_text())["recipe"]["seed"]
+        == 123
+    )
+    saved = capture_protocol(page)
+    restore_protocol(page, saved)
+    page.open_sparse_noise()
+    assert page.sparse_dialog.fields["left"].editor.text() == "left.json"
+    assert page.sparse_dialog.pattern_count.value() == 3
+    assert page.sparse_dialog.pattern_duration.text() == "25"
+    page.sparse_dialog.reject()
+
+
+@pytest.mark.parametrize("cancel_kind", ["cancel", "authority", "geometry"])
+def test_sparse_noise_gui_discards_late_completion(
+    window, tmp_path, monkeypatch, cancel_kind
+):
+    import threading
+
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.gui import sparse_noise_dialog
+
+    started, release, finished = threading.Event(), threading.Event(), threading.Event()
+
+    def blocked(selections, root, geometry, *, pattern_count, pattern_duration, check):
+        started.set()
+        try:
+            release.wait(5)
+            check()
+            raise AssertionError("Cancelled job must not complete")
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(sparse_noise_dialog, "prepare_selection", blocked)
+    page = window.protocol
+    page.assets.folders["root"].editor.setText(str(tmp_path))
+    page.sparse_geometry = lambda: make_compile_context().display.geometry
+    page.editor.timeline.set_screens(("Front",))
+    before = len(page.editor.drafts)
+    _sparse_gui_recipe(tmp_path, "recipe.json", 123)
+    page.open_sparse_noise()
+    dialog = page.sparse_dialog
+    dialog.fields["front"].editor.setText("recipe.json")
+    dialog.start()
+    assert started.wait(2)
+    if cancel_kind == "authority":
+        page.apply_view(DashboardView())
+    elif cancel_kind == "geometry":
+        page.sparse_geometry = lambda: (
+            make_compile_context().display.geometry.model_copy(
+                update={"frame_id": "changed"}
+            )
+        )
+        dialog.poll()
+    else:
+        dialog.reject()
+    release.set()
+    assert finished.wait(2)
+    QApplication.processEvents()
+    assert page.sparse_dialog is None
+    assert len(page.editor.drafts) == before
+
+
+def test_sparse_noise_gui_invalid_recipe_and_outside_root_do_not_start(
+    window, tmp_path
+):
+    from tests.visual_stimulus.support import make_compile_context
+
+    page = window.protocol
+    root = tmp_path / "assets"
+    root.mkdir()
+    _sparse_gui_recipe(tmp_path, "outside.json", 1)
+    page.assets.folders["root"].editor.setText(str(root))
+    page.sparse_geometry = lambda: make_compile_context().display.geometry
+    page.editor.timeline.set_screens(("Front",))
+    page.open_sparse_noise()
+    dialog = page.sparse_dialog
+    dialog.fields["front"].editor.setText("../outside.json")
+    dialog.start()
+    assert not dialog.running
+    assert dialog.notice.text()
+    assert not (root / "sparse-noise").exists()
+    dialog.reject()
+
+
 def show_previews(target: DashboardWindow) -> None:
     """Enter the runtime layout that hosts previews (Start swaps it in; G02)."""
     target.apply_view(replace(target.dashboard.view, phase=Phase.RUNNING))
@@ -883,7 +1032,7 @@ def test_protocol_config_round_trip_retains_complete_schedule(
 
     page = window.protocol
     data = capture_protocol(page)
-    data["mode"], data["asset_root"] = "Closed-loop", "C:/实验/assets"
+    data["mode"], data["asset_root"] = "Closed-loop", "C:/å®žéªŒ/assets"
     trial = data["trials"][0]
     trial.update(
         name="First",
@@ -933,7 +1082,7 @@ def test_microcontroller_config_load_is_local_and_collects_for_normal_submission
 ) -> None:
     panel = window.devices.microcontroller
     data = panel.snapshots.capture()
-    data.update(port="COM91", firmware_path="C:/实验/firmware.ino")
+    data.update(port="COM91", firmware_path="C:/å®žéªŒ/firmware.ino")
     data["trial_state"] = {"pin": "D8", "enabled": False}
     data["projector_flip"] = {"pin": "D2", "enabled": True}
     data["camera_pins"] = {
@@ -1131,7 +1280,7 @@ def test_tab_config_buttons_roundtrip_into_fresh_gui(
 
     try:
         original = capture(window)
-        path = tmp_path / f"{owner}-实验.json"
+        path = tmp_path / f"{owner}-å®žéªŒ.json"
         writer = files(window)
         assert writer.save_button.isEnabled()
         writer.save_button.click()
@@ -1854,6 +2003,9 @@ def test_shared_theme_styles_menu_bar_and_menu_states(app: QApplication) -> None
     assert f"QMenu {{ background: {COLORS.card}; color: {COLORS.text};" in current
     assert "QMenu::item:selected" in current
     assert "QMenu::item:disabled" in current
+    assert app.windowIcon().isNull()  # Keep the native application-icon fallback.
+    child = QWidget()
+    assert child.windowIcon().cacheKey() == app.windowIcon().cacheKey()
 
 
 def test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking(
@@ -8363,21 +8515,38 @@ def test_restored_managed_draft_assigns_eye_and_adds_output_locally(
 
 def test_managed_window_waits_for_history_save_before_closing(
     app: QApplication,
+    monkeypatch,
 ) -> None:
+    from PyQt6.QtWidgets import QMessageBox
+
     from cephvr.gui.managed_window import ManagedDashboardWindow
 
     managed = ManagedDashboardWindow(sample=True)
     requests: list[bool] = []
     managed.close_requested.connect(lambda: requests.append(True))
     managed.show()
-    app.processEvents()
-
+    managed.open_stimulus_authoring()
+    editor = managed.authoring_page.editor
+    editor.documents[0]["params"]["seed"] = 123
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *a: QMessageBox.StandardButton.No
+    )
+    assert not managed.close()
+    assert requests == []
+    prompts = []
+    monkeypatch.setattr(
+        QMessageBox,
+        "question",
+        lambda *a: prompts.append(True) or QMessageBox.StandardButton.Yes,
+    )
     managed.close()
     assert requests == [True]
     assert managed.isVisible()
-
+    assert not editor.jobs.closed.is_set()
     managed.finish_close()
     assert not managed.isVisible()
+    assert editor.jobs.closed.is_set()
+    assert prompts == [True]
     managed.deleteLater()
     app.processEvents()
 
@@ -9390,6 +9559,18 @@ def test_wheel_never_changes_input_values(
 def test_epoch_clock_duration_retains_fractional_precision() -> None:
     from cephvr.gui.formatting import clock_duration, parse_clock_duration
 
+    for seconds, expected in (
+        ("0", "00:00:00.000"),
+        ("3", "00:00:03.000"),
+        ("3.25", "00:00:03.250"),
+        ("0.001", "00:00:00.001"),
+        ("59.999", "00:00:59.999"),
+        ("3600", "01:00:00.000"),
+    ):
+        from decimal import Decimal
+
+        assert clock_duration(seconds) == expected
+        assert Decimal(parse_clock_duration(expected)) == Decimal(seconds)
     assert parse_clock_duration("01:02:03.000000001") == "3723.000000001"
     assert clock_duration("3723.000000001") == "01:02:03.000000001"
     for invalid in ("62", "1:02:03", "00:60:00", "00:00:60", "00:00:00.1234567890"):
@@ -9857,7 +10038,13 @@ def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
 def test_protocol_participation_and_asset_pages(window: DashboardWindow) -> None:
     from cephvr.gui.window import PAGES
 
-    assert PAGES == ("Dashboard", "Protocol", "Devices", "Tracking")
+    assert PAGES == (
+        "Dashboard",
+        "Protocol",
+        "Devices",
+        "Tracking",
+        "Generate assets",
+    )
     panel = window.protocol
     assert panel.assets.parent() is panel.config_scroll.widget()
     assert panel.program_card.isAncestorOf(panel.session_mode)
@@ -10649,7 +10836,7 @@ def test_motion_auto_commit_and_invalid_edit_undo(
     editor.subgroup.apply()
     assert not editor.flush_parameters()
     editor.undo()
-    assert editor.subgroup.composer.duration.text() == "00:01:00"
+    assert editor.subgroup.composer.duration.text() == "00:01:00.000"
     assert editor.program == original
 
 
@@ -10755,7 +10942,7 @@ def test_stationary_texture_speed_variation_defaults_toward_rig_right(
             editor.program, editor.path, editor.program.sequence[0].epoch_id, "70"
         )
     )
-    assert editor.sequence_summary.text() == "1 epoch · 1 block · 00:01:10"
+    assert editor.sequence_summary.text() == "1 epoch · 1 block · 00:01:10.000"
 
 
 @pytest.mark.parametrize("gap", ["0", "1.25"])
@@ -10917,18 +11104,20 @@ def test_batch_create_variations_preview_insert_and_reload(
     create.composer.add_file("Texture", str(path), "Left")
     create.composer.duration.setText("00:00:05.000000001")
     create.add_variation()
-    create.rows[0].method.setCurrentIndex(1)
+    create.rows[0].restore(create.rows[0].draft().model_copy(update={"method": 1}))
     create.rows[0].values.setText("0, 1, 0.25")
     create.refresh_preview()
     assert create.add_button.isEnabled(), create.summary.text()
     assert create.summary.text().startswith("5 epochs")
-    create.rows[0].method.setCurrentIndex(0)
+    create.rows[0].restore(create.rows[0].draft().model_copy(update={"method": 0}))
     create.rows[0].values.setText("10, 20, 40")
     create.add_variation()
     create.rows[1].parameter.setCurrentIndex(
         create.rows[1].parameter.findData("Direction")
     )
-    create.rows[1].values.setText("0, 180")
+    create.rows[1].restore(
+        create.rows[1].draft().model_copy(update={"method": 0, "values": "0, 180"})
+    )
     create.refresh_preview()
     assert create.add_button.isEnabled()
     assert create.notice.text()
@@ -13499,7 +13688,7 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     row.values.setText("10, 20, 30")
     for width in (1280, 720):
         window.resize(width, 1000)
-        for method in ("Values", "Sweep (min, max, step)", "Random"):
+        for method in ("Random",):
             row.method.setCurrentText(method)
             QTest.qWait(30)
             app.processEvents()
@@ -13525,8 +13714,8 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
                 row.layer,
                 row.parameter,
                 row.method,
-                row.values,
             ]
+            assert row.method.count() == 1 and row.values.isHidden()
             if method == "Random":
                 controls.extend(row.random_fields.values())
             for control in controls:
@@ -13603,7 +13792,7 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     assert not hasattr(create, "combine")
     row.target.setCurrentIndex(row.target.findText("All projectors"))
     row.layer.setCurrentIndex(row.layer.findData(1))
-    row.values.setText("10, 20")
+    row.restore(row.draft().model_copy(update={"method": 0, "values": "10, 20"}))
     epochs = expand_program(
         create.candidate(), seed_decimal="0", max_expanded_epochs=2000
     )
@@ -14295,7 +14484,8 @@ def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
     assert editor.program == before
 
 
-def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
+@pytest.mark.parametrize("fit", ["Source", "Fold"])
+def test_image_fit_and_motion_are_saved_without_texture_phase(window, app, fit):
     from cephvr.gui.image_parameters import ImageParameters
     from cephvr.gui.protocol_document import blank_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
@@ -14306,8 +14496,13 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     editor.parameters.bind(editor.program, (0,), 0, "Left")
     parameters = editor.parameters
     image = next(form for form in parameters.forms if isinstance(form, ImageParameters))
-    assert image.fit.currentText() == "Contain"
-    image.fit.setCurrentText("Cover")
+    assert image.fit.currentText() == "Resize"
+    assert [image.fit.itemText(i) for i in range(image.fit.count())] == [
+        "Resize",
+        "Source",
+        "Fold",
+    ]
+    image.fit.setCurrentText(fit)
     image.motion.speed.setText("12")
     image.motion.direction.setText("90")
     image.motion.edited = True
@@ -14315,9 +14510,10 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     assert parameters.apply()
     restored = parse_program_json(editor.program.model_dump_json(), max_bytes=1_048_576)
     setting = restored.sequence[0].settings[parameters.layer_index]
-    assert setting.kind == "image" and setting.fit == "cover"
-    assert setting.initial.x == 4
-    assert setting.motion.y.function.value == pytest.approx(12)
+    assert setting.kind == "image" and setting.fit == fit.lower()
+    assert not image.initial_x.isEnabled()
+    assert not image.motion.speed.isEnabled()
+    assert setting.initial.x != 4
     assert "phase_x" not in setting.model_dump()
 
 
@@ -14399,6 +14595,43 @@ def test_image_fit_preview_contains_crops_and_stretches(app):
     assert covered.pixelColor(10, 256).blue() > 200
     stretched = fitted_image(source, "stretch", 1, 1)
     assert stretched.pixelColor(5, 50).red() > 200
+
+
+def test_source_preview_uses_original_size_not_thumbnail_size(app):
+    from PyQt6.QtGui import QColor, QImage
+
+    from cephvr.gui.trial_preview_canvas import screen_image
+
+    thumbnail = QImage(100, 100, QImage.Format.Format_RGB32)
+    thumbnail.fill(QColor("red"))
+    # The same 100px thumbnail represents either a large or small original image.
+    cropped = screen_image(thumbnail, "source", (3000, 3000), (1200, 800))
+    padded = screen_image(thumbnail, "source", (300, 300), (1200, 800))
+    assert cropped.pixelColor(0, 0).red() == 255
+    assert padded.pixelColor(0, 0).alpha() == 0
+    assert padded.pixelColor(padded.width() // 2, padded.height() // 2).red() == 255
+
+
+@pytest.mark.parametrize("fit", ["contain", "cover", "stretch"])
+def test_image_fit_editor_preserves_imported_legacy_modes(app, fit):
+    from cephvr.gui.image_parameters import ImageParameters
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    setting = (
+        add_stimulus(blank_program(), 0, "Image", ("Front",)).sequence[0].settings[0]
+    )
+    values = setting.model_dump(mode="json")
+    values["fit"] = fit
+    schema = type(setting).model_json_schema()
+    editor = ImageParameters(values, schema, schema["$defs"])
+    assert editor.fit.count() == 3
+    assert editor.fit.currentIndex() == -1
+    assert editor.read()["fit"] == fit
+    assert editor.initial_x.isEnabled()
+    editor.fit.setCurrentText("Resize")
+    assert editor.read() == {"fit": "resize"}
+    assert not editor.initial_x.isEnabled()
 
 
 def test_batch_image_fit_preserves_legacy_default_and_rejects_invalid_values():
@@ -17445,7 +17678,7 @@ def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
     editor.group_editor.repetitions.setText("300")
     editor.group_editor.mark_changed()
     assert editor.group_editor.apply()
-    assert editor.subgroup.composer.duration.text() == "00:00:01"
+    assert editor.subgroup.composer.duration.text() == "00:00:01.000"
     editor.subgroup.apply()
     editor.hierarchy.contents.block_actions.add.click()
     assert editor.path == (0, 1)
@@ -17526,7 +17759,8 @@ def test_empty_variation_blocks_add_group_without_losing_draft(window, app, samp
     app.processEvents()
     row = form.rows[0]
     assert row.values.text() == ""
-    row.values.setFocus()
+    row.random_fields["minimum"].setText("invalid")
+    row.random_fields["minimum"].setFocus()
     app.processEvents()
     before = editor.snapshot()
     QTest.mouseClick(editor.timeline.block_actions.add, Qt.MouseButton.LeftButton)
@@ -17571,7 +17805,8 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(
     row = form.rows[0]
     row.target.setCurrentIndex(row.target.findText("All projectors"))
     row.parameter.setCurrentIndex(row.parameter.findData("Speed"))
-    row.values.setText("10,20,30")
+    # Exercise compatibility with an existing explicit-list protocol.
+    row.restore(row.draft().model_copy(update={"method": 0, "values": "10,20,30"}))
     row.values.editingFinished.emit()
     app.processEvents()
     assert not form.notice.text()
@@ -17713,14 +17948,20 @@ def test_large_random_group_stays_compact_and_layer_controls_are_indices(
         form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
     form.add_variation()
     row = form.rows[0]
+    assert [row.method.itemText(i) for i in range(row.method.count())] == ["Random"]
+    assert row.draft().method == 2
+    assert row.values.isHidden() and row.values_caption.isHidden()
+    assert row.random_captions[-1].text() == "Resolution"
+    assert row.parameter.findData("At end") == -1
     row.target.setCurrentIndex(row.target.findText("All projectors"))
-    row.method.setCurrentText("Random")
     row.random_fields["maximum"].setText("1000000")
     form.apply()
     assert not form.notice.text() and not form.dirty
     small = editor.program
+    assert len(small.sequence[0].body) == 1
+    assert len(form.paths) == 1
     initial_rules = small.sequence[0].body[0].repetition_rules
-    for repetitions in (10000, 1000000):
+    for repetitions in (5, 10000, 1000000):
         with patch(
             "cephvr.gui.subgroup_repetitions.resolve_repetition",
             wraps=resolve_repetition,
@@ -17736,6 +17977,18 @@ def test_large_random_group_stays_compact_and_layer_controls_are_indices(
         assert len(program.model_dump_json()) < len(small.model_dump_json()) + 128
         assert not epoch.repetition_settings
         assert len(editor.hierarchy.contents.nodes) == len(editor.timeline.nodes) == 1
+        assert len(program.sequence[0].body) == 1
+        if repetitions == 5:
+            from cephvr.visual_stimulus.compiler.expansion import expand_program
+            from cephvr.visual_stimulus.config.models.program_model import Program
+
+            restored = Program.model_validate_json(program.model_dump_json())
+            plan = expand_program(restored, seed_decimal="0", max_expanded_epochs=5)
+            assert len(plan) == 5
+            assert [e.settings for e in plan] == [
+                resolve_repetition(epoch.settings, epoch.repetition_rules, i)
+                for i in range(5)
+            ]
         assert resolve_repetition(
             epoch.settings, epoch.repetition_rules, repetitions - 1
         ) != resolve_repetition(epoch.settings, epoch.repetition_rules, 0)
@@ -17983,9 +18236,113 @@ def test_texture_recipe_file_selection_preserves_original_json(tmp_path: Path) -
     design.write_text('{"kind":"arena","pattern":"checker"}')
     with pytest.raises(ValueError, match="texture"):
         resolve_stimulus_file(str(tmp_path), str(design), texture=True)
-    outside = tmp_path.parent / "outside.JSON"
-    with pytest.raises(ValueError):
+    outside = tmp_path / "missing.JSON"
+    with pytest.raises(OSError):
         resolve_stimulus_file(str(tmp_path), str(outside), texture=True)
+
+
+@pytest.mark.parametrize(
+    "suffix", [".png", ".tiff", ".jpg", ".mp4", ".mkv", ".glb", ".JSON"]
+)
+def test_external_stimulus_selection_imports_without_overwriting(tmp_path, suffix):
+    from cephvr.gui.stimulus_files import resolve_stimulus_file
+
+    root = tmp_path / "assets"
+    source = tmp_path / "external" / f"texture{suffix}"
+    root.mkdir()
+    source.parent.mkdir()
+    original = b'{"pattern":"checker","params":{"tile_width_mm":20}}'
+    source.write_bytes(original)
+    existing = root / source.name
+    existing.write_bytes(b"keep existing asset")
+    first = resolve_stimulus_file(str(root), str(source), texture=True)
+    imported = root / first.path
+    assert imported.is_relative_to(root) and imported != existing
+    assert imported.read_bytes() == source.read_bytes() == original
+    assert existing.read_bytes() == b"keep existing asset"
+    assert resolve_stimulus_file(str(root), str(imported), texture=True) == first
+    source.write_bytes(original + b"\n")
+    second = resolve_stimulus_file(str(root), str(source), texture=True)
+    assert first.path != second.path
+    assert imported.read_bytes() == original
+    if suffix == ".JSON":
+        assert first.tile_width_mm == first.tile_height_mm == 20
+
+
+def test_external_texture_import_preserves_relative_image_dependency(tmp_path):
+    from cephvr.gui.stimulus_files import resolve_stimulus_file
+    from cephvr.visual_stimulus.config.models.program_model import Asset
+    from cephvr.visual_stimulus.resources.recipe_dependencies import image_dependency
+    from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
+
+    root = tmp_path / "assets"
+    root.mkdir()
+    source = tmp_path / "texture.json"
+    raw = b'{"pattern":"image","params":{"texture_path":"images/tile.png"}}'
+    source.write_bytes(raw)
+    image = tmp_path / "images" / "tile.png"
+    image.parent.mkdir()
+    image.write_bytes(b"original image")
+    selected = resolve_stimulus_file(str(root), str(source), texture=True)
+    asset = Asset(
+        asset_id="texture",
+        logical_path=selected.path,
+        profile=selected.profile,
+        color_override=None,
+    )
+    dependency = image_dependency(root, asset, parse_texture_recipe(raw))
+    assert dependency is not None
+    assert (root / dependency.logical_path).read_bytes() == image.read_bytes()
+    assert (root / selected.path).read_bytes() == source.read_bytes() == raw
+
+
+def test_external_stimulus_import_failure_leaves_no_partial_copy(tmp_path, monkeypatch):
+    from cephvr.gui import stimulus_files
+
+    root = tmp_path / "assets"
+    root.mkdir()
+    source = tmp_path / "texture.png"
+    source.write_bytes(b"original")
+
+    def fail_copy(source, target):
+        target.write_bytes(b"partial")
+        raise OSError("disk full")
+
+    monkeypatch.setattr(stimulus_files.shutil, "copyfile", fail_copy)
+    with pytest.raises(OSError, match="disk full"):
+        stimulus_files.resolve_stimulus_file(str(root), str(source), texture=True)
+    assert list(root.iterdir()) == []
+    assert source.read_bytes() == b"original"
+
+
+def test_external_texture_picker_round_trip_and_preview(window, tmp_path):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    root = tmp_path / "assets"
+    root.mkdir()
+    source = tmp_path / "texture.json"
+    raw = b'{"pattern":"checker","params":{"texture_resolution":16,"tile_width_mm":20}}'
+    source.write_bytes(raw)
+    editor = ParameterDocument(window)
+    editor.set_program(blank_program())
+    editor.add_stimulus("Texture")
+    panel = editor.parameters
+    panel.asset_root = str(root)
+    panel.set_media_path(next(iter(panel.asset_forms)), str(source))
+    assert panel.apply(), panel.message.text()
+    program = parse_program_json(editor.program.model_dump_json(), max_bytes=1_000_000)
+    asset = program.assets[0]
+    assert (root / asset.logical_path).read_bytes() == source.read_bytes() == raw
+    source.unlink()
+    media = PreviewMedia(program, str(root), None)
+    try:
+        image = media.image(asset.asset_id)
+        assert not image.isNull() and image.width() == image.height() == 16
+        assert not media.errors
+    finally:
+        media.close()
 
 
 def test_texture_reference_link_keeps_appearance_and_disables_reparented_motion(
@@ -18772,9 +19129,11 @@ def test_phosphor_popups_and_owned_windows_get_scanline_film(
     dialog = QDialog(window)
     try:
         window.appearance.select("amber_phosphor")
-        dialog.resize(360, 260)
+        dialog.resize(520, 260)
         pixels = []
-        for index, name in enumerate(("ExternalPreviewSlot", "TrialPreviewPixels")):
+        for index, name in enumerate(
+            ("ExternalPreviewSlot", "TrialPreviewPixels", "AssetPreviewPixels")
+        ):
             target = QWidget(dialog)
             target.setObjectName(name)
             target.setStyleSheet("background: white;")
@@ -18794,7 +19153,7 @@ def test_phosphor_popups_and_owned_windows_get_scanline_film(
                         rendered.pixelColor(target.x() + 20, y).name()
                     )
             pixels[0].move(30, 45)
-            dialog.resize(380, 280)
+            dialog.resize(540, 280)
             app.processEvents()
         window.appearance.select("standard", persist=False)
         assert film.isHidden()
@@ -20060,12 +20419,14 @@ def test_placement_bundle_uses_native_pixels_without_reference_measurements(
         blackout_zones=zones if view == "blackout_placement" else None,
         photodiode_face="Bottom",
         photodiode_patch=None if empty else pulse,
+        photodiode_mode="every_frame",
     )
     assert path.name == f"{view}.glb"
     profile = DisplayProfile.model_validate_json(
         (tmp_path / "runtime/calibration/diagnostic_display_profile.json").read_text()
     )
     assert profile.calibration_view == view
+    assert profile.photodiode_mode == "every_frame"
     assert (
         tmp_path / "runtime/calibration" / path.name
     ).read_bytes() == path.read_bytes()
@@ -21021,18 +21382,20 @@ def test_variation_cards_focus_and_remove_preserve_remaining_rules(window, app, 
         first, second = form.rows
         app.processEvents()
         window.protocol.config_scroll.ensureWidgetVisible(first)
+        window.activateWindow()
         first.target.setFocus()
+        QTest.qWait(10)
         app.processEvents()
         assert first.editing and not second.editing
         assert first.remove.isVisibleTo(first)
-        second.values.setFocus()
+        second.random_fields["maximum"].setFocus()
         app.processEvents()
         assert second.editing and not first.editing
-        second.values.setText("5, 10")
+        second.random_fields["maximum"].setText("50")
         form.remove_variation(first)
         app.processEvents()
         assert form.rows == form.variation_cards.rules == [second]
-        assert second.values.text() == "5, 10"
+        assert second.random_fields["maximum"].text() == "50"
         form.remove_variation(second)
         assert form.variation_cards.isHidden()
     finally:
@@ -22251,6 +22614,7 @@ def test_runtime_per_screen_pulses_submit_restore_and_keep_disabled_placement(wi
         mapping["output_id"] = face
     source["photodiode_output_id"] = "front"
     source["photodiode_patch"]["high_linear_rgb"] = [0.8, 0.7, 0.6]
+    source["photodiode_mode"] = "every_frame"
     base = runtime_pb2.DisplayConfiguration(profile_json=json.dumps(source))
     panel.install_configuration(base)
     panel.select_pulse_face("Left")
@@ -22261,6 +22625,8 @@ def test_runtime_per_screen_pulses_submit_restore_and_keep_disabled_placement(wi
     assert set(panel.timing.patches()) == {"Front", "Left"}
     submitted = panel.configuration_for_submit(base)
     parsed = DisplayProfile.model_validate_json(submitted.profile_json)
+    assert parsed.photodiode_mode == "every_frame"
+    assert panel.timing.pulse_mode == "every_frame"
     assert set(parsed.marker_patches) == {"front", "left"}
     assert parsed.marker_patches["left"].rect.x == 20
     assert parsed.marker_patches["front"].high_linear_rgb == (0.8, 0.7, 0.6)
@@ -22274,6 +22640,7 @@ def test_runtime_per_screen_pulses_submit_restore_and_keep_disabled_placement(wi
     assert parsed.photodiode_patches["front"].high_linear_rgb == (0.8, 0.7, 0.6)
     panel.calibration_files.apply_snapshot(json.loads(disabled.profile_json))
     assert set(panel.timing.drafts) == {"Front", "Left"}
+    assert panel.timing.pulse_mode == "every_frame"
     panel.timing.pulse.setChecked(True)
     assert set(panel.timing.patches()) == {"Front", "Left"}
     panel.timing.target.addItem("Unassigned display", "unassigned")
@@ -23046,6 +23413,55 @@ def test_preview_selection_waits_for_source_readiness(app, cancel):
     workspace.close()
     workspace.deleteLater()
     app.processEvents()
+
+
+@pytest.mark.parametrize("first_succeeds", [False, True])
+def test_preview_setup_selections_open_serially_at_start(window, first_succeeds):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+    from cephvr.gui.previews import PreviewWorkspace
+
+    panel = window.devices.cameras
+    workspace = PreviewWorkspace(window)
+    state = pb.Snapshot()
+    state.configuration.revision = 1
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.session_preview_max_hz = 20
+    for draft, role in zip(panel.drafts, ("behavioral", "tracking"), strict=True):
+        camera = getattr(settings, role)
+        camera.enabled = True
+        camera.device.device_id = draft.serial
+    calls = []
+    binding = ManagedCameras(
+        panel, SimpleNamespace(request=lambda *a, **kw: True), lambda *_: False
+    )
+
+    def submit(key, visible):
+        calls.append((key, visible, binding.queue("camera")))
+
+    workspace.visibility_requested.connect(submit)
+    workspace.apply_views(binding.install(state), allowed=True, reserve_configured=True)
+    keys = tuple(workspace.views)
+    for key in keys:
+        workspace.controls[key].click()
+    assert workspace.waiting == set(keys)
+    state.session.phase = pb.SESSION_PHASE_RUNNING
+    state.session.context.session_id = str(uuid4())
+    workspace.apply_views(binding.install(state), allowed=True)
+    assert calls == [(keys[0], True, True)]
+    assert workspace.controls[keys[1]].isChecked()
+    # Repeated snapshots while the first command is busy must keep the second choice.
+    workspace.apply_views(binding.install(state), allowed=True)
+    assert workspace.waiting == {keys[1]}
+    assert len(calls) == 1
+    binding.finished("camera", first_succeeds, "")
+    workspace.apply_views(binding.install(state), allowed=True)
+    assert calls == [(keys[0], True, True), (keys[1], True, True)]
+    binding.finished("camera", True, "")
+    workspace.apply_views(binding.install(state), allowed=True)
+    assert len(calls) == 2  # Failed Show is never automatically retried.
 
 
 def test_preview_top_row_holds_system_controls_hud_console_and_view_toggles(
@@ -23861,6 +24277,60 @@ def test_trial_preview_generates_recipe_pixels_and_caches_errors(
 
 
 @pytest.mark.parametrize("face", ["Front", "Left", "Right", "Bottom"])
+def test_physical_field_import_and_planning_preview_preserve_mm(face, app, tmp_path):
+    import json
+
+    import numpy as np
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_file_stimulus
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.visual_stimulus.resources.physical_field import raster_field
+
+    path = tmp_path / "field.json"
+    params = dict(spatial_period_mm=10.0, orientation_deg=37.0, feature_sharpness=0.25)
+    raw = json.dumps(
+        dict(
+            cephvr_asset_type="texture_field",
+            format_version=1,
+            kind="texture",
+            pattern="grating",
+            params=params,
+        )
+    ).encode()
+    path.write_bytes(raw)
+    program = add_file_stimulus(
+        blank_program(), 0, "Texture", (face,), str(tmp_path), str(path)
+    )
+    setting = program.sequence[0].settings[0]
+    assert setting.pattern.period_x.value == setting.pattern.period_y.value == 1
+    media = PreviewMedia(program, str(tmp_path), None)
+    asset = setting.pattern.asset_id
+    try:
+        assert not media.image(asset).isNull()
+        first = media.field_image(asset, 40.0, 30.0, (0.137, -0.219))
+        # Inspect actual planning pixels after the same display transfer.
+        from cephvr.generate_stimulus.textures import display_pixels
+
+        expected = display_pixels(
+            raster_field("grating", params, 40, 30, 512, 512, offset_mm=(0.137, -0.219))
+        )
+        actual = (
+            np.frombuffer(
+                first.constBits().asstring(first.sizeInBytes()), dtype=np.uint8
+            )
+            .reshape(512, first.bytesPerLine())[:, : 512 * 3]
+            .reshape(512, 512, 3)
+        )
+        np.testing.assert_allclose(actual.astype(int), expected.astype(int), atol=1)
+        media.field_image(asset, 400.0, 80.0, (0.137, -0.219))
+        assert path.read_bytes() == raw
+    finally:
+        media.close()
+    assert not media.field_recipes
+
+
+@pytest.mark.parametrize("face", ["Front", "Left", "Right", "Bottom"])
 @pytest.mark.parametrize("flip", [False, True])
 @pytest.mark.parametrize("axis", ["x", "y"])
 def test_trial_preview_maps_usable_pixels_to_screen_without_margins(
@@ -23939,7 +24409,7 @@ def test_trial_preview_maps_usable_pixels_to_screen_without_margins(
     for position in (15, 50, 105):
         first = (20, position) if axis == "x" else (position, 20)
         second = (100, position) if axis == "x" else (position, 100)
-        mirrored = flip ^ (face == "Bottom" and axis == "x")
+        mirrored = flip
         assert target.pixelColor(*first) == QColor("red" if mirrored else "blue")
         assert target.pixelColor(*second) == QColor("blue" if mirrored else "red")
     # Unused output pixels must not spill outside the physical screen.
@@ -23950,8 +24420,9 @@ def test_trial_preview_maps_usable_pixels_to_screen_without_margins(
     media.close()
 
 
-@pytest.mark.parametrize("spin", [False, True])
-def test_preview_linked_motion_moves_followers_and_replays_boundaries(spin):
+@pytest.mark.parametrize("motion", ["phase", "translation", "spin"])
+def test_preview_linked_motion_moves_followers_and_replays_boundaries(motion):
+    spin = motion == "spin"
     from cephvr.gui.projector_geometry import RigDimensions
     from cephvr.gui.protocol_document import blank_program
     from cephvr.gui.stimulus_presets import add_stimulus
@@ -23976,6 +24447,8 @@ def test_preview_linked_motion_moves_followers_and_replays_boundaries(spin):
             **(
                 {"motion": source.motion.model_copy(update={"rotation": rate})}
                 if spin
+                else {"motion": source.motion.model_copy(update={"x": rate})}
+                if motion == "translation"
                 else {"phase_x": rate}
             ),
         }
@@ -24012,7 +24485,7 @@ def test_preview_linked_motion_moves_followers_and_replays_boundaries(spin):
     def states(t):
         return {
             layer.setting.instance_id: tuple(
-                layer.values[k] for k in ("phase_x", "phase_y", "rotation")
+                layer.values[k] for k in ("x", "y", "phase_x", "phase_y", "rotation")
             )
             for layer in plan.seek(t)
         }
@@ -24020,8 +24493,8 @@ def test_preview_linked_motion_moves_followers_and_replays_boundaries(spin):
     zero, one, three = states(0), states(1_000_000_000), states(3_000_000_000)
     assert all(one[k] != zero[k] for k in one)
     for k in one:
-        assert tuple(three[k][i] - zero[k][i] for i in range(3)) == pytest.approx(
-            tuple(3 * (one[k][i] - zero[k][i]) for i in range(3))
+        assert tuple(three[k][i] - zero[k][i] for i in range(5)) == pytest.approx(
+            tuple(3 * (one[k][i] - zero[k][i]) for i in range(5))
         )
     assert states(1_000_000_000) == one
     assert states(3_000_000_000) == three
@@ -24447,7 +24920,8 @@ def test_texture_drift_preserves_mm_speed_across_projector_pitches(linked, veloc
 
 
 @pytest.mark.parametrize(
-    "subject", ["0000", "0001", "1234", "", "123", "12345", "ABCD", "12a4", "１２３４"]
+    "subject",
+    ["0000", "0001", "1234", "", "123", "12345", "ABCD", "12a4", "ï¼‘ï¼’ï¼“ï¼”"],
 )
 def test_four_digit_subject_and_species_setup(window, subject):
     from cephvr.control.v1 import types_pb2 as pb
@@ -25127,67 +25601,107 @@ def test_navigation_repaints_selection_before_page_work(window, app):
 
 
 def test_protocol_category_changes_are_atomic_and_persisted(window, app):
-    from cephvr.gui.protocol_document import TrialDraft, blank_program, review_program
+    from cephvr.gui.protocol_document import blank_program, review_program
     from cephvr.gui.protocol_snapshot import (
         capture_protocol,
         restore_protocol,
         validate_protocol,
     )
+    from cephvr.gui.stimulus_presets import add_stimulus
 
-    page = window.protocol
-    editor = page.editor
-    editor.set_program(blank_program())
+    page, editor = window.protocol, window.protocol.editor
+    editor.set_program(review_program())
     assert [page.category.itemText(i) for i in range(page.category.count())] == [
         "Media presentation",
-        "Texture drift",
         "3D navigation",
     ]
     assert page.category.currentIndex() == -1
     page.category.setCurrentText("Media presentation")
-    assert editor.program.category == "media_presentation"
+    media = editor.drafts[0].exported_program
+    assert media.instances
     editor.undo()
     assert editor.program.category is None
-    assert page.category.currentIndex() == -1
     editor.undo(redo=True)
-    assert editor.program.category == "media_presentation"
-    saved = validate_protocol(capture_protocol(page))
-    restore_protocol(page, saved)
-    assert page.category.currentText() == "Media presentation"
-    page.category.setCurrentText("Texture drift")
-    editor.drafts.append(
-        TrialDraft(
-            "Moving", review_program().model_copy(update={"category": "texture_drift"})
-        )
-    )
-    assert all(draft.program.category == "texture_drift" for draft in editor.drafts)
+    assert editor.drafts[0].exported_program == media
     editor.drafts[0].stimulus_seed_decimal = "123"
     editor.drafts[0].gap_after_seconds = "0.5"
-    drifting = [draft.exported_program for draft in editor.drafts]
+    page.category.setCurrentText("3D navigation")
+    arena = add_stimulus(
+        blank_program().model_copy(update={"category": "navigation_3d"}),
+        0,
+        "3D arena",
+        (),
+    )
+    editor.set_program(arena)
     page.category.setCurrentText("Media presentation")
-    assert page.category.currentText() == "Media presentation"
-    assert len(editor.drafts) == 1
-    assert not page.message.isVisible()
-    page.category.setCurrentText("Texture drift")
-    assert [draft.exported_program for draft in editor.drafts] == drifting
+    assert editor.drafts[0].exported_program == media
     assert editor.drafts[0].stimulus_seed_decimal == "123"
     assert editor.drafts[0].gap_after_seconds == "0.5"
     saved = validate_protocol(capture_protocol(page))
     restore_protocol(page, saved)
-    page.category.setCurrentText("Media presentation")
-    assert len(editor.drafts) == 1
-    page.category.setCurrentText("Texture drift")
-    assert [draft.exported_program for draft in editor.drafts] == drifting
+    page.category.setCurrentText("3D navigation")
+    assert editor.drafts[0].exported_program == arena
     with pytest.raises(ValueError, match="different protocol category"):
-        page.import_program(
-            blank_program().model_copy(update={"category": "media_presentation"})
-        )
-    assert [draft.exported_program for draft in editor.drafts] == drifting
-    for draft in editor.drafts:
-        draft.program = draft.program.model_copy(update={"category": None})
-    with pytest.raises(ValueError, match="whole protocol"):
-        page.import_program(
-            blank_program().model_copy(update={"category": "texture_drift"})
-        )
+        page.import_program(media)
+    page.category.setCurrentText("Media presentation")
+    assert editor.drafts[0].exported_program == media
+
+
+@pytest.mark.parametrize("unfinished", ["asset", "duration", "group"])
+def test_protocol_type_switch_allows_unfinished_rows(window, app, unfinished):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_snapshot import capture_protocol
+
+    page = window.protocol
+    editor = page.editor
+    editor.set_program(blank_program())
+    page.category.setCurrentText("Media presentation")
+    open_protocol_group(editor, generate=True)
+    composer = editor.subgroup.composer
+    composer.set_screens(("Front", "Bottom"))
+    if unfinished == "asset":
+        composer.change_type("Front", "Texture")
+        assert composer.pending_assets
+    elif unfinished == "duration":
+        composer.duration.setText("unfinished")
+    else:
+        editor.group_editor.repetitions.setText("unfinished")
+        editor.group_editor.mark_changed()
+    committed = editor.program
+    with pytest.raises(ValueError, match="current trial edit"):
+        capture_protocol(page)
+    assert not editor.flush_parameters()
+    editor.feedback.clear()
+    editor.subgroup.notice.clear()
+    editor.group_editor.message.clear()
+    page.category.setCurrentText("3D navigation")
+    app.processEvents()
+    assert editor.program.category == "navigation_3d"
+    assert editor.feedback.dialog is None
+    assert editor.subgroup.notice.dialog is None
+    assert editor.group_editor.message.dialog is None
+    page.category.setCurrentText("Media presentation")
+    assert editor.program == committed
+    assert not editor.subgroup.dirty
+    assert not composer.pending_assets
+    capture_protocol(page)
+
+
+def test_protocol_type_switch_commits_complete_edits(window, app):
+    from cephvr.gui.program_editing import node_at
+    from cephvr.gui.protocol_document import blank_program
+
+    page = window.protocol
+    editor = page.editor
+    editor.set_program(blank_program())
+    page.category.setCurrentText("Media presentation")
+    open_protocol_group(editor, generate=True)
+    editor.subgroup.composer.set_screens(("Front", "Bottom"))
+    editor.subgroup.composer.duration.setText("00:01:07.250")
+    page.category.setCurrentText("3D navigation")
+    page.category.setCurrentText("Media presentation")
+    epoch = node_at(editor.program, editor.path)
+    assert epoch.duration.duration.ns() == 67_250_000_000
 
 
 def test_category_first_visit_preserves_moving_legacy_template(window, app):
@@ -25198,23 +25712,29 @@ def test_category_first_visit_preserves_moving_legacy_template(window, app):
     page.editor.set_program(review_program())
     moving = page.editor.program
     page.category.setCurrentText("Media presentation")
-    assert page.editor.program.category == "media_presentation"
-    assert not page.editor.program.instances
-    assert not page.message.isVisible()
-    page.category.setCurrentText("Texture drift")
-    assert page.editor.drafts[0].exported_program == moving.model_copy(
-        update={"category": "texture_drift"}
+    assert page.editor.program == moving.model_copy(
+        update={"category": "media_presentation"}
     )
     saved = capture_protocol(page)
-    saved["category_templates"]["media_presentation"]["trials"][0]["program"][
-        "category"
-    ] = "texture_drift"
+    saved["trials"][0]["program"]["category"] = "texture_drift"
+    checked = validate_protocol(saved)
+    assert checked["trials"][0]["program"]["category"] == "media_presentation"
+    assert (
+        checked["trials"][0]["program"]["sequence"]
+        == saved["trials"][0]["program"]["sequence"]
+    )
+    checked["category_templates"] = {
+        "navigation_3d": {
+            "trials": checked["trials"],
+            "selected_trial": 0,
+        }
+    }
     with pytest.raises(ValueError, match="owning category"):
-        validate_protocol(saved)
+        validate_protocol(checked)
 
 
 @pytest.mark.parametrize("preset", ["Sine grating", "Image", "Video"])
-def test_presentation_rows_keep_layers_and_fades_without_motion(app, preset):
+def test_presentation_rows_keep_layers_and_fades_with_motion(app, preset):
     from cephvr.gui.epoch_composer import EpochComposer
     from cephvr.gui.epoch_motion import EpochMotion
     from cephvr.gui.protocol_document import blank_program
@@ -25227,38 +25747,21 @@ def test_presentation_rows_keep_layers_and_fades_without_motion(app, preset):
     composer.set_screens(("Front", "Bottom"))
     composer.refresh_rows()
     composer.program = add_stimulus(composer.program, 0, preset, ("Front",))
-    if preset == "Sine grating":
-        epoch = composer.program.sequence[0]
-        composer.program = composer.program.model_copy(
-            update={
-                "sequence": (
-                    epoch.model_copy(
-                        update={
-                            "settings": (
-                                epoch.settings[0].model_copy(
-                                    update={"linked_to": "unused_reference"}
-                                ),
-                            )
-                        }
-                    ),
-                )
-            }
-        )
     composer.refresh_rows()
     row = composer.rows["Front"]
     captions = [title for title, _ in row.columns]
     assert "Layer" in captions
     assert "Fade in (s)" not in captions and "Fade out (s)" not in captions
     assert row.parameters.advanced_card.isAncestorOf(row.parameters.fades.fade_in)
-    assert not any(isinstance(form, EpochMotion) for form in row.parameters.forms)
-    assert not any("Speed" in caption or "Direction" in caption for caption in captions)
+    assert any(isinstance(form, EpochMotion) for form in row.parameters.forms) == (
+        preset != "Image"
+    )
+    assert any("Direction" in caption for caption in captions) == (preset != "Video")
     assert not composer.mode.isEnabled()
     row.parameters.fades.fade_in.setText("0.5")
     row.parameters.fades.mark_changed()
     assert row.parameters.apply(), row.parameters.message.text()
     assert composer.program.sequence[0].settings[0].opacity.kind == "keyframes"
-    if preset == "Sine grating":
-        assert composer.program.sequence[0].settings[0].linked_to == "unused_reference"
     composer.add_empty_layer("Front")
     assert row.layer.count() == 2
     composer.close()
@@ -25860,3 +26363,758 @@ def test_managed_camera_acquisition_rate_rejects_unrelated_or_unusable_readback(
         ]
         == "—"
     )
+
+
+def test_stimulus_authoring_tab_preserves_draft_and_close_veto(window, monkeypatch):
+    import copy
+
+    from PyQt6.QtWidgets import QMessageBox
+
+    assert window.authoring_page.editor is None
+    window.apply_view(replace(window.dashboard.view, phase=Phase.RUNNING))
+    window.select_page(4)
+    assert window.authoring_page.editor is None
+    window.apply_view(replace(window.dashboard.view, phase=Phase.CONFIGURATION))
+    window.open_stimulus_authoring()
+    editor = window.authoring_page.editor
+    assert editor is not None and not editor.isWindow()
+    assert window.stack.currentIndex() == 4
+    editor.documents[0]["params"]["seed"] = 123
+    window.select_page(0)
+    window.select_page(4)
+    assert window.authoring_page.editor is editor
+    assert editor.documents[0]["params"]["seed"] == 123
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *a: QMessageBox.StandardButton.No
+    )
+    assert not window.close()
+    assert not editor.jobs.closed.is_set()
+    editor.saved = copy.deepcopy(editor.documents)
+    assert window.close()
+    assert editor.jobs.closed.is_set()
+
+
+@pytest.mark.parametrize("flip", [False, True])
+def test_fold_preview_matches_calibrated_runtime_coordinates(app, flip):
+    from types import SimpleNamespace as NS
+
+    from PyQt6.QtGui import QColor, QImage
+
+    from cephvr.gui.trial_preview_image import folded_image
+    from cephvr.gui.trial_preview_surfaces import (
+        PreviewCorrection,
+        PreviewGeometry,
+        PreviewSurface,
+    )
+    from cephvr.visual_stimulus.config.calibration_adjustments import affine_vertices
+    from cephvr.visual_stimulus.rendering.image_fold import calibrated_fold_map
+
+    surfaces, profiles, geometry_surfaces = {}, [], []
+    for face in ("Left", "Front", "Right", "Bottom"):
+        vertices = affine_vertices(
+            -0.8 if flip else 0.8, 0.6, 0.5, 0.5, quarter_turn=face == "Bottom"
+        )
+        correction = PreviewCorrection(
+            tuple(v["xy"] for v in vertices),
+            source_uv=tuple(v["uv"] for v in vertices),
+            valid_area=(0.1, 0.2, 0.9, 0.8),
+        )
+        surfaces[face] = PreviewSurface(
+            80,
+            60,
+            correction=correction,
+            image_pixels=(80, 60),
+            output_pixels=(100, 100),
+        )
+        profiles.append(
+            NS(
+                surface_id=face.lower(),
+                viewport=NS(x=0, y=0, width=100, height=100),
+                valid_area=(0.1, 0.2, 0.9, 0.8),
+                output_width=100,
+                output_height=100,
+                columns=2,
+                vertices=tuple(NS(**v) for v in vertices),
+            )
+        )
+        geometry_surfaces.append(
+            NS(
+                surface_id=face.lower(),
+                bottom_left_mm=(0, 0, 0),
+                bottom_right_mm=(80, 0, 0),
+                top_left_mm=(0, 60, 0),
+            )
+        )
+    geometry = PreviewGeometry(surfaces, None)
+    for face, profile in zip(surfaces, profiles, strict=True):
+        mapping = geometry.image_fold_map(face)
+        assert mapping == pytest.approx(
+            calibrated_fold_map(NS(surfaces=geometry_surfaces), profiles, profile)
+        )
+    image = QImage(240, 140, QImage.Format.Format_RGB32)
+    from PyQt6.QtGui import QPainter
+
+    image.fill(QColor("black"))
+    painter = QPainter(image)
+    regions = {
+        "Left": (0, 0, 80, 60, "cyan"),
+        "Front": (80, 0, 80, 60, "magenta"),
+        "Right": (160, 0, 80, 60, "yellow"),
+        "Bottom": (90, 60, 60, 80, "green"),
+    }
+    for x, y, w, h, color in regions.values():
+        painter.fillRect(x, y, w, h, QColor(color))
+    painter.end()
+    for face, (_, _, _, _, color) in regions.items():
+        result = folded_image(
+            image, (240, 140), geometry.image_fold_map(face), (80, 60)
+        )
+        for x, y in ((0.1, 0.1), (0.5, 0.5), (0.9, 0.9)):
+            assert result.pixelColor(
+                int(result.width() * x), int(result.height() * y)
+            ) == QColor(color)
+    short = folded_image(image, (10, 10), geometry.image_fold_map("Front"), (80, 60))
+    assert short.pixelColor(short.width() // 2, short.height() // 2).alpha() == 0
+
+
+@pytest.mark.parametrize("pattern", ["checker", "filtered_noise"])
+@pytest.mark.parametrize("invalid_motion", [False, True])
+def test_compact_texture_picker_accepts_file_into_empty_asset_row(
+    app, tmp_path, pattern, invalid_motion
+):
+    import json
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_parameters import StimulusParameters
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    root = tmp_path / "assets"
+    root.mkdir()
+    source = tmp_path / "noise.texture.json"
+    raw = json.dumps(
+        {
+            "kind": "texture",
+            "pattern": pattern,
+            "params": {
+                "tile_width_mm": 104,
+                "texture_resolution": 16,
+                "features_per_tile": 6.933333333333334,
+            },
+        }
+    )
+    source.write_text(raw, encoding="utf-8")
+    program = add_stimulus(blank_program(), 0, "Texture", ("Front",))
+    panel = StimulusParameters(compact=True)
+    panel.asset_root = str(root)
+    panel.bind(program, 0, 0, "Front")
+    identity = next(iter(panel.asset_forms))
+    assert next(a for a in program.assets if a.asset_id == identity).logical_path
+    panel.asset_forms[identity].clear()
+    if invalid_motion:
+        from cephvr.gui.epoch_motion import EpochMotion
+
+        motion = next(form for form in panel.forms if isinstance(form, EpochMotion))
+        motion.speed.setText("invalid")
+        motion.edited = True
+    committed = []
+    panel.committed.connect(committed.append)
+    panel.set_media_path(identity, str(source))
+    if invalid_motion:
+        assert not committed
+        assert panel.program == program
+        assert panel.asset_forms[identity].text() == ""
+        return
+    assert committed, panel.message.text()
+    assert panel.apply(), panel.message.text()
+    setting = panel.program.sequence[0].settings[0]
+    asset = next(
+        a for a in panel.program.assets if a.asset_id == setting.pattern.asset_id
+    )
+    assert (root / asset.logical_path).read_text(encoding="utf-8") == raw
+    assert source.read_text(encoding="utf-8") == raw
+    assert setting.pattern.period_x.value == 104
+    assert next(iter(panel.asset_forms.values())).text() == asset.logical_path
+
+
+@pytest.mark.parametrize(
+    "preset,category",
+    [
+        ("Texture", None),
+        ("Image", None),
+        ("Looming image", None),
+        ("Video", None),
+        ("Image", "media_presentation"),
+    ],
+)
+def test_asset_variations_choose_folder_media_without_adding_epochs(
+    window, app, tmp_path, preset, category
+):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(
+        grouped_program(blank_program().model_copy(update={"category": category}))
+    )
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    subset = tmp_path / "subset"
+    subset.mkdir()
+    suffix = ".mp4" if preset == "Video" else ".png"
+    for name in ("a", "b", "c"):
+        (subset / (name + suffix)).write_bytes(b"test media source; no decoder invoked")
+    (subset / "ignore.txt").write_text("not media")
+    (subset / "nested").mkdir()
+    (subset / "nested" / ("excluded" + suffix)).write_bytes(b"nested")
+    for face in ("Left", "Right"):
+        form.composer.add_file(preset, str(subset / ("a" + suffix)), face)
+    form.add_variation()
+    row = form.rows[0]
+    row.target.setCurrentIndex(row.target.findText("All projectors"))
+    row.parameter.setCurrentIndex(row.parameter.findData("Asset"))
+    assert row.parameter.currentText() == "Asset"
+    assert row.method.count() == 1 and row.method.currentText() == "Random from folder"
+    assert row.asset_folder.isVisibleTo(row)
+    assert all(edit.isHidden() for edit in row.random_fields.values())
+    assert row.values.isHidden()
+    row.asset_folder.editor.setText(str(subset))
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    first = editor.program
+    assert len(first.sequence[0].body) == len(form.paths) == 1
+    epoch = first.sequence[0].body[0]
+    assert len(epoch.repetition_rules) == 2
+    choices = epoch.repetition_rules[0].asset_ids
+    assert len(choices) == 3
+    assert all(r.kind == "uniform_asset_v1" for r in epoch.repetition_rules)
+    assert len({r.seed for r in epoch.repetition_rules}) == 1
+    assert len({r.stream for r in epoch.repetition_rules}) == 2
+    editor.group_editor.repetitions.setText("12")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    form = editor.subgroup
+    row = form.rows[0]
+    assert len(editor.program.sequence[0].body) == 1
+    initial = expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12)
+
+    def identity(setting):
+        return (
+            setting.pattern.asset_id if setting.kind == "texture" else setting.asset_id
+        )
+
+    assert all(
+        identity(setting) in choices for item in initial for setting in item.settings
+    )
+    assert len({identity(item.settings[0]) for item in initial}) > 1
+    assert [identity(item.settings[0]) for item in initial] != [
+        identity(item.settings[1]) for item in initial
+    ]
+    saved = Program.model_validate_json(editor.program.model_dump_json())
+    (subset / ("later" + suffix)).write_bytes(b"added after snapshot")
+    editor.set_program(saved)
+    form = editor.subgroup
+    row = form.rows[0]
+    assert row.asset_folder.editor.text() == str(subset)
+    assert row.asset_folder.asset_ids == choices
+    form.composer.batch_label.setText("Keep subset snapshot")
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    after = expand_program(editor.program, seed_decimal="2", max_expanded_epochs=12)
+    assert [item.settings for item in after] == [item.settings for item in initial]
+    row.shared.setChecked(True)
+    form.apply()
+    assert not form.notice.text()
+    shared = expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12)
+    assert all(
+        identity(item.settings[0]) == identity(item.settings[1]) for item in shared
+    )
+    if category == "media_presentation":
+        assert row.parameter.findData("Asset") >= 0
+        return
+    form.add_variation()
+    numeric = form.rows[-1]
+    parameter = (
+        "Playback start"
+        if preset == "Video"
+        else "End size"
+        if preset == "Looming image"
+        else "Speed"
+    )
+    numeric.parameter.setCurrentIndex(numeric.parameter.findData(parameter))
+    numeric.random_fields["minimum"].setText("1")
+    numeric.random_fields["maximum"].setText("10")
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    assert len(editor.program.sequence[0].body) == 1
+    assert len(editor.program.sequence[0].body[0].repetition_rules) == 3
+    combined = expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12)
+    assert len(combined) == 12
+    assert [identity(item.settings[0]) for item in combined] == [
+        identity(item.settings[0]) for item in shared
+    ]
+    editor.undo()
+    assert len(editor.program.sequence[0].body[0].repetition_rules) == 2
+    if preset == "Image":
+        from unittest.mock import patch
+
+        from PyQt6.QtWidgets import QFileDialog
+
+        row = editor.subgroup.rows[0]
+        for width in (1280, 1000, 840, 720):
+            window.resize(width, 1000)
+            app.processEvents()
+            assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+            assert (
+                row.method.width()
+                >= row.method.fontMetrics().horizontalAdvance("Random from folder") + 30
+            )
+            for control in (
+                row.method,
+                row.asset_folder,
+                row.asset_folder.editor,
+                row.asset_folder.browse,
+            ):
+                assert row.rect().contains(
+                    QRect(control.mapTo(row, QPoint()), control.size())
+                )
+        with patch("cephvr.gui.paths.open_file_dialog"):
+            row.asset_folder.choose_path()
+            dialog = row.asset_folder.dialog
+            assert (
+                dialog is not None
+                and dialog.fileMode() == QFileDialog.FileMode.Directory
+            )
+            editor.setEnabled(False)
+            assert row.asset_folder.dialog is None
+            editor.setEnabled(True)
+        before = editor.program
+        row.asset_folder.editor.setText(str(tmp_path / "missing"))
+        editor.subgroup.apply()
+        assert editor.program == before
+        assert "existing" in editor.subgroup.notice.text()
+        editor.subgroup.discard()
+
+
+def test_asset_variation_imports_external_subset_once_and_guards_invalid_folder(
+    app, tmp_path
+):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.variation_assets import VariationAssets
+
+    root = tmp_path / "assets"
+    root.mkdir()
+    subset = tmp_path / "external"
+    subset.mkdir()
+    (subset / "a.png").write_bytes(b"external image")
+    picker = VariationAssets()
+    picker.editor.setText(str(subset))
+    candidates = picker.load(blank_program(), str(root), ("image",))
+    assert len(candidates) == 1
+    imported = root / candidates[0].logical_path
+    assert imported.read_bytes() == b"external image"
+    assert picker.load(blank_program(), str(root), ("image",)) == candidates
+    assert len(list(root.glob("import-*"))) == 1
+    picker.editor.setText(str(root / "missing"))
+    with pytest.raises(ValueError, match="existing"):
+        picker.load(blank_program(), str(root), ("image",))
+    picker.editor.setText(str(subset))
+    with pytest.raises(ValueError, match="compatible"):
+        picker.load(blank_program(), str(root), ("video",))
+    picker.editor.clear()
+    with pytest.raises(ValueError, match="Choose a folder"):
+        picker.load(blank_program(), str(root), ("image",))
+    picker.deleteLater()
+
+
+@pytest.mark.parametrize("modern", [False, True])
+@pytest.mark.parametrize("face", ["Left", "Front", "Right", "Bottom"])
+def test_grating_has_asset_orientation_speed_and_compact_variations(
+    window, app, tmp_path, face, modern
+):
+    import json
+
+    from cephvr.gui.grating_motion import GratingMotion
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.rig_parameter_edits import motion_numbers
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    raw = json.dumps(
+        {
+            "pattern": "grating",
+            "params": {
+                "spatial_period_mm": 12,
+                "orientation_deg": 73,
+                "feature_sharpness": 1,
+                "texture_resolution": 64,
+                "tile_width_mm": 100,
+                "tile_height_mm": 100,
+                "fit_cycles_to_tile": False,
+            },
+        }
+    ).encode()
+    if modern:
+        from cephvr.generate_stimulus.textures import new_texture
+
+        design = new_texture("grating")
+        design["params"].update(
+            spatial_period_mm=12, orientation_deg=73, feature_sharpness=1
+        )
+        raw = json.dumps(design).encode()
+    path = tmp_path / "bars.texture.json"
+    path.write_bytes(raw)
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens((face,))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    form.composer.set_asset_root(str(tmp_path))
+    form.composer.add_file("Grating", str(path), face)
+    reference = form.composer.rows[face]
+    assert reference.stimulus.currentData() == "Grating"
+    assert [
+        title
+        for title, _ in reference.columns
+        if title and title not in ("Layer", "Stimulus")
+    ] == ["Asset", "Orientation (°)", "Speed (mm/s)"]
+    assert reference.actions_button.isHidden()
+    parameters = reference.parameters
+    motion = next(f for f in parameters.forms if isinstance(f, GratingMotion))
+    motion.orientation.setText("45")
+    motion.speed.setText("10")
+    assert parameters.apply(), parameters.message.text()
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    epoch = editor.program.sequence[0].body[0]
+    setting = epoch.settings[0]
+    assert setting.grating and setting.pattern.period_x.value == 12
+    assert motion_numbers(setting.model_dump(mode="json"))[:2] == pytest.approx(
+        (10, 45)
+    )
+    asset = next(
+        a for a in editor.program.assets if a.asset_id == setting.pattern.asset_id
+    )
+    assert asset.profile == "cephvr_grating_json_v1"
+    media = PreviewMedia(editor.program, str(tmp_path), window)
+    image = media.image(asset.asset_id)
+    assert not image.isNull(), media.errors
+    assert all(
+        image.pixelColor(5, y) == image.pixelColor(5, 0) for y in range(image.height())
+    )
+    form.add_variation()
+    row = form.rows[0]
+    assert [row.parameter.itemData(i) for i in range(row.parameter.count())] == [
+        "Orientation",
+        "Speed",
+        "Asset",
+    ]
+    row.random_fields["minimum"].setText("0")
+    row.random_fields["maximum"].setText("270")
+    row.random_fields["precision"].setText("90")
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    editor.group_editor.repetitions.setText("12")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    assert len(editor.program.sequence[0].body) == 1
+    plan = expand_program(editor.program, seed_decimal="0", max_expanded_epochs=12)
+    assert len(plan) == 12
+    preview = PreviewPlan(editor.program)
+    angles = []
+    for index, item in enumerate(plan):
+        setting = item.settings[0]
+        values = setting.model_dump(mode="json")
+        speed, angle, _ = motion_numbers(values)
+        assert speed == pytest.approx(10)
+        assert angle in (0, 90, 180, -90)
+        angles.append(angle)
+        assigned = next(a.value for a in setting.assignments if a.target == "rotation")
+        assert preview.seek(index * 60_000_000_000 + 1)[0].values[
+            "rotation"
+        ] == pytest.approx(assigned)
+    assert len(set(angles)) > 1
+    restored = Program.model_validate_json(editor.program.model_dump_json())
+    editor.set_program(restored)
+    assert (
+        expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12) == plan
+    )
+    assert path.read_bytes() == raw
+    editor.subgroup.remove_variation(editor.subgroup.rows[0])
+    editor.subgroup.apply()
+    motion = next(
+        f
+        for f in editor.subgroup.composer.rows[face].parameters.forms
+        if isinstance(f, GratingMotion)
+    )
+    motion.orientation.setText("180")
+    motion.speed.setText("0")
+    assert editor.subgroup.composer.rows[face].parameters.apply()
+    editor.subgroup.apply()
+    values = editor.program.sequence[0].body[0].settings[0].model_dump(mode="json")
+    assert motion_numbers(values)[:2] == pytest.approx((0, 180))
+    if face == "Front" and not modern:
+        subset = tmp_path / "grating-subset"
+        subset.mkdir()
+        for period in (6, 24):
+            design = json.loads(raw)
+            design["params"]["spatial_period_mm"] = period
+            (subset / f"{period}.json").write_text(json.dumps(design))
+        form = editor.subgroup
+        form.add_variation()
+        row = form.rows[-1]
+        row.parameter.setCurrentIndex(row.parameter.findData("Asset"))
+        row.asset_folder.editor.setText(str(subset))
+        form.apply()
+        assert not form.notice.text() and not form.dirty
+        rules = editor.program.sequence[0].body[0].repetition_rules
+        assert len(rules[0].grating_periods_mm) == 2
+        assets = {a.asset_id: a for a in editor.program.assets}
+        for item in expand_program(
+            editor.program, seed_decimal="0", max_expanded_epochs=12
+        ):
+            setting = item.settings[0]
+            expected = float(Path(assets[setting.pattern.asset_id].logical_path).stem)
+            assert (
+                setting.pattern.period_x.value
+                == setting.pattern.period_y.value
+                == expected
+            )
+            assert motion_numbers(setting.model_dump(mode="json"))[:2] == pytest.approx(
+                (0, 180)
+            )
+        editor.set_program(
+            Program.model_validate_json(editor.program.model_dump_json())
+        )
+        assert (
+            editor.subgroup.rows[0].asset_folder.grating_periods_mm
+            == rules[0].grating_periods_mm
+        )
+    media.deleteLater()
+
+
+def test_photodiode_mode_saved_and_legacy_default(window):
+    panel = window.devices.projectors
+    timing = panel.timing
+    assert timing.pulse_mode == "landmarks"
+    timing.set_pulse_mode("every_frame")
+    saved = panel.calibration_files.snapshot()
+    assert saved["photodiode_mode"] == "every_frame"
+    timing.set_pulse_mode("landmarks")
+    panel.calibration_files.apply_snapshot(saved)
+    assert timing.pulse_mode == "every_frame"
+    legacy = {k: v for k, v in saved.items() if k != "photodiode_mode"}
+    panel.calibration_files.apply_snapshot(legacy)
+    assert timing.pulse_mode == "landmarks"
+    with pytest.raises(ValueError, match="photodiode mode"):
+        panel.calibration_files.apply_snapshot(dict(saved, photodiode_mode="unknown"))
+    assert timing.pulse_mode == "landmarks"
+
+
+@pytest.mark.parametrize(
+    "family", ["Uniform", "Image", "Video", "Sparse noise", "Grating", "Texture drift"]
+)
+def test_media_family_choices_are_projector_and_layer_local(app, family):
+    from cephvr.gui.epoch_batch import family as family_name
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    composer = EpochComposer()
+    composer.program = blank_program().model_copy(
+        update={"category": "media_presentation"}
+    )
+    composer.set_screens(("Front", "Bottom"))
+    composer.refresh_rows()
+    row = composer.rows["Front"]
+    assert [row.stimulus.itemText(i) for i in range(row.stimulus.count())] == [
+        "None",
+        "Uniform",
+        "Image",
+        "Video",
+        "Sparse noise",
+        "Grating",
+        "Texture drift",
+    ]
+    composer.change_type("Bottom", "Uniform")
+    bottom = composer.program.sequence[0].settings[0]
+    composer.change_type("Front", family)
+    assert not composer.message.text(), composer.message.text()
+    epoch = composer.program.sequence[0]
+    assert epoch.settings[0] == bottom
+    assert family_name(epoch.settings[1]) == family
+    assert row.stimulus.currentText() == family
+    assert (
+        Program.model_validate_json(composer.program.model_dump_json())
+        == composer.program
+    )
+    if family == "Uniform":
+        assert not composer.pending_assets
+        assert "Color (linear RGB)" in [title for title, _ in row.columns]
+        composer.value()
+    elif family == "Grating":
+        captions = [title for title, _ in row.columns]
+        assert "Orientation (°)" in captions and "Speed (mm/s)" in captions
+    elif family == "Texture drift":
+        assert "Direction (°)" in [title for title, _ in row.columns]
+    elif family == "Sparse noise":
+        assert row.parameters.sparse_layer is not None
+    composer.close()
+
+
+def test_sparse_noise_layer_preparation_preserves_epoch_and_other_projectors(
+    app, tmp_path
+):
+    import time
+
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    composer = EpochComposer()
+    composer.program = blank_program().model_copy(
+        update={"category": "media_presentation"}
+    )
+    composer.sparse_geometry = lambda: make_compile_context().display.geometry
+    composer.set_asset_root(str(tmp_path))
+    composer.set_screens(("Front", "Left"))
+    composer.refresh_rows()
+    composer.change_type("Left", "Uniform")
+    other = composer.program.sequence[0].settings[0]
+    composer.change_type("Front", "Sparse noise")
+    row = composer.rows["Front"]
+    sparse_editor = row.parameters.sparse_layer
+    sparse_editor.form.children_by_key["seed"].control.setText("42")
+    sparse_editor.form.children_by_key["pattern_count"].control.setText("3")
+    sparse_editor.form.children_by_key["pattern_duration"].children_by_key[
+        "seconds"
+    ].control.setText("0.1")
+    sparse_editor.start()
+    deadline = time.monotonic() + 10
+    while composer.pending_assets and time.monotonic() < deadline:
+        QTest.qWait(10)
+    assert not composer.pending_assets, row.parameters.sparse_layer.error.text()
+    program = composer.value()
+    epoch = program.sequence[0]
+    assert len(program.sequence) == 1 and epoch.duration.duration.seconds == "60"
+    assert epoch.settings[0] == other
+    sparse = epoch.settings[1].sparse_noise
+    assert len(sparse.asset_ids) == 3
+    assert sparse.asset_at(0) == sparse.asset_ids[0]
+    assert sparse.asset_at(100_000_000) == sparse.asset_ids[1]
+    assert sparse.asset_at(59_999_999_999) == sparse.asset_ids[2]
+    assert all((tmp_path / asset.logical_path).is_file() for asset in program.assets)
+    assert Program.model_validate_json(program.model_dump_json()) == program
+    restored = composer.rows["Front"].parameters.sparse_layer
+    assert restored.form.children_by_key["seed"].control.text() == "42"
+    assert restored.form.children_by_key["pattern_count"].control.text() == "3"
+    assert (
+        restored.form.children_by_key["pattern_duration"]
+        .children_by_key["seconds"]
+        .control.text()
+        == "0.1"
+    )
+    composer.change_type("Front", "Uniform")
+    assert not composer.program.assets
+    composer.close()
+
+
+def test_inline_grating_pattern_and_link_controls_round_trip(app):
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.grating_appearance import GratingAppearance
+    from cephvr.gui.grating_motion import GratingMotion
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    composer = EpochComposer()
+    composer.program = blank_program().model_copy(
+        update={"category": "media_presentation"}
+    )
+    composer.set_screens(("Bottom", "Front"))
+    composer.refresh_rows()
+    composer.change_type("Bottom", "Grating")
+    composer.change_type("Front", "Grating")
+    assert not composer.pending_assets and not composer.program.assets
+    bottom = composer.rows["Bottom"].parameters
+    appearance = next(f for f in bottom.forms if isinstance(f, GratingAppearance))
+    motion = next(f for f in bottom.forms if isinstance(f, GratingMotion))
+    appearance.period.setText("13")
+    appearance.sharpness.setText("0.3")
+    motion.orientation.setText("37")
+    motion.speed.setText("7")
+    assert bottom.apply(), bottom.message.text()
+    front = composer.rows["Front"].parameters
+    assert front.motion_source is not None
+    front.motion_source.setCurrentText("Linked")
+    source_id = composer.program.sequence[0].settings[0].instance_id
+    front.linked_to.setCurrentIndex(front.linked_to.findData(source_id))
+    assert front.apply(), front.message.text()
+    program = composer.value()
+    assert program.sequence[0].settings[1].linked_to == source_id
+    assert program.sequence[0].settings[0].pattern.frequency.value == pytest.approx(
+        1 / 13
+    )
+    assert Program.model_validate_json(program.model_dump_json()) == program
+    composer.close()
+
+
+@pytest.mark.parametrize("cancel_kind", ["authority", "root", "geometry", "screen"])
+def test_inline_sparse_noise_discards_late_preparation(
+    app, tmp_path, monkeypatch, cancel_kind
+):
+    from threading import Event
+
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.gui import sparse_noise_layer
+    from cephvr.gui.epoch_composer import EpochComposer
+
+    entered, release, finished = Event(), Event(), Event()
+    original = sparse_noise_layer._prepare
+
+    def blocked(*args):
+        entered.set()
+        release.wait(3)
+        try:
+            original(*args)
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(sparse_noise_layer, "_prepare", blocked)
+    composer = EpochComposer()
+    geometry = make_compile_context().display.geometry
+    current = [geometry]
+    composer.sparse_geometry = lambda: current[0]
+    composer.set_asset_root(str(tmp_path))
+    composer.set_screens(("Front",))
+    composer.change_type("Front", "Sparse noise")
+    before = composer.program
+    helper = composer.rows["Front"].parameters.sparse_layer
+    helper.start()
+    assert entered.wait(2)
+    if cancel_kind == "authority":
+        composer.setEnabled(False)
+    elif cancel_kind == "root":
+        composer.set_asset_root(str(tmp_path / "other"))
+    elif cancel_kind == "geometry":
+        current[0] = geometry.model_copy(update={"observer_mm": (1.0, 0.0, 0.0)})
+    else:
+        composer.set_screens(())
+    helper.poll()
+    release.set()
+    assert finished.wait(2)
+    QTest.qWait(60)
+    assert composer.program == before
+    assert composer.pending_assets
+    assert not helper.running
+    assert helper.cancelled.is_set()
+    composer.close_file_dialogs()
+    composer.close()

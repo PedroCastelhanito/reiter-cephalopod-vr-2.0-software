@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "working_tree": "Uncommitted task changes and pre-existing/concurrent changes; hashes identify selected sources.",
+  "sha256": {
+    "src/cephvr/visual_stimulus/rendering/image_fold.py": "4bb5a8255cc776133f9a8848a5eaaa283d01a20800977a2a63c591d0b82e0425",
+    "src/cephvr/visual_stimulus/rendering/layer_draw.py": "31b8d843363a334ef4c834e62519404ff1f31f4a037c6e772fd6dc54cc3bd223",
+    "src/cephvr/visual_stimulus/rendering/shaders.py": "efcc28319581aa44c8d7976a4bd5cd3487bc9019bc833d440ebb076636ebe049",
+    "src/cephvr/visual_stimulus/resources/uniforms.py": "c7889b6435a38f45077ff86d53cd623a9ad8338dbc1c0aa1e915a6f10a45b700",
+    "src/cephvr/gui/trial_preview_image.py": "f259e9139f22c102f8cdd5b819d45d88e83eb53ab9abed81ce26440c79fb84bb",
+    "src/cephvr/gui/trial_preview_surfaces.py": "377734d84489238213c822d3111cdbe0f9423a63d7bcfb0b0d6aba37d81a877c"
+  },
+  "scope": "Local implementation, offscreen Qt and standalone OpenGL. No physical projector or full-workload acceptance."
+}

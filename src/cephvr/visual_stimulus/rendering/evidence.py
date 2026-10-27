@@ -64,7 +64,18 @@ def uniform_values(
         values = {
             "opacity": (float(state.get("opacity", 1.0)),),
             "contrast": (float(state.get("contrast", 1.0)),),
-            "mean_rgb": tuple(getattr(settings, "mean_linear_rgb", (0.0, 0.0, 0.0))),
+            "grating_sharpness": (getattr(pattern, "feature_sharpness", 0.0),),
+            "mean_rgb": tuple(
+                getattr(
+                    settings,
+                    "mean_linear_rgb",
+                    getattr(
+                        getattr(settings, "sparse_noise", None),
+                        "background_linear_rgb",
+                        (0.0, 0.0, 0.0),
+                    ),
+                )
+            ),
             "modulation_rgb": tuple(
                 getattr(settings, "modulation_linear_rgb", (0.0, 0.0, 0.0))
             ),
@@ -75,7 +86,13 @@ def uniform_values(
     result = {}
     for layout in artifact.uniform_layouts:
         if layout.instance_id != snapshot.instance_id or layout.name.startswith(
-            "clip_vertices_"
+            (
+                "clip_vertices_",
+                "image_target_pixels_",
+                "image_fold_map_",
+                "field_extent_mm_",
+                "field_phase_mm_",
+            )
         ):
             continue
         components = values[layout.name]

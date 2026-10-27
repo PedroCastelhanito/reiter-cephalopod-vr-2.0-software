@@ -10,7 +10,8 @@ This is a declared interface boundary; no importer/runtime is implemented.
 The operator generates the visual arena before session preparation using external
 tools. The stimulus program references the resulting asset and gives each live
 arena instance a stable identity. Selecting assets and configuring protocol
-boundaries does not introduce a built-in mesh generator or 3D modeling editor.
+boundaries remains separate from the offline [stimulus authoring application](stimulus-authoring.md).
+Its generator exports static assets before Setup and owns no runtime geometry generation.
 
 The trial protocol is the single editable source of each arena instance's movement
 mode (explicit region, unrestricted, or declared arena-file geometry) and optional wall margin. Bind protocol movement

@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty working tree; local validation, no rig acceptance",
+  "checks": [
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src/cephvr/generate_stimulus",
+        "src/cephvr/visual_stimulus/config/models/sparse_noise.py",
+        "src/cephvr/visual_stimulus/resources/sparse_noise.py",
+        "src/cephvr/gui/sparse_noise_dialog.py",
+        "src/cephvr/gui/sparse_noise_import.py",
+        "tools/prepare_sparse_noise.py",
+        "tests/generate_stimulus",
+        "tests/visual_stimulus/test_resources.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "check-0.txt"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/generate_stimulus",
+        "src/cephvr/visual_stimulus/config/models/sparse_noise.py",
+        "src/cephvr/visual_stimulus/resources/sparse_noise.py",
+        "src/cephvr/gui/sparse_noise_dialog.py",
+        "src/cephvr/gui/sparse_noise_import.py",
+        "tools/prepare_sparse_noise.py",
+        "tests/generate_stimulus",
+        "tests/visual_stimulus/test_resources.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "check-1.txt"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "src/cephvr/generate_stimulus",
+        "src/cephvr/visual_stimulus/config/models/sparse_noise.py",
+        "src/cephvr/visual_stimulus/resources/sparse_noise.py",
+        "src/cephvr/gui/sparse_noise_dialog.py",
+        "src/cephvr/gui/sparse_noise_import.py",
+        "tools/prepare_sparse_noise.py"
+      ],
+      "exit_code": 0,
+      "output": "check-2.txt"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "contracts/visual_stimulus/generate_schemas.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": "check-3.txt"
+    },
+    {
+      "command": [
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+        "tools/check_backend_boundaries.py"
+      ],
+      "exit_code": 0,
+      "output": "check-4.txt"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output": "check-5.txt"
+    }
+  ],
+  "tests": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen pytest tests/generate_stimulus tests/visual_stimulus/test_resources.py -q -m \"not windows and not rig\" --basetemp=<visualization workspace>/sparse-spacing-final --tb=short",
+      "result": "143 passed, 2 deselected in 4.58s",
+      "source": "Captured tool result, summarized here"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen pytest tests/gui/test_dashboard.py -q -k sparse_noise --basetemp=.pytest-tmp-sparse-spacing-gui --tb=short",
+      "result": "5 passed, 1004 deselected in 8.07s",
+      "source": "Captured tool result, summarized here"
+    }
+  ],
+  "hashes": {
+    "src/cephvr/visual_stimulus/config/models/sparse_noise.py": "231045d26403a04a1f0fc36114f9b92650eb6d6ac3e6e0ee4531f830a22eb260",
+    "src/cephvr/visual_stimulus/resources/sparse_noise.py": "5fab17d55b7ac98eb14fd03c587111b5f63eab2ca905f96d23af4763fafa3563",
+    "src/cephvr/gui/sparse_noise_dialog.py": "6730d99dd3697699912abcb9a59706d511d5527107b0357509d58ae2c777102e",
+    "src/cephvr/gui/sparse_noise_import.py": "8201c07964c6bcd45fe187875cf2bb9e9375db86e2459c433c6ccaefdd724e42",
+    "tools/prepare_sparse_noise.py": "7b807d803f747b5a90dfa217f155ce13ccc11388905803c92b7a4998cedc64fe"
+  }
+}

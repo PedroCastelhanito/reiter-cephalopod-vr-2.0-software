@@ -144,15 +144,11 @@ class StimulusPreviewArea(QWidget):
                 instrument = self.timeline.projector_cards.get(name)
                 if instrument is not None:
                     layout.addWidget(instrument, 2)
-                    instrument.setVisible(
-                        self.timeline.advanced and category != "media_presentation"
-                    )
+                    instrument.setVisible(self.timeline.advanced)
             else:
                 self.timeline.place_projectors()
                 layout.addWidget(self.timeline.motion_section, 1)
-                self.timeline.motion_section.setVisible(
-                    self.timeline.advanced and category != "media_presentation"
-                )
+                self.timeline.motion_section.setVisible(self.timeline.advanced)
             self.cells.append(cell)
         self.relayout_cells()
         self.layout_changed.emit()

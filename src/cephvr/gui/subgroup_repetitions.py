@@ -6,7 +6,11 @@ from cephvr.gui.arena_movement import patch_arena
 from cephvr.gui.program_editing import data_nodes, node_at, validate
 from cephvr.gui.projector_layers import layers_for
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Group, Program
-from cephvr.visual_stimulus.config.models.repetition import RepetitionRule
+from cephvr.visual_stimulus.config.models.repetition import (
+    AssetRepetitionRule,
+    Repetition,
+    RepetitionRule,
+)
 from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
 
 
@@ -27,7 +31,7 @@ def rebuild_repetitions(program: Program, scope: tuple[int, ...]) -> Program:
         draft = epoch.subgroup_draft
         if draft is None or any(nodes[i]["repetition_settings"] for i in positions):
             continue
-        per_member: dict[int, list[RepetitionRule]] = {i: [] for i in positions}
+        per_member: dict[int, list[Repetition]] = {i: [] for i in positions}
         updated = []
         for rule in draft.rules:
             if rule.method != 2 or not draft.enabled:
@@ -44,13 +48,17 @@ def rebuild_repetitions(program: Program, scope: tuple[int, ...]) -> Program:
                 targets.extend(i for i in layers if i not in targets)
             if not targets:
                 raise ValueError("A saved variation target is unavailable")
-            key = (
+            key: tuple[str, ...] = (
                 rule.minimum.strip(),
                 rule.maximum.strip(),
                 rule.precision.strip(),
                 rule.parameter,
                 repr((rule.projector, rule.projectors, rule.layer, rule.shared)),
             )
+            if rule.parameter == "Asset":
+                key = ("Asset", *rule.asset_ids, key[-1])
+                if rule.grating_periods_mm:
+                    key = (*key[:-1], repr(rule.grating_periods_mm), key[-1])
             seed = rule.seed if rule.seed and rule.sample_key == key else token_hex(16)
             updated.append(
                 rule.model_copy(update={"seed": seed, "sample_key": key, "samples": ()})
@@ -58,6 +66,19 @@ def rebuild_repetitions(program: Program, scope: tuple[int, ...]) -> Program:
             for offset, position in enumerate(positions):
                 for ordinal, layer in enumerate(targets):
                     setting = nodes[position]["settings"][layer]
+                    if rule.parameter == "Asset":
+                        per_member[position].append(
+                            AssetRepetitionRule(
+                                instance_id=setting["instance_id"],
+                                asset_ids=rule.asset_ids,
+                                grating_periods_mm=rule.grating_periods_mm,
+                                seed=seed,
+                                stream="" if rule.shared else str(ordinal),
+                                offset=offset,
+                                stride=len(positions),
+                            )
+                        )
+                        continue
                     if setting["kind"] == "arena":
                         patch_arena(setting, {rule.parameter: rule.minimum}, data)
                     per_member[position].append(

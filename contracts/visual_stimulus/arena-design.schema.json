@@ -1,0 +1,255 @@
+{
+  "$defs": {
+    "Relief": {
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "default": "none",
+          "enum": [
+            "none",
+            "rock",
+            "ridges",
+            "waves"
+          ],
+          "title": "Pattern",
+          "type": "string"
+        },
+        "height_mm": {
+          "default": 0,
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "Height Mm",
+          "type": "number"
+        },
+        "scale_mm": {
+          "default": 20,
+          "exclusiveMinimum": 0,
+          "maximum": 1000000.0,
+          "title": "Scale Mm",
+          "type": "number"
+        },
+        "seed": {
+          "default": 0,
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "title": "Relief",
+      "type": "object"
+    },
+    "Scatter": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "density_per_cm2": {
+          "default": 0.01,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Density Per Cm2",
+          "type": "number"
+        },
+        "clustering": {
+          "default": 0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Clustering",
+          "type": "number"
+        },
+        "min_scale": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "maximum": 1000000.0,
+          "title": "Min Scale",
+          "type": "number"
+        },
+        "max_scale": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "maximum": 1000000.0,
+          "title": "Max Scale",
+          "type": "number"
+        },
+        "seed": {
+          "default": 0,
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "model"
+      ],
+      "title": "Scatter",
+      "type": "object"
+    },
+    "Surface": {
+      "additionalProperties": false,
+      "properties": {
+        "visible": {
+          "default": true,
+          "title": "Visible",
+          "type": "boolean"
+        },
+        "color": {
+          "default": [
+            0.5,
+            0.5,
+            0.5,
+            1
+          ],
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          ],
+          "title": "Color",
+          "type": "array"
+        },
+        "alpha_mode": {
+          "default": "OPAQUE",
+          "enum": [
+            "OPAQUE",
+            "MASK"
+          ],
+          "title": "Alpha Mode",
+          "type": "string"
+        },
+        "alpha_cutoff": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Alpha Cutoff",
+          "type": "number"
+        },
+        "texture": {
+          "default": "",
+          "title": "Texture",
+          "type": "string"
+        },
+        "texture_scale_mm": {
+          "default": 100,
+          "exclusiveMinimum": 0,
+          "maximum": 1000000.0,
+          "title": "Texture Scale Mm",
+          "type": "number"
+        },
+        "relief": {
+          "$ref": "#/$defs/Relief"
+        },
+        "scatters": {
+          "items": {
+            "$ref": "#/$defs/Scatter"
+          },
+          "maxItems": 16,
+          "title": "Scatters",
+          "type": "array"
+        }
+      },
+      "title": "Surface",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "kind": {
+      "const": "arena_design",
+      "default": "arena_design",
+      "title": "Kind",
+      "type": "string"
+    },
+    "shape": {
+      "default": "rectangular",
+      "enum": [
+        "rectangular",
+        "circular",
+        "torus",
+        "two_choice",
+        "cross"
+      ],
+      "title": "Shape",
+      "type": "string"
+    },
+    "width_mm": {
+      "default": 500,
+      "exclusiveMinimum": 0,
+      "maximum": 1000000.0,
+      "title": "Width Mm",
+      "type": "number"
+    },
+    "depth_mm": {
+      "default": 500,
+      "exclusiveMinimum": 0,
+      "maximum": 1000000.0,
+      "title": "Depth Mm",
+      "type": "number"
+    },
+    "height_mm": {
+      "default": 100,
+      "exclusiveMinimum": 0,
+      "maximum": 1000000.0,
+      "title": "Height Mm",
+      "type": "number"
+    },
+    "corridor_mm": {
+      "default": 100,
+      "exclusiveMinimum": 0,
+      "maximum": 1000000.0,
+      "title": "Corridor Mm",
+      "type": "number"
+    },
+    "segments": {
+      "default": 48,
+      "maximum": 256,
+      "minimum": 8,
+      "title": "Segments",
+      "type": "integer"
+    },
+    "subdivisions": {
+      "default": 12,
+      "maximum": 128,
+      "minimum": 1,
+      "title": "Subdivisions",
+      "type": "integer"
+    },
+    "surfaces": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Surface"
+      },
+      "title": "Surfaces",
+      "type": "object"
+    }
+  },
+  "title": "ArenaDesign",
+  "type": "object"
+}

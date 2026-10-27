@@ -1,5 +1,6 @@
 """Card-based local protocol configuration and canonical timeline editing."""
 
+from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -30,10 +31,15 @@ from cephvr.gui.protocol_snapshot import (
 )
 from cephvr.gui.protocol_templates import switch_category
 from cephvr.gui.recordings import RecordingsCard
+from cephvr.gui.sparse_noise_dialog import SparseNoiseDialog
 from cephvr.gui.stimulus_assets import StimulusAssetsCard
 from cephvr.gui.view import DashboardView
 from cephvr.visual_stimulus.config.categories import CATEGORY_LABELS
-from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+from cephvr.visual_stimulus.config.models.display_profile import Geometry
+from cephvr.visual_stimulus.config.models.program_model import (
+    Program,
+    parse_program_json,
+)
 from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 
@@ -78,6 +84,8 @@ class ProtocolPage(QWidget):
         top.setColumnStretch(2, 3)
         self.recordings = recordings
         self.can_edit = False
+        self.sparse_geometry: Callable[[], Geometry] | None = None
+        self.sparse_dialog: SparseNoiseDialog | None = None
         self.session_mode = combo(
             ("Not set", "Open-loop", "Closed-loop")
             if tracking_available
@@ -114,6 +122,7 @@ class ProtocolPage(QWidget):
             alignment=Qt.AlignmentFlag.AlignTop,
         )
         self.editor = ProtocolEditor(sample=sample)
+        self.editor.subgroup.composer.sparse_geometry = self.layer_geometry
         self.editor.subgroup.composer.tracking_available = tracking_available
         self._schedule_empty = False
         self.category_templates: dict[str, JSON] = {}
@@ -141,6 +150,83 @@ class ProtocolPage(QWidget):
         self.config_files.message.connect(self.show_file_message)
         self.config_files.loaded_document.connect(self.remember_program_import)
 
+    def layer_geometry(self) -> Geometry:
+        if self.sparse_geometry is None:
+            raise ValueError("Configure projector geometry first")
+        return self.sparse_geometry()
+
+    def open_sparse_noise(self) -> None:
+        if not self.can_edit or not self.editor.flush_parameters():
+            return
+        if self.sparse_dialog is not None:
+            self.sparse_dialog.raise_()
+            return
+        try:
+            root = Path(self.assets.folders["root"].editor.text()).resolve()
+            if not self.assets.folders["root"].editor.text() or not root.is_dir():
+                raise ValueError("Choose an existing Assets folder first")
+            if self.sparse_geometry is None or not self.editor.timeline.screens:
+                raise ValueError("Configure and enable the projector screens first")
+            geometry = self.sparse_geometry()
+            screens = self.editor.timeline.screens
+
+            def available() -> bool:
+                try:
+                    return (
+                        self.can_edit
+                        and self.sparse_geometry is not None
+                        and Path(self.assets.folders["root"].editor.text()).resolve()
+                        == root
+                        and self.editor.timeline.screens == screens
+                        and self.sparse_geometry() == geometry
+                    )
+                except (ValueError, OSError):
+                    return False
+
+            dialog = SparseNoiseDialog(
+                self,
+                root=root,
+                geometry=geometry,
+                screens=screens,
+                available=available,
+                program_path=self.editor.drafts[self.editor.index].path,
+            )
+        except (ValueError, OSError) as error:
+            self.show_error("Cannot prepare sparse noise", error)
+            return
+        dialog.prepared.connect(self.append_sparse_noise)
+        dialog.finished.connect(lambda: setattr(self, "sparse_dialog", None))
+        dialog.finished.connect(dialog.deleteLater)
+        self.sparse_dialog = dialog
+        dialog.open()
+
+    def append_sparse_noise(self, program: Program, path: str, name: str) -> None:
+        if (
+            not self.can_edit
+            or self.sparse_dialog is None
+            or not self.sparse_dialog.available()
+        ):
+            return
+        try:
+            category = self.editor.program.category
+            program = parse_program_json(
+                program.model_copy(update={"category": category}).model_dump_json(),
+                max_bytes=DEFAULT_DOCUMENT_BYTES,
+            )
+            if not self.editor.flush_parameters():
+                raise ValueError("Finish the current trial edit first")
+            draft = TrialDraft(name, program, path=path)
+            draft.group_for_editing()
+        except ValueError as error:
+            self.show_error("Cannot add sparse-noise trial", error)
+            return
+        self.editor.drafts.append(draft)
+        self.editor.histories.append(EditHistory())
+        self.editor.trials.addItem(name)
+        self.editor.configuration_schedule_empty = False
+        self.editor.trials.setCurrentRow(len(self.editor.drafts) - 1)
+        self.editor.changed.emit()
+
     def sync_category(self) -> None:
         categories = {draft.program.category for draft in self.editor.drafts}
         category = next(iter(categories)) if len(categories) == 1 else None
@@ -157,9 +243,6 @@ class ProtocolPage(QWidget):
         if index < 0:
             self.sync_category()
             return
-        if not self.editor.flush_parameters():
-            self.sync_category()
-            return
         category = tuple(CATEGORY_LABELS)[index]
         try:
             switch_category(self, category)
@@ -169,8 +252,6 @@ class ProtocolPage(QWidget):
             return
 
     def import_program(self, program: object) -> None:
-        from cephvr.visual_stimulus.config.models.program_model import Program
-
         if not isinstance(program, Program):
             raise TypeError("Expected a canonical stimulus program")
         category = self.editor.program.category
@@ -477,6 +558,8 @@ class ProtocolPage(QWidget):
         self.can_edit = view.can_edit
         self.config_files.set_enabled(self.can_edit)
         if not self.can_edit:
+            if self.sparse_dialog is not None:
+                self.sparse_dialog.reject()
             self.editor.close_source_dialog()
             if self.save_dialog is not None:
                 self.save_dialog.reject()

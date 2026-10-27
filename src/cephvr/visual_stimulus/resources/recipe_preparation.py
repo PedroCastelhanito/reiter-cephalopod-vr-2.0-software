@@ -35,6 +35,24 @@ def prepare_recipe_image(
             "texture recipes produce full-range RGB samples without chroma subsampling"
         )
     size = recipe.resolution
+    if recipe.physical_field:
+        if (
+            asset.color_override is not None
+            and asset.color_override.transfer != "linear"
+        ):
+            raise ValueError("Physical texture fields require linear color")
+        budget.reserve(owner=owner, cpu_bytes=4096, gpu_bytes=16 * output_count)
+        return ImagePixels(
+            1,
+            1,
+            "uint8",
+            3,
+            ("red", "green", "blue"),
+            np.zeros((1, 1, 3), dtype=np.uint8),
+            "linear",
+            "none",
+            recipe,
+        )
     pixel_count = size * size
     working_bytes = estimated_working_bytes(recipe)
     if recipe.pattern == "image" and image_pixels is not None:

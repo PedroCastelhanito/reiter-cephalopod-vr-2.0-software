@@ -16,7 +16,56 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 339
+**Status:** Accepted · **Revision:** 369
+
+- Generate assets is a lazy main-GUI tab; standalone invocation opens the same
+  offline editor in its own window. First opening receives an explicit asset root
+  and optional validated geometry snapshot. The Design files card exposes only
+  Open and Save as. Every Save action, including the keyboard shortcut, opens
+  Save As with the previous path suggested; only a confirmed destination publishes
+  the design, and cancellation preserves the draft and saved files. Previews stay
+  in memory and create no files. Omit preview captions, the Cancel generation control and routine preview
+  status messages; retain errors and automatic cancellation of obsolete work.
+  Tab changes preserve drafts and undo; main-window closure checks
+  unsaved designs before the normal close sequence.
+  The tab follows existing non-Dashboard runtime-phase gates. Textures/Arenas save
+  reusable recipes and static GLB bundles under V04/V18, without changing calibration,
+  starting projector outputs or modifying protocols. Both entry points share the
+  editor, generation functions and theme. Asset recipes contain appearance and seed
+  only; duration, speed, sequence count and projector assignment belong to Protocol.
+  Procedural texture files define physical appearance and seed independently of
+  any preview or projector extent under V04. Grating phase remains zero;
+  tile-size, fit-to-tile and phase-cycles controls are omitted. Preview dimensions
+  only select the visible window and never change saved appearance or file bytes.
+  Generated textures are projector-independent. Default appearance previews require no
+  calibration; screen selection appears only for optional calibrated inspection and
+  is never saved in the asset. Both use shared cards, labeled controls
+  and responsive columns: independently scrolling design controls on the left,
+  preview on the right, stacked on narrow windows. Standalone uses the saved
+  frontend style; offline authoring does not fabricate runtime status/logs.
+  Use Grating orientation for horizontal/vertical bars; omit their separate pattern
+  choices. Previously saved bar recipes remain readable with their existing controls.
+  Simple asset parameters share equal-width two-column rows. Colors, file pickers,
+  seeds and nested groups span both columns; color channels retain one RGB(A) row.
+  Color parameters come last. Grating starts with spatial period/orientation,
+  followed by sharpness. Authoring documents and saved recipes omit pixel resolution,
+  including legacy size aliases; Open/Save strip those fields. Raster sampling size
+  remains an internal rendering detail. Texture previews fit within1920 × 1080
+  while preserving physical aspect ratio (square previews1080 × 1080); procedural
+  fields are sampled directly at the preview dimensions.
+  Save writes recipe JSON without a companion PNG. Direct runtime loading of
+  existing recipes retains its resolution behavior.
+- Protocol exposes Uniform, Image, Video, Sparse noise, Grating and Texture drift
+  independently in each epoch's projector/layer row. None removes that layer.
+  Uniform authors linear RGB without an asset. Sparse noise authors square size,
+  minimum center distance, activation probability, background, explicit seed,
+  pattern count and pattern duration directly in that row. Apply prepares a bounded,
+  cancellable sequence off the GUI thread using V04's existing generator, retains
+  the validated appearance in the protocol, and commits only the selected layer;
+  other layers retain their timing. Editing authority, Assets, screen or geometry
+  changes discard late results. Retain external recipe/program import compatibility;
+  an external recipe is not required. Generated image resources/provenance remain
+  internal execution inputs under the [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
 
 - While Tracking development is paused, managed no-Tracking applications hide the
   Tracking page/navigation, status indicator, velocity-saving option, session-mode
@@ -26,8 +75,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   preview/video recording stays acquisition-owned under E08. Imported programs
   retain normal validation; hiding feedback does not remove its declarations.
 
-- Protocol category is separate from session Control: Media presentation, Texture
-  drift or 3D navigation. Preserve projector rows, row-local Layer management,
+- Protocol category is separate from session Control: Media presentation or 3D
+  navigation. Media includes all six 2D families, their motion and valid links. Preserve projector rows, row-local Layer management,
   parameter columns and a Motion source choice (Self/Linked) for link-capable textures.
   Both choices fit in the open popup without scrolling. The wide-row Motion source
   column stays 246 logical pixels for either choice; narrow layouts retain reflow.
@@ -35,9 +84,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   requires an eligible source. Fade-in/Fade-out controls sit in Advanced settings
   below their row. Switching category remembers and restores its last trial
   schedule/selection, including protocol save/load; Control and asset root stay shared.
+  Incomplete row parameters never block type changes: apply complete edits quietly,
+  then switch using committed schedules, resetting edits that cannot apply. Save,
+  preview and E07 Setup retain their validation gates.
   First use inherits compatible content, otherwise starts blank while retaining the
   departing content in its compatible category template. Templates validate atomically;
-  legacy source stays intact until explicitly classified. V02 owns executable validation.
+  unclassified legacy source stays intact until explicitly classified. The former
+  texture_drift category loads as Media presentation without changing its settings.
+  Distinct legacy Media/Drift schedules are never silently merged or discarded:
+  ambiguous snapshots reject atomically and require separate schedule imports.
+  V02 owns executable validation.
 - Monitor defaults to Combined: one renderer-owned GPU rig view maps the live
   calibrated output crops onto the prepared screen planes, beside shared instruments.
   Left-drag rotates the inspection camera with the protocol preview's sensitivity
@@ -46,7 +102,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Combined gives the rig view the expanding image area, collapsing unused camera
   space. Stimulus native viewers are borderless within the current theme's preview
   brackets; show source and representative preview FPS beneath each image, retaining
-  group-rate semantics and stale/unavailable markers. Drift gives the rig image and
+  group-rate semantics and stale/unavailable markers. Media motion gives the rig image and
   instruments equal expanding columns, centering and scaling the complete plot/table
   within its column. Drift shares compatible projector vectors on one polar plot with stable
   projector colors and common speed/angular scales; incompatible units remain separate.
@@ -65,7 +121,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   padding for larger instruments. Restore plot headings when images are hidden.
   Adapt rows and
   image/plot stacking to available space. Static projectors retain their plots.
-  Presentation omits motion controls/instruments. Navigation uses
+  Media exposes instruments for its available motion sources. Navigation uses
   the single observer's arena map and motion instruments with projected output views.
   Restore camera video space when a camera preview is selected in any category;
   replace the old standalone stimulus
@@ -97,10 +153,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   attempt in experiment metadata; requested current is never measured luminance or
   evidence of unchanged hardware at Start. See the [brightness contract](../../contracts/projector-brightness.md).
 
+- Synchronization offers the V22 Photodiode mode selector:60-frame landmarks or Every frame. Persist the choice with projector files and runtime profiles; older files default to landmarks. Lock mode changes during active placement; previews use the mode selected at Open.
 - Synchronization adds Launch photodiode placement and Launch blackout placement. The former starts black when its initial pulse definition is empty/incomplete, then runs V22's bright/dark submission sequence on black as complete live edits arrive; the latter previews black zones on neutral gray. Reuse V01 diagnostic Open/Update/Close, one active view, authority/revision/sequence gates and Idle restoration. During active placement enable only the relevant pixel rectangles/target or blackout add/remove controls; debounce complete bounded edits and retain the last valid presentation while typing. Unknown state permits Close only. Live Frame/Pulse/target edits preserve the diagnostic sequence; Close/reopen restarts it. These previews do not establish optical acceptance.
 
 - Projector window creation and recreation preserve the current desktop cursor
   position; disable automatic fullscreen cursor centering in the native window owner.
+  Physical projector outputs have no window icons or taskbar/switcher entries;
+  the main GUI retains its native application icon and taskbar entry.
 
 - Tab and Shift+Tab move forward/backward through visible enabled GUI form controls,
   including persistent editors inside tables. Tables retain arrow-key selection;
@@ -321,7 +380,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   tables, and reserve enough space for centered glyphs and consistent insets.
   Trial and epoch timeline rows use the full editing-content width, with the trailing
   add button flush to the content right edge and no extra reserved right gutter.
-  Timeline duration labels use hh:mm:ss, retaining fractional seconds when present.
+  Epoch entries and timeline duration labels use hh:mm:ss.mmm, always showing
+  milliseconds and retaining existing finer fractional precision without rounding.
   Layer selectors use a narrow index-only column with descriptive tooltips. Subgroups are
   separately identified batches of flat source epochs, using V03 authoring metadata;
   equal labels do not merge batches. Clicking a batch header or any member selects
@@ -416,13 +476,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Reserve the advanced fade row’s minimum height after narrow reflow.
   Keep canonical settings per instance/projector when switching layers. Empty slots
   are editor drafts, excluded from generated programs and runtime delivery.
-  Image rows expose Fit (Contain/Cover/Stretch), Move speed and Direction; zero
-  speed is still. Initial position and whole-image rotation sit in Advanced settings.
-  These edit existing 2D object motion, never texture phase. New Images use Contain;
-  omitted legacy fit keeps Stretch under V04. The editor offers a Fit dropdown;
-  numeric variation excludes Fit. Fitting precedes the existing geometry/calibration
-  pipeline in both the planning preview and renderer.
-  Stimulus mode, Duration (hh:mm:ss) and Name share one row at wide
+  Image rows offer Resize, Source and Fold under V04; new Images
+  default to Resize. Disable position/movement controls for these fixed-screen fits.
+  Saved legacy fits retain their appearance and movement until explicitly changed;
+  show their legacy name as the dropdown placeholder without adding new choices.
+  Numeric variation excludes Fit. Planning previews require configured native
+  resolution for Source and apply the same crop/pad rule using original asset sizes.
+  Fold previews share runtime source-coordinate mapping and Front reference scale;
+  missing reference calibration is shown as an error.
+  Stimulus mode, Duration (hh:mm:ss.mmm) and Name share one row at wide
   widths, with widths reflecting their values; narrow widths wrap. Leave extra
   separation before stimulus rows. Arena mode omits the redundant type selector and exposes Longitudinal/Lateral/Angular
   movement toggles and signed gains under V24 (zero gain disables an axis). Keep
@@ -434,6 +496,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Motion source and Linked to in the parameter columns above. Video hides
   Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
   Texture omits initial position/orientation controls and preserves imported pose values.
+  Grating directly authors physical period, sharpness (sinusoidal through square),
+  linear colors, Orientation and Speed without an asset. Orientation is the rig
+  direction normal to the bars, including at zero speed. Self/Linked uses V02:
+  linked Grating rows select one independent Grating reference and use its pattern,
+  motion and spatial/temporal phase through Bottom-based unfolding. Hide follower
+  pattern/motion controls while linked; retain its independent definition for unlinking.
+  Uniform and Sparse noise omit unrelated motion/file controls. Existing asset-backed
+  Grating loads and retains its versioned angle interpretation, Orientation/Speed/Asset
+  variations and source bytes. Direct Grating retains compact Orientation/Speed
+  repetitions. V04 owns pattern interpretation; V07 owns boundary phase retention.
+
+
   Expose initial position/orientation for arena, Video and Looming in Advanced settings,
   Arena shows aligned Initial position XYZ (mm) and Orientation yaw/pitch/roll (degrees)
   sections. New arena X/Y default to zero at arena center, Z copies the configured subject
@@ -482,19 +556,25 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   always-visible Add variation rule button and no Enable checkbox. Added rules are active; removing the last rule
   leaves only the add button. Do not activate legacy disabled drafts on load.
   Each rule uses a contrasting editing card with local Projectors, Layer, Parameter,
-  Method and Values/range labels. Keep Layer narrow and reflow within the page.
+  Method and range labels (Values only for saved legacy rules). Keep Layer narrow and reflow within the page.
   Removal appears on hover or keyboard focus; removing the final card hides its
   container while retaining Add variation rule. All projectors covers the enabled reference screens and
   offers common layer ordinals; explicit missing/stale targets reject generation.
   A selected local ordinal maps to the corresponding canonical instance on each
-  projector; isolate shared 2D instances for independent values. Accept explicit values or bounded min/max/step
-  sweeps, or Random for numeric parameters. Random shows Minimum, Maximum,
-  Precision (positive value step), with an unchecked Share random values across projectors
-  option. Independent target draws are the default; sharing explicitly reuses one list.
-  No manual resample or count field. Without a fixed list, draw for every existing
-  subgroup source epoch (one for a new subgroup). With paired Values/Sweep lists, materialize the
-  ordered source pattern once. Draw independently for each subgroup occurrence and
-  projector across all group repetitions; independent draws may coincide by chance.
+  projector; isolate shared 2D instances for independent values. New rules offer only
+  Random for numeric parameters, with Minimum, Maximum and Resolution (positive
+  value step), and an unchecked Share random values across projectors option. Independent target draws are the default; sharing explicitly reuses one list.
+  Asset offers Random from folder for image/video/image-tile layers. Browse or paste
+  a subset folder; retain compatible direct children (no recursion) as a bounded
+  candidate snapshot. Import external files through the existing Assets-root mechanism.
+  Preserve layer placement/scale and other parameters. Save the folder and candidate
+  identities for reopening; later directory additions do not silently change a saved
+  rule. Reject missing/empty/incompatible selections atomically. V08 owns seeded
+  per-repetition choices and shared/independent projector streams; no new source epochs.
+  No manual resample or count field. Rules assign values to the N repetitions of each
+  existing subgroup source epoch (one for a new subgroup), without adding source epochs.
+  Preserve saved legacy Values/Sweep lists and their existing ordered source pattern.
+  Draw independently for each subgroup occurrence and projector across all group repetitions; independent draws may coincide by chance.
   Keep source blocks and saved V08 seeded rules compact, without an occurrence-count
   limit in subgroup authoring. Resolve only representative values for editing; changing
   repetitions preserves existing seeds and the sampled prefix. Explicit source-list
@@ -505,14 +585,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   and seeds; edits to range, precision or targets create a new seed. V08 resolves
   executable rules at Setup, independently of order/duration seeds; rendering never
   samples. Retain legacy concrete repetition tables when loading existing programs.
-  Pair rules by value position with equal list lengths, without Combine. Explicit
-  Values remain in entered order. Parameter choices share
+  Saved legacy lists pair by value position with equal list lengths, without Combine;
+  explicit values remain in entered order. Parameter choices share
   the selected stimulus columns and captions, including units: Rotation replaces
   Angular speed in the UI, without changing its canonical key. Exclude Width, Height
   and Opacity. Mixed targets offer only compatible common columns; unsupported
-  targets reject generation. Video At end accepts ordered categorical values, without
-  a numeric sweep. Validate the resulting sequence on each automatic update. Materialize variants as
-  flat canonical source epochs edited together through their subgroup.
+  targets reject generation. New numeric rules exclude categorical Video At end;
+  retain saved legacy categorical lists. Validate rules on each automatic update;
+  source epochs remain edited together through their subgroup.
   No Shuffle trial action is exposed; group-order and Setup seed ownership remain unchanged.
   Store optional batch labels and distinct generated-batch identities under V03.
   The trailing + appends a new subgroup; edits update the selected subgroup in place.
@@ -608,7 +688,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Setup retains the final seed/order. Invalid mutations preserve the last valid program.
 - CephVR1 texture designs resolve an existing exported PNG plus declared tile dimensions
   into canonical V03; missing/invalid companions fail without synthesizing appearance.
-  File replacement is epoch-local and E07 root-relative. Omit texture-design controls;
+  File selection accepts supported media/texture recipes from any location. Copy
+  external selections into unique folders under Assets, preserving recipe-relative
+  image inputs and originals; keep existing in-root selections in place. Saved
+  references remain E07 root-relative and replacement remains epoch-local.
+  Omit texture-design controls;
   expose speed/direction/angular speed, opacity, playback, retain-state and feedback.
   Physical-screen direction authoring uses the shared rig frame: Right0°, Front90°, Left180°,
   Back−90°, with wall flow interpreted in V02's unfolded plane. Apply the same
@@ -985,9 +1069,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   verified calibration; preview placement must not require an additional Y inversion.
   Raw pixel widths/heights, offsets, reference bars and masks
   stay output-local; Bottom surface extents/pitches and render-target axes swap.
-  The rig preview undoes the Bottom portrait quarter-turn and folded optical mirror
-  when placing its raster onto the physical plane; output-local calibration remains
-  unchanged. Imported warps retain
+  Planning and native rig previews undo only the Bottom portrait quarter-turn
+  when placing its raster onto the physical plane, without an extra surface-X
+  reflection, so linked translation agrees with the walls. Physical projector
+  calibration and saved output-axis inversions remain unchanged. Imported warps retain
   their declared mapping; regenerated GUI profiles adopt this correction at fresh Setup.
   Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
   older Scale bounds to crop sizes using retained native measurements; reject a
@@ -1342,8 +1427,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 168
+**Status:** Accepted · **Revision:** 171
 
+- Shared dropdowns reserve the themed row heights before opening their popup;
+  short lists show every choice, and longer lists retain the visible-item limit
+  and native scrolling.
+- Qt application windows inherit a transparent app icon, suppressing the default
+  title-bar glyph while retaining native window controls. Camera preview windows
+  clear their HighGUI class-icon fallback as well as per-window icons.
 - In Protocol Self motion rows, align the last parameter field with the right edge
   of the Asset text field, excluding Browse. Preserve Linked and Advanced alignment
   and responsive field reflow.
@@ -1541,7 +1632,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   CRT scanlines/vignette and heading glow; Standard omits them. No CRT toggle or
   refresh-band feature is provided. Retro-family
   popups, menus and owned windows carry the same scanline film. Exclude projected
-  preview image areas (trial rig/surface canvases and native preview footprints)
+  preview image areas (asset texture previews, trial rig/surface canvases and native preview footprints)
   from scanlines and vignette; surrounding controls retain the style.
   Decorations are display-only: stored
   titles and headings are unchanged. The palette follows the owning window.
@@ -1754,7 +1845,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   no Clear button or separate action row.
   Reflow/scroll before clipping; preserve widget ownership
   and state during layout changes. Connection evidence remains distinct from Ready.
-- Except Protocol's G01 full-width planner and Projectors' display/tank diagram column, every page and device subtab keeps controls at the left, with a fitted HUD above
+- Amber phosphor navigation reserves content-measured width for complete page names,
+  icons and selection markers.
+- Except Protocol's G01 full-width planner, Generate assets' offline preview column
+  and Projectors' display/tank diagram column, every page and device subtab keeps controls at the left, with a fitted HUD above
   an expanding Runtime log at the right; placeholder pages retain this same layout.
   HUD height follows its rendered text, including wrapped lines and panel padding.
   The Runtime log fills the remaining column height. Shared fitted-text helpers,

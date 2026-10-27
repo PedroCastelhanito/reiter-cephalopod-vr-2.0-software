@@ -1,0 +1,4 @@
+Date:2026-10-27 Asia/Tokyo
+Source base:c7881b1f87a5d294383d310ebcb92630cd825099; dirty concurrent working tree.
+Local Qt tests and fake GL submission checks only; no app restart, physical photodiode trace, projector scanout or full-load acceptance.
+Initial pytest:13 passes/5 errors due sandbox temp directory permissions; workspace basetemp recovered. Initial mypy2 errors corrected. Windows wildcard/missing calibration_bundle reads were corrected through directory discovery.

@@ -53,6 +53,7 @@ def merge_projector_draft(
     geometry: Mapping[str, object] | None,
     blackout_zones: list[dict[str, Any]] | None = None,
     pulse_patches: Mapping[str, Mapping[str, Any]] | None = None,
+    photodiode_mode: str | None = None,
 ) -> runtime_pb2.DisplayConfiguration:
     """Update this page's fields without normalizing unrelated calibration data."""
     document = display_document(base)
@@ -106,6 +107,10 @@ def merge_projector_draft(
     if type(pulse_enabled) is not bool:
         raise ValueError("Photodiode enable must be true or false")
     document["photodiode_enabled"] = pulse_enabled
+    if photodiode_mode is not None:
+        if photodiode_mode not in ("landmarks", "every_frame"):
+            raise ValueError("Unsupported photodiode mode")
+        document["photodiode_mode"] = photodiode_mode
     if pulse_patches is not None:
         previous = document.get("photodiode_patches") or {}
         if document.get("photodiode_output_id") and document.get("photodiode_patch"):

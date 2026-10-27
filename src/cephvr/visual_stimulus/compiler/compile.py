@@ -306,6 +306,12 @@ def _check_asset_resources(
         for settings in epoch.settings:
             if isinstance(settings, (ImageSettings, VideoSettings, ArenaSettings)):
                 add_asset(settings.asset_id)
+                if (
+                    isinstance(settings, ImageSettings)
+                    and settings.sparse_noise is not None
+                ):
+                    for asset_id in settings.sparse_noise.asset_ids:
+                        add_asset(asset_id)
             elif isinstance(settings, TextureSettings) and isinstance(
                 settings.pattern, ImageTile
             ):
@@ -315,6 +321,7 @@ def _check_asset_resources(
         "tiff_uint_v1": "image",
         "jpeg8_v1": "image",
         "cephvr1_texture_json_v1": "image",
+        "cephvr_grating_json_v1": "image",
         "mp4_h264_sdr8_v1": "video",
         "matroska_ffv1_v3_uint_v1": "video",
         "glb2_static_unlit_v1": "arena",
@@ -413,13 +420,6 @@ def compile_trial(
         )
     ):
         settings = occurrence.settings
-        if program.category == "media_presentation":
-            settings = tuple(
-                setting.model_copy(update={"linked_to": None})
-                if isinstance(setting, TextureSettings)
-                else setting
-                for setting in settings
-            )
         _validate_writers(settings, index)
         _check_ranges(settings, index, duration_ns)
         end = cursor + duration_ns

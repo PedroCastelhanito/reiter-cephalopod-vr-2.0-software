@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from math import isfinite
 
 from cephvr.gui.arena_movement import patch_arena
@@ -55,7 +56,8 @@ def materialize_values(
                 frames = {
                     (r.rig_coordinates, r.rig_angle_version if r.rig_coordinates else 1)
                     for r in rules
-                    if r.layer == index and r.parameter in ("Speed", "Direction")
+                    if r.layer == index
+                    and r.parameter in ("Speed", "Direction", "Orientation")
                 }
                 if len(frames) > 1:
                     raise ValueError(
@@ -72,3 +74,26 @@ def materialize_values(
                     setting["end_behavior"] = END_BEHAVIORS[patch["At end"].lower()]
         data["sequence"].append(epoch)
     return validate(data)
+
+
+def listed_values(method: int, text: str, parameter: str) -> tuple[str, ...]:
+    """Parse bounded legacy list/sweep inputs independently of their widget."""
+    if method == 0:
+        values = tuple(v.strip() for v in text.split(","))
+        if parameter == "At end":
+            if any(v.lower() not in END_BEHAVIORS for v in values):
+                raise ValueError("At end values must be loop or hold final frame")
+        else:
+            for value in values:
+                float(value)
+        return values
+    try:
+        start, stop, step = (Decimal(part.strip()) for part in text.split(","))
+    except (InvalidOperation, ValueError) as error:
+        raise ValueError("Sweep needs min, max, step") from error
+    if not all(v.is_finite() for v in (start, stop, step)) or step <= 0 or stop < start:
+        raise ValueError("Sweep needs finite min ≤ max and positive step")
+    count = int((stop - start) // step) + 1
+    if count > 512:
+        raise ValueError("Sweep exceeds 512 values")
+    return tuple(str(start + i * step) for i in range(count))

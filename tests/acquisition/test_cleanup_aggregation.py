@@ -61,11 +61,19 @@ from cephvr.shared.commands import CommandLedger
         "unexpected_output",
         "unexpected_resource",
         "missing_commands",
+        "prepared_empty",
+        "prepared_ring",
+        "prepared_ring_attached",
+        "prepared_ring_missing_release",
+        "prepared_ring_wrong_peer",
+        "prepared_ring_wrong_transfer",
+        "prepared_ring_wrong_target",
+        "prepared_ring_wrong_work",
     ],
 )
 def test_worker_cleanup_before_setup_requires_exact_device_only_proof(case):
     from cephvr.acquisition.coordinator.evidence_cleanup import WorkerCleanupEvidence
-    from cephvr.acquisition.state import ResourceRecord
+    from cephvr.acquisition.state import ChildOperation, ResourceRecord
     from cephvr.platform.windows.resource_ledger import ResourceKey
 
     work = control.WorkContext(session=control.SessionContext(session_id=str(uuid4())))
@@ -105,6 +113,52 @@ def test_worker_cleanup_before_setup_requires_exact_device_only_proof(case):
         released=True,
     )
     resources = {}
+    ledger = NativeResourceLedger(max_resources=10, max_transfers_per_resource=4)
+    if case.startswith("prepared_"):
+        session.setup_cancelled = True
+        worker.setup_operation = control.OperationContext(command_id=str(uuid4()))
+        worker.child_operations[worker.setup_operation.command_id] = ChildOperation(
+            command_id=worker.setup_operation.command_id,
+            camera=role,
+            work=control.WorkContext.FromString(work.SerializeToString()),
+            parent_operation=session.operation,
+            kind="setup_session",
+        )
+        if case == "prepared_ring_wrong_work":
+            worker.child_operations[
+                worker.setup_operation.command_id
+            ].work.session.session_id = str(uuid4())
+        if case != "prepared_empty":
+            transfer_id = str(uuid4())
+            attachment = acq.FrameBufferAttachment()
+            attachment.buffer.producer.CopyFrom(identity)
+            attachment.buffer.owner.CopyFrom(owner)
+            attachment.sync.target.CopyFrom(identity)
+            attachment.sync.transfer_id = transfer_id
+            key = ResourceKey("ring", owner.generation)
+            resources["ring"] = ResourceRecord(
+                attachment=attachment, ring=None, ledger_key=key
+            )
+            session.expected_attachments[role] = {"ring"}
+            ledger.register(key, kind="ring")
+            peer_id = (
+                str(uuid4())
+                if case == "prepared_ring_wrong_peer"
+                else identity.generation
+            )
+            ledger.expect_attachment(
+                key, peer_instance_id=peer_id, transfer_id=transfer_id
+            )
+            if case == "prepared_ring_attached":
+                ledger.confirm_attachment(
+                    key, peer_instance_id=peer_id, transfer_id=transfer_id
+                )
+            if case == "prepared_ring_wrong_transfer":
+                attachment.sync.transfer_id = str(uuid4())
+            if case == "prepared_ring_wrong_target":
+                attachment.sync.target.generation = str(uuid4())
+            if case != "prepared_ring_missing_release":
+                cleanup.resources.add(resource="ring", released=True)
     if case == "ready":
         worker.setup_ready = acq.WorkerReadyEvidence(required_checks_passed=True)
     elif case == "missing_device":
@@ -137,17 +191,31 @@ def test_worker_cleanup_before_setup_requires_exact_device_only_proof(case):
         worker.commands = None
     evidence = WorkerCleanupEvidence(
         resources=resources,
-        resource_ledger=NativeResourceLedger(
-            max_resources=10, max_transfers_per_resource=4
-        ),
+        resource_ledger=ledger,
         commands=commands,
     )
-    if case in {"before_setup", "ready"}:
+    if case in {
+        "before_setup",
+        "ready",
+        "prepared_empty",
+        "prepared_ring",
+        "prepared_ring_attached",
+    }:
         evidence.retain(session, worker, cleanup)
-        assert (worker.setup_ready is None) == (case == "before_setup")
+        evidence.retain(session, worker, cleanup)
+        assert (worker.setup_ready is None) == (case != "ready")
+        if "ring" in resources:
+            snapshot = ledger.snapshot(resources["ring"].ledger_key)
+            assert snapshot.transfers[0].released
+            assert snapshot.transfers[0].attached == (case == "prepared_ring_attached")
+            assert ledger.may_close_owner(resources["ring"].ledger_key)
     else:
         with pytest.raises(ValueError):
             evidence.retain(session, worker, cleanup)
+        if "ring" in resources and case.startswith("prepared_"):
+            assert (
+                not ledger.snapshot(resources["ring"].ledger_key).transfers[0].released
+            )
 
 
 @pytest.mark.parametrize(

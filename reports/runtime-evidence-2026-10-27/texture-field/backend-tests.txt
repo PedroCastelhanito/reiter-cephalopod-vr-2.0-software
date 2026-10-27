@@ -1,0 +1,152 @@
+COMMAND: ['C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests/visual_stimulus', '-q', '-m', 'not windows and not rig', '--timeout=60', '--basetemp=C:\\Users\\ReiterU_PC\\.codex\\visualizations\\2026\\10\\27\\01a17c63-c157-7eb1-af71-3d5243620475\\backend-tests-retained']
+
+...........F......................................................... [ 11%]
+.....................................................F.................. [ 23%]
+........................................................................ [ 35%]
+........................................................................ [ 47%]
+........................................................................ [ 59%]
+........................................................................ [ 71%]
+........................................................................ [ 82%]
+........................................................................ [ 94%]
+...............................                                          [100%]
+================================== FAILURES ===================================
+_ ExpansionTests.test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent _
+
+self = <tests.visual_stimulus.test_compilation.ExpansionTests testMethod=test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent>
+
+    def test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent(
+        self,
+    ) -> None:
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+        from cephvr.visual_stimulus.config.models.repetition import (
+            AssetRepetitionRule,
+            RepetitionRule,
+        )
+        from cephvr.visual_stimulus.config.parameter_edits import (
+            motion_numbers,
+            patch_setting,
+        )
+    
+        source = add_stimulus(blank_program(), 0, "Grating", ("Left",))
+        payload = grouped_program(source).model_dump(mode="json")
+        group = payload["sequence"][0]
+        group["repetitions"] = 12
+        setting = group["body"][0]["settings"][0]
+        patch_setting(
+            setting, {"Speed": "10", "Orientation": "45"}, rig_coordinates=True
+        )
+>       first = payload["assets"][0]
+                ^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests\visual_stimulus\test_compilation.py:463: IndexError
+___ test_replacing_display_preserves_only_unreused_native_release_receipts ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016466580990>
+
+    def test_replacing_display_preserves_only_unreused_native_release_receipts(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import threading
+    
+        from cephvr.visual_stimulus.rendering import native as native_module
+    
+        gl = _FakeGL()
+        original = _two_output_display()
+        raw_temporary = original.model_dump(mode="json")
+        raw_temporary["outputs"][0]["width_px"] += 8
+        temporary = parse_display_json(json.dumps(raw_temporary), max_bytes=1_000_000)
+        outputs_by_id = {
+            item.output_id: SimpleNamespace(
+                context=_FakeContext(gl, item.output_id),
+                width=item.width_px,
+                height=item.height_px,
+                bits=item.rgb_bits_per_channel,
+                activate=lambda: None,
+            )
+            for item in temporary.active_outputs
+        }
+        registrations: list[tuple[str, str | None]] = []
+        port = ModernGLPort(
+            Path("."), announce=lambda key, path: registrations.append((key, path))
+        )
+        port._owner = threading.get_ident()
+        port._glfw = _FakeGLFW(gl)
+        port._glfw.destroy_window = lambda _window: None
+        port._glfw.swap_interval = lambda _interval: None
+        port._glfw.create_window = lambda _w, _h, title, _monitor, _share: title
+        port._moderngl = SimpleNamespace(DEPTH_TEST=1, BLEND=2)
+        port._display = temporary
+        port._display_calibration = None
+        port._outputs = {
+            output_id: _OutputContext(
+                output_id,
+                output_id,
+                item.context,
+                item.width,
+                item.height,
+                item.bits,
+                1,
+                item.context.screen,
+                item.activate,
+            )
+            for output_id, item in outputs_by_id.items()
+        }
+        port._window_obligations = set(outputs_by_id)
+        port._orphan_windows = {}
+        port._calibration_owner = SimpleNamespace(release=lambda: ())
+        port.preview = None
+        unrelated_key = "visual_stimulus:gpu:previous-session-resource"
+        port._released = [unrelated_key]
+        port.clock_ns = lambda: 10
+        port._idle_device_color = lambda *_args: (0.0, 0.0, 0.0)
+        port._release_partial = lambda _created: port._outputs.clear() or []
+    
+        def glfw_factory() -> _FakeGLFW:
+            return _FakeGLFW(gl)
+    
+        def install_fake_graphics() -> None:
+            port._glfw = glfw_factory()
+            port._glfw.destroy_window = lambda _window: None
+            port._glfw.swap_interval = lambda _interval: None
+            port._glfw.create_window = lambda _w, _h, title, _monitor, _share: title
+            port._moderngl = SimpleNamespace(DEPTH_TEST=1, BLEND=2)
+    
+        port._load_graphics = install_fake_graphics
+        monkeypatch.setattr(
+            native_module,
+            "resolve_output_monitors",
+            lambda display, _glfw, _resolver: [
+                (output, object()) for output in display.active_outputs
+            ],
+        )
+        monkeypatch.setattr(native_module, "configure_window", lambda *_args: None)
+        contexts = iter(
+            _FakeContext(gl, item.output_id) for item in original.active_outputs
+        )
+        monkeypatch.setattr(
+            native_module, "attach_window_context", lambda _gl: next(contexts)
+        )
+        monkeypatch.setattr(native_module, "verify_framebuffer", lambda *_args: None)
+        monkeypatch.setattr(native_module, "clear_valid_background", lambda *_args: None)
+    
+        engine = RendererEngine(port, clock_ns=lambda: 10)
+        engine._display = temporary
+        engine._display_observation = _initialization(temporary)
+        prepared = _prepared(
+            temporary,
+            previous=original,
+            previous_calibration=PreparedCalibration(assets=(), resources=(), content={}),
+        )
+        activities, closed = engine.close_display_calibration(temporary, prepared)
+    
+>       assert closed and activities
+E       assert (False)
+
+tests\visual_stimulus\test_display_calibration_rendering.py:752: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_compilation.py::ExpansionTests::test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_replacing_display_preserves_only_unreused_native_release_receipts
+2 failed, 602 passed, 52 deselected, 3 subtests passed in 4.85s

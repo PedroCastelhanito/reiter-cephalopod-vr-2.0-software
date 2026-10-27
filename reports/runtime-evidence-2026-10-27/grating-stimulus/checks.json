@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-27",
+  "revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "scope": "Dirty tree with active concurrent protocol-media-families and physical-field/photodiode work. No commit or application restart.",
+  "sha256": {
+    "src/cephvr/gui/grating_motion.py": "06d9ee4677d775831e701c5ac82582ebfb621f0cc8167978afe4da24f64e25de",
+    "src/cephvr/gui/stimulus_presets.py": "8a3ce6e3401e4906a2443853f71ae256d24f97a549be1f25bc64fdf93e2dc3d9",
+    "src/cephvr/gui/prepared_file_picker.py": "32be00056b03e3202adf12b4d8df33e029aefa99c425889a007e7ee263a27898",
+    "src/cephvr/gui/epoch_batch.py": "473085fa75a160144eb3a653c8d53ec62555587e92119c6ce2acc046fedf08a5",
+    "src/cephvr/gui/projector_layers.py": "a7233c5698819d56e3becb516bb74223d44f6e3d418d462cb767e31b3188d926",
+    "src/cephvr/gui/stimulus_columns.py": "03f75865ffcfbde931c5abb11ba2db28542920a83b8fa15e4b59d56060661ca4",
+    "src/cephvr/gui/stimulus_parameters.py": "d84f2e391f6c4a2da19f4fdb505ae64fcf9fb82b4a186325eb4649acb54f2a1d",
+    "src/cephvr/gui/reference_fields.py": "45e1b5237e98262add41adc4ef2796ed2b52f98268c5b8f6be8bcb0cbb90d524",
+    "src/cephvr/gui/projector_reference.py": "5508e4809347deb6db3d23480ef083a8c894b48fa2cb8c4ed1072b9758cdc0db",
+    "src/cephvr/gui/epoch_composer.py": "255cad0404faf848eeee1842d1af3dfd4f01a6846d5e0c7f92bf5622dadf7184",
+    "src/cephvr/gui/subgroup_editor.py": "3a40c431e627b424360037992967f39c01e1386914d33cb2255b5cf02ffc8f28",
+    "src/cephvr/gui/variation_assets.py": "d0a52b29d1243b00d801a107a6f9d6c4517ef7dac01aa30f1d42994c2d26aac6",
+    "src/cephvr/gui/batch_values.py": "97eba0da4a6e921bd73be96693369b6d90bef7304ccb2ef49398c4e71956fd04",
+    "src/cephvr/gui/stimulus_files.py": "2f00929ae4ae92baf15db6a8ea1faa51a2af98acafe03b22eac0722522a8ded7",
+    "src/cephvr/gui/trial_preview_media.py": "dd0a384fa346b5abc201b58ed0b22259c39f2d1d5d252651ee6edaed607d938c",
+    "src/cephvr/visual_stimulus/config/media_profiles.py": "57337e785654890251901a8e4af775cc452d29ed8f96983f85b898f6d5f6e475",
+    "src/cephvr/visual_stimulus/config/grating.py": "b9abef465ff572d5a195e658b8d234740de305b9895973d40906334f350fd961",
+    "src/cephvr/visual_stimulus/config/models/program_model.py": "2a98f10fcff362ccea40ab05cb1ad7ea3724cbba5372bec06a210ffebe8f5b0b",
+    "src/cephvr/visual_stimulus/config/models/repetition.py": "77b26ba8623b29a3e230b8aba8e646d5ab11878d63b56d7af22853208a90689e",
+    "src/cephvr/visual_stimulus/config/parameter_edits.py": "d14c41acb857dc728fc113d8c2b239e421b12d9e7eee66b43540faf3d43130db",
+    "src/cephvr/visual_stimulus/config/repetition_values.py": "fa5345883f7760d83330e5b337095bfeb5894cddaae716f4da8a34ab7e097ee1",
+    "src/cephvr/visual_stimulus/config/categories.py": "99e9fe37048c5c09c0471f714de885bf561badc14925c0e16a3d77376551f4bf",
+    "src/cephvr/visual_stimulus/resources/grating_recipe.py": "1c3b8aaf93f42b420b32547d254826e17c82261aeab15f9bddf90d59e189ff71",
+    "src/cephvr/visual_stimulus/resources/assets.py": "11dadfccc4476262edf7286e0029ad83ebdac19c7dbc58cfc6fc795281ab5d31",
+    "src/cephvr/visual_stimulus/resources/image_source.py": "5c1a3cc99983cea775119d5b149603a5be2c15df60708ae5f7c19cac13d8473c",
+    "src/cephvr/visual_stimulus/resources/prepare.py": "1155e86bda5bddfe15602c8689d9d7e3d14c406c6f77d1b2c2eec2608163dd9e",
+    "src/cephvr/visual_stimulus/compiler/compile.py": "0c14c3008613ff183222399b20c49a737cca92bb94bc558067d48edf6d524c8d",
+    "src/cephvr/gui/batch_variation.py": "a7f2e368e25852feeaaff83e8a2fb0b8ea4c17a288208e5e2c68c097413fd549",
+    "src/cephvr/gui/subgroup_repetitions.py": "58707fc529fc72217ed2e8b77582b46c032d3b447500c1ebcb7a7644afe29d7b",
+    "src/cephvr/visual_stimulus/config/models/authoring.py": "5e35d6db59e90b43462f2bf38c64e1ff4db6e808ff6a30036224463d77389bad",
+    "tests/gui/test_dashboard.py": "11e44ce73c37437d652417038e71f55bd02c89327714e0afa19bb5fa1e3372a8",
+    "tests/visual_stimulus/test_compilation.py": "9af5af42ecd5fdac3d3b99bd684135ae89107d2bd3bb22656008f10f09eb8b81",
+    "tests/visual_stimulus/test_resources.py": "111197ff2aec1f0ba9e159c4cb4152c261fcdeb2f5ce8772655e6acbf5a7cdda"
+  },
+  "gui": {
+    "result": "69 passed, 985 deselected",
+    "raw": "gui-verified.txt",
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -m \"not windows and not rig\" -k \"(grating_has or variation or subgroup or stimulus_parameter or prepared_texture or batch_reference or reference_motion_source or mixed_projector_cards or family_advanced or external_texture_picker) and not reference_type_change\" --basetemp=<external writable visualization root>/grating-gui-final-3 --timeout=45"
+  },
+  "backend": {
+    "result": "156 passed, 3 subtests passed",
+    "raw": "backend-final.txt",
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_compilation.py tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_resources.py -q -m \"not windows and not rig\" -k \"not media_links_are_preserved_in_source_but_not_executed and not presentation_category_rejects_executable_motion\" --basetemp=<external writable visualization root>/grating-backend-final-2 --timeout=45"
+  },
+  "earlier_focused": {
+    "gui": "8 passed: four projector faces times legacy/current recipe versions, including Asset/Orientation rules and stationary state",
+    "resources": "4 passed: eager/deferred times legacy/current recipe versions"
+  },
+  "limits": [
+    "No managed app restart or native/live playback/physical verification.",
+    "Older category/link and removed-Looming-selector assertions failed during concurrent family migration; explicitly excluded from the final selections.",
+    "Final code/static/schema checks recorded in context.md."
+  ],
+  "final_grating_gui": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k grating_has --basetemp=<external writable visualization root>/grating-gui-release --timeout=45",
+    "result": "8 passed, 1046 deselected",
+    "raw": "grating-final.txt"
+  },
+  "final_grating_backend": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_compilation.py -q -k \"grating_recipe_preparation or grating_rules_keep\" --basetemp=<external writable visualization root>/grating-backend-release --timeout=45",
+    "result": "5 passed, 137 deselected",
+    "raw": "grating-backend-final.txt"
+  },
+  "static": {
+    "ruff_check": "All checks passed;30 source files plus3 owning test files",
+    "ruff_format": "33 files already formatted",
+    "mypy": "Success: no issues found in30 source files (--platform win32)",
+    "schema": "14 schemas checked;0 needed regeneration",
+    "boundaries": "780 modules;0 violations, retained size advisories",
+    "whitespace": "git diff --check passed; CRLF normalization warnings only"
+  }
+}

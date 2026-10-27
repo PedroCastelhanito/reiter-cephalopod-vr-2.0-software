@@ -71,7 +71,9 @@ class PulseCanvas(QWidget):
                 (patch.background_rect, "black"),
                 (
                     patch.rect,
-                    "white" if photodiode_level(self.preview.index) else "black",
+                    "white"
+                    if photodiode_level(self.preview.index, timing.pulse_mode)
+                    else "black",
                 ),
             ):
                 if rect is not None:

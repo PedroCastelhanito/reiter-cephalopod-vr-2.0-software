@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
+from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.resources.assets import PreparedAsset
@@ -31,6 +32,7 @@ class ImageSource:
     gpu_bytes: int
     load: LoadPixels
     output_ids: tuple[str, ...] | None = None
+    field_recipe: Any = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +43,7 @@ class ImageInfo:
     channel_order: tuple[str, ...]
     transfer: Transfer
     alpha: Alpha
+    field_recipe: Any = None
 
 
 def validate_image_source(
@@ -67,7 +70,7 @@ def validate_image_source(
         raise ValueError("image source metadata does not match its protected asset")
     if source.byte_count <= 0:
         raise ValueError("protected image source must contain bytes")
-    is_recipe = asset.profile == "cephvr1_texture_json_v1"
+    is_recipe = asset.profile in TEXTURE_RECIPE_PROFILES
     if (dependency_asset is None) != (dependency_source is None):
         raise ValueError("recipe image dependency asset and source must be paired")
     if not is_recipe and dependency_asset is not None:
@@ -106,6 +109,7 @@ def validate_image_source(
             pixels.channel_order,
             pixels.transfer,
             pixels.alpha,
+            pixels.field_recipe,
         )
         _validate_linear_output(validation_bytes, info)
         del validation_bytes
@@ -146,7 +150,15 @@ def validate_image_source(
         _validate_linear_output(result, info)
         return result
 
-    return ImageSource(key, info.width, info.height, cpu_bytes, gpu_bytes, load), info
+    return ImageSource(
+        key,
+        info.width,
+        info.height,
+        cpu_bytes,
+        gpu_bytes,
+        load,
+        field_recipe=info.field_recipe,
+    ), info
 
 
 def read_source_bytes(source: PreparedAsset, check: Check) -> bytes:
@@ -216,7 +228,7 @@ def _load_image_pixels(
     dependency_asset: Asset | None,
     dependency_source: PreparedAsset | None,
 ) -> tuple[ImagePixels, str | None]:
-    is_recipe = asset.profile == "cephvr1_texture_json_v1"
+    is_recipe = asset.profile in TEXTURE_RECIPE_PROFILES
     base_bytes = (
         2 * encoded_bytes
         + _read_buffer_overhead(encoded_bytes)
@@ -309,7 +321,32 @@ def _render_recipe(
         raise ValueError(
             "texture recipes produce full-range RGB samples without chroma subsampling"
         )
-    recipe = parse_texture_recipe(raw, max_document_bytes=max_document_bytes)
+    from cephvr.visual_stimulus.resources.grating_recipe import interpreted_recipe
+
+    recipe = interpreted_recipe(
+        parse_texture_recipe(raw, max_document_bytes=max_document_bytes), asset.profile
+    )
+    if recipe.physical_field:
+        import numpy as np
+
+        if (
+            asset.color_override is not None
+            and asset.color_override.transfer != "linear"
+        ):
+            raise ValueError("Physical texture fields require linear color")
+        if reserve_pixels is not None:
+            reserve_pixels(1, 1)
+        return ImagePixels(
+            1,
+            1,
+            "uint8",
+            3,
+            ("red", "green", "blue"),
+            np.zeros((1, 1, 3), dtype=np.uint8),
+            "linear",
+            "none",
+            recipe,
+        ), "physical_field_v1"
     image_pixels = None
     if recipe.pattern == "image":
         if dependency_asset is None or dependency_source is None:
@@ -368,7 +405,11 @@ def _render_recipe(
         asset.color_override.transfer if asset.color_override else "linear",
         "none",
     )
-    return result, recipe.pattern
+    # Only legacy polar rasters depend on display geometry in the content key.
+    pattern = recipe.pattern
+    if pattern == "polar_grating" and recipe.params.get("tile_local", False):
+        pattern = "polar_tile"
+    return result, pattern
 
 
 def _content_key(

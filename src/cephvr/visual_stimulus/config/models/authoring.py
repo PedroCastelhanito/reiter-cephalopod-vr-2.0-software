@@ -25,6 +25,11 @@ class VariationDraft(Model):
     seed: str = ""
     sample_key: tuple[Text, ...] = ()
     samples: Annotated[tuple[Text, ...], Field(max_length=32000)] = ()
+    folder: Text = ""
+    asset_ids: Annotated[tuple[Text, ...], Field(max_length=2000)] = ()
+    grating_periods_mm: Annotated[
+        tuple[Annotated[float, Field(gt=0)], ...], Field(max_length=2000)
+    ] = ()
 
 
 class SubgroupDraft(Model):

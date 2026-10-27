@@ -616,9 +616,9 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 215
+**Status:** Accepted · **Revision:** 216
 
-- Visual Stimulus policy version19 combines the accepted file-owned projection limits
+- Visual Stimulus policy version20 adds V22 selectable landmark/every-frame modes and combines the accepted file-owned projection limits
   (V15/G01) with required scientific evidence and optional reduced review video
   using sequential timestamp-mapped frames and uncropped equal-cell recording with
   Bottom review rotation, no labels and no gutters for matching post-rotation sizes;

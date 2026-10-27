@@ -19,7 +19,11 @@ def covering_texture(
         setting is None
         or setting.kind != "texture"
         or setting.space.kind != "physical_surface"
-        or setting.pattern.kind != "image_tile"
+        or (
+            setting.pattern.kind != "image_tile"
+            and not setting.uniform
+            and not setting.grating
+        )
     ):
         return snapshot
     mapping = next(m for m in setting.space.mappings if m.surface_id == surface_id)
@@ -44,7 +48,7 @@ def covering_texture(
     for axis, name in enumerate(("width", "height")):
         old = float(values[name])
         extent = max(old, 2 * max(abs(p[axis]) for p in points))
-        period = float(values["period_x" if axis == 0 else "period_y"])
+        period = float(values.get("period_x" if axis == 0 else "period_y", 1.0))
         # Whole tiles preserve the shader's corner-anchored phase.
         extent = old + 2 * math.ceil(max(0.0, extent - old) / (2 * period)) * period
         values[name] = extent

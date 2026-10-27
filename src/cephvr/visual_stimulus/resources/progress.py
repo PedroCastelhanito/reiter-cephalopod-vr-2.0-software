@@ -1,6 +1,20 @@
 """Bounded operator feedback for CPU and graphics Setup stages."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
+
+
+@dataclass(slots=True)
+class PreparationMetrics:
+    """Cumulative CPU preparation measurements for one Setup, including cache hits."""
+
+    source_seconds: float = 0.0
+    image_seconds: float = 0.0
+    compile_seconds: float = 0.0
+    sources_hashed: int = 0
+    fingerprints_reused: int = 0
+    images_validated: int = 0
+    validations_reused: int = 0
 
 
 class SetupProgress:

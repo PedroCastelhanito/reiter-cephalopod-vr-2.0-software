@@ -33,6 +33,7 @@ class ImagePixels:
     pixels: Any
     transfer: Transfer
     alpha: Alpha
+    field_recipe: Any = None
 
 
 def _declared_transfer(asset: Asset) -> Literal["linear", "srgb", "bt709", ""]:

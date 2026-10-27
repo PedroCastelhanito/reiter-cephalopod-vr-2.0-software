@@ -1,0 +1,58 @@
+{
+  "recorded_utc": "2026-10-27T04:40:37.501567+00:00",
+  "base_revision": "83c7e81e3b621471fc8925ad95de5e95cf6fd64d",
+  "working_tree": "dirty; shared workspace includes unrelated concurrent work",
+  "source_sha256": {
+    "src/cephvr/generate_stimulus/arena.py": "b7c42effd431994b0d1415abb17cf8a7d477d47e60d2ccefbe5f4ddb850cede5",
+    "src/cephvr/generate_stimulus/documents.py": "881ad9aad383127323c6dd93a41f2d92b132457b189b281cbc1cfbf702a8d6fa",
+    "src/cephvr/generate_stimulus/files.py": "1bed6f3478920aac0b87175b4141a2997766cf4c3f22c2ef89f5756c791fc137",
+    "src/cephvr/generate_stimulus/geometry.py": "81f0894dd9d819f655d36ccf155511b7037a4d81e4c8bf3ccec31463841a7ac8",
+    "src/cephvr/generate_stimulus/jobs.py": "a9ae012ea5de33975fa3f4c583e7fbbe7639312432dda5ddb1e48dd5be544bea",
+    "src/cephvr/generate_stimulus/models.py": "2edbabd363a2d0a16bbd110522f41a0886148b9ed0cada0a56ca183646f395d9",
+    "src/cephvr/generate_stimulus/properties.py": "ec7fc31ed556ffc18497484c760de74b7693d081975c9b3a0fc0dac7650e1a03",
+    "src/cephvr/generate_stimulus/textures.py": "ec3069fd6bac49af8952ca757d4af633bb0214f8664cb8852d6e871d63b8ed18",
+    "src/cephvr/generate_stimulus/texture_preview.py": "e6cda7ce22cdcdf2f1e641f2cf043c5c3148f3f1c6847f1f1d9460ef5af031c3",
+    "src/cephvr/generate_stimulus/viewport.py": "56a935b2933b801908b803f8f52c9d44158c489bb7be9796c10f7bdf25b02245",
+    "src/cephvr/generate_stimulus/window.py": "9022475d615385a748fb42f819ce01faaf2300a9ab7e804e7f57b4f5c0a4a727",
+    "src/cephvr/generate_stimulus/__init__.py": "90b245d04a3aad85f43447a68190c34f379e9d89bf6b340ebce5b2fc678fcb96",
+    "src/cephvr/generate_stimulus/__main__.py": "db578ad822fcc746418663861dda4b55825ea1a00cf743e978be7c9fbcae7117",
+    "src/cephvr/gui/stimulus_authoring.py": "892fc40df462c42329999d93cf1855ea525ef21875776bed39c90323eea4dcba",
+    "src/cephvr/gui/window.py": "4d03914e19ca1cc9a09e5152b019b074e5559eda1d791f772d35f54481917f89",
+    "src/cephvr/visual_stimulus/resources/sparse_noise.py": "1acccce34dfa477b908f62bf96ef1c6056c16ea007cbe152ed8ade90ff3075b8",
+    "src/cephvr/visual_stimulus/rendering/arena_gpu.py": "74cd72aacd2d2d79ae19457f7b87bc4f4dcc9c82359d80e072012f004e4ddd5c"
+  },
+  "checks": {
+    "authoring_and_visual_stimulus": "254 passed, 6 native/rig deselected; tests/generate_stimulus plus resource/compilation/rendering modules",
+    "gui_regression": "47 passed, 954 deselected; test_dashboard -k sparse_noise or protocol or trial_preview",
+    "final_authoring": "39 passed after final cancellation, publication and input-budget changes",
+    "ruff": "20 scoped source/test files lint and format pass",
+    "mypy": "17 production source files pass with --platform win32",
+    "schemas": "13 schemas checked, no drift",
+    "boundaries": "769 backend modules, zero violations; new offline package also reviewed manually",
+    "package": "python -m build --no-isolation succeeds for sdist and Windows wheel; wheel contains all 13 authoring modules and GUI launcher",
+    "headless_import": "arena generation imports without loading Qt"
+  },
+  "native": {
+    "method": "bounded standalone Qt application runs; own-window grabs; all test windows closed",
+    "layouts": [
+      "1280x850",
+      "720x640",
+      "960x680 at QT_SCALE_FACTOR=1.25"
+    ],
+    "result": "OpenGL creation, textured MASK rendering, material update and current-resource cache succeed; screenshots inspected",
+    "limitations": "No physical projector presentation, optical calibration, mixed-monitor DPI or combined-load acceptance. Existing main GUI not restarted."
+  },
+  "initial_failures": [
+    "Sandbox default pytest temp unavailable; switched to authorized external visualization workspace for demo fixtures",
+    "Production GLB rejects BLEND; authoring now exposes only OPAQUE/MASK coverage",
+    "Initial property panel clipping corrected and reinspected"
+  ],
+  "managed_launch_regression": {
+    "direct_managed_QtGui_import": "reproduced DLL load failure, exit1",
+    "corrected_entry": "verified interpreter plus python_entry/module_arguments; no parent DLL handle inheritance assumed",
+    "native_probe": "real editor opened via bootstrap; bounded event loop exit0",
+    "regression_tests": "8 passed",
+    "static": "Ruff/format, Win32 mypy and769-module boundary checks pass",
+    "limits": "Existing main GUI not restarted; no projector/experiment lifecycle changes"
+  }
+}

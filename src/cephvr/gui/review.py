@@ -50,6 +50,9 @@ class ReviewDashboardWindow(DashboardWindow):
     def closeEvent(self, event: QCloseEvent | None) -> None:
         if event is None:
             return
+        if not self.confirm_authoring_close():
+            event.ignore()
+            return
         if getattr(self, "_restore_failed", False):
             dialog = QMessageBox(self)
             dialog.setIcon(QMessageBox.Icon.Warning)

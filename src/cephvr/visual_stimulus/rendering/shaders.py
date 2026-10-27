@@ -22,11 +22,15 @@ uniform int mode;
 uniform vec3 mean_rgb;
 uniform vec3 modulation_rgb;
 uniform float contrast;
+uniform float grating_sharpness;
 uniform float opacity;
 uniform vec2 frequency;
 uniform vec2 phase;
 uniform vec2 period;
+uniform vec2 image_target_pixels;
+uniform vec2 image_fold_map[3];
 layout(std430, binding = 3) buffer DiagnosticFlags { uint diagnostic_flags[]; };
+// PHYSICAL_FIELD_DECLARATION
 void mark_alpha(float coverage, vec3 premultiplied_rgb) {
     if (any(isnan(premultiplied_rgb)) || any(isinf(premultiplied_rgb)) ||
         isnan(coverage) || isinf(coverage)) {
@@ -36,9 +40,21 @@ void mark_alpha(float coverage, vec3 premultiplied_rgb) {
     }
 }
 void main() {
+    // PHYSICAL_FIELD_SAMPLE
     float signal = 0.0;
-    if (mode == 0 || mode == 4 || mode == 5 || mode == 6) {
+    if (mode == 0 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8 || mode == 10) {
         vec2 image_uv = uv;
+        vec4 sample_value;
+        if (mode == 7) {
+            ivec2 size = textureSize(image_tex, 0);
+            // Work in top-left pixel coordinates; an odd spare pixel goes right/bottom.
+            ivec2 pixel = ivec2(floor(vec2(uv.x, 1.0 - uv.y) * image_target_pixels))
+                + ivec2(trunc((vec2(size) - image_target_pixels) * 0.5));
+            if (any(lessThan(pixel, ivec2(0))) || any(greaterThanEqual(pixel, size))) {
+                color = vec4(0.0); return;
+            }
+            sample_value = texelFetch(image_tex, ivec2(pixel.x, size.y - 1 - pixel.y), 0);
+        }
         if (mode == 5 || mode == 6) {
             vec2 size = vec2(textureSize(image_tex, 0));
             float ratio = (period.x / period.y) / (size.x / size.y);
@@ -50,8 +66,22 @@ void main() {
                 color = vec4(0.0); return;
             }
         }
-        vec4 sample_value = texture(image_tex, image_uv);
+        if (mode == 8) {
+            vec2 pixel = image_fold_map[0] + uv.x * image_fold_map[1] + uv.y * image_fold_map[2];
+            vec2 size = vec2(textureSize(image_tex, 0));
+            if (any(lessThan(pixel, vec2(0.0))) || any(greaterThanEqual(pixel, size))) {
+                color = vec4(0.0); return;
+            }
+            image_uv = vec2(pixel.x / size.x, 1.0 - pixel.y / size.y);
+        }
+        if (mode != 7) sample_value = texture(image_tex, image_uv);
         mark_alpha(sample_value.a, sample_value.rgb);
+        if (mode == 10) {
+            vec3 rgb = sample_value.rgb + mean_rgb * (1.0 - sample_value.a);
+            mark_alpha(opacity, rgb * opacity);
+            float coverage = clamp(opacity, 0.0, 1.0);
+            color = vec4(rgb * coverage, coverage); return;
+        }
         if (mode != 4) {
             vec3 straight_sample = sample_value.a > 0.0
                 ? sample_value.rgb / sample_value.a : vec3(0.0);
@@ -70,6 +100,12 @@ void main() {
         mark_alpha(coverage_raw, tiled_rgb * coverage_raw);
         float coverage = clamp(coverage_raw, 0.0, 1.0);
         color = vec4(tiled_rgb * coverage, coverage); return;
+    } else if (mode == 11) {
+        float wave = cos(6.283185307179586 * (frequency.x * (uv.x - 0.5) + phase.x));
+        float alpha = 0.5 + 0.5 * wave;
+        float edge = 0.5 * (1.0 - grating_sharpness);
+        float mask = edge <= 0.0 ? step(0.5, alpha) : smoothstep(0.5-edge, 0.5+edge, alpha);
+        signal = 2.0 * mix(alpha, mask, grating_sharpness) - 1.0;
     } else if (mode == 1 || mode == 2) {
         float wave = cos(6.283185307179586 * (frequency.x * uv.x + phase.x));
         signal = mode == 1 ? wave : (wave >= 0.0 ? 1.0 : -1.0);

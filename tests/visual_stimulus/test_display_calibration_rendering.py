@@ -730,6 +730,7 @@ def test_replacing_display_preserves_only_unreused_native_release_receipts(
         ],
     )
     monkeypatch.setattr(native_module, "configure_window", lambda *_args: None)
+    monkeypatch.setattr(native_module, "hide_output_shell_entry", lambda *_args: None)
     contexts = iter(
         _FakeContext(gl, item.output_id) for item in original.active_outputs
     )
@@ -1041,10 +1042,12 @@ def test_native_calibration_owner_retains_failed_context_resource_for_retry(
     assert owner.release() == ()
 
 
+@pytest.mark.parametrize("mode", ["landmarks", "every_frame"])
 @pytest.mark.parametrize("view", ["frame_grid", "photodiode_placement"])
 def test_native_port_releases_owner_and_accepts_a_later_calibration(
     monkeypatch: pytest.MonkeyPatch,
     view: str,
+    mode: str,
 ) -> None:
     _install_fake_gl_binding(monkeypatch)
     gl = _FakeGL()
@@ -1058,7 +1061,9 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
     )
     display, prepared, outputs = _native_calibration_inputs(gl)
     if view == "photodiode_placement":
-        display = display.model_copy(update={"calibration_view": view})
+        display = display.model_copy(
+            update={"calibration_view": view, "photodiode_mode": mode}
+        )
         prepared.display = display
     port = ModernGLPort.__new__(ModernGLPort)
     port._owner = __import__("threading").get_ident()
@@ -1124,13 +1129,13 @@ def test_native_port_releases_owner_and_accepts_a_later_calibration(
                     for e in gl.events
                     if e[0] == "mask" and e[2] == (1.0, 1.0, 1.0, 1.0)
                 ]
-                assert bool(white) == photodiode_level(submission)
+                assert bool(white) == photodiode_level(submission, mode)
                 if submission >= 3:
                     pulse = [
                         e for e in gl.events if e[0] == "mask" and e[3] == (2, 3, 6, 7)
                     ]
                     assert len(pulse) == 1
-                    level = float(photodiode_level(submission))
+                    level = float(photodiode_level(submission, mode))
                     assert pulse[0][2] == (level, level, level, 1.0)
         if view == "photodiode_placement":
 

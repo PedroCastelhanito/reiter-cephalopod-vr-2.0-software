@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 from cephvr.gui.arena_movement import ArenaMovement
 from cephvr.gui.components import equal_row_height, label
 from cephvr.gui.epoch_motion import EpochMotion
+from cephvr.gui.grating_appearance import GratingAppearance
+from cephvr.gui.grating_motion import GratingMotion
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.motion_source import MotionSource
@@ -53,7 +55,57 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
         ),
         None,
     )
-    if image is not None:
+    color = next(
+        (
+            f
+            for f in editor.forms
+            if isinstance(f, ValueEditor) and "mean_linear_rgb" in f.children_by_key
+        ),
+        None,
+    )
+    if editor.sparse_layer is not None:
+        sparse = editor.sparse_layer
+        sparse_captions = (
+            "Square size (mm)",
+            "Minimum distance (mm)",
+            "Active probability",
+            "Background (linear)",
+            "Seed",
+            "Patterns",
+            "Pattern duration (s)",
+        )
+        sparse.form.hide()
+        result = [
+            (caption, sparse.form.children_by_key[key])
+            for caption, key in zip(
+                sparse_captions, sparse.form.children_by_key, strict=True
+            )
+        ]
+        result.append(("Preparation", sparse.configure))
+        for caption, control in result:
+            control.setAccessibleName(caption)
+            editor.external_controls.append(control)
+        return result
+    if color is not None:
+        color_control = color.children_by_key["mean_linear_rgb"]
+        editor.external_controls.append(color_control)
+        return [("Color (linear RGB)", color_control)]
+    grating = next((f for f in editor.forms if isinstance(f, GratingMotion)), None)
+    if grating is not None:
+        appearance = next(
+            (form for form in editor.forms if isinstance(form, GratingAppearance)), None
+        )
+        if appearance is not None:
+            result = [
+                ("Spatial period (mm)", appearance.period),
+                ("Sharpness (0–1)", appearance.sharpness),
+                ("Color A (linear RGB)", appearance.colors.children_by_key["color_a"]),
+                ("Color B (linear RGB)", appearance.colors.children_by_key["color_b"]),
+            ]
+        result.extend(
+            (("Orientation (°)", grating.orientation), ("Speed (mm/s)", grating.speed))
+        )
+    elif image is not None:
         result.extend(
             (
                 ("Fit", image.fit),
@@ -67,7 +119,8 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             image.motion.angular,
         ):
             image_control.setEnabled(not image.motion.custom.isChecked())
-            image.motion.custom.toggled.connect(image_control.setDisabled)
+        image.motion.custom.toggled.connect(image.update_controls)
+        image.update_controls()
     elif arena is not None:
         if editor.tracking_available:
             result.extend(arena.cells)
@@ -121,7 +174,11 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
 
         node = node_at(program, editor.node_index)
         assert isinstance(node, Epoch)
-        captions = stimulus_columns(node.settings[editor.layer_index])
+        captions = (
+            ()
+            if grating is not None
+            else stimulus_columns(node.settings[editor.layer_index])
+        )
         result = [
             result[0],
             *[
@@ -129,25 +186,12 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
                 for i, (title, control) in enumerate(result[1:])
             ],
         ]
-    if program is not None and program.category == "media_presentation":
-        kept = []
-        for title, control in result:
-            if title in ("Asset", "Fit", "Start (s)", "At end"):
-                kept.append((title, control))
-            else:
-                control.hide()
-        result = kept
-        if len(result) == 1:
-            result.append(("Fit", label("")))
-        while len(result) < 4:
-            result.append(("", label("")))
     if (
-        motion is not None
+        (motion is not None or grating is not None)
         and editor.fades is not None
         # Binding during a session lock must not hide a supported control on unlock.
         and editor.linked_to.isEnabledTo(editor)
         and program is not None
-        and program.category != "media_presentation"
     ):
         editor.motion_source = MotionSource(editor.linked_to)
         editor.motion_source.currentIndexChanged.connect(editor.mark_changed)

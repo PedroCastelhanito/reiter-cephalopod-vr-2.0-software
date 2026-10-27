@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Literal
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
+from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.artifact_models import ComponentProvenance
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Program
@@ -16,16 +18,19 @@ from cephvr.visual_stimulus.resources.assets import (
     RELOADABLE_IMAGE_PROFILES,
     PreparedAssetSet,
     PreparedResourceBundle,
+    ProtectedFingerprintCache,
     ProtectedSource,
     prepare_assets,
 )
 from cephvr.visual_stimulus.resources.budget import PreparationBudget, arena_mesh_bytes
 from cephvr.visual_stimulus.resources.calibration import prepare_calibration
+from cephvr.visual_stimulus.resources.grating_recipe import interpreted_recipe
 from cephvr.visual_stimulus.resources.image_interpretation import (
     image_interpretation,
     image_validation_key,
 )
 from cephvr.visual_stimulus.resources.media import decode_image
+from cephvr.visual_stimulus.resources.progress import PreparationMetrics
 from cephvr.visual_stimulus.resources.provenance import software_provenance
 from cephvr.visual_stimulus.resources.recipe_dependencies import (
     decode_recipe_image,
@@ -60,6 +65,8 @@ def prepare_resources(
     component_provenance: tuple[ComponentProvenance, ...] | None = None,
     validated_images: dict[str, tuple[ImageSource, ImageInfo]] | None = None,
     image_progress: Callable[[int, int], None] | None = None,
+    fingerprints: ProtectedFingerprintCache | None = None,
+    metrics: PreparationMetrics | None = None,
 ) -> PreparedResourceBundle:
     """Protect all source assets and return canonical manifest facts.
 
@@ -82,6 +89,8 @@ def prepare_resources(
         path_overrides=path_overrides,
         max_document_bytes=max_document_bytes,
         defer_images=defer_images,
+        fingerprints=fingerprints,
+        metrics=metrics,
     )
     try:
         from cephvr.visual_stimulus.config.models.artifact_models import (
@@ -108,7 +117,7 @@ def prepare_resources(
         dependencies_to_prepare = []
         for source_asset in source_set.assets:
             authored = authored_by_id[source_asset.asset_id]
-            if authored.profile != "cephvr1_texture_json_v1":
+            if authored.profile not in TEXTURE_RECIPE_PROFILES:
                 continue
             if defer_images:
                 from cephvr.visual_stimulus.resources.image_source import (
@@ -129,6 +138,7 @@ def prepare_resources(
                         raw,
                         max_document_bytes=max_document_bytes or snapshot_limit_bytes,
                     )
+                    recipe = interpreted_recipe(recipe, authored.profile)
                     dependency = image_dependency(assets_root, authored, recipe)
                     del raw, recipe
                 finally:
@@ -139,6 +149,7 @@ def prepare_resources(
                     source_asset.data,
                     max_document_bytes=max_document_bytes or snapshot_limit_bytes,
                 )
+                recipe = interpreted_recipe(recipe, authored.profile)
                 recipes[authored.asset_id] = recipe
                 dependency = image_dependency(assets_root, authored, recipe)
             if dependency is not None:
@@ -168,6 +179,8 @@ def prepare_resources(
                 source_factory=factory,
                 owner_prefix=f"{owner_prefix}:recipe-dependencies",
                 defer_images=defer_images,
+                fingerprints=fingerprints,
+                metrics=metrics,
             )
             source_set = PreparedAssetSet(
                 (*source_set.assets, *dependency_set.assets),
@@ -270,6 +283,7 @@ def prepare_resources(
                     dependency_source=dependency_source,
                 )
                 if validation_key not in validation_cache:
+                    validation_started = time.perf_counter()
                     validation_cache[validation_key] = validate_image_source(
                         authored,
                         source_asset,
@@ -282,6 +296,13 @@ def prepare_resources(
                         dependency_source=dependency_source,
                     )
                     new_validation_keys.append(validation_key)
+                    if metrics is not None:
+                        metrics.image_seconds += (
+                            time.perf_counter() - validation_started
+                        )
+                        metrics.images_validated += 1
+                elif metrics is not None:
+                    metrics.validations_reused += 1
                 image_source, info = validation_cache[validation_key]
                 image_sources[authored.asset_id] = image_source
                 if image_progress is not None:
@@ -290,9 +311,11 @@ def prepare_resources(
                 kind = "image"
                 provider = (
                     "cephvr1-texture-raster-v1"
-                    if authored.profile == "cephvr1_texture_json_v1"
+                    if authored.profile in TEXTURE_RECIPE_PROFILES
                     else "imagecodecs+tifffile-linear-premultiplied-v1"
                 )
+                if info.field_recipe is not None:
+                    provider = "cephvr-physical-field-v1"
                 cpu_bytes = metadata_bytes[authored.asset_id]
                 # Residency admits this peak separately when a protected source
                 # is decoded/uploaded, rather than retaining every validated image.
@@ -302,12 +325,13 @@ def prepare_resources(
                 "tiff_uint_v1",
                 "jpeg8_v1",
                 "cephvr1_texture_json_v1",
+                "cephvr_grating_json_v1",
             ):
                 if source_asset.data is None:
                     raise MemoryError(
                         f"static asset {authored.asset_id} has no bounded source snapshot"
                     )
-                if authored.profile == "cephvr1_texture_json_v1":
+                if authored.profile in TEXTURE_RECIPE_PROFILES:
                     recipe = recipes[authored.asset_id]
                     image_input = None
                     if authored.asset_id in recipe_images:
@@ -335,9 +359,11 @@ def prepare_resources(
                 kind = "image"
                 provider = (
                     "cephvr1-texture-raster-v1"
-                    if authored.profile == "cephvr1_texture_json_v1"
+                    if authored.profile in TEXTURE_RECIPE_PROFILES
                     else "imagecodecs+tifffile-linear-premultiplied-v1"
                 )
+                if image.field_recipe is not None:
+                    provider = "cephvr-physical-field-v1"
             elif authored.profile in ("mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"):
                 video = index_video(
                     authored,
@@ -489,10 +515,26 @@ def prepare_resources(
                 else software_provenance(budget.check_cancelled_or_expired)
             ),
         )
+        from cephvr.visual_stimulus.resources.physical_field import validate_field_uses
+
+        field_ids = {
+            asset_id
+            for asset_id, content in {**prepared_content, **image_sources}.items()
+            if getattr(content, "field_recipe", None) is not None
+        }
+        validate_field_uses(program.sequence, field_ids)
+        layouts = (
+            build_uniform_layouts(program, display, frozenset(field_ids))
+            if field_ids
+            else build_uniform_layouts(program, display)
+        )
+        from cephvr.visual_stimulus.resources.uniforms import validate_image_layouts
+
+        validate_image_layouts(layouts, display, prepared_content)
         return PreparedResourceBundle(
             source_set,
             manifest,
-            build_uniform_layouts(program, display),
+            layouts,
             prepared_content,
             image_sources,
         )

@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099",
+  "source": "config/last_configuration.json; trial 1 saved program (working tree)",
+  "asset_root": "C:/Users/ReiterU_PC/Desktop/Pedro/media",
+  "removed_missing_unused_declarations": [
+    {
+      "asset_id": "asset_1",
+      "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_2",
+      "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_3",
+      "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_4",
+      "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    },
+    {
+      "asset_id": "asset_5",
+      "logical_path": "import-qf703icq/CephVR_Fold_Test_Bottom_Below.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    }
+  ],
+  "used_asset_ids": [
+    "asset_10",
+    "asset_11",
+    "asset_12",
+    "asset_13"
+  ],
+  "validation": "Pydantic program parsing passes; all retained declared files exist; every non-assets program field unchanged. Running configuration not modified; no native Setup attempted."
+}

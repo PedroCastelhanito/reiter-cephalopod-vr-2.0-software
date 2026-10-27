@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-27",
+  "task": "sparse-noise-gui",
+  "base_revision": "83c7e81e3b621471fc8925ad95de5e95cf6fd64d",
+  "scope": "Working tree changes; concurrent acquisition/preview work preserved. No native app restart or hardware commands.",
+  "source_sha256": {
+    "src/cephvr/gui/protocol.py": "c2f939c0e7445feccd7c649d1454a853b710ada0e2ed6feb950fa451fdde4ee6",
+    "src/cephvr/gui/window.py": "5340bb235f4a9d70b36c20bbd688724cbb56a578bcb02104b3a125e765ca1e05",
+    "src/cephvr/gui/sparse_noise_dialog.py": "94bb66da823a9ec7dfd51dd9b9b85857c1da69d64a739f62f196b24d7fe4f690",
+    "src/cephvr/gui/sparse_noise_import.py": "575c1c0b09608fd2c3fb5807604418d9484abd47c064c8005adcdd33c3498b86",
+    "src/cephvr/visual_stimulus/resources/sparse_noise.py": "aa870997ca4eae5e46eb8a792b4544211bc69f1ddbac839e540f8a772ac2680b",
+    "src/cephvr/visual_stimulus/resources/sparse_noise_selection.py": "bdebb9a46e766012594236974d08cada38441f4b60bd1da164213fa10c9ecd46",
+    "tests/gui/test_dashboard.py": "e949de518ad11f968799f3e08f67cc4ffa5b6fb9b8bc0202b9fe302f0aae8d82",
+    "tests/visual_stimulus/test_resources.py": "ca469dc39f3038c0d537723736e822e554539ebbdcabbf0464ddc69198a6e385"
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"sparse_noise or protocol or trial_preview\" -m \"not windows and not rig\" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-gui-final",
+      "result": "47 passed, 954 deselected in 39.72s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k sparse_noise --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-gui-layout-final",
+      "result": "Final layout: 5 passed, 996 deselected in 4.17s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_compilation.py tests/visual_stimulus/test_rendering.py -q -m \"not windows and not rig\" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-gui-backend-final",
+      "result": "215 passed, 6 deselected in 2.26s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui/protocol.py src/cephvr/gui/window.py src/cephvr/gui/sparse_noise_dialog.py src/cephvr/gui/sparse_noise_import.py src/cephvr/visual_stimulus/resources/sparse_noise.py src/cephvr/visual_stimulus/resources/sparse_noise_selection.py",
+      "result": "6 sources passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/gui/protocol.py src/cephvr/gui/window.py src/cephvr/gui/sparse_noise_dialog.py src/cephvr/gui/sparse_noise_import.py src/cephvr/visual_stimulus/resources/sparse_noise.py src/cephvr/visual_stimulus/resources/sparse_noise_selection.py tests/gui/test_dashboard.py tests/visual_stimulus/test_resources.py",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui/protocol.py src/cephvr/gui/window.py src/cephvr/gui/sparse_noise_dialog.py src/cephvr/gui/sparse_noise_import.py src/cephvr/visual_stimulus/resources/sparse_noise.py src/cephvr/visual_stimulus/resources/sparse_noise_selection.py tests/gui/test_dashboard.py tests/visual_stimulus/test_resources.py",
+      "result": "8 files formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "12 schemas, no drift"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "767 modules, zero violations; Protocol page 572-line cohesion advisory reviewed, keeps trial/history transactions with existing owner"
+    },
+    {
+      "command": "git diff --check -- <task-owned source, tests, contracts, architecture and reports>",
+      "result": "passed; whole-worktree check separately reports concurrent acquisition/coordinator/evidence_telemetry.py blank EOF line, not modified by this task"
+    },
+    {
+      "method": "Offscreen QApplication, load_terminal_font(), apply_theme(); SparseNoiseDialog with four-screen valid_display_json fixture and example recipe; render dialog.grab() at default 720x760 and narrow 480x620",
+      "result": "picker.png and picker-narrow.png visually inspected; scrollable body and visible action row; no native DPI claim"
+    }
+  ],
+  "intermediate": "Initial mypy detected QWidget.geometry method collision, fixed to scene_geometry. Isolated first screenshot lacked application font registration; final renders use it. Atomic patch-context failures corrected. No runtime assertions weakened.",
+  "limitations": [
+    "Requires normal relaunch to use source changes in the running app.",
+    "Actual projector size, optical timing, native file dialogs and DPI remain pending rig acceptance.",
+    "Preparation appends a new trial; changing a source recipe requires preparing again.",
+    "Recipe counts/durations/backgrounds must match. Seeds/density/square sizes may differ.",
+    "Retain generated bundles and their selection/provenance files."
+  ]
+}

@@ -16,17 +16,6 @@ class MotionSource(SelectionBox):
         self.currentIndexChanged.connect(self.choose)
         linked_to.currentIndexChanged.connect(self.sync)
 
-    def showPopup(self) -> None:
-        view = self.view()
-        assert view is not None
-        view.ensurePolished()
-        # Styled popup chrome must not force either of the two choices to scroll.
-        view.setMinimumHeight(
-            sum(view.sizeHintForRow(index) for index in range(self.count()))
-            + 2 * view.frameWidth()
-        )
-        super().showPopup()
-
     def choose(self, index: int) -> None:
         if index == 0:
             self.linked_to.setCurrentIndex(0)

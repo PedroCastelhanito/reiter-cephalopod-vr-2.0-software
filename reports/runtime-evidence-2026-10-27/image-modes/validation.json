@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27",
+  "task": "image-resize-source",
+  "scope": "Local implementation, offscreen GUI and native standalone OpenGL; no projector outputs or running GUI restart.",
+  "checks": [
+    {"command": "python -m pytest tests/visual_stimulus -q -m 'not windows and not rig' --basetemp=<external visualization workspace>/image-modes-backend-final", "result": "See backend.txt for final output."},
+    {"command": "python -m pytest tests/visual_stimulus/test_rendering.py -q -k 'native_source_shader or image_frame or image_target or image_crop' --basetemp=.pytest-tmp-image-modes-last", "result": "13 passed, 119 deselected; includes six native OpenGL pixel comparisons through the actual layer-draw function, both fits, crop/pad/mixed axes and uniform evidence."},
+    {"command": "python -m pytest tests/gui/test_dashboard.py -q -k 'image_fit or source_preview or family_advanced_controls' --basetemp=.pytest-tmp-image-modes-gui-final", "result": "13 passed, 993 deselected; offscreen Qt, save/load/default/two-choice/legacy compatibility and original-size preview tests."},
+    {"command": "python -m pytest tests/gui/test_preview_timeline.py -q --basetemp=<external visualization workspace>/image-modes-preview", "result": "118 passed; offscreen Qt."},
+    {"command": "python -m mypy --platform win32 src/cephvr/visual_stimulus <six affected GUI modules>", "result": "176 sources pass."},
+    {"command": "python -m ruff check <affected backend, GUI and tests>", "result": "Pass after import ordering corrections."},
+    {"command": "python -m ruff format --check <affected backend, GUI and tests>", "result": "193 files formatted."},
+    {"command": "python contracts/visual_stimulus/generate_schemas.py --check", "result": "14 schemas checked; no drift. Program and prepared-trial schemas regenerated from canonical model."},
+    {"command": "python tools/check_backend_boundaries.py", "result": "770 modules, zero boundary violations. Existing size advisories remain; scene drawing extracted into focused layer_draw.py."}
+  ],
+  "earlier_attempts": [
+    "Initial combined test command referenced nonexistent test_compiler.py; no tests ran. Correct owning suites were subsequently run.",
+    "Scoped lint initially caught import ordering and a loop-index use-after-loop advisory; corrected before final checks."
+  ],
+  "limits": "New fits require rectangular affine valid-area calibration. Sheared/nonlinear consumed profiles reject during Setup. Source texel selection is not optical pixel equality; final calibration/color/display processing still applies. Full asset memory remains allocated. Physical rig acceptance is pending."
+}

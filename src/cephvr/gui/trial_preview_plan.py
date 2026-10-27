@@ -12,7 +12,6 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Fixed,
     Program,
     Settings,
-    Time,
 )
 from cephvr.visual_stimulus.rendering.state import InstanceState
 from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
@@ -89,6 +88,14 @@ class PreviewPlan:
                         boundary.time_ns - prior_state.last_epoch_start_ns
                     ) / 1e9
                 prior_state.advance(boundary.time_ns)
+            if self.geometry is not None:
+                from cephvr.visual_stimulus.rendering.grating_field import (
+                    retain_shared_grating_phase,
+                )
+
+                retain_shared_grating_phase(
+                    self.states, self.geometry, boundary.time_ns
+                )
             for operation in boundary.operations:
                 setting = (
                     epoch.settings[operation.next_settings_index]
@@ -109,8 +116,14 @@ class PreviewPlan:
                         epoch_start_ns=epoch.start_ns,
                         now_ns=boundary.time_ns,
                     )
-                if setting is not None:
+                if setting is not None and not (
+                    setting.kind == "texture" and setting.grating
+                ):
                     for assignment in setting.assignments:
+                        from cephvr.visual_stimulus.config.models.program_model import (
+                            Time,
+                        )
+
                         if isinstance(assignment.value, Time):
                             value = assignment.value.ns() / 1e9
                         elif isinstance(assignment.value, (int, float)):
@@ -131,7 +144,7 @@ class PreviewPlan:
         order = ([scene.arena_instance_id] if scene.arena_instance_id else []) + list(
             scene.layer_instance_ids
         )
-        return tuple(
+        layers = tuple(
             PreviewLayer(
                 by_id[key],
                 dict(
@@ -142,4 +155,33 @@ class PreviewPlan:
             )
             for key in order
             if key in by_id
+        )
+
+        if self.geometry is None:
+            return layers
+        from cephvr.visual_stimulus.rendering.grating_field import (
+            shared_grating_snapshots,
+        )
+        from cephvr.visual_stimulus.rendering.types import InstanceSnapshot
+
+        snapshots = shared_grating_snapshots(
+            tuple(
+                InstanceSnapshot(
+                    layer.setting.instance_id,
+                    layer.setting.kind,
+                    True,
+                    tuple(layer.values.items()),
+                    layer.setting,
+                )
+                for layer in layers
+            ),
+            self.geometry,
+        )
+        return tuple(
+            PreviewLayer(
+                snapshot.settings,
+                {k: float(v) for k, v in snapshot.state if isinstance(v, (int, float))},
+            )
+            for snapshot in snapshots
+            if snapshot.settings is not None
         )

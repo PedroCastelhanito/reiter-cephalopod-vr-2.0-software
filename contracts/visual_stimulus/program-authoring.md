@@ -118,20 +118,17 @@ Runtime/GPU/rig verification is separate from declaration validation.
 
 ## Protocol category
 
-The optional `category` is `media_presentation`, `texture_drift` or `navigation_3d`.
-All trial sources in one protocol must agree. Omitted/null preserves unclassified
-legacy sources; classification is explicit and never rewrites executable settings.
-V02 governs capability checks in the canonical model, including repetition settings
-and rules. Presentation keeps fixed placement, video playback, overlays and opacity
-fades but rejects time-varying layer motion/size/texture spacing and motion feedback.
-Saved `linked_to` values are retained as inactive source metadata in Presentation;
-link validation is skipped and compiled settings clear the link before preparation
-and rendering. Navigation retains one arena with 2D overlays and arena-free epochs.
+The optional `category` is `media_presentation` or `navigation_3d`.
+All trial sources in one protocol agree. Omitted/null preserves unclassified legacy
+sources. Legacy `texture_drift` input normalizes to `media_presentation` without
+changing executable settings. Media permits all six 2D row choices and their valid
+motion, animation, feedback, links and fades. Navigation permits one arena plus overlays.
+Links are validated and compiled in either category under V02; no Media-only link
+suppression remains.
 
-GUI protocol snapshots may include `category_templates`, keyed by the three category
-identifiers. Each holds `trials` and `selected_trial` with the same validation as the
-active schedule; all template trials must match their key. Templates are local editing
-content and are not submitted as additional controller trials. Older snapshots without
-templates remain valid. Switching restores the last template; a first visit inherits
-compatible content or starts blank, preserving the previous content in its compatible
-template. Control mode and asset root remain shared.
+GUI snapshots retain `category_templates` keyed by the two identifiers, each containing
+`trials` and `selected_trial`. A single legacy Drift template migrates to Media.
+Equivalent templates collapse; distinct legacy Media/Drift schedules reject atomically
+with a separate-import explanation, rather than silently changing the experiment order.
+Unclassified imports still require explicit category selection. Category switching
+preserves committed schedules, including when unfinished edits cannot apply.

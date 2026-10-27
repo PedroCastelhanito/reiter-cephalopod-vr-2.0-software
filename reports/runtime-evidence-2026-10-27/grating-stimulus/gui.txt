@@ -1,0 +1,194 @@
+.....................FF......................................F.........  [100%]
+================================== FAILURES ===================================
+_ test_reference_type_change_clears_asset_and_switches_stimulus_mode[picker] __
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001CB0EB601F0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001CB0C5DCD30>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final/test_reference_type_change_cle0')
+selection = 'picker'
+
+    @pytest.mark.parametrize("selection", ["picker", "paste"])
+    def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
+        window: DashboardWindow, app: QApplication, tmp_path: Path, selection: str
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        composer.set_subject_height("0")
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        folder = tmp_path / "images"
+        folder.mkdir()
+        path = folder / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Image", str(path), "Right")
+        row = composer.rows["Front"]
+        before = editor.program
+        row.stimulus.setCurrentText("Looming")
+>       assert row.stimulus.currentText() == "Looming"
+E       AssertionError: assert 'Texture drift' == 'Looming'
+E         
+E         - Looming
+E         + Texture drift
+
+tests\gui\test_dashboard.py:11724: AssertionError
+__ test_reference_type_change_clears_asset_and_switches_stimulus_mode[paste] __
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001CB0C5DCEE0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001CB0C5DCD30>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final/test_reference_type_change_cle1')
+selection = 'paste'
+
+    @pytest.mark.parametrize("selection", ["picker", "paste"])
+    def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
+        window: DashboardWindow, app: QApplication, tmp_path: Path, selection: str
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        composer.set_subject_height("0")
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        folder = tmp_path / "images"
+        folder.mkdir()
+        path = folder / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Image", str(path), "Right")
+        row = composer.rows["Front"]
+        before = editor.program
+        row.stimulus.setCurrentText("Looming")
+>       assert row.stimulus.currentText() == "Looming"
+E       AssertionError: assert 'Texture drift' == 'Looming'
+E         
+E         - Looming
+E         + Texture drift
+
+tests\gui\test_dashboard.py:11724: AssertionError
+_ test_asset_variations_choose_folder_media_without_adding_epochs[Image-media_presentation] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001CB1E336200>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001CB0C5DCD30>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17c38-cacd-76c2-931f-b8e66467fa53/grating-gui-final/test_asset_variations_choose_f4')
+preset = 'Image', category = 'media_presentation'
+
+    @pytest.mark.parametrize(
+        "preset,category",
+        [
+            ("Texture", None),
+            ("Image", None),
+            ("Looming image", None),
+            ("Video", None),
+            ("Image", "media_presentation"),
+        ],
+    )
+    def test_asset_variations_choose_folder_media_without_adding_epochs(
+        window, app, tmp_path, preset, category
+    ):
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.timeline.set_screens(("Left", "Right"))
+        editor.set_program(
+            grouped_program(blank_program().model_copy(update={"category": category}))
+        )
+        form = editor.subgroup
+        form.composer.set_asset_root(str(tmp_path))
+        subset = tmp_path / "subset"
+        subset.mkdir()
+        suffix = ".mp4" if preset == "Video" else ".png"
+        for name in ("a", "b", "c"):
+            (subset / (name + suffix)).write_bytes(b"test media source; no decoder invoked")
+        (subset / "ignore.txt").write_text("not media")
+        (subset / "nested").mkdir()
+        (subset / "nested" / ("excluded" + suffix)).write_bytes(b"nested")
+        for face in ("Left", "Right"):
+            form.composer.add_file(preset, str(subset / ("a" + suffix)), face)
+        form.add_variation()
+        row = form.rows[0]
+        row.target.setCurrentIndex(row.target.findText("All projectors"))
+        row.parameter.setCurrentIndex(row.parameter.findData("Asset"))
+        assert row.parameter.currentText() == "Asset"
+        assert row.method.count() == 1 and row.method.currentText() == "Random from folder"
+        assert row.asset_folder.isVisibleTo(row)
+        assert all(edit.isHidden() for edit in row.random_fields.values())
+        assert row.values.isHidden()
+        row.asset_folder.editor.setText(str(subset))
+        form.apply()
+        assert not form.notice.text() and not form.dirty
+        first = editor.program
+        assert len(first.sequence[0].body) == len(form.paths) == 1
+        epoch = first.sequence[0].body[0]
+        assert len(epoch.repetition_rules) == 2
+        choices = epoch.repetition_rules[0].asset_ids
+        assert len(choices) == 3
+        assert all(r.kind == "uniform_asset_v1" for r in epoch.repetition_rules)
+        assert len({r.seed for r in epoch.repetition_rules}) == 1
+        assert len({r.stream for r in epoch.repetition_rules}) == 2
+        editor.group_editor.repetitions.setText("12")
+        editor.group_editor.mark_changed()
+        assert editor.group_editor.apply()
+        form = editor.subgroup
+        row = form.rows[0]
+        assert len(editor.program.sequence[0].body) == 1
+        initial = expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12)
+    
+        def identity(setting):
+            return (
+                setting.pattern.asset_id if setting.kind == "texture" else setting.asset_id
+            )
+    
+        assert all(
+            identity(setting) in choices for item in initial for setting in item.settings
+        )
+        assert len({identity(item.settings[0]) for item in initial}) > 1
+        assert [identity(item.settings[0]) for item in initial] != [
+            identity(item.settings[1]) for item in initial
+        ]
+        saved = Program.model_validate_json(editor.program.model_dump_json())
+        (subset / ("later" + suffix)).write_bytes(b"added after snapshot")
+        editor.set_program(saved)
+        form = editor.subgroup
+        row = form.rows[0]
+        assert row.asset_folder.editor.text() == str(subset)
+        assert row.asset_folder.asset_ids == choices
+        form.composer.batch_label.setText("Keep subset snapshot")
+        form.apply()
+        assert not form.notice.text() and not form.dirty
+        after = expand_program(editor.program, seed_decimal="2", max_expanded_epochs=12)
+        assert [item.settings for item in after] == [item.settings for item in initial]
+        row.shared.setChecked(True)
+        form.apply()
+        assert not form.notice.text()
+        shared = expand_program(editor.program, seed_decimal="1", max_expanded_epochs=12)
+        assert all(
+            identity(item.settings[0]) == identity(item.settings[1]) for item in shared
+        )
+        if category == "media_presentation":
+>           assert row.parameter.count() == 1 and row.parameter.currentData() == "Asset"
+E           assert (3 == 1)
+E            +  where 3 = <built-in method count of SelectionBox object at 0x000001CB129D9360>()
+E            +    where <built-in method count of SelectionBox object at 0x000001CB129D9360> = <cephvr.gui.components.SelectionBox object at 0x000001CB129D9360>.count
+E            +      where <cephvr.gui.components.SelectionBox object at 0x000001CB129D9360> = <cephvr.gui.batch_variation.BatchVariationRow object at 0x000001CB1E5AA3B0>.parameter
+
+tests\gui\test_dashboard.py:26604: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode[picker]
+FAILED tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode[paste]
+FAILED tests/gui/test_dashboard.py::test_asset_variations_choose_folder_media_without_adding_epochs[Image-media_presentation]
+3 failed, 68 passed, 971 deselected in 57.97s

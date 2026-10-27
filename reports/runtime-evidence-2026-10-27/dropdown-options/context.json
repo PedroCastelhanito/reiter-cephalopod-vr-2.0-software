@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "c7881b1f87a5d294383d310ebcb92630cd825099 plus dirty working tree",
+  "scope": "isolated Qt Dashboard and local tests; running managed GUI untouched",
+  "reproduction": {
+    "method": "Native sample Dashboard, Amber phosphor, lazy authoring page, open View popup",
+    "viewport_height": 34,
+    "row_heights": [25, 25],
+    "image": "before.png"
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/generate_stimulus/test_gui.py -q -k dashboard_authoring_popup --basetemp <external visualization root>/dropdown-native-tests",
+      "outcome": "3 passed, 21 deselected; native Standard/Retro/Amber popup checks",
+      "image": "after.png"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/generate_stimulus -q -m 'not windows and not rig' --basetemp <external visualization root>/dropdown-authoring-tests",
+      "outcome": "78 passed, 5 deselected"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k 'phosphor_combo_popup_and_dialog_icons_follow_amber or reference_motion_source_switches_controls_and_requires_target or camera_role_dropdown_opens_by_mouse_and_selects_by_keyboard' --basetemp <external visualization root>/dropdown-shared-tests",
+      "outcome": "12 passed, 1016 deselected"
+    },
+    {
+      "command": "Ruff check/format components.py motion_source.py test_gui.py; Win32 mypy components.py motion_source.py; tools/check_backend_boundaries.py; git diff --check",
+      "outcome": "pass; 773 modules, zero boundary violations; unrelated size advisories remain"
+    }
+  ],
+  "limits": "No running managed GUI restart or physical/full-load acceptance. Initial optional-view mypy failure fixed. Two exploratory popup alternatives did not fix sizing and were not retained. Native screenshots visually inspected."
+}

@@ -93,3 +93,27 @@ def private_scene(data: dict[str, Any], epoch: dict[str, Any]) -> dict[str, Any]
     data["scenes"].append(scene)
     epoch["scene_id"] = scene["scene_id"]
     return cast(dict[str, Any], scene)
+
+
+def drop_unused_assets(data: dict[str, Any], candidates: set[str]) -> None:
+    """Remove replaced resources only when no schedule/draft still refers to them."""
+    strings: set[str] = set()
+
+    def visit(value: object) -> None:
+        if isinstance(value, str):
+            strings.add(value)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                if (key.endswith("_id") and key != "asset_id") or (
+                    key.endswith("_ids") and key != "asset_ids"
+                ):
+                    continue
+                visit(item)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item)
+
+    visit({key: value for key, value in data.items() if key != "assets"})
+    data["assets"] = [
+        a for a in data["assets"] if a["asset_id"] not in candidates - strings
+    ]

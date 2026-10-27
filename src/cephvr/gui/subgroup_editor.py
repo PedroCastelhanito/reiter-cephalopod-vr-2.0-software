@@ -60,8 +60,13 @@ class SubgroupEditor(BatchCreate):
     def add_variation_from(self, reference: Program) -> None:
         super().add_variation_from(reference)
         row = self.rows[-1]
-        for control in (row.values, *row.random_fields.values()):
+        for control in (
+            row.values,
+            row.asset_folder.editor,
+            *row.random_fields.values(),
+        ):
             control.editingFinished.connect(self.queue_update)
+        row.asset_folder.path_selected.connect(self.queue_update)
 
     def queue_update(self) -> None:
         if not self._binding and not self._previewing:
@@ -202,11 +207,39 @@ class SubgroupEditor(BatchCreate):
                 raise ValueError("Select one subgroup to change its variation rules")
             reference = self.reference()
             candidate = self.candidate() if self.rows else None
+            for row in self.rows:
+                if row.parameter.currentData() != "Asset":
+                    continue
+                kinds = tuple(
+                    sorted(
+                        {
+                            "grating"
+                            if (setting := row.settings[row.targets[i][2]]).kind
+                            == "texture"
+                            and setting.grating
+                            else setting.kind
+                            for i in row.target_indices()
+                        }
+                    )
+                )
+                assets = row.asset_folder.load(
+                    self.source, self.composer.asset_root, kinds
+                )
+                known = {asset.asset_id: asset for asset in reference.assets}
+                for asset in assets:
+                    if asset.asset_id in known and known[asset.asset_id] != asset:
+                        raise ValueError(
+                            "Asset variation identity conflicts with an existing asset"
+                        )
+                    known[asset.asset_id] = asset
+                reference = reference.model_copy(
+                    update={"assets": tuple(known.values())}
+                )
             variants = (
                 generated_batch(candidate)
                 if candidate is not None
                 and rules_changed
-                and any(row.method.currentIndex() != 2 for row in self.rows)
+                and any(row.method.currentData() != 2 for row in self.rows)
                 else None
             )
             count = len(variants.sequence) if variants else len(self.paths)
@@ -246,6 +279,11 @@ class SubgroupEditor(BatchCreate):
         epoch = node_at(program, paths[0])
         template = self.composer.program.sequence[0]
         assert isinstance(epoch, Epoch) and isinstance(template, Epoch)
+        if epoch.subgroup_draft is not None:
+            for variation, rule in zip(
+                self.rows, epoch.subgroup_draft.rules, strict=True
+            ):
+                variation.random_seed, variation.seed_key = rule.seed, rule.sample_key
         self.composer.program = program.model_copy(
             update={
                 "sequence": (template.model_copy(update={"scene_id": epoch.scene_id}),)

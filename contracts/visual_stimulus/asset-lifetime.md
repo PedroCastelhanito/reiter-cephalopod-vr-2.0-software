@@ -98,6 +98,23 @@ GUI import applies explicit physical tile dimensions when supplied; absent dimen
 preserve the authored tile size. JSON recipe motion fields are not playback authority:
 program epoch motion and V02 links own drift and rotation.
 
+## Grating recipe interpretation
+
+`cephvr_grating_json_v1` accepts a Grating texture-design JSON and retains its
+original protected bytes/fingerprint. Raw images and other recipe families reject
+this profile because they do not declare the required intrinsic grating parameters.
+Interpret the saved orientation as zero in memory; the epoch owns final orientation.
+Preserve recipe colour/contrast/sharpness and physical spatial period. Legacy designs
+are sampled as one unrotated repeat period, with no fit-to-tile frequency rounding;
+extent-independent physical-field designs keep that representation and zero their
+intrinsic angle. GUI import uses the interpreted period for physical tile dimensions.
+
+Planning preview, eager preparation and deferred protected reload use the same
+interpreter. The profile distinguishes content/residency keys from ordinary Texture
+using the same file, and existing source protection, cancellation, budgeting and
+resource release remain authoritative. Repetition Asset choices retain their periods
+under the source contract. No source file is rewritten or sampled during rendering.
+
 ## Windows handle binding
 
 For a local source use `CreateFileW` with `GENERIC_READ`, `FILE_SHARE_READ`,
@@ -127,6 +144,17 @@ do not automatically copy, retry indefinitely or downgrade to change detection.
 This contract does not promise protection from arbitrary privileged/kernel changes.
 
 ## Lifetime, failure and release
+
+Within one Setup, streamed assets may reuse a fingerprint from a still-live
+`ProtectedWindowsSource` after acquiring another protected handle and verifying the
+same volume/file identity. Keep per-consumer registration and handle ownership;
+cache entries own no handles and cannot substitute pathname, size or modification
+time checks for live protection. Rehash after the backing handle closes. Scope the
+bounded fingerprint metadata to preparation; do not persist it across Setup runs.
+Compatible image decode-validation results remain independently keyed by content,
+interpretation, dependencies and display requirements. Setup reports reuse counts
+and separate source, successful image-validation and compilation timings; these
+are CPU preparation measurements, not presentation or rig throughput evidence.
 
 Tag resources/results with their prepared configuration generation. Keep protection
 across Ready and intertrial gaps until no prepared consumer can use the source;

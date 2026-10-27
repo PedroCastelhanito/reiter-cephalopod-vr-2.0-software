@@ -102,7 +102,7 @@ _NUMERIC_PARAMS = {
     "black_fraction",
     "blur_mm",
 }
-_BOOL_PARAMS = {"fit_cycles_to_tile", "seamless", "seamless_texture"}
+_BOOL_PARAMS = {"tile_local", "fit_cycles_to_tile", "seamless", "seamless_texture"}
 _COLOR_PARAMS = {"color_a", "color_b", "foreground", "background"}
 _SURFACE_PARAMS = {"origin_screen", "origin_face", "target_screen", "target_face"}
 
@@ -114,6 +114,7 @@ class TextureRecipe:
     resolution: int
     tile_width_mm: float | None
     tile_height_mm: float | None
+    physical_field: bool = False
 
 
 def parse_texture_recipe(
@@ -136,8 +137,15 @@ def parse_texture_recipe(
     if data.get("kind") not in (None, "texture"):
         raise ValueError("Texture recipe kind must be 'texture'.")
     asset_type = data.get("cephvr_asset_type")
-    if asset_type not in (None, "texture_design"):
-        raise ValueError("Texture recipe asset type must be 'texture_design'.")
+    field = asset_type == "texture_field"
+    if field and (
+        type(data.get("format_version")) is not int or data["format_version"] != 1
+    ):
+        raise ValueError("Unsupported physical texture field version")
+    if asset_type not in (None, "texture_design", "texture_field"):
+        raise ValueError(
+            "Texture recipe asset type must be 'texture_design' or 'texture_field'."
+        )
     if asset_type is None and not any(
         key in data for key in ("pattern", "params", "pattern_params", "preview_file")
     ):
@@ -156,6 +164,27 @@ def parse_texture_recipe(
     pattern = _ALIASES.get(pattern, pattern)
     if pattern not in _SUPPORTED:
         raise ValueError(f"Unsupported legacy texture pattern: {pattern_text!r}.")
+    if field:
+        from cephvr.visual_stimulus.resources.physical_field import validate_field
+
+        if (
+            data.get("kind") != "texture"
+            or "params" not in data
+            or "pattern" not in data
+        ):
+            raise ValueError("Physical field requires kind, pattern and params")
+        if data.keys() - {
+            "cephvr_asset_type",
+            "format_version",
+            "kind",
+            "pattern",
+            "params",
+        }:
+            raise ValueError("Unsupported physical field document fields")
+        validate_field(pattern, params)
+        return TextureRecipe(
+            pattern, params, DEFAULT_TEXTURE_RESOLUTION, None, None, True
+        )
     resolution_raw = params.get(
         "texture_resolution",
         params.get("size", data.get("size", DEFAULT_TEXTURE_RESOLUTION)),
@@ -179,7 +208,7 @@ def parse_texture_recipe(
 
 def estimated_working_bytes(recipe: TextureRecipe) -> int:
     """Conservative procedural scratch estimate; image bytes use source dimensions."""
-    if recipe.pattern == "image":
+    if recipe.physical_field or recipe.pattern == "image":
         return 0
     pixels = recipe.resolution * recipe.resolution
     # Covers coordinate grids, RGB mixes, and FFT fields that coexist at peaks.
@@ -192,11 +221,28 @@ def generate_texture_recipe(
     surface_corners: Mapping[str, object] | None = None,
     image_pixels: np.ndarray | None = None,
     check: Callable[[], None] | None = None,
+    extent_mm: tuple[float, float] = (100.0, 100.0),
+    sample_size: tuple[int, int] | None = None,
+    offset_mm: tuple[float, float] = (0.0, 0.0),
 ) -> np.ndarray:
     """Generate RGB8 pixels; image data must be supplied as decoded RGB pixels."""
     if check is not None:
         check()
     import numpy as np
+
+    if recipe.physical_field:
+        from cephvr.visual_stimulus.resources.physical_field import raster_field
+
+        nx, ny = sample_size or (recipe.resolution, recipe.resolution)
+        return raster_field(
+            recipe.pattern,
+            recipe.params,
+            *extent_mm,
+            nx,
+            ny,
+            offset_mm=offset_mm,
+            check=check or (lambda: None),
+        )
 
     if recipe.pattern == "image":
         if image_pixels is None:
@@ -221,7 +267,7 @@ def generate_texture_recipe(
         if check is not None:
             check()
         return np.ascontiguousarray(image)
-    if recipe.pattern == "polar_grating":
+    if recipe.pattern == "polar_grating" and not recipe.params.get("tile_local", False):
         if surface_corners is None:
             raise ValueError(
                 "Polar texture generation requires explicit surface corners."

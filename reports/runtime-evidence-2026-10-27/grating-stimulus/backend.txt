@@ -1,0 +1,218 @@
+F.................................................................... [ 44%]
+........................................................................ [ 91%]
+.............                                                            [100%]
+================================== FAILURES ===================================
+_ VideoTransitionTests.test_media_links_are_preserved_in_source_but_not_executed _
+
+self = <tests.visual_stimulus.test_compilation.VideoTransitionTests testMethod=test_media_links_are_preserved_in_source_but_not_executed>
+
+    def test_media_links_are_preserved_in_source_but_not_executed(self):
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        hold = {"kind": "hold"}
+        setting.update(
+            linked_to="unused_reference",
+            motion={axis: hold for axis in ("x", "y", "rotation")},
+            phase_x=hold,
+            phase_y=hold,
+            width={"kind": "constant", "value": 10},
+            height={"kind": "constant", "value": 10},
+            feedback=[],
+        )
+        encoded = json.dumps(source)
+>       program = make_program(encoded)
+                  ^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_compilation.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\visual_stimulus\support.py:283: in make_program
+    return parse_program_json(source, max_bytes=1_000_000)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\visual_stimulus\config\models\program_model.py:786: in parse_program_json
+    return parse_json(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = <class 'cephvr.visual_stimulus.config.models.program_model.Program'>
+source = '{"format_version": 2, "assets": [], "instances": [{"instance_id": "texture", "family": "texture"}], "scenes": [{"scen...tion_linear_rgb": [0.5, 0.5, 0.5], "contrast": {"kind": "constant", "value": 1}}]}], "category": "media_presentation"}'
+max_bytes = 1000000, max_depth = 64
+
+    def parse_json(
+        model: type[T], source: str, *, max_bytes: int, max_depth: int = 64
+    ) -> T:
+        if (
+            type(max_bytes) is not int
+            or type(max_depth) is not int
+            or min(max_bytes, max_depth) <= 0
+        ):
+            raise ValueError("positive integer JSON limits required")
+        if not isinstance(source, str):
+            raise ValueError("UTF-8 JSON text required")
+        if len(source.encode("utf8")) > max_bytes:
+            raise ValueError("document exceeds byte budget")
+        depth = 0
+        quoted = False
+        escaped = False
+        for ch in source:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    quoted = False
+            elif ch == '"':
+                quoted = True
+            elif ch in "[{":
+                depth += 1
+                if depth > max_depth:
+                    raise ValueError("document exceeds nesting budget")
+            elif ch in "]}":
+                depth -= 1
+    
+        def unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f"duplicate JSON key: {key}")
+                result[key] = value
+            return result
+    
+        def invalid(value: str) -> NoReturn:
+            raise ValueError(f"nonfinite JSON constant: {value}")
+    
+        # This preflight checks duplicate keys; it is not a second schema definition.
+        json.loads(source, object_pairs_hook=unique, parse_constant=invalid)
+>       return model.model_validate_json(source, strict=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Program
+E         Value error, Linked texture requires another active texture reference [type=value_error, input_value={'format_version': 2, 'as...': 'media_presentation'}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+src\cephvr\visual_stimulus\config\models\schema_common.py:139: ValidationError
+_ VisualStimulusConfigurationTests.test_presentation_category_rejects_executable_motion (key='phase_x') _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_presentation_category_rejects_executable_motion>
+
+    def test_presentation_category_rejects_executable_motion(self) -> None:
+        from copy import deepcopy
+    
+        from tests.visual_stimulus.support import fixture_source
+    
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        setting["motion"] = {axis: {"kind": "hold"} for axis in ("x", "y", "rotation")}
+        setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
+        setting["width"] = setting["height"] = {"kind": "constant", "value": 10}
+        setting["feedback"] = []
+        Program.model_validate_json(json.dumps(source))
+        for key, value in (
+            ("phase_x", {"kind": "rate", "function": {"kind": "constant", "value": 1}}),
+            ("width", {"kind": "ramp", "initial": 10, "slope_per_s": 1}),
+            (
+                "motion",
+                {
+                    "x": {"kind": "rate", "function": {"kind": "constant", "value": 1}},
+                    "y": {"kind": "hold"},
+                    "rotation": {"kind": "hold"},
+                },
+            ),
+        ):
+            candidate = deepcopy(source)
+            candidate["sequence"][0]["settings"][0][key] = value
+>           with (
+                self.subTest(key=key),
+                self.assertRaisesRegex(ValueError, "presentation"),
+            ):
+E           AssertionError: ValueError not raised
+
+tests\visual_stimulus\test_configuration.py:49: AssertionError
+_ VisualStimulusConfigurationTests.test_presentation_category_rejects_executable_motion (key='width') _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_presentation_category_rejects_executable_motion>
+
+    def test_presentation_category_rejects_executable_motion(self) -> None:
+        from copy import deepcopy
+    
+        from tests.visual_stimulus.support import fixture_source
+    
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        setting["motion"] = {axis: {"kind": "hold"} for axis in ("x", "y", "rotation")}
+        setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
+        setting["width"] = setting["height"] = {"kind": "constant", "value": 10}
+        setting["feedback"] = []
+        Program.model_validate_json(json.dumps(source))
+        for key, value in (
+            ("phase_x", {"kind": "rate", "function": {"kind": "constant", "value": 1}}),
+            ("width", {"kind": "ramp", "initial": 10, "slope_per_s": 1}),
+            (
+                "motion",
+                {
+                    "x": {"kind": "rate", "function": {"kind": "constant", "value": 1}},
+                    "y": {"kind": "hold"},
+                    "rotation": {"kind": "hold"},
+                },
+            ),
+        ):
+            candidate = deepcopy(source)
+            candidate["sequence"][0]["settings"][0][key] = value
+>           with (
+                self.subTest(key=key),
+                self.assertRaisesRegex(ValueError, "presentation"),
+            ):
+E           AssertionError: ValueError not raised
+
+tests\visual_stimulus\test_configuration.py:49: AssertionError
+_ VisualStimulusConfigurationTests.test_presentation_category_rejects_executable_motion (key='motion') _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_presentation_category_rejects_executable_motion>
+
+    def test_presentation_category_rejects_executable_motion(self) -> None:
+        from copy import deepcopy
+    
+        from tests.visual_stimulus.support import fixture_source
+    
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        source = json.loads(fixture_source())
+        source["category"] = "media_presentation"
+        setting = source["sequence"][0]["settings"][0]
+        setting["motion"] = {axis: {"kind": "hold"} for axis in ("x", "y", "rotation")}
+        setting["phase_x"] = setting["phase_y"] = {"kind": "hold"}
+        setting["width"] = setting["height"] = {"kind": "constant", "value": 10}
+        setting["feedback"] = []
+        Program.model_validate_json(json.dumps(source))
+        for key, value in (
+            ("phase_x", {"kind": "rate", "function": {"kind": "constant", "value": 1}}),
+            ("width", {"kind": "ramp", "initial": 10, "slope_per_s": 1}),
+            (
+                "motion",
+                {
+                    "x": {"kind": "rate", "function": {"kind": "constant", "value": 1}},
+                    "y": {"kind": "hold"},
+                    "rotation": {"kind": "hold"},
+                },
+            ),
+        ):
+            candidate = deepcopy(source)
+            candidate["sequence"][0]["settings"][0][key] = value
+>           with (
+                self.subTest(key=key),
+                self.assertRaisesRegex(ValueError, "presentation"),
+            ):
+E           AssertionError: ValueError not raised
+
+tests\visual_stimulus\test_configuration.py:49: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_media_links_are_preserved_in_source_but_not_executed
+SUBFAILED(key='phase_x') tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_presentation_category_rejects_executable_motion
+SUBFAILED(key='width') tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_presentation_category_rejects_executable_motion
+SUBFAILED(key='motion') tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_presentation_category_rejects_executable_motion
+4 failed, 153 passed in 2.41s

@@ -1,6 +1,5 @@
 """Projector/layer variation targets, paired by value position."""
 
-from decimal import Decimal, InvalidOperation
 from random import Random
 from typing import Literal
 
@@ -16,11 +15,11 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.batch_random import random_values
-from cephvr.gui.batch_values import ValueRule
+from cephvr.gui.batch_values import ValueRule, listed_values
 from cephvr.gui.components import button, combo, equal_row_height, label
 from cephvr.gui.editing_card import EditingSurface
-from cephvr.gui.epoch_batch import END_BEHAVIORS
 from cephvr.gui.stimulus_columns import stimulus_columns
+from cephvr.gui.variation_assets import VariationAssets
 from cephvr.visual_stimulus.config.models.authoring import VariationDraft
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
@@ -35,9 +34,11 @@ class BatchVariationRow(EditingSurface):
         settings: tuple[Settings, ...] = (),
         *,
         presentation: bool = False,
+        random_only: bool = False,
     ) -> None:
         super().__init__()
         self.presentation = presentation
+        self.random_only = random_only
         self.targets = targets
         self.settings = settings
         self.projectors = projectors or {"Rig-wide": list(range(len(targets)))}
@@ -70,7 +71,15 @@ class BatchVariationRow(EditingSurface):
         self.target.setCurrentIndex(self.target.findData(initial))
         self.layer = combo(())
         self.parameter = combo(())
-        self.method = combo(("Values", "Sweep (min, max, step)", "Random"))
+        self.method = combo(())
+        for method, title in enumerate(("Values", "Sweep (min, max, step)", "Random")):
+            if not random_only or method == 2:
+                self.method.addItem(title, method)
+        self.method.setToolTip(
+            "Assign a random parameter value to each repetition without adding source epochs."
+            if random_only
+            else "Choose how to generate parameter values."
+        )
         self.values = QLineEdit()
         self.values.setPlaceholderText("10, 20, 30")
         for column, (caption, control) in enumerate(
@@ -128,7 +137,7 @@ class BatchVariationRow(EditingSurface):
             (
                 ("minimum", "Minimum", "0"),
                 ("maximum", "Maximum", "100"),
-                ("precision", "Precision", "1"),
+                ("precision", "Resolution", "1"),
             )
         ):
             edit = QLineEdit(value)
@@ -150,6 +159,12 @@ class BatchVariationRow(EditingSurface):
         self.shared = QCheckBox("Share random values across projectors")
         self.shared.toggled.connect(self.changed)
         self.value_grid.addWidget(self.shared, 2, 0, 1, 4)
+        self.asset_folder = VariationAssets()
+        self.asset_folder.editor.textChanged.connect(self.changed)
+        self.folder_caption = label("Folder", "label")
+        self.folder_caption.setBuddy(self.asset_folder.editor)
+        body.addWidget(self.folder_caption)
+        body.addWidget(self.asset_folder)
         self.fit_control_heights()
         self.target.currentIndexChanged.connect(self.refresh_layers)
         self.layer.currentIndexChanged.connect(self.refresh)
@@ -224,8 +239,9 @@ class BatchVariationRow(EditingSurface):
             self.target_grid.setColumnStretch(1, 0)
             self.target_grid.setColumnStretch(2, 1)
             self.target_grid.setColumnStretch(3, 0)
-            self.value_grid.addWidget(self.method_caption, 0, 0)
-            self.value_grid.addWidget(self.method, 1, 0)
+            span = 4 if self.parameter.currentData() == "Asset" else 1
+            self.value_grid.addWidget(self.method_caption, 0, 0, 1, span)
+            self.value_grid.addWidget(self.method, 1, 0, 1, span)
             self.value_grid.addWidget(self.values_caption, 0, 1, 1, 3)
             self.value_grid.addWidget(self.values, 1, 1, 1, 3)
             for column, (caption, edit) in enumerate(
@@ -339,8 +355,22 @@ class BatchVariationRow(EditingSurface):
         for caption, key in common:
             if self.presentation and key not in ("Playback start", "At end"):
                 continue
-            if key != "Fit":
+            if key != "Fit" and not (
+                self.random_only and self.method.currentData() == 2 and key == "At end"
+            ):
                 self.parameter.addItem(caption, key)
+        if (
+            self.random_only
+            and indices
+            and self.settings
+            and all(
+                (setting := self.settings[self.targets[i][2]]).kind == "video"
+                or (setting.kind == "image" and setting.sparse_noise is None)
+                or (setting.kind == "texture" and setting.pattern.kind == "image_tile")
+                for i in indices
+            )
+        ):
+            self.parameter.addItem("Asset", "Asset")
         self.parameter.setCurrentIndex(max(0, self.parameter.findData(previous)))
         self.parameter.blockSignals(False)
         self.update_hint()
@@ -367,21 +397,34 @@ class BatchVariationRow(EditingSurface):
         return self.random_cache[1]
 
     def update_hint(self) -> None:
+        asset = self.parameter.currentData() == "Asset"
+        if asset and self.method.currentText() != "Random from folder":
+            self.method.blockSignals(True)
+            self.method.clear()
+            self.method.addItem("Random from folder", 2)
+            self.method.blockSignals(False)
+        elif not asset and self.method.currentText() == "Random from folder":
+            self.method.setItemText(self.method.findData(2), "Random")
         categorical = self.parameter.currentData() == "At end"
         self.method.setEnabled(bool(self.targets) and not categorical)
         if categorical:
-            self.method.setCurrentIndex(0)
-        random_method = self.method.currentIndex() == 2
+            self.method.setCurrentIndex(self.method.findData(0))
+        random_method = self.method.currentData() == 2
         self.shared.setVisible(random_method and len(self.selected_projectors()) > 1)
         for control in (*self.random_fields.values(), *self.random_captions):
-            control.setVisible(random_method)
-        self.values.setVisible(not random_method)
-        self.values_caption.setVisible(not random_method)
+            control.setVisible(random_method and not asset)
+        self.values.setVisible(not random_method and not asset)
+        self.values_caption.setVisible(not random_method and not asset)
+        self.asset_folder.setVisible(asset)
+        self.folder_caption.setVisible(asset)
+        if self.stacked is False:
+            self.value_grid.addWidget(self.method_caption, 0, 0, 1, 4 if asset else 1)
+            self.value_grid.addWidget(self.method, 1, 0, 1, 4 if asset else 1)
         if categorical:
             self.values.setPlaceholderText("loop, hold final frame")
             return
         self.values.setPlaceholderText(
-            "0, 10, 2" if self.method.currentIndex() else "10, 20, 30"
+            "0, 10, 2" if self.method.currentData() == 1 else "10, 20, 30"
         )
 
     def read_rules(self, random_count: int = 1) -> tuple[ValueRule, ...]:
@@ -392,15 +435,7 @@ class BatchVariationRow(EditingSurface):
         parameter = self.parameter.currentData()
         if not parameter:
             raise ValueError("Selected layers have no common variation parameter")
-        if self.method.currentIndex() == 0:
-            values = tuple(v.strip() for v in self.values.text().split(","))
-            if parameter == "At end":
-                if any(v.lower() not in END_BEHAVIORS for v in values):
-                    raise ValueError("At end values must be loop or hold final frame")
-            else:
-                for value in values:
-                    float(value)
-        elif self.method.currentIndex() == 2:
+        if self.method.currentData() == 2:
             indices = self.target_indices()
             independent = not self.shared.isChecked()
             draws = self.sampled_values(
@@ -429,22 +464,9 @@ class BatchVariationRow(EditingSurface):
                 for position, index in enumerate(indices)
             )
         else:
-            try:
-                start, stop, step = (
-                    Decimal(part.strip()) for part in self.values.text().split(",")
-                )
-            except (InvalidOperation, ValueError) as error:
-                raise ValueError("Sweep needs min, max, step") from error
-            if (
-                not all(v.is_finite() for v in (start, stop, step))
-                or step <= 0
-                or stop < start
-            ):
-                raise ValueError("Sweep needs finite min ≤ max and positive step")
-            count = int((stop - start) // step) + 1
-            if count > 512:
-                raise ValueError("Sweep exceeds 512 values")
-            values = tuple(str(start + i * step) for i in range(count))
+            values = listed_values(
+                self.method.currentData(), self.values.text(), parameter
+            )
         return tuple(
             ValueRule(
                 self.targets[i][1],
@@ -467,7 +489,7 @@ class BatchVariationRow(EditingSurface):
             if self.layer.currentData() is not None
             else 0,
             parameter=self.parameter.currentData() or "",
-            method=self.method.currentIndex(),
+            method=self.method.currentData(),
             values=self.values.text(),
             minimum=self.random_fields["minimum"].text(),
             maximum=self.random_fields["maximum"].text(),
@@ -480,9 +502,20 @@ class BatchVariationRow(EditingSurface):
             if self.random_cache
             else (),
             samples=self.random_cache[1] if self.random_cache else (),
+            folder=self.asset_folder.editor.text().strip(),
+            asset_ids=self.asset_folder.asset_ids,
+            grating_periods_mm=self.asset_folder.grating_periods_mm,
         )
 
     def restore(self, draft: VariationDraft) -> None:
+        if self.method.findData(draft.method) < 0:
+            # Retain imported list semantics without offering them for new rules.
+            self.method.addItem(
+                "Values (saved)" if draft.method == 0 else "Sweep (saved)", draft.method
+            )
+        if draft.method != 2:
+            self.method.setCurrentIndex(self.method.findData(draft.method))
+            self.refresh()
         self.rig_coordinates = draft.rig_coordinates
         self.rig_angle_version = draft.rig_angle_version
         if self.rig_coordinates and self.rig_angle_version == 1:
@@ -496,8 +529,11 @@ class BatchVariationRow(EditingSurface):
         self.target.setCurrentIndex(self.target.findData(draft.projector))
         self.layer.setCurrentIndex(self.layer.findData(draft.layer))
         self.parameter.setCurrentIndex(self.parameter.findData(draft.parameter))
-        self.method.setCurrentIndex(draft.method)
+        self.method.setCurrentIndex(self.method.findData(draft.method))
         self.values.setText(draft.values)
+        self.asset_folder.restore(
+            draft.folder, draft.asset_ids, draft.grating_periods_mm
+        )
         for key, edit in self.random_fields.items():
             edit.setText(getattr(draft, key))
         self.shared.setChecked(draft.shared)
