@@ -1434,6 +1434,16 @@ The running app and failed session were not reset, restarted or cleared. Actual
 cleanup/recovery and corrected native Setup remain unverified under the existing
 [rig item](rig-verification.md#dummy-session-no-output).
 
+Oct27 current reconciliation: Oct26 file-preserving recovery, fresh Setup/Cancel
+and two60s saving-disabled Visual-Stimulus-only normal trials pass
+([native context](runtime-evidence-2026-10-26/lifecycle-followup/context.json)).
+The controller planning suite now passes11 cases; controller lifecycle commands,
+acquisition session preparation and Visual Stimulus recording pass160 local cases.
+These cover each saving selection reenabled, no-writer/no-file normal and interrupted
+finalization, capture-only setup and NewSession reset. No new source defect was
+established. Explicit native filesystem auditing and the full Abort/fresh-session/
+recording-reenable matrix remain open; no new rig execution occurred.
+
 ## Preview rotation and Combined windows — 2026-10-23
 
 `preview-rotation-and-projector-windows`: owner confirms coherent physical rig
@@ -2185,6 +2195,17 @@ shutdowns also reproduce JOB_INSPECTION_FAILED/WinError5 and repeated cleanup
 unregistered-resource reports; [latest retained emergency](emergency-671222891311500-184b469b-d95c-4e3f-a128-b5d8e1fd7145.json).
 Exact old process absence is verified before reload; none of these old closures is
 upgraded by the successful fresh run.
+
+Oct27 reconciliation: the later guarded Configuration-state
+[ShutdownApplication](runtime-evidence-2026-10-27/rate-scaling/final-shutdown.json)
+succeeds for generation f05d7088-37eb-4350-a95a-f3704bb7bf53, followed by
+[exact owned-process absence](runtime-evidence-2026-10-27/rate-scaling/final-exit.json).
+The retained shutdown harness rejects active sessions, prompts, cleanup blockers
+and incomplete operations. This supplies the previously missing idle-exit retest;
+it does not establish the historical MCU/WinError5 cause or test every live-resource
+shutdown variant. Current controller handoff/supervisor shutdown regressions pass
+25 cases (local, not new native execution). Keep the historical incident follow-up
+open only for recurrence/attribution rather than repeating the completed idle test.
 
 **GUI repairs and native check:** Monitor→Amber exposed a deleted QLabel caption;
 style selection now refreshes its cache from live children while preserving original
@@ -7248,6 +7269,15 @@ boundaries (724 modules, zero violations) pass. Earlier 2,233-pass backend evide
 belongs to the first increment. No full GUI rerun, native/rig/SDK or performance
 acceptance is claimed. Remaining advisory findings stay in TODO for individual
 review. [Helper caller traces, source comparison, patch and commands](runtime-evidence-2026-10-19/ponytail-vulture/helper-followup/context.json).
+
+Oct27 follow-up scans at60% and100% confidence outside the concurrently edited
+GUI/Visual Stimulus owners found no safe additional production deletion. Generated
+RPC hooks, structural contract/telemetry fields, native ABI state and required
+callback signatures remain; static findings alone do not prove dead code. No
+whitelist, dependency or behavior change. Targeted controller/acquisition/
+supervisor/launcher/shared Ruff checks pass;769-module boundary checks report zero
+violations with existing cohesion advisories. Remaining GUI/Visual Stimulus
+candidates still require caller review after concurrent work settles.
 
 Oct19 `ponytail-repo-simplification` uses repository-wide static/AST scans and
 targeted caller review under [ARCH-002](../architecture.md#arch-002). Shared command

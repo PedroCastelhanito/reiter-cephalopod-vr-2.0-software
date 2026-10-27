@@ -70,8 +70,11 @@ This does not close the remaining fault, physical or full-workload checks below.
   remain independent. [Local evidence](runtime.md#no-recording-dummy-session--2026-10-23).
   Oct23 native Setup failed with INVALID_CATALOGUE on an empty revision1 update;
   the focused local fix passes102 coordinator/supervisor tests. Preserve the retained
-  failed-session evidence; verify normal cleanup/recovery and corrected Setup after
-  loading the fix. No native recovery or successful retry is claimed.
+  failed-session evidence. Oct26 preserving recovery, fresh Setup/Cancel and two
+  normal60s Visual-Stimulus-only trials with saving disabled pass; see the
+  [lifecycle evidence](runtime-evidence-2026-10-26/lifecycle-followup/context.json).
+  Explicit no-output filesystem audit, all-active-backend Abort/fresh-session and
+  recording-reenable variants remain open.
 
 <a id="protocol-category-previews"></a>
 - [ ] `protocol-category-previews` [gui] [visual_stimulus] On the rig, verify media
@@ -410,10 +413,11 @@ commands, reports and output metadata; preserve original stop/recovery bounds.
   missing/failed evidence must remain visible. Verify NewSession after safe cleanup.
   Oct19 A10rev69 native two-Abort/reuse cycles pass at0.36s with exact Closed
   statuses and complete camera accounting; see current verification above.
-- [ ] `rapid-abort-setup-heartbeat`: immediately perform NewSession, fresh Setup and
-  Start in the same application generation; record beyond the retired trial's
-  original end. Retain heartbeats/pulse identities and confirm no old worker,
-  deadline or pulse task mutates the new trial; include Abort during finalization.
+- [ ] `rapid-abort-setup-heartbeat`: force Abort during finalization and verify
+  exact cleanup and safe subsequent reuse under that race. The bounded immediate
+  Abort/NewSession/Setup/Start reuse beyond the retired trial end already passes
+  Oct27; see [acceptance](runtime-evidence-2026-10-27/rate-scaling/validation.json).
+  That success does not establish the forced finalization-race variant.
 - [ ] `camera-preview-sdk-discard-reuse`: repeat more than five Behavior/Tracking
   preview Start/Stop cycles in one generation, confirming actual device/ring release
   after each Stop and a successful following Start. Capture any incomplete drain

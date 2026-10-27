@@ -767,7 +767,7 @@ remains pending. This angular-motion correction does not establish the cause of
 the separately reported linear Front/Bottom speed discrepancy below.
 
 
-Oct19 open `stimulus-physical-speed-mismatch`: owner observes Front downward motion
+Oct27 owner-deferred `stimulus-physical-speed-mismatch` (reported Oct19): owner observes Front downward motion
 faster than Bottom backward motion on physical screens. Earlier synthetic checks
 cannot close this finding. Read-only inspection of DUMMY_2_161013's actual logged
 phase/period/clip uniforms over1.0005195s infers50 mm/s on both surfaces under its
@@ -783,7 +783,8 @@ and a zero-drop/duplicate/omission encoder outcome. Correlations exceed0.99;
 This checks the recorded GPU result beyond the previous uniform arithmetic, not
 optical motion. Need a same-measured-distance travel comparison on the physical
 screens and current session binding. No cause established, corrective multiplier
-applied or live output changed. V15 is not proof of optical speed.
+applied or live output changed. V15 is not proof of optical speed. Owner deferred
+the physical comparison on Oct27; resume only on explicit request.
 
 
 Oct19 `pre-experiment-output-audit`: four retained Desktop dummy sessions contain
