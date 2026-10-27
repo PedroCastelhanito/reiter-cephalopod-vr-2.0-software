@@ -2388,6 +2388,10 @@ def test_confirmed_immediate_off_retires_matching_cancelled_trial_reservation(sc
     )
     clock.value = 201
     if scenario == "matching":
+        late_on = owner.on(selected, scheduled_boundary_ns=100, deadline_ns=1000)
+        assert late_on.outcome == mcu.PULSE_COMMAND_OUTCOME_NOT_DISPATCHED
+        assert late_on.error_code == "BOUNDARY_NOT_RESERVED"
+        assert "ON" not in port.verbs
         observation = owner.status(deadline_ns=1000)
         assert not observation.state.behavioral.running
     else:

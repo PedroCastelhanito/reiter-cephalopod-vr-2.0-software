@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import threading
@@ -743,6 +744,17 @@ class NativeRecording:
                 else None
             ),
         )
+        video = self._output_results[0]
+        if (
+            video.visual_stimulus_review_video_content
+            == pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES
+            and video.closure
+            in {pb.OUTPUT_CLOSURE_CLOSED, pb.OUTPUT_CLOSURE_NOT_STARTED}
+        ):
+            logging.getLogger(__name__).warning(
+                "Visual Stimulus trial %s review video contains no submitted frames",
+                self._schedule.command.target.work.trial.trial_id,
+            )
         return self._output_results
 
     def review_summary(self) -> vp.ReviewRecordingSummary | None:

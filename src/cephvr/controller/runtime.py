@@ -122,6 +122,7 @@ class ControllerRuntime:
             {name: backend.context for name, backend in backends.items()},
             max_entries=limits.max_retained_incidents,
             max_payload_bytes=max_preparation_bytes,
+            health_silence_ns=health_silence_ns,
         )
         self.projections.set_scope(pb.WorkContext(), self.configuration_state.revision)
         self.clock = clock

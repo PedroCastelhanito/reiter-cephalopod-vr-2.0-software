@@ -816,3 +816,96 @@ async def test_retired_setup_accepts_exact_late_ready_without_mutating_readiness
     )
     assert wrong_generation_receipt.result == pb.COMMAND_RESULT_REJECTED
     assert wrong_generation_receipt.failure.code == "IDENTITY"
+
+
+@pytest.mark.parametrize("phase", [pb.TRIAL_PHASE_FINALIZING, pb.TRIAL_PHASE_ENDED])
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        "",
+        "deadline",
+        "generation",
+        "trial",
+        "operation",
+        "not_interrupted",
+        "no_cutoff",
+        "activity",
+    ],
+)
+async def test_interrupted_started_retains_only_exact_on_time_activity(
+    tmp_path, phase, invalid
+):
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as visual
+
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    attempt.trial_participants = dict(attempt.required)
+    attempt.target_ns, attempt.end_ns = 100, 200
+    attempt.interrupted = invalid != "not_interrupted"
+    attempt.interruption_issued_ns = 0 if invalid == "no_cutoff" else 115
+    fixture.lifecycle.session.phase = (
+        pb.SESSION_PHASE_FINALIZING
+        if phase == pb.TRIAL_PHASE_FINALIZING
+        else pb.SESSION_PHASE_ENDED
+    )
+    fixture.lifecycle.session.outcome = pb.SESSION_OUTCOME_INTERRUPTED
+    fixture.lifecycle.trial.phase = phase
+    fixture.lifecycle.trial.outcome = pb.TRIAL_OUTCOME_INTERRUPTED
+    object.__setattr__(
+        fixture.reports.hooks,
+        "activity_requirements",
+        lambda _attempt, _name: (
+            frozenset(),
+            frozenset(),
+            frozenset({"left"}),
+            frozenset({"left"}),
+            frozenset(),
+        ),
+    )
+    started = pb.StartedReport(
+        context=pb.ReportContext(
+            backend=fixture.backend,
+            work=pb.WorkContext(trial=attempt.prepared.trials[0].context),
+            operation=pb.OperationContext(command_id=attempt.trial_operation),
+        ),
+        actual_start_monotonic_ns=105,
+    )
+    started.first_required_activity.add(
+        kind="visual_stimulus_presentation_call",
+        observed_monotonic_ns=110,
+        device_evidence=pb.DeviceProgressEvidence(
+            visual_stimulus_output=visual.OutputActivity(
+                output_id="left",
+                swap_entry_ns=105,
+                swap_return_ns=110,
+                submission=visual.SUBMISSION_OUTCOME_RETURNED,
+            )
+        ),
+    )
+    if invalid == "generation":
+        started.context.backend.backend_generation = _id()
+    elif invalid == "trial":
+        started.context.work.trial.trial_id = _id()
+    elif invalid == "operation":
+        started.context.operation.command_id = _id()
+    elif invalid == "activity":
+        del started.first_required_activity[:]
+    ingress = 201 if invalid == "deadline" else 120
+    before_session = fixture.lifecycle.session.SerializeToString()
+    before_trial = fixture.lifecycle.trial.SerializeToString()
+    report = pb.LifecycleReport(started=started)
+    receipt = await fixture.reports.receive(report, ingress)
+    assert (receipt.result == pb.COMMAND_RESULT_ACCEPTED) == (not invalid)
+    assert fixture.lifecycle.session.SerializeToString() == before_session
+    assert fixture.lifecycle.trial.SerializeToString() == before_trial
+    assert (attempt.target_ns, attempt.end_ns) == (100, 200)
+    assert bool(attempt.started) == (not invalid)
+    if not invalid:
+        assert (
+            await fixture.reports.receive(report, ingress)
+        ).result == pb.COMMAND_RESULT_ACCEPTED
+        report.started.actual_start_monotonic_ns = 106
+        assert (
+            await fixture.reports.receive(report, ingress)
+        ).result == pb.COMMAND_RESULT_REJECTED
+        assert attempt.started[fixture.backend.backend_name] == started

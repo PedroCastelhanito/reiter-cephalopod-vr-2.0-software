@@ -90,9 +90,8 @@ class WindowsEncoderProcess:
 
     @property
     def output_creation_identity(self) -> WindowsFileIdentity | None:
-        # A path that appears after launch is not proof that this child created it.
-        # Keep the explicit slot for a future native creator receipt; absent that
-        # evidence pre-T cleanup must preserve the artifact as unconfirmed.
+        # Only the identity observed before child exit grants creator authority.
+        # A final sync identity may prove closure but cannot authorize deletion.
         return self._output_creation_identity
 
     @property

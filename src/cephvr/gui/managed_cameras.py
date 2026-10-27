@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Callable
+from math import isfinite
 
 from PyQt6.QtCore import QObject, QTimer
 
@@ -129,6 +130,8 @@ class ManagedCameras(QObject):
         self.configured_tests.clear()
         self.panel.controller_trigger_rates.clear()
         self.panel.controller_trigger_sources.clear()
+        self.panel.controller_acquisition_rates.clear()
+        self.panel.refresh_controls()
 
     def test_enabled(self) -> None:
         if self.configured_tests:
@@ -203,9 +206,53 @@ class ManagedCameras(QObject):
         )
         cameras.controller_trigger_rates.clear()
         cameras.controller_trigger_sources.clear()
+        cameras.controller_acquisition_rates.clear()
         if mcu_settings is not None:
-            for name in ("behavioral", "tracking", "eye_tracking"):
+            for reported_role, name in enumerate(
+                ("behavioral", "tracking", "eye_tracking"), start=1
+            ):
                 device = getattr(mcu_settings, name).device
+                reported = getattr(state.acquisition_devices, name)
+                measured = reported.acquisition_rate
+                session_run = state.session.context.session_id
+                current_run = (
+                    session_run
+                    if state.session.phase
+                    in (
+                        pb.SESSION_PHASE_SETTING_UP,
+                        pb.SESSION_PHASE_READY,
+                        pb.SESSION_PHASE_STARTING,
+                        pb.SESSION_PHASE_RUNNING,
+                    )
+                    else reported.preview_run_id
+                    if state.session.phase == pb.SESSION_PHASE_CONFIGURATION
+                    and reported.device_open
+                    and reported.preview_running
+                    else ""
+                )
+                if (
+                    device.device_id
+                    and measured.device_id == device.device_id
+                    and (
+                        not reported.device.configured_id
+                        or reported.preview_run_id != current_run
+                        or reported.device.configured_id == device.device_id
+                    )
+                    and measured.camera == reported_role
+                    and current_run
+                    and measured.acquisition_run_id == current_run
+                    and measured.HasField("received_fps")
+                    and isfinite(measured.received_fps)
+                    and measured.received_fps >= 0
+                    and measured.observed_monotonic_ns > 0
+                    and measured.valid_until_monotonic_ns
+                    > measured.observed_monotonic_ns
+                ):
+                    cameras.controller_acquisition_rates[device.device_id] = (
+                        measured.received_fps,
+                        measured.observed_monotonic_ns,
+                        measured.valid_until_monotonic_ns,
+                    )
                 pulse = getattr(mcu_settings.pulses, name)
                 if device.device_id:
                     cameras.controller_trigger_sources[device.device_id] = (

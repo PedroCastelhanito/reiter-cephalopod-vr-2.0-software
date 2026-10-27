@@ -183,6 +183,7 @@ async def test_camera_heartbeat_handoff_preserves_trial_evidence_fence(
     )
     record = SimpleNamespace(
         launch=SimpleNamespace(worker=worker, work=session_work),
+        context=SimpleNamespace(camera=1),
         trial=SimpleNamespace(
             preparation=control.OperationContext(command_id=child.command_id)
         ),
@@ -198,7 +199,10 @@ async def test_camera_heartbeat_handoff_preserves_trial_evidence_fence(
     reports = cast(
         WorkerTelemetryReports,
         SimpleNamespace(
-            workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+            workers={1: record},
+            current_session=lambda: session,
+            lock=asyncio.Lock(),
+            _pending_camera_rates={},
         ),
     )
     heartbeat = control.HeartbeatReport(
@@ -266,6 +270,7 @@ async def test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope(
     )
     record = SimpleNamespace(
         launch=SimpleNamespace(worker=worker, work=work),
+        context=SimpleNamespace(camera=1),
         trial=None,
         child_operations={"child": child},
         heartbeat=control.HeartbeatReport(
@@ -281,7 +286,10 @@ async def test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope(
     reports = cast(
         WorkerTelemetryReports,
         SimpleNamespace(
-            workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+            workers={1: record},
+            current_session=lambda: session,
+            lock=asyncio.Lock(),
+            _pending_camera_rates={},
         ),
     )
     heartbeat = control.HeartbeatReport(
@@ -1222,6 +1230,7 @@ async def _retained_operation_test_owner(*, late_started: bool = False):
         result_reservation_bytes=4096,
     )
     evidence = WorkerEvidenceCoordinator(
+        health_silence_ns=15_000_000_000,
         backend=backend,
         owner=owner,
         settings=settings,
@@ -1617,6 +1626,7 @@ async def test_cancelled_setup_late_ready_is_retained_without_ready_promotion(
         resources[attachment_id] = ResourceRecord(attachment, None, resource_key)
         session.expected_attachments[context.camera] = {attachment_id}
     evidence_coordinator = WorkerEvidenceCoordinator(
+        health_silence_ns=15_000_000_000,
         backend=backend,
         owner=owner,
         settings=control.AcquisitionSettings(),
@@ -1864,3 +1874,182 @@ async def test_late_interrupted_operation_retained_without_deadline_success(
             await wait_child_operation(
                 owner.child, 600, asyncio.Lock(), clock=lambda: 500
             )
+
+
+class _CameraRateRecipient:
+    def __init__(self, *, blocked=False):
+        self.entered = asyncio.Event()
+        self.release = asyncio.Event()
+        if not blocked:
+            self.release.set()
+        self.calls = []
+
+    async def report_acquisition_device_status(self, report, *, deadline_ns):
+        self.calls.append(
+            wire.AcquisitionDeviceStatusReport.FromString(report.SerializeToString())
+        )
+        self.entered.set()
+        await self.release.wait()
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+
+def _camera_rate_reports(*, blocked=False, session=False):
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=_id()
+    )
+    run = _id()
+    resolved = camera_pb2.CameraResolvedState()
+    resolved.device.configured_id = "camera-1"
+    work = control.WorkContext()
+    current = None
+    preview = SimpleNamespace(
+        run_id=run, started=True, stopping=False, resolved_camera=resolved
+    )
+    if session:
+        work.session.session_id = run
+        work.session.controller_generation = _id()
+        preview = None
+        current = SimpleNamespace(
+            work=work,
+            trial=None,
+            interrupted=False,
+            setup_cancelled=False,
+            cleanup_complete=False,
+            camera_resolutions={1: resolved},
+            required_cameras={1},
+        )
+    record = SimpleNamespace(
+        context=SimpleNamespace(camera=1),
+        launch=SimpleNamespace(worker=worker, work=work),
+        preview=preview,
+        alive=True,
+        heartbeat=None,
+        trial=None,
+        child_operations={},
+    )
+    recipient = _CameraRateRecipient(blocked=blocked)
+    reports = WorkerTelemetryReports(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        ),
+        workers={1: record},
+        commands=None,
+        current_session=lambda: current,
+        controller=recipient,
+        lock=asyncio.Lock(),
+        clock=lambda: 2000,
+        health_silence_ns=15_000_000_000,
+    )
+    heartbeat = control.HeartbeatReport(
+        source=worker,
+        work=work,
+        sent_monotonic_ns=1000,
+        session_phase=control.SESSION_PHASE_READY
+        if session
+        else control.SESSION_PHASE_CONFIGURATION,
+        camera_acquisition_rate=control.CameraAcquisitionRate(
+            camera=1,
+            acquisition_run_id=run,
+            received_fps=30,
+            observed_monotonic_ns=900,
+            valid_until_monotonic_ns=15_000_000_900,
+            device_id="camera-1",
+        ),
+    )
+    return reports, record, recipient, heartbeat
+
+
+@pytest.mark.parametrize("retire", ["", "generation", "run", "stopping"])
+async def test_camera_rate_delivery_is_bounded_and_never_blocks_worker_heartbeat(
+    retire,
+):
+    reports, record, recipient, heartbeat = _camera_rate_reports(blocked=True)
+    try:
+        receipt = await asyncio.wait_for(
+            reports.report_heartbeat(heartbeat, deadline_ns=3000, ingress_ns=2000), 0.5
+        )
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+        await asyncio.wait_for(recipient.entered.wait(), 0.5)
+        for timestamp in (1001, 1002, 1003):
+            heartbeat.sent_monotonic_ns = timestamp
+            heartbeat.camera_acquisition_rate.observed_monotonic_ns = timestamp
+            heartbeat.camera_acquisition_rate.valid_until_monotonic_ns = (
+                timestamp + 15_000_000_000
+            )
+            receipt = await asyncio.wait_for(
+                reports.report_heartbeat(heartbeat, deadline_ns=3000, ingress_ns=2000),
+                0.5,
+            )
+            assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+            assert len(reports._pending_camera_rates) == 1
+        if retire == "generation":
+            record.launch.worker.generation = _id()
+        elif retire == "run":
+            record.preview.run_id = _id()
+        elif retire == "stopping":
+            record.preview.stopping = True
+        recipient.release.set()
+        await asyncio.wait_for(reports._camera_rate_task, 0.5)
+        assert len(recipient.calls) == (1 if retire else 2)
+        if not retire:
+            assert (
+                recipient.calls[-1].camera_acquisition_rate.observed_monotonic_ns
+                == 1003
+            )
+        assert not reports._pending_camera_rates
+    finally:
+        recipient.release.set()
+        if reports._camera_rate_task:
+            await reports._camera_rate_task
+
+
+@pytest.mark.parametrize("invalid", ["nan", "stale", "run", "device"])
+async def test_invalid_optional_rate_does_not_reject_heartbeat_or_identical_retry(
+    invalid,
+):
+    reports, record, recipient, heartbeat = _camera_rate_reports()
+    if invalid == "nan":
+        heartbeat.camera_acquisition_rate.received_fps = float("nan")
+    elif invalid == "stale":
+        heartbeat.camera_acquisition_rate.observed_monotonic_ns = 3000
+    elif invalid == "run":
+        heartbeat.camera_acquisition_rate.acquisition_run_id = _id()
+    elif invalid == "device":
+        heartbeat.camera_acquisition_rate.device_id = "other"
+    for _ in range(2):
+        assert (
+            await reports.report_heartbeat(heartbeat, deadline_ns=3000, ingress_ns=2000)
+        ).result == control.COMMAND_RESULT_ACCEPTED
+    assert not record.heartbeat.HasField("camera_acquisition_rate")
+    assert not reports._pending_camera_rates and recipient.calls == []
+
+
+async def test_headless_session_rate_uses_capture_scope_without_preview():
+    reports, record, recipient, heartbeat = _camera_rate_reports(session=True)
+    assert record.preview is None
+    assert (
+        await reports.report_heartbeat(heartbeat, deadline_ns=3000, ingress_ns=2000)
+    ).result == control.COMMAND_RESULT_ACCEPTED
+    await asyncio.wait_for(reports._camera_rate_task, 0.5)
+    assert len(recipient.calls) == 1
+    assert (
+        recipient.calls[0].camera_acquisition_rate == heartbeat.camera_acquisition_rate
+    )
+    assert not recipient.calls[0].HasField("work")
+
+
+@pytest.mark.parametrize(
+    "age_ns", [4_800_000_000, 14_999_999_999, 15_000_000_000, 15_000_000_001]
+)
+async def test_camera_rate_freshness_tracks_health_silence_without_new_cadence(age_ns):
+    reports, record, recipient, heartbeat = _camera_rate_reports(session=True)
+    now = heartbeat.camera_acquisition_rate.observed_monotonic_ns + age_ns
+    reports.clock = lambda: now
+    assert (
+        await reports.report_heartbeat(heartbeat, deadline_ns=now + 1, ingress_ns=now)
+    ).result == control.COMMAND_RESULT_ACCEPTED
+    fresh = age_ns < 15_000_000_000
+    assert record.heartbeat.HasField("camera_acquisition_rate") == fresh
+    if reports._camera_rate_task is not None:
+        await reports._camera_rate_task
+    assert len(recipient.calls) == int(fresh)

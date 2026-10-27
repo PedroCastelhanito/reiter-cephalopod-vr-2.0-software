@@ -30,7 +30,7 @@ def scale_full_range_into(
     ):
         raise ValueError("pixel scaling buffers differ from resolved representation")
     # Widen before arithmetic: ufunc resolution otherwise may multiply in the
-    # narrower source dtype and only cast the already-overflowed result to uint64.
+    # narrower source dtype and only cast the already-overflowed result.
     numpy.copyto(scratch, source, casting="unsafe")
     numpy.multiply(scratch, target_max, out=scratch)
     numpy.add(scratch, denominator // 2, out=scratch)

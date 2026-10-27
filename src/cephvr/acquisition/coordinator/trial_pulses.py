@@ -167,7 +167,25 @@ class TrialPulseBoundaries:
                 mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
             )
 
-        if not self._current_boundary(session, trial):
+        if (
+            self.session_slot.current is not session
+            or session.trial is not trial
+            or session.cleanup_complete
+        ):
+            return
+        current = self._current_boundary(session, trial)
+        if not current:
+            # A boundary that passed the pre-dispatch guard is a fact even if
+            # interruption arrived while the serial owner was completing it.
+            # Keep the trial's ON proof for recording, but never revive readiness
+            # or overwrite the safety OFF readback.
+            if (
+                command != mcu.PULSE_BOUNDARY_COMMAND_ON
+                or self.clock() >= delivery_deadline_ns
+            ):
+                return
+            _retain_boundary_result(trial, command, evidence)
+            await self.send_evidence(trial, evidence, delivery_deadline_ns)
             return
         if command == mcu.PULSE_BOUNDARY_COMMAND_OFF:
             trial.pulse_delivery_deadline_ns = delivery_deadline_ns
@@ -191,6 +209,7 @@ class TrialPulseBoundaries:
             self.session_slot.current is session
             and session.trial is trial
             and not session.interrupted
+            and not session.cleanup_complete
             and not session.setup_cancelled
             and not trial.interrupted
             and trial.stop is None

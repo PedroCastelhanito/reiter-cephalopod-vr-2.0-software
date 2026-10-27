@@ -1,0 +1,260 @@
+{
+  "timestamp_utc": "2026-10-27T03:36:36.166131+00:00",
+  "source_revision": "83c7e81e3b621471fc8925ad95de5e95cf6fd64d",
+  "source_sha256": {
+    "src/cephvr/shared/pixels/scaling.py": "efa198d1b7962f4d320947f1851a033d85b2ca674eb9f5142647faa14c7d74f4",
+    "src/cephvr/shared/pixels/preparer.py": "654a3a2ef7d3e7537fd3f7adff6c17ac5c265b191ecd29fe33848531c66d1501"
+  },
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "2.4.4",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+  "maximum_intermediate": 4294868992,
+  "uint32_maximum": 4294967295,
+  "warmup_calls_per_dtype": 4,
+  "timed_rounds": 10,
+  "calls_per_round": 16,
+  "order": "alternate reference/production order each round",
+  "exhaustive_equality": [
+    {
+      "source_bits": 8,
+      "target_bits": 8,
+      "input_values": 256,
+      "output_sha256": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880"
+    },
+    {
+      "source_bits": 8,
+      "target_bits": 10,
+      "input_values": 256,
+      "output_sha256": "0d5093a22dbd2cb7c83f0ec093d8e48d68b62c83e4caa9c0519c7cb1489bf4af"
+    },
+    {
+      "source_bits": 8,
+      "target_bits": 16,
+      "input_values": 256,
+      "output_sha256": "f393097e80ec38db493eb054a0886181eb2c0e8cf7b5cdf1de392fbe94b0d1f5"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "869938ee80b05e83543d70283406e027c34859baed89de7cdfdf63a373fa5778"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "96e812d54ab33c45b21c1825d87cc24bd43861546f9c7cd364fbf4b07d0cade9"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "8eb27ff3c9acaa84b286d6e98401fe9bc7bc1afc12b8c26e861ea49cca3d284a"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "9389d3ce4a13dfbb9b8a88abe2f2167ea0baf5dacf502e8092b525c0d6227c6e"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "051881624967a2043183113a5f3b74b381c5e676a5bdf40d8a7770ece6ef0c49"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "6b6f29702ab4a077eb7c6deabcc514ccd1b5aa7b156e7c219ba648eaf4438b58"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "5fad0004b724e6658d704fba464e470073452e50be14857a7a244f137e40eed0"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "9717cd766c1028c3567b228c10b619129ab7e936c0a5f2a799ca160117ae4e4c"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "68e419472d25e0b85e9917ccf692fd58245c5e95e9a46f07d1df81d2e9da246b"
+    }
+  ],
+  "timings": [
+    {
+      "shape": [
+        1080,
+        1920
+      ],
+      "source_bits": 16,
+      "target_bits": 8,
+      "uint64": {
+        "scratch_bytes": 16588800,
+        "samples_ms": [
+          2.32249375,
+          2.37838125,
+          2.43003125,
+          2.182625,
+          2.1441625,
+          2.13380625,
+          2.1025875,
+          2.13724375,
+          2.10143125,
+          2.09924375
+        ],
+        "median_ms": 2.140703125
+      },
+      "uint32": {
+        "scratch_bytes": 8294400,
+        "samples_ms": [
+          1.84365,
+          1.8253125,
+          1.82445625,
+          1.77241875,
+          1.768575,
+          1.75809375,
+          1.74785625,
+          1.7594125,
+          1.7372125,
+          1.7352375
+        ],
+        "median_ms": 1.76399375
+      },
+      "median_time_reduction_percent": 17.597459946717265
+    },
+    {
+      "shape": [
+        1080,
+        1920
+      ],
+      "source_bits": 12,
+      "target_bits": 10,
+      "uint64": {
+        "scratch_bytes": 16588800,
+        "samples_ms": [
+          2.5042875,
+          2.50128125,
+          2.5294625,
+          2.5742375,
+          2.5648125,
+          2.51431875,
+          2.50515625,
+          2.5017,
+          2.53784375,
+          2.5050875
+        ],
+        "median_ms": 2.5097375
+      },
+      "uint32": {
+        "scratch_bytes": 8294400,
+        "samples_ms": [
+          2.1405125,
+          2.1235125,
+          2.1467375,
+          2.17610625,
+          2.1805625,
+          2.14423125,
+          2.12421875,
+          2.124975,
+          2.17015625,
+          2.1286125
+        ],
+        "median_ms": 2.142371875
+      },
+      "median_time_reduction_percent": 14.637611503195059
+    },
+    {
+      "shape": [
+        1024,
+        1280,
+        3
+      ],
+      "source_bits": 12,
+      "target_bits": 16,
+      "uint64": {
+        "scratch_bytes": 31457280,
+        "samples_ms": [
+          4.66493125,
+          5.02093125,
+          5.106175,
+          4.68268125,
+          4.75723125,
+          4.76575,
+          4.4694125,
+          4.5563,
+          4.4578125,
+          4.51745625
+        ],
+        "median_ms": 4.67380625
+      },
+      "uint32": {
+        "scratch_bytes": 15728640,
+        "samples_ms": [
+          3.42365625,
+          3.35714375,
+          3.46793125,
+          3.380125,
+          3.46456875,
+          3.43395,
+          3.3426375,
+          3.32879375,
+          3.3435125,
+          3.326525
+        ],
+        "median_ms": 3.368634375
+      },
+      "median_time_reduction_percent": 27.92524561753068
+    },
+    {
+      "shape": [
+        480,
+        640
+      ],
+      "source_bits": 8,
+      "target_bits": 16,
+      "uint64": {
+        "scratch_bytes": 2457600,
+        "samples_ms": [
+          0.309775,
+          0.30785,
+          0.3087,
+          0.31045,
+          0.31134375,
+          0.310025,
+          0.30825,
+          0.33204375,
+          0.3859375,
+          0.3220875
+        ],
+        "median_ms": 0.3102375
+      },
+      "uint32": {
+        "scratch_bytes": 1228800,
+        "samples_ms": [
+          0.25963125,
+          0.25519375,
+          0.25548125,
+          0.25541875,
+          0.25626875,
+          0.25774375,
+          0.25668125,
+          0.2837,
+          0.293175,
+          0.2813125
+        ],
+        "median_ms": 0.2572125
+      },
+      "median_time_reduction_percent": 17.091744228212256
+    }
+  ],
+  "limitations": "CPU synthetic scaling only; no SDK, camera, GPU, native viewer, recording or rig workload."
+}

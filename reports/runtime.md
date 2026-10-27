@@ -190,6 +190,35 @@ Final nongui integration:2698 passed,5 skipped,3 subtests;6 dependency warnings.
 Concurrent GUI/launcher edits were preserved and tested-source fingerprints retained;
 do not attribute their changes to this repair. [Methods, diagnostics and source provenance](runtime-evidence-2026-10-27/cleanup-metrics/context.json).
 
+Measured camera acquisition rate and uint32 scaling are owner-approved Oct27
+follow-ups under [A10](../docs/architecture/acquisition.md#a10),
+[E08](../docs/architecture/system-contracts.md#e08) and
+[G02](../docs/architecture/gui.md#g02). Final backend suite2907 passes,
+9 skips/49 deselections,3 subtests and6 existing dependency warnings; GUI rate12
+and broader camera/preview32 pass. Windows-target mypy133 sources passes;
+Ruff/format48 changed files and boundaries769 modules/zero violations pass.
+ARCH-002 preserves capture ownership and a bounded latest-value telemetry sender;
+pure device-view merge stays in its existing helper and the GUI status renderer
+is separated from control/layout refresh. Existing larger owner modules remain
+cohesive, with no new process/dependency or scientific state.
+
+Initial native testing exposed an expiry shorter than the configured heartbeat
+cadence, repaired using the existing process-silence bound. Its immediate Abort
+also exposed valid Started evidence arriving during interrupted Finalizing; E05
+now retains that exact timely evidence without reviving execution. The failed
+run's camera closure remains historical Unconfirmed; exact process exit and
+file-preserving recovery are confirmed. Additional immediate-Abort repairs retain
+late recipe/ON evidence, original operation deadlines and the entire camera
+terminal handoff, with exact output identity and unchanged deletion protections.
+Final native Abort at T+13.642ms confirms Interrupted trial/session and seven Closed
+outputs in458.4ms. Immediate reuse crosses the retired trial end and completes two
+60s trials:14 Closed artifacts, six fully decoded/count-matched videos, contiguous
+camera counters and unchanged capture generations across the gap. Native Cameras
+shows30.0/60.0Hz with viewers hidden, clearing both rates on confirmed release.
+All11 saved files remain unchanged; final normal shutdown confirms exact owned-
+process absence. Full-load and electrical/optical timing remain unverified.
+[Commands, provenance, failed-run and current evidence](runtime-evidence-2026-10-27/rate-scaling/validation.json).
+
 ### Code to review / implement
 
 - Owner approved the camera page-hide repair. The existing update-only placement
@@ -201,13 +230,18 @@ do not attribute their changes to this repair. [Methods, diagnostics and source 
   closes both viewers and devices. Native X-close/manual-drag/DPI variants remain
   on the rig checklist; local preservation regressions pass.
 
-- Proposed uint32 pixel-scaling scratch halves that buffer;12 exhaustive equality
-  cases pass and synthetic scaler timings improve14–24%. Production unchanged;
-  the8-to8 preview fast path bypasses scaling. [Method/results](runtime-evidence-2026-10-26/hierarchy-audit/pixel-benchmark/context.md).
+- Owner-approved uint32 pixel-scaling scratch is implemented. Twelve exhaustive
+  comparisons and eight SDK-backed recording depth combinations preserve exact
+  bytes; scratch halves and current synthetic scaling improves14.6-27.9%.
+  The8-to8 identity path still bypasses scaling. No full-load FPS gain is claimed.
+  [Current method/results](runtime-evidence-2026-10-27/rate-scaling/context.md).
 - Continuous acquisition implementation and bounded native validation are complete;
   see the [current acquisition assessment](acquisition.md#continuous-camera-acquisition-design--2026-10-21).
-  Camera receive-rate telemetry and remaining device-layout promotion still need
-  their owning scope/implementation choices; existing TODO entries remain authoritative.
+  Owner-approved camera receive-rate telemetry is implemented independently of
+  viewer visibility, configured trigger rate and trial admission. The existing
+  five-second heartbeat carries source-time measurements; explicit expiry uses
+  the existing process-silence allowance, not a new heartbeat policy.
+  Remaining device-layout promotion still needs its owning scope choice.
 - Embedded-preview integration and off-GL-thread readback remain owner-deferred;
   this audit does not promote either alternative. Physical geometry, darkness and
   optical/electrical timing require measurements, not speculative code changes.

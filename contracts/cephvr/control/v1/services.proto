@@ -446,6 +446,7 @@ message AcquisitionDeviceStatusReport {
   OperationState result = 4;
   optional string exported_pfs_path = 5; // Only after successful file close.
   CameraPreviewVisibility preview_visibility = 6; // Observation only; operation/result absent.
+  CameraAcquisitionRate camera_acquisition_rate = 7; // Observation only; mutually exclusive with work/operation/result/preview visibility.
   // Separate command result from observed device state and from original errors.
 }
 message CameraPreviewVisibility {

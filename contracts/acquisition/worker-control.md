@@ -142,6 +142,32 @@ work and 300 seconds after confirmed finalization/cleanup under E08. Retention i
 in memory; it is neither the session log nor a recovery journal after process crash.
 The Interrupted fence and exact registered-context checks still prohibit execution.
 
+## Advisory acquisition-rate observation
+
+The capture owner counts all ordered SDK image-result receipts before copying,
+including invalid images. A constant-space interval starts at its first receipt;
+after at least1s it reports (receipt count minus1)/(last minus first receipt time).
+Intervals or receipt gaps reaching3s are discarded and rebaseline. The last included
+receipt timestamps the measurement; heartbeats never restamp it. A fresh capture
+starts unknown; trial admission changes do not reset this continuous measurement.
+
+Worker HeartbeatReport.camera_acquisition_rate carries CameraAcquisitionRate:
+camera role, acquisition_run_id (manual preview UUID or session UUID), device_id,
+optional received_fps, observed_monotonic_ns and valid_until_monotonic_ns. The
+expiry is source measurement time plus the existing E08 process-silence bound;
+worker heartbeat cadence is unchanged. It is never extended from send time. The existing coordinator status
+RPC forwards only a bounded latest observation after checking the current worker
+and capture identity. Controller projection validates current backend/session or
+manual run and configured device before storing CameraDeviceView.acquisition_rate.
+No existing device-open/preview facts are invented for a headless session.
+
+A missing/nonfinite/negative/future/stale observation is not a current rate.
+The GUI expires observations at their validated source-derived deadline and clears
+disconnected/retired runs. This accommodates the existing5s heartbeat without
+inventing a faster measurement-delivery guarantee.
+This best-effort display channel adds no lifecycle acknowledgement, per-frame RPC,
+history or recording/health guarantee. PreviewRates remains viewer-owned and separate.
+
 ## Remaining integration
 
 See the [single acquisition worklist](README.md#remaining-decisions-and-implementation-work)

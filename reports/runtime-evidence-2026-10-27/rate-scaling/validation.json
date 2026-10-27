@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-27",
+  "source_revision": "83c7e81e3b621471fc8925ad95de5e95cf6fd64d",
+  "scope": "Approved measured SDK receive-rate telemetry and uint32 scaling; dirty working tree with concurrent GUI/sparse-noise edits retained",
+  "checks": {
+    "gui_focused": "14 passed,980 deselected; subsequent integrated camera/preview selection32 passed,969 deselected (gui-tests.txt)",
+    "preview_recording_owners": "206 passed,2 deselected,6 existing SWIG warnings",
+    "actual_sdk_recording": "17 passed,6 SWIG warnings including8 source/target combinations",
+    "scaler": "12 exhaustive byte-equality cases; scratch halves;14.6-27.9% isolated time reduction (context.md/result.json)",
+    "gui_static": "Ruff and Windows-target mypy2 files pass",
+    "backend_integration": "2907 passed,9 skipped,49 deselected,3 subtests,6 dependency warnings; excludes GUI and concurrent unfinished generate_stimulus editor",
+    "camera_manual_native": "native-manual-1 passed; native HUD30.0/60.0Hz with viewers hidden, release cleared both,11 settings unchanged",
+    "normal_two_trial_native": "native-session-2 passed;14 Closed artifacts,six videos fully decoded/count-matched;unchanged capture generations across gap",
+    "latest_focused": "361 cleanup/coordinator/recording/lifecycle tests;163 subsequent Visual Stimulus cases; cleanup predicate parity816 combinations",
+    "static": "Ruff check/format48 changed files; Windows-target mypy133 sources;769 backend modules/zero boundary violations",
+    "final_native": "Abort5 T+13.642ms,458.4005ms observed return with confirmed cleanup; followed immediately by native-session-3 two60s trials,14 Closed artifacts,six fully decoded/count-matched videos",
+    "final_shutdown": "exact owned-process absence in final-exit.json",
+    "saved_settings": "All11 files unchanged for manual capture, Abort and normal reuse"
+  },
+  "limits": "Bounded two-camera and stimulus runs only. No full-load FPS gain, native zero-receipt case, electrical/optical pulse alignment or physical DPI acceptance. Failed historical outputs remain Unconfirmed and retained. Concurrent editor work preserved; native6 owners unchanged during execution, later cleanup diagnostic variable rename is behavior-neutral.",
+  "failed_attempts": "Initial GUI test text passed through a Windows pipe was mojibake; fixed UTF-8 fixture text and reran. Initial GUI static checks found import order/type variable reuse; fixed. Restricted agent test temp/shared-memory access failed/stalled; permitted owning run passed. Iterative immediate-Abort failures retained in native-session-1 and native-start-abort-1..4; exact file-preserving recovery confirmed. Final integration initially found an incomplete object.__new__ fixture and cleanup-diagnostic loop-variable type collision; fixture and variable name corrected,2907-test rerun and mypy pass. Restricted asyncio loopback attempts stalled; permitted tests passed.",
+  "rapid_reuse": {
+    "retired_end_ns": 1098105618133700,
+    "new_start_ns": 1098066338857500,
+    "new_end_ns": 1098126338857500
+  },
+  "abort_decoded_frames": {
+    "protocol-data\\RIGCHECK_133321_behavioral_cam.mp4": "1",
+    "protocol-data\\RIGCHECK_133321_stimulus.mp4": "1",
+    "protocol-data\\RIGCHECK_133321_tracking_cam.mp4": "2"
+  }
+}

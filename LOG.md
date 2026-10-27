@@ -12076,3 +12076,154 @@ without attributing those implementations to this audit.
 Synchronization succeeded: implementation/evidence commit96414ea1 was pushed to
 origin/main in PedroCastelhanito/reiter-cephalopod-vr-2.0-software. No forced update
 or history rewrite was used. Retained ignored recording outputs remain local.
+
+### 2026-10-27 - [acquisition] [controller] [gui] [shared] Rate and scaling implementation approved
+
+Owner approved `camera-acquisition-rate-readback` and `pixel-scaling-uint32-review`.
+Moved both tasks from Deferred to In progress. Reviewing existing worker telemetry
+and GUI projection before adding bounded receipt-rate evidence; Luna owns the
+scaling implementation and Astra reviews the telemetry interface and lifecycle.
+Preserve configured trigger/preview rates, exact pixel outputs and existing
+physical/scientific deferrals. Working tree was clean at start.
+
+### 2026-10-27 - [gui] [shared] [acquisition] Receipt HUD and scaling verification
+
+`camera-acquisition-rate-readback`: GUI projects exact run/device receipt rates,
+independent of preview visibility; a focused status timer expires stale values
+without control/layout churn. Starting and trial transitions preserve current
+session rates.14 focused then32 integrated camera/preview cases pass; scoped
+Ruff and Windows-target mypy pass. Initial fixture text had Windows-pipe encoding
+damage and two static issues; corrected and rerun. Higher-model review found and
+repaired worker measurement baseline/restamping and inactive capture cases; backend
+transport review remains in progress.
+
+`pixel-scaling-uint32-review`: uint32 scratch halves the allocation, retaining exact
+outputs in12 exhaustive comparisons and8 SDK-backed recording depth combinations.
+Preview/recording-owner206 tests and recording-payload17 pass, with6 existing SWIG
+warnings. The restricted agent run could not access native shared memory/temp;
+the permitted owning run passes. Synthetic scaler median time improves14.6-27.9%,
+not a whole-camera/full-workload guarantee. Evidence: rate-scaling/context.md and
+validation.json. ARCH-002 keeps the scaler change to one dtype and its bound.
+
+### 2026-10-27 - [acquisition] [controller] [gui] Native telemetry boundary findings
+
+First native rate run reaches Ready and trial1 with measured29.97/59.95Hz and no
+camera viewer. At trial2 start, observations are4.79/4.83s old: existing worker
+heartbeat cadence is5s, conflicting with the new3s display expiry assumption.
+The test then Aborts at T+16.266ms; a valid renderer Started report arrives during
+Finalizing and is rejected, causing renderer recovery/exit and unconfirmed camera
+cleanup. This is a separate pre-existing late-evidence race exposed by the test,
+not evidence of stopped continuous acquisition. Raw failure is retained under
+rate-scaling/native-session-1. All11 saved files remain unchanged; runtime
+restoration failed safely without blind file writes. Exact exit receipt confirms
+all old-generation processes absent; unfinished session/output remains preserved.
+
+Corrective work reuses existing E08 process-silence bound for source-derived
+telemetry expiry without changing heartbeat policy, and retains exact interrupted
+Started evidence without restoring Running or extending deadlines. The native
+harness will collect optional rate assertions through normal completion before
+failing, avoiding an immediate trial-start Abort solely for display telemetry.
+
+### 2026-10-27 - [visual_stimulus] [controller] [acquisition] Immediate-start Abort regression
+
+Corrected receipt expiry passes native-session-2 Ready, both60s trial starts and
+intertrial gap; normal cleanup and all11 saved files confirmed unchanged. Broader
+post-repair backend suite2860 passes,5 skips/49 deselections,3 subtests,6 warnings;
+Win32 mypy116 sources passes. Failed native-session-1 was recovered preserving files.
+
+`rapid-abort-setup-heartbeat`: separate fresh native-start-abort-1 requests Abort at
+T+9.9996ms. Unlike the previous Started rejection, this reports renderer
+"recording session is closing" and native-catalogue cleanup mismatch, followed by
+renderer exit and unconfirmed aggregate cleanup. Source investigation is in
+progress with higher-model review; no successful Abort or closure claim. Existing
+normal protocol result remains valid. Evidence: rate-scaling/abort-live.json and
+native-start-abort-1.log. Saved files/failed output remain protected.
+
+### 2026-10-27 - [gui] [acquisition] [visual_stimulus] Native rate and interruption follow-up
+
+`camera-acquisition-rate-readback`: native-manual-1 displays measured30.0/60.0Hz
+in Cameras with both viewers hidden; normal ReleaseControl confirms both cameras
+closed, clears rate fields/HUD and remains stable. All11 saved files unchanged.
+The recording Header race is repaired without extending deadlines: normal finish
+seals frame admission while awaiting required publication, cancellation stays final.
+361 focused cleanup/coordinator/recording/lifecycle tests pass. Cleanup diagnostics
+retain boolean proof validation; independent old/new parity covers816 combinations.
+
+`rapid-abort-setup-heartbeat`: native-start-abort-2 at T+11.1994ms no longer reports
+recording-session-closing. Renderer records closure metrics, but controller rejects
+Finished closure; cameras report exact per-output Unconfirmed evidence. Investigation
+continues; fresh failed files are retained, no successful Abort claim. Source hashes,
+read-only abort-2-live snapshot and diagnostics remain in rate-scaling evidence.
+
+### 2026-10-27 - [acquisition] [visual_stimulus] Immediate-Abort ordering and deadline diagnosis
+
+Native-start-abort-3 retains one camera frame per role but no camera Completion;
+renderer no longer reports Header/closure rejection, then loses its cleanup report
+to an expired recipe-publication deadline. Exact shutdown receipt confirms all
+owned processes absent; all11 saved files remain unchanged. Failed output retained.
+Astra identified deferred renderer cleanup incorrectly minimizing its original
+bound against an unrelated latest command deadline; focused163 tests pass after
+repair. Root/Luna/Astra traced camera cleanup overtaking pulse evidence between
+end-marker creation and terminal Future creation. The existing guard covered only
+the Future, allowing failed-cleanup to replace the graceful terminal handoff.
+The bounded full-handoff fence and accepted zero-frame interrupted closure are
+under implementation; normal acquisition success/Started and deletion ownership
+proof remain strict. No physical/electrical timing or rapid-reuse pass claimed.
+
+### 2026-10-27 - [acquisition] [visual_stimulus] Preserved terminal evidence under early Abort
+
+Native-start-abort-4 removes the renderer Header, closure and crossed-deadline
+failures, but still fails camera cleanup before exact shutdown. Root/Astra/Luna
+identified TrialPulseBoundaries dropping the actual terminal ON reply when Abort
+arrives during its RPC, while interrupt_session cancels the ON task. OFF alone
+cannot satisfy the exact trial ON/OFF handoff; the repaired terminal fence therefore
+correctly waits to its original deadline. The ensuing unconfirmed cleanup and stale
+work heartbeat escalation remain retained in native-5 diagnostics. Implementing
+exact in-flight reply retention without new ON dispatch or newer OFF rollback.
+Zero-frame interrupted closure and present-empty Visual output classification now
+match existing A07/V12 contracts, preserving Interrupted and deletion protections;
+241 focused backend checks and root295 integrated checks pass. No native acceptance
+yet for this new edge-case repair, and historical failed files remain Unconfirmed.
+
+### 2026-10-27 - [gui] [visual_stimulus] Stimulus authoring completed
+
+`generate-stimulus` completed:254 authoring/backend cases (6 rig/native excluded),
+47 existing GUI cases, final39 authoring rerun, Ruff/format20 files, Win32 mypy17
+sources,13-schema drift and769-module boundary checks pass. Sdist/Windows wheel
+builds succeed; archive inspection confirms13 authoring modules and the launcher.
+Generation imports without Qt. Native standalone previews, MASK textures and cache
+updates passed at100%/125% scaling; wide/narrow screenshots inspected. The main GUI
+was not restarted. Evidence and source hashes are in
+reports/runtime-evidence-2026-10-27/generate-stimulus/context.json. Physical projection,
+optical correctness, mixed-monitor DPI and full-load acceptance remain separate rig
+work; the completed implementation task moves to that explicit follow-up.
+
+### 2026-10-27 - [gui] [controller] [acquisition] [visual_stimulus] [shared] Rate/scaling and Abort acceptance
+
+`camera-acquisition-rate-readback` and `pixel-scaling-uint32-review` complete:
+native hidden-viewer HUD30.0/60.0Hz, source expiry/release checks, exhaustive byte
+equality and SDK-backed recording conversions pass. Uint32 scratch halves memory;
+isolated scaling14.6–27.9% faster, without a full-load FPS claim. A10/E08/G02 retain
+source identity and existing cadence/deadlines. Luna implementation and Astra
+decision/review kept the requested cost/performance hierarchy.
+
+`rapid-abort-setup-heartbeat` and `interrupt-trial-log-closure` complete for bounded
+native acceptance: Abort5 at T+13.642ms returns confirmed cleanup in458.4005ms,
+trial/session Interrupted and seven present Closed outputs. Three tiny videos fully
+decode. Immediate same-runtime reuse crosses the retired trial end, completes two
+60s trials with14 Closed artifacts/six full decoded-count matches; camera counters
+remain contiguous within trials under unchanged capture generations. All11 saved
+settings remain identical; final normal shutdown has exact owned-process absence.
+E05/E06/A02/A07/A11/V12/E13 corrections preserve late factual evidence, terminal
+handoff, original deadlines, safe OFF ordering and deletion protections. Writer
+completion status is distinct from experiment outcome. Failed historical output
+remains retained Unconfirmed; no retroactive repair or native zero-receipt claim.
+
+Final integration2907 passes,9 skips/49 deselections,3 subtests,6 existing warnings;
+GUI rate12 and broader camera/preview32 pass. Ruff/format48 files, Win32 mypy133,
+boundaries769/zero violations pass. Initial final-suite failure was a constructor-
+bypassing fixture missing its recording dependency; final type failure was a reused
+loop-variable name. Both corrected without runtime behavior change; reruns pass.
+Evidence and provenance: reports/runtime-evidence-2026-10-27/rate-scaling/validation.json.
+Full-workload, optical/electrical alignment and physical DPI remain on rig checklist.
+Concurrent stimulus-authoring work is preserved outside this completed change.

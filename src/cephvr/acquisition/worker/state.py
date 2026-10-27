@@ -64,6 +64,7 @@ class WorkerState:
     health_trial_phase: control.TrialPhase | None = None
     health_progress_required: bool = False
     health_last_progress_ns: int | None = None
+    health_camera_acquisition_rate: control.CameraAcquisitionRate | None = None
     health_owner_observed_ns: int | None = None
     health_active_error: control.ErrorReport | None = None
     health_continuing_functions: tuple[control.ContinuingFunctionEvidence, ...] = ()
@@ -113,6 +114,7 @@ class WorkerState:
         progress_required: bool,
         last_progress_ns: int | None,
         observed_ns: int,
+        camera_acquisition_rate: control.CameraAcquisitionRate | None = None,
     ) -> None:
         """Publish a bounded owner snapshot for the independent health loop."""
         with self.lock:
@@ -122,6 +124,13 @@ class WorkerState:
             self.health_progress_required = progress_required
             self.health_last_progress_ns = last_progress_ns
             self.health_owner_observed_ns = observed_ns
+            self.health_camera_acquisition_rate = (
+                control.CameraAcquisitionRate.FromString(
+                    camera_acquisition_rate.SerializeToString(deterministic=True)
+                )
+                if camera_acquisition_rate is not None
+                else None
+            )
 
     def update_fault_snapshot(
         self,
@@ -197,6 +206,17 @@ class WorkerState:
                 report.work.CopyFrom(self.health_work)
             if self.health_active_error is not None:
                 report.active_error.CopyFrom(self.health_active_error)
+            if self.health_camera_acquisition_rate is not None:
+                rate = report.camera_acquisition_rate
+                rate.CopyFrom(self.health_camera_acquisition_rate)
+                if rate.observed_monotonic_ns <= (1 << 63) - 1 - health_silence_ns:
+                    rate.valid_until_monotonic_ns = (
+                        rate.observed_monotonic_ns + health_silence_ns
+                    )
+                    if sent_ns >= rate.valid_until_monotonic_ns:
+                        report.ClearField("camera_acquisition_rate")
+                else:
+                    report.ClearField("camera_acquisition_rate")
             owner_fresh = (
                 self.health_owner_observed_ns is not None
                 and sent_ns >= self.health_owner_observed_ns

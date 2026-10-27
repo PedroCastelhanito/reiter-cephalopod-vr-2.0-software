@@ -310,6 +310,13 @@ is recorded under Camera no-wiring anchoring below.
   exceeds retired end times; no forced race or idle300s/full-workload pass claimed.
   Preserve historical failed outputs without closure upgrades.
   [Current verification](runtime-evidence-2026-10-19/camera-timing-verification/verification.json).
+  Oct27 immediate-start Abort now confirms Interrupted metadata/seven Closed outputs
+  in458.4ms, followed by two60s trials crossing the retired end with six fully decoded
+  count matches. Hidden-viewer measured rates30.0/60.0Hz clear on release; all11 saved
+  files remain unchanged and exact final process absence is confirmed. These close
+  the bounded immediate-Abort/reuse tasks, not forced-race, native zero-receipt,
+  full-workload, physical DPI or electrical/optical alignment variants.
+  [Rate/scaling acceptance](runtime-evidence-2026-10-27/rate-scaling/validation.json).
 
 - [ ] Load the corrected retained-state protocol and perform fresh Setup; confirm
   texture positions hold at drift-to-static boundaries and resume smoothly on all

@@ -1533,7 +1533,8 @@ def test_release_is_required_and_no_activity_before_onset():
     ]
 
 
-def test_recording_closure_does_not_block_gl_or_extend_deadline():
+@pytest.mark.parametrize("late_publication", [False, True])
+def test_recording_closure_does_not_block_gl_or_extend_deadline(late_publication):
     driver, clock, reports, recorder, graphics, command, release = prepared_driver(
         saving=True
     )
@@ -1551,15 +1552,35 @@ def test_recording_closure_does_not_block_gl_or_extend_deadline():
     assert not reports.lifecycle("finished")
     assert driver.advance(clock()) is not None
     cleanup = command()
-    deferred = driver.execute("Cleanup", cleanup, clock() + 100_000_000)
+    cleanup_deadline = clock() + 100_000_000
+    deferred = driver.execute("Cleanup", cleanup, cleanup_deadline)
     assert deferred is not None and not deferred.done()
     assert not reports.lifecycle("cleanup")
     assert recorder.deadline == deadline
+    if late_publication:
+        trial = driver.state.trial
+        assert trial is not None and trial.schedule is not None
+        trial.schedule.outputs.add(
+            output_key="recipe", output_tag="stimulus_LOG", path="recipe.json"
+        )
+        driver.execute(
+            "ConfirmRecipePublication",
+            visual_stimulus.WorkerRecipePublication(
+                command=command(True),
+                prepared=trial.artifact.handle,
+                published=True,
+                path="recipe.json",
+            ),
+            clock() + 100,
+        )
+        clock.value += 200
     recorder.results = ()
     driver.advance(clock())
     assert deferred.done() and deferred.exception() is None
     assert reports.lifecycle("finished")
     assert reports.lifecycle("cleanup")
+    assert reports.lifecycle("cleanup")[0][1] == cleanup_deadline
+    assert reports.lifecycle("finished")[0][1] == deadline
 
 
 def test_cancel_before_onset_has_no_started_or_finished_and_joins_cleanup():
@@ -1575,6 +1596,52 @@ def test_cancel_before_onset_has_no_started_or_finished_and_joins_cleanup():
     assert future.done()
     assert not reports.lifecycle("started")
     assert not reports.lifecycle("finished")
+    assert not graphics.begun
+
+
+@pytest.mark.parametrize("begun", [False, True])
+@pytest.mark.parametrize("invalid", [None, "prepared", "path", "failure"])
+def test_recipe_publication_after_stop_preserves_recording_ownership(begun, invalid):
+    driver, clock, reports, recorder, graphics, command, release = prepared_driver(
+        saving=True
+    )
+    trial = driver.state.trial
+    assert trial is not None and trial.schedule is not None
+    trial.schedule.outputs.add(
+        output_key="recipe", output_tag="stimulus_LOG", path="reserved-recipe.json"
+    )
+    driver.execute("ReleaseTrial", release, clock() + 100_000_000)
+    if begun:
+        clock.value = release.start_monotonic_ns
+        driver.advance(clock())
+    driver.execute(
+        "InterruptSession",
+        visual_stimulus.WorkerStop(command=command(True)),
+        clock() + 100_000_000,
+    )
+    deadline, cutoff = trial.finish_deadline_ns, trial.cutoff_ns
+    publication = visual_stimulus.WorkerRecipePublication(
+        command=command(True),
+        published=True,
+        prepared=trial.artifact.handle,
+        path="reserved-recipe.json",
+    )
+    if invalid == "prepared":
+        publication.prepared.plan_sha256 = "different"
+    elif invalid == "path":
+        publication.path = "other-recipe.json"
+    elif invalid == "failure":
+        publication.published = False
+    if invalid:
+        with pytest.raises(RuntimeError, match="recipe"):
+            driver.execute("ConfirmRecipePublication", publication, clock() + 1000)
+    else:
+        driver.execute("ConfirmRecipePublication", publication, clock() + 1000)
+    assert recorder.calls.count("publication") == int(begun and invalid is None)
+    assert trial.stopped and not trial.finished
+    assert (trial.finish_deadline_ns, trial.cutoff_ns) == (deadline, cutoff)
+    assert not reports.lifecycle("finished")
+    assert trial.begun == begun
     assert not graphics.begun
 
 

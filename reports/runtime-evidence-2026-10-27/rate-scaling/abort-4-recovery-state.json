@@ -1,0 +1,17 @@
+{
+  "exit": {
+    "controller_generation": "d343da1e-efd5-4d6d-9df2-fb7a3d1867d5",
+    "supervisor_generation": "e94b1323-4681-436f-ad47-0bb738dc2f45",
+    "observed_monotonic_ns": 1097543834098800,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "pointer": {
+    "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-27\\rate-scaling\\native-start-abort-4\\recordings\\20261027_hierarchy_audit\\RIGCHECK-132313",
+    "session_id": "39d7cd35-fcf2-4ec0-95c8-3d4f545c08f1",
+    "controller_generation": "d343da1e-efd5-4d6d-9df2-fb7a3d1867d5",
+    "supervisor_generation": "e94b1323-4681-436f-ad47-0bb738dc2f45",
+    "format_version": 1
+  }
+}

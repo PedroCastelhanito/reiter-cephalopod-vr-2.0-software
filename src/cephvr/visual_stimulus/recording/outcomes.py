@@ -56,8 +56,6 @@ def closed_results(
             input_frames=counts.input_submitted_count,
             duplicate_frames=counts.duplicate_frame_count,
         )
-    if completion.warning:
-        video.failure.message = completion.warning
     frames = pb.OutputResult(
         output_key=outputs["stimulus_frames"].output_key,
         path=outputs["stimulus_frames"].path,

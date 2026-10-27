@@ -502,6 +502,8 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
     assert metrics == [("recording_closed", worker.metrics.snapshot())]
     assert session.poll_finished() == result
     assert len(metrics) == 1
+    with pytest.raises(RuntimeError, match="recording session is closing"):
+        session.publish_header_factory(lambda: pytest.fail("cancelled header ran"))
 
 
 def test_recording_session_failure_exports_terminal_metrics_once(
@@ -651,6 +653,7 @@ def test_recording_finish_publishes_exact_cutoff_before_closing_wakes_owner(
     session.begin_finish(cutoff_ns=2_000_000_001, deadline_ns=3_000_000_000)
     assert observed == [2_000_000_001]
     assert worker._cutoff_ns == 2_000_000_001
+    session.begin_cancel(deadline_ns=3_000_000_000)
 
 
 def test_native_preonset_cancel_closes_real_session_without_cadence_cutoff(
@@ -794,9 +797,10 @@ def test_native_cancel_after_trial_end_uses_scheduled_end_as_cutoff(
     assert result is not None
 
 
-def test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence() -> (
-    None
-):
+@pytest.mark.parametrize("creator", [True, None])
+def test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence(
+    creator,
+) -> None:
     empty = RecordingCounts(0, 0, 0, 0, 0, 0, None)
     started_empty = resolve_video_completion(
         empty,
@@ -807,7 +811,7 @@ def test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence()
         encoder_finalized=True,
         file_sync_and_close_confirmed=True,
         artifact_present=True,
-        artifact_created_by_session=True,
+        artifact_created_by_session=creator,
         reserved_path_absent_after_cleanup=False,
     )
     assert (started_empty.content, started_empty.closure) == ("NO_FRAMES", "CLOSED")
@@ -839,7 +843,8 @@ def test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence()
     assert empty_encoder_error.closure == "UNCONFIRMED"
 
 
-def test_video_presence_and_exit_are_insufficient_without_creator_identity() -> None:
+@pytest.mark.parametrize("missing", [None, "sync", "exit", "cleanup", "artifact"])
+def test_submitted_video_closure_requires_final_proof_not_deletion_authority(missing):
     one_frame = RecordingCounts(
         1, 1, 1, 0, 0, 0, 0, encoded_frame_count=1, selected_real_count=1
     )
@@ -848,14 +853,68 @@ def test_video_presence_and_exit_are_insufficient_without_creator_identity() -> 
         final_cutoff_known=True,
         every_eligible_group_resolved=True,
         no_partial_input_write=True,
-        encoder_cleanup_confirmed=True,
-        encoder_finalized=True,
-        file_sync_and_close_confirmed=True,
-        artifact_present=True,
+        encoder_cleanup_confirmed=missing != "cleanup",
+        encoder_finalized=missing != "exit",
+        file_sync_and_close_confirmed=missing != "sync",
+        artifact_present=missing != "artifact",
         artifact_created_by_session=None,
         reserved_path_absent_after_cleanup=False,
     )
-    assert outcome.closure == "UNCONFIRMED"
+    assert outcome.closure == ("CLOSED" if missing is None else "UNCONFIRMED")
+
+
+@pytest.mark.parametrize("replacement", [False, True])
+@pytest.mark.parametrize("appears_at_exit", [False, True])
+def test_encoder_finalization_checks_final_identity_without_creator_promotion(
+    tmp_path, replacement, appears_at_exit
+):
+    from cephvr.visual_stimulus.recording.encoder_owner import EncoderTrialOwner
+
+    events = []
+    identity = object()
+    process = NS(
+        cleanup_complete=False,
+        output_creation_identity=None if appears_at_exit else identity,
+        close_stdin=lambda **_: events.append("eof"),
+    )
+
+    def wait(**_):
+        events.append("wait")
+        process.cleanup_complete = True
+        return 0
+
+    process.wait = wait
+    process.output_identity = lambda: (
+        identity if not appears_at_exit or process.cleanup_complete else None
+    )
+    sync = NS(
+        sync=lambda: events.append("sync"),
+        close=lambda: events.append("close"),
+    )
+
+    def open_sync(path, expected):
+        assert path == tmp_path / "video.mp4" and expected is identity
+        return sync
+
+    owner = EncoderTrialOwner(
+        NS(),
+        NS(
+            open=open_sync,
+            identity=lambda _: object() if replacement else identity,
+        ),
+        clock_ns=lambda: 1,
+    )
+    owner.process = process
+    if replacement:
+        with pytest.raises(RuntimeError, match="identity changed at closure"):
+            owner.finalize(tmp_path / "video.mp4", 100)
+    else:
+        result = owner.finalize(tmp_path / "video.mp4", 100)
+        assert result.artifact_present and result.file_sync_and_close_confirmed
+        assert result.artifact_created_by_session == (not appears_at_exit)
+        assert result.output_identity is identity
+    assert process.output_creation_identity is (None if appears_at_exit else identity)
+    assert events == ["eof", "wait", "sync", "close"]
 
 
 def test_capacity_drops_complete_capture_reconciliation_for_video_closure() -> None:
@@ -1356,6 +1415,39 @@ def native_recording():
     return recording
 
 
+def test_native_empty_video_warns_once_without_poisoning_closed_output(
+    native_recording, caplog
+):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    recording = native_recording
+    recording._session = NS(poll_finished=lambda: NS(evidence_closed=True))
+    recording._header_published = True
+    recording._worker = NS(counts=lambda: RecordingCounts(0, 0, 0, 0, 0, 0, None))
+    recording._schedule = visual.WorkerSchedule()
+    recording._schedule.command.target.work.trial.trial_id = "exact-trial"
+    for tag in ("stimulus", "stimulus_frames"):
+        recording._schedule.outputs.add(output_key=tag, output_tag=tag, path=tag)
+    recording._cutoff_ns = 5
+    recording._encoder_exit = 0
+    recording._video_sync_ok = True
+    recording._artifact_present = True
+    recording.encoder_owner.process = NS(
+        cleanup_complete=True, output_creation_identity=None
+    )
+    results = recording.poll_finished()
+    assert results is not None and results[0].closure == pb.OUTPUT_CLOSURE_CLOSED
+    assert not results[0].HasField("failure")
+    assert (
+        results[0].visual_stimulus_review_video_content
+        == pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES
+    )
+    assert recording.poll_finished() == results
+    assert len(caplog.records) == 1
+    assert "exact-trial" in caplog.text and "no submitted frames" in caplog.text
+
+
 @pytest.mark.parametrize(
     ("attempted", "confirmed", "process_closed", "child_released"),
     [
@@ -1807,9 +1899,9 @@ def test_invalid_encoder_count_does_not_inflate_diagnostics(consumed: int) -> No
     assert worker.counts().unresolved_capture_count == 1
 
 
-@pytest.mark.parametrize("cancel", [False, True])
+@pytest.mark.parametrize("mode", ["normal", "cancel", "late_header"])
 def test_native_video_off_retains_scientific_evidence_without_native_ports(
-    native_recording, tmp_path, cancel
+    native_recording, tmp_path, mode
 ):
     import json
 
@@ -1820,6 +1912,7 @@ def test_native_video_off_retains_scientific_evidence_without_native_ports(
     from .support import make_prepared_trial
 
     recording = native_recording
+    cancel = mode == "cancel"
     setup = visual.WorkerSetup()
     setup.settings.save_visual_stimulus_data = False
     setup.policies.limits.evidence_pending_bytes = 1_000_000
@@ -1850,11 +1943,11 @@ def test_native_video_off_retains_scientific_evidence_without_native_ports(
     else:
         recipe_path = tmp_path / "trial_stimulus_LOG.json"
         recipe_path.write_bytes(recipe.data)
-        recording.publication(
-            visual.WorkerRecipePublication(
-                published=True, prepared=request.prepared, path=str(recipe_path)
-            )
+        publication = visual.WorkerRecipePublication(
+            published=True, prepared=request.prepared, path=str(recipe_path)
         )
+        if mode != "late_header":
+            recording.publication(publication)
         state = EvidenceStateSnapshot(
             0, artifact.epochs[0].scene_id, 12, (), (), (), (), ()
         )
@@ -1891,6 +1984,12 @@ def test_native_video_off_retains_scientific_evidence_without_native_ports(
             )
         )
         recording.begin_finish(100, 200)
+        if mode == "late_header":
+            assert recording.poll_finished() is None
+            assert not (tmp_path / "trial_stimulus_frames.jsonl").exists()
+            assert recording._finish_deadline_ns == 200
+            recording.publication(publication)
+            assert recording._finish_deadline_ns == 200
     result = None
     for _ in range(1000):
         result = recording.poll_finished()

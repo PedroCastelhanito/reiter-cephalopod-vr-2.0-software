@@ -99,11 +99,15 @@ class _Worker:
 @pytest.mark.parametrize("interrupt", [False, True])
 @pytest.mark.parametrize("trial_level", [False, True])
 @pytest.mark.parametrize("adopted", [False, True])
+@pytest.mark.parametrize("boundary_in_flight", [False, True])
 def test_safety_fanout_survives_off_failure_and_missing_worker(
     interrupt: bool,
     trial_level: bool,
     adopted: bool,
+    boundary_in_flight: bool,
 ) -> None:
+    if boundary_in_flight and not interrupt:
+        pytest.skip("in-flight boundaries apply only to InterruptSession")
     session_id = str(uuid4())
     session_work = control.WorkContext(
         session=control.SessionContext(session_id=session_id)
@@ -207,14 +211,34 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
         )
 
         async def interrupt_with_boundaries():
-            tasks = [asyncio.create_task(asyncio.Event().wait()) for _ in range(3)]
+            release = asyncio.Event()
+            if boundary_in_flight:
+                trial.start_monotonic_ns = trial.end_monotonic_ns = 10
+
+                async def wait_release():
+                    await release.wait()
+
+                pulse_on = asyncio.create_task(wait_release())
+                pulse_off = asyncio.create_task(wait_release())
+
+                async def wait_for_off():
+                    await pulse_off
+
+                tasks = [pulse_on, pulse_off, asyncio.create_task(wait_for_off())]
+            else:
+                tasks = [asyncio.create_task(asyncio.Event().wait()) for _ in range(3)]
             trial.pulse_on_task, trial.pulse_off_task, trial.normal_end_task = tasks
             await asyncio.sleep(0)
             result = await termination.interrupt_session(
                 interrupt_request, deadline_ns=100
             )
+            if boundary_in_flight:
+                assert not any(task.cancelled() for task in tasks)
+                assert serial.off_called
+                release.set()
+            else:
+                assert all(task.cancelled() for task in tasks)
             await asyncio.gather(*tasks, return_exceptions=True)
-            assert all(task.cancelled() for task in tasks)
             return result
 
         admission = asyncio.run(interrupt_with_boundaries())
@@ -469,6 +493,7 @@ def _interrupted_finished_case(save_video: bool):
         current_session=lambda: session,
         controller=cast(ControllerPort, object()),
         lock=asyncio.Lock(),
+        health_silence_ns=15_000_000_000,
     )
     return owner, worker, evidence, session, trial, backend
 

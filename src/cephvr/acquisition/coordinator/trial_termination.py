@@ -330,13 +330,26 @@ class TrialTermination:
             self.session_slot.interrupted = True
             if session.trial is not None:
                 session.trial.interrupted = True
-                for task in (
-                    session.trial.pulse_on_task,
-                    session.trial.pulse_off_task,
-                    session.trial.normal_end_task,
-                ):
-                    if task is not None and task is not asyncio.current_task():
+                trial = session.trial
+                now = self.clock()
+                pending_boundaries = (
+                    (trial.pulse_on_task, trial.start_monotonic_ns),
+                    (trial.pulse_off_task, trial.end_monotonic_ns),
+                )
+                for task, boundary_ns in pending_boundaries:
+                    if (
+                        task is not None
+                        and task is not asyncio.current_task()
+                        and (boundary_ns is None or now < boundary_ns)
+                    ):
                         task.cancel()
+                task = trial.normal_end_task
+                if (
+                    task is not None
+                    and task is not asyncio.current_task()
+                    and (trial.end_monotonic_ns is None or now < trial.end_monotonic_ns)
+                ):
+                    task.cancel()
         selected = session_output_roles(session)
         serial_task = asyncio.create_task(
             self._force_outputs_off(

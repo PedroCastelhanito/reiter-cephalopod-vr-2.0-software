@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 
+from cephvr.acquisition.coordinator.cleanup_diagnostics import worker_cleanup_failure
 from cephvr.acquisition.coordinator.commands import (
     retain_worker_command,
     wait_child_operation,
@@ -141,8 +142,20 @@ class SessionlessCleanup:
         if not operation.succeeded:
             raise RuntimeError("cleanup operation failed")
         evidence = await self._wait_cleanup(record, child.command_id, deadline_ns)
-        if evidence is None or not self.cleanup_complete(record, evidence):
-            raise RuntimeError("exact worker cleanup release evidence is incomplete")
+        if evidence is None:
+            raise RuntimeError(
+                f"{record.launch.worker.role} camera worker generation "
+                f"{record.launch.worker.generation} cleanup retained evidence is missing"
+            )
+        if not self.cleanup_complete(record, evidence):
+            failure = worker_cleanup_failure(record, evidence)
+            raise RuntimeError(
+                failure
+                or (
+                    f"{record.launch.worker.role} camera worker generation "
+                    f"{record.launch.worker.generation} cleanup evidence is invalid"
+                )
+            )
         return record
 
     async def _wait_cleanup(

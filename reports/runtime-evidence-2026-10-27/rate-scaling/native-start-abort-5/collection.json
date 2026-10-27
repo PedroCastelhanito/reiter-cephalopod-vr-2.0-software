@@ -1,0 +1,862 @@
+{
+  "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-27\\rate-scaling\\native-start-abort-5\\recordings\\20261027_hierarchy_audit\\RIGCHECK-133316",
+  "videos": {
+    "protocol-data\\RIGCHECK_133321_behavioral_cam.mp4": {
+      "size_bytes": 495887,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40033",
+            "width": 2456,
+            "height": 2568,
+            "coded_width": 2464,
+            "coded_height": 2576,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "307:321",
+            "pix_fmt": "yuvj444p",
+            "level": 51,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 512,
+            "duration": "0.033333",
+            "bit_rate": "118437360",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "1",
+            "nb_read_frames": "1",
+            "extradata_size": 68,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-27\\rate-scaling\\native-start-abort-5\\recordings\\20261027_hierarchy_audit\\RIGCHECK-133316\\protocol-data\\RIGCHECK_133321_behavioral_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "0.033333",
+          "size": "495887",
+          "bit_rate": "119014070",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "3ba33d56-7037-4deb-aca7-d5c8d9fbb9b5",
+            "cephvr_trial_id": "7a2db374-cec0-43df-96b8-ea43409f23d6",
+            "cephvr_camera_role": "behavioral",
+            "cephvr_device_id": "40065509",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    },
+    "protocol-data\\RIGCHECK_133321_stimulus.mp4": {
+      "size_bytes": 5087,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40020",
+            "width": 1280,
+            "height": 720,
+            "coded_width": 1280,
+            "coded_height": 720,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "16:9",
+            "pix_fmt": "yuvj444p",
+            "level": 32,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "120/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 256,
+            "duration": "0.016667",
+            "bit_rate": "1982400",
+            "bits_per_raw_sample": "8",
+            "nb_read_frames": "1",
+            "extradata_size": 62,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-27\\rate-scaling\\native-start-abort-5\\recordings\\20261027_hierarchy_audit\\RIGCHECK-133316\\protocol-data\\RIGCHECK_133321_stimulus.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "0.016667",
+          "size": "5087",
+          "bit_rate": "2441711",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "iso5",
+            "minor_version": "512",
+            "compatible_brands": "iso5iso6mp41",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    },
+    "protocol-data\\RIGCHECK_133321_tracking_cam.mp4": {
+      "size_bytes": 2979,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.64002a",
+            "width": 1588,
+            "height": 1344,
+            "coded_width": 1600,
+            "coded_height": 1344,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "397:336",
+            "pix_fmt": "yuvj420p",
+            "level": 42,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 512,
+            "duration": "0.033333",
+            "bit_rate": "129840",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "2",
+            "nb_read_frames": "2",
+            "extradata_size": 62,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-27\\rate-scaling\\native-start-abort-5\\recordings\\20261027_hierarchy_audit\\RIGCHECK-133316\\protocol-data\\RIGCHECK_133321_tracking_cam.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "0.033333",
+          "size": "2979",
+          "bit_rate": "714967",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "isom",
+            "minor_version": "512",
+            "compatible_brands": "isomiso6iso2avc1mp41",
+            "cephvr_identity_version": "1",
+            "cephvr_session_id": "3ba33d56-7037-4deb-aca7-d5c8d9fbb9b5",
+            "cephvr_trial_id": "7a2db374-cec0-43df-96b8-ea43409f23d6",
+            "cephvr_camera_role": "tracking",
+            "cephvr_device_id": "40747103",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    }
+  },
+  "frame_logs": {
+    "protocol-data\\RIGCHECK_133321_behavioral_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 1,
+        "video_frame": 1,
+        "completion": 1
+      },
+      "received_frames": 1,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "real": 1
+      },
+      "video_dispositions": {
+        "real": 1
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 1098045626924000,
+      "last_source_ns": 1098045626924000,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1098045645833400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1,
+            "selected_source_frame_count": 1,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1098045623672500,
+            "on_acknowledged_monotonic_ns": 1098045653873400,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1098045657355400,
+            "off_acknowledged_monotonic_ns": 1098045686887600
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 43,
+            "scope": "physical_stop",
+            "observed_monotonic_ns": 1098045891625700
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1098045593595900,
+              "camera_frame_counter": 40,
+              "camera_timestamp_ns": 1022880396944781,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1098045626924000,
+              "camera_frame_counter": 41,
+              "camera_timestamp_ns": 1022880430269558,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1098045626924000,
+              "camera_frame_counter": 41,
+              "camera_timestamp_ns": 1022880430269558,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1098045660298500,
+              "camera_frame_counter": 42,
+              "camera_timestamp_ns": 1022880463593039,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\RIGCHECK_133321_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 1,
+        "clipping": 4,
+        "group_update": 2,
+        "encoder_outcome": 1,
+        "completion": 1
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 1,
+      "initial_capture_dispositions": {
+        "admitted": 1
+      },
+      "first_source_ns": 1098045619162200,
+      "last_source_ns": 1098045619162200,
+      "final_records": {
+        "encoder_outcome": {
+          "kind": "encoder_outcome",
+          "admitted_count": 1,
+          "input_submitted_count": 1,
+          "capacity_drop_count": 0,
+          "selected_real_count": 1,
+          "same_slot_omission_count": 0,
+          "encoded_frame_count": 1,
+          "duplicate_frame_count": 0,
+          "final_input_group_id": 0,
+          "cutoff_host_ns": 1098045686695900,
+          "exit_code": 0,
+          "eof_sent": true,
+          "drain_confirmed": true
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 1098045686695900,
+          "last_group_id": 0,
+          "state_count": 1,
+          "submission_attempt_count": 4,
+          "capture_admission_count": 1,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      },
+      "completion_present": true
+    },
+    "protocol-data\\RIGCHECK_133321_tracking_cam_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "frame": 2,
+        "video_frame": 2,
+        "completion": 1
+      },
+      "received_frames": 2,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {
+        "real": 2
+      },
+      "video_dispositions": {
+        "real": 2
+      },
+      "render_groups": 0,
+      "initial_capture_dispositions": {},
+      "first_source_ns": 1098045620095200,
+      "last_source_ns": 1098045636835300,
+      "final_records": {
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1098045639889300,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 2,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 2,
+            "selected_source_frame_count": 2,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1098045623672500,
+            "on_acknowledged_monotonic_ns": 1098045653873400,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1098045657355400,
+            "off_acknowledged_monotonic_ns": 1098045686887600
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 87,
+            "scope": "physical_stop",
+            "observed_monotonic_ns": 1098045862587800
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1098045603583900,
+              "camera_frame_counter": 83,
+              "camera_timestamp_ns": 1098044118963420,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1098045620095200,
+              "camera_frame_counter": 84,
+              "camera_timestamp_ns": 1098044135576000,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1098045636835300,
+              "camera_frame_counter": 85,
+              "camera_timestamp_ns": 1098044152288040,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1098045653751900,
+              "camera_frame_counter": 86,
+              "camera_timestamp_ns": 1098044169000610,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      "completion_present": true
+    }
+  },
+  "recording_metrics": [
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "a3d4c5ee-8deb-4ca0-b4dc-c357613780b6",
+      "session_id": "3ba33d56-7037-4deb-aca7-d5c8d9fbb9b5",
+      "trial_id": "7a2db374-cec0-43df-96b8-ea43409f23d6",
+      "configuration_revision": 2,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 1,
+            "total": 822000,
+            "max": 822000
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 1,
+            "total": 94402400,
+            "max": 94402400
+          },
+          "queue_wait": {
+            "count": 1,
+            "total": 4046700,
+            "max": 4046700
+          },
+          "normalization": {
+            "count": 1,
+            "total": 900,
+            "max": 900
+          },
+          "pipe_write": {
+            "count": 1,
+            "total": 1172400,
+            "max": 1172400
+          },
+          "frame_input": {
+            "count": 1,
+            "total": 1172400,
+            "max": 1172400
+          },
+          "slot_hold": {
+            "count": 1,
+            "total": 99668500,
+            "max": 99668500
+          }
+        },
+        "worst_stage_samples": {
+          "readback_poll_ready": {
+            "group_id": 0,
+            "start_monotonic_ns": 1098045724701500,
+            "end_monotonic_ns": 1098045725523500,
+            "elapsed_ns": 822000
+          },
+          "capture_ready": {
+            "group_id": 0,
+            "start_monotonic_ns": 1098045631159000,
+            "end_monotonic_ns": 1098045725561400,
+            "elapsed_ns": 94402400
+          },
+          "queue_wait": {
+            "group_id": 0,
+            "start_monotonic_ns": 1098045725561400,
+            "end_monotonic_ns": 1098045729608100,
+            "elapsed_ns": 4046700
+          },
+          "normalization": {
+            "group_id": 0,
+            "video_frame_index": 0,
+            "start_monotonic_ns": 1098045729624900,
+            "end_monotonic_ns": 1098045729625800,
+            "elapsed_ns": 900
+          },
+          "pipe_write": {
+            "group_id": 0,
+            "start_monotonic_ns": 1098045729632200,
+            "end_monotonic_ns": 1098045730804600,
+            "video_frame_index": 0,
+            "elapsed_ns": 1172400
+          },
+          "frame_input": {
+            "group_id": 0,
+            "video_frame_index": 0,
+            "start_monotonic_ns": 1098045729632200,
+            "write_attempts": 1,
+            "zero_progress_writes": 0,
+            "end_monotonic_ns": 1098045730804600,
+            "elapsed_ns": 1172400
+          },
+          "slot_hold": {
+            "group_id": 0,
+            "start_monotonic_ns": 1098045631159000,
+            "end_monotonic_ns": 1098045730827500,
+            "elapsed_ns": 99668500
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 1,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 0,
+        "submitted_bytes": 3686400,
+        "cancelled_captures": 0
+      }
+    },
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "a3d4c5ee-8deb-4ca0-b4dc-c357613780b6",
+      "session_id": "2a2f3a8f-8fb2-4da5-84a0-3f3bf8d1afba",
+      "trial_id": "d8af2e09-c77e-441e-9ebc-85f7f8d88a88",
+      "configuration_revision": 4,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 3552,
+            "total": 2097578100,
+            "max": 2155800
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 3552,
+            "total": 7970150300,
+            "max": 202769000
+          },
+          "queue_wait": {
+            "count": 3552,
+            "total": 1363994400,
+            "max": 13114700
+          },
+          "normalization": {
+            "count": 3552,
+            "total": 2109000,
+            "max": 3600
+          },
+          "pipe_write": {
+            "count": 3553,
+            "total": 5187331200,
+            "max": 5429500
+          },
+          "frame_input": {
+            "count": 3552,
+            "total": 5195656800,
+            "max": 11178800
+          },
+          "slot_hold": {
+            "count": 3552,
+            "total": 14622886800,
+            "max": 204714700
+          }
+        },
+        "worst_stage_samples": {
+          "frame_input": {
+            "group_id": 2,
+            "video_frame_index": 2,
+            "start_monotonic_ns": 1098066708413500,
+            "write_attempts": 2,
+            "zero_progress_writes": 1,
+            "end_monotonic_ns": 1098066719592300,
+            "elapsed_ns": 11178800
+          },
+          "capture_ready": {
+            "group_id": 4,
+            "start_monotonic_ns": 1098066880411500,
+            "end_monotonic_ns": 1098067083180500,
+            "elapsed_ns": 202769000
+          },
+          "slot_hold": {
+            "group_id": 4,
+            "start_monotonic_ns": 1098066880411500,
+            "end_monotonic_ns": 1098067085126200,
+            "elapsed_ns": 204714700
+          },
+          "readback_poll_ready": {
+            "group_id": 6,
+            "start_monotonic_ns": 1098067252884400,
+            "end_monotonic_ns": 1098067255040200,
+            "elapsed_ns": 2155800
+          },
+          "queue_wait": {
+            "group_id": 736,
+            "start_monotonic_ns": 1098079429257800,
+            "end_monotonic_ns": 1098079442372500,
+            "elapsed_ns": 13114700
+          },
+          "normalization": {
+            "group_id": 2555,
+            "video_frame_index": 2555,
+            "start_monotonic_ns": 1098109747202900,
+            "end_monotonic_ns": 1098109747206500,
+            "elapsed_ns": 3600
+          },
+          "pipe_write": {
+            "group_id": 3138,
+            "start_monotonic_ns": 1098119463344900,
+            "end_monotonic_ns": 1098119468774400,
+            "video_frame_index": 3138,
+            "elapsed_ns": 5429500
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 2,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 1,
+        "submitted_bytes": 13094092800,
+        "cancelled_captures": 0
+      }
+    },
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "a3d4c5ee-8deb-4ca0-b4dc-c357613780b6",
+      "session_id": "2a2f3a8f-8fb2-4da5-84a0-3f3bf8d1afba",
+      "trial_id": "ab2aece5-f07d-4389-9988-a8226f30d5a9",
+      "configuration_revision": 4,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 3601,
+            "total": 2083655400,
+            "max": 3281300
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 3601,
+            "total": 7315644500,
+            "max": 49912000
+          },
+          "queue_wait": {
+            "count": 3601,
+            "total": 2185662800,
+            "max": 139616700
+          },
+          "normalization": {
+            "count": 3601,
+            "total": 2331100,
+            "max": 3900
+          },
+          "pipe_write": {
+            "count": 3634,
+            "total": 5322086800,
+            "max": 5577200
+          },
+          "frame_input": {
+            "count": 3601,
+            "total": 5482990300,
+            "max": 155046200
+          },
+          "slot_hold": {
+            "count": 3601,
+            "total": 15082276800,
+            "max": 160279800
+          }
+        },
+        "worst_stage_samples": {
+          "frame_input": {
+            "group_id": 2,
+            "video_frame_index": 2,
+            "start_monotonic_ns": 1098130000670500,
+            "write_attempts": 33,
+            "zero_progress_writes": 32,
+            "end_monotonic_ns": 1098130155716700,
+            "elapsed_ns": 155046200
+          },
+          "slot_hold": {
+            "group_id": 2,
+            "start_monotonic_ns": 1098129995458500,
+            "end_monotonic_ns": 1098130155738300,
+            "elapsed_ns": 160279800
+          },
+          "queue_wait": {
+            "group_id": 3,
+            "start_monotonic_ns": 1098130016507400,
+            "end_monotonic_ns": 1098130156124100,
+            "elapsed_ns": 139616700
+          },
+          "readback_poll_ready": {
+            "group_id": 809,
+            "start_monotonic_ns": 1098143446938700,
+            "end_monotonic_ns": 1098143450220000,
+            "elapsed_ns": 3281300
+          },
+          "pipe_write": {
+            "group_id": 891,
+            "start_monotonic_ns": 1098144814144500,
+            "end_monotonic_ns": 1098144819721700,
+            "video_frame_index": 891,
+            "elapsed_ns": 5577200
+          },
+          "normalization": {
+            "group_id": 1202,
+            "video_frame_index": 1202,
+            "start_monotonic_ns": 1098149999551200,
+            "end_monotonic_ns": 1098149999555100,
+            "elapsed_ns": 3900
+          },
+          "capture_ready": {
+            "group_id": 3600,
+            "start_monotonic_ns": 1098189963330900,
+            "end_monotonic_ns": 1098190013242900,
+            "elapsed_ns": 49912000
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 10,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 33,
+        "submitted_bytes": 13274726400,
+        "cancelled_captures": 0
+      }
+    }
+  ],
+  "errors": []
+}

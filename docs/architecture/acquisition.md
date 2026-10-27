@@ -680,7 +680,13 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 75
+**Status:** Accepted · **Revision:** 76
+
+- Camera workers measure ordered SDK result receipts, including invalid images,
+  independently of viewer visibility and trial admission. Publish bounded latest
+  observations through E08 telemetry tied to the current capture run and device;
+  capture restart resets measurement, while trial boundaries preserve it. These
+  values are neither usable-image rate nor hardware trigger/exposure evidence.
 
 - Visible native camera previews report E08 PreviewRates from existing latest-frame IDs
   and acquisition timestamps, without adding capture-worker messages. One queued

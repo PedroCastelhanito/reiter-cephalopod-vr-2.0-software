@@ -83,6 +83,7 @@ class RecordingSession:
         self._line_bytes = 0
         self._header_factory: Callable[[], tuple[Header, ArtifactRef]] | None = None
         self._closing = False
+        self._cancelled = False
         self._done = False
         self._error: BaseException | None = None
         self._result: RecordingCloseResult | None = None
@@ -100,7 +101,7 @@ class RecordingSession:
         with self._condition:
             if self._header_factory is not None:
                 raise RuntimeError("recording trial Header is already published")
-            if self._closing:
+            if self._cancelled:
                 raise RuntimeError("recording session is closing")
             self._header_factory = factory
             self._condition.notify_all()
@@ -228,6 +229,7 @@ class RecordingSession:
             if cutoff_ns is not None:
                 if self.worker is not None:
                     self.worker.set_cutoff(cutoff_ns)
+            self._cancelled = True
             self._closing = True
             self._condition.notify_all()
 
@@ -295,11 +297,13 @@ class RecordingSession:
             while header_factory is None:
                 with self._condition:
                     self._condition.wait_for(
-                        lambda: self._header_factory is not None or self._closing,
+                        lambda: self._header_factory is not None or self._cancelled,
                         timeout=0.05,
                     )
                     header_factory = self._header_factory
-                    if header_factory is None and self._closing:
+                    # A begun trial can stop before the asynchronous recipe receipt.
+                    # Normal finish seals frames but still needs its required Header.
+                    if header_factory is None and self._cancelled:
                         if self.failure_cleanup is not None:
                             self.failure_cleanup()
                         self._result = RecordingCloseResult(

@@ -287,6 +287,9 @@ async def test_trial_state_disabled_still_checks_continuous_camera_without_off(r
         "cancelled",
         "stopped",
         "during_io",
+        "interrupted_during_io",
+        "cleanup_during_io",
+        "expired_during_io",
     ],
 )
 async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
@@ -295,6 +298,8 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
     from cephvr.acquisition.coordinator import trial_pulses
 
     wake, entered, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    now = [100]
+    delivered = []
 
     async def wait_boundary(boundary, *, clock):
         await wake.wait()
@@ -321,7 +326,12 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
     async def serial_call(roles, *, scheduled_boundary_ns, deadline_ns, **kwargs):
         calls.append((command, scheduled_boundary_ns, deadline_ns))
         entered.set()
-        if retired == "during_io":
+        if retired in {
+            "during_io",
+            "interrupted_during_io",
+            "cleanup_during_io",
+            "expired_during_io",
+        }:
             await release.wait()
         return mcu.PulseCommandEvidence(
             command=command,
@@ -351,8 +361,13 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
         serial_ack_timeout_ns=10,
         start_evidence_allowance_ns=20,
         lifecycle_delivery_ns=30,
-        clock=lambda: 100,
+        clock=lambda: now[0],
     )
+
+    async def send_evidence(target_trial, evidence, deadline_ns):
+        delivered.append((target_trial, evidence, deadline_ns))
+
+    monkeypatch.setattr(owner, "send_evidence", send_evidence)
     task = asyncio.create_task(
         owner.execute(session, trial, (), command=command, boundary_ns=100)
     )
@@ -374,15 +389,49 @@ async def test_scheduled_boundary_never_actuates_or_forwards_for_retired_owner(
     elif retired == "stopped":
         trial.stop = control.OperationContext(command_id="stop")
     wake.set()
-    if retired == "during_io":
+    if retired in {
+        "during_io",
+        "interrupted_during_io",
+        "cleanup_during_io",
+        "expired_during_io",
+    }:
         await entered.wait()
-        slot.current = replace(session)
+        if retired == "interrupted_during_io":
+            session.interrupted = trial.interrupted = True
+        elif retired == "cleanup_during_io":
+            session.cleanup_complete = True
+        elif retired == "expired_during_io":
+            session.interrupted = trial.interrupted = True
+            now[0] = 120
+        else:
+            slot.current = replace(session)
         release.set()
     await task
-    assert calls == ([(command, 100, 110)] if retired in {"live", "during_io"} else [])
+    assert calls == (
+        [(command, 100, 110)]
+        if retired
+        in {
+            "live",
+            "during_io",
+            "interrupted_during_io",
+            "cleanup_during_io",
+            "expired_during_io",
+        }
+        else []
+    )
     assert changes == ([trial] if retired == "live" else [])
+    assert [item[2] for item in delivered] == (
+        [120 if command == mcu.PULSE_BOUNDARY_COMMAND_ON else 130]
+        if retired == "live"
+        else [120]
+        if retired == "interrupted_during_io"
+        and command == mcu.PULSE_BOUNDARY_COMMAND_ON
+        else []
+    )
     assert (trial.pulse_on is not None) == (
-        retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_ON
+        retired in {"live", "interrupted_during_io"}
+        and now[0] < 120
+        and command == mcu.PULSE_BOUNDARY_COMMAND_ON
     )
     assert (trial.pulse_off is not None) == (
         retired == "live" and command == mcu.PULSE_BOUNDARY_COMMAND_OFF
@@ -618,6 +667,10 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
             interruption = acq.WorkerInterrupt()
             interruption.command.target.work.session.CopyFrom(work.trial.session)
             lifecycle = object.__new__(WorkerTrialLifecycle)
+            lifecycle.trial_state = WorkerTrialState(
+                schedule=retained_schedule, stop_request=interruption
+            )
+            assert lifecycle._interrupted_schedule_matches(request, retained_schedule)
             lifecycle.trial_state = WorkerTrialState(
                 stopped_schedule=retained_schedule, stop_request=interruption
             )

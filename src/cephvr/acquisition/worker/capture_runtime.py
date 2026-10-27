@@ -203,6 +203,17 @@ class WorkerCaptureResources:
                 warning_occurrence=self.warning_occurrence,
                 diagnostics_for=self._diagnostics.observe,
                 first_trial_frame=self._first_trial_frame,
+                camera_role=self.worker.camera,
+                acquisition_run_id=(
+                    str(self._preview_run_id)
+                    if self._preview_run_id is not None
+                    else str(
+                        self._session_run_id or self.worker.work.session.session_id
+                    )
+                    if self.worker.work.WhichOneof("work") == "session"
+                    else ""
+                ),
+                device_id=payload.device.device_id,
             )
             self._attachments = tuple(attached)
             return tuple(attached)

@@ -660,6 +660,7 @@ message HeartbeatReport {
   repeated ContinuingFunctionEvidence continuing_functions = 9; // Source-owned prepared keys only; supervisor forwards exact report.
   optional uint64 cleanup_resources_revision = 10; // Revision 0 declares an explicitly empty catalogue; absent is unknown.
   repeated ResourceObligation cleanup_resources = 11; // Complete append-only planned native obligations, acknowledged before creation.
+  CameraAcquisitionRate camera_acquisition_rate = 12; // Capture-owner receipt measurement; never a heartbeat-time estimate.
 }
 message RecoveryState {
   string attempt_id = 1;
@@ -834,6 +835,14 @@ message PreviewRates {
   optional double preview_fps = 2;
   int64 observed_monotonic_ns = 3;
 }
+message CameraAcquisitionRate {
+  cephvr.acquisition.v1.CameraRole camera = 1;
+  string acquisition_run_id = 2;
+  optional double received_fps = 3;
+  int64 observed_monotonic_ns = 4;
+  string device_id = 5;
+  optional int64 valid_until_monotonic_ns = 6; // Owner-sample timestamp plus E08 health silence bound; never heartbeat send time.
+}
 message CameraDeviceView {
   optional bool device_open = 1;
   optional bool preview_running = 2;
@@ -849,6 +858,7 @@ message CameraDeviceView {
   uint64 preview_visibility_revision = 12;
   string preview_failure = 13;
   PreviewRates rates = 14;
+  CameraAcquisitionRate acquisition_rate = 15;
   // Descriptive evidence, not controller configuration or execution authority.
   // No frames, native handles, PFS text or scientific histories.
 }

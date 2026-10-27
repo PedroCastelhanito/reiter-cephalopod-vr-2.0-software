@@ -44,6 +44,7 @@ class WorkerEvidenceCoordinator:
         current_session: Callable[[], SessionRecord | None],
         controller: ControllerPort,
         lock: asyncio.Lock,
+        health_silence_ns: int,
         control_policies: control.ControlPolicies | None = None,
         configuration_resolution: ConfigurationResolution | None = None,
         trial_lifecycle: TrialLifecycleReports | None = None,
@@ -96,6 +97,8 @@ class WorkerEvidenceCoordinator:
             current_session=current_session,
             controller=controller,
             lock=lock,
+            health_silence_ns=health_silence_ns,
+            clock=clock,
         )
 
     async def reconcile_retained_operation(

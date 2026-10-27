@@ -428,11 +428,18 @@ class LifecycleReports:
         camera_roles, external_roles, visual_stimulus_outputs, sources, producers = (
             self.hooks.activity_requirements(attempt, name)
         )
+        interrupted_retention = (
+            attempt.interrupted
+            and attempt.interruption_issued_ns > 0
+            and self.lifecycle.trial.phase
+            in (pb.TRIAL_PHASE_FINALIZING, pb.TRIAL_PHASE_ENDED)
+        )
         if (
             not sources
             and not trial_state_required(attempt, name)
             or self.lifecycle.trial.phase
             not in (pb.TRIAL_PHASE_STARTING, pb.TRIAL_PHASE_RUNNING)
+            and not interrupted_retention
             or not started_satisfied(
                 payload,
                 target_ns=attempt.target_ns,
@@ -447,6 +454,7 @@ class LifecycleReports:
             )
         ):
             return rejected_receipt("LATE", "Started evidence late or incomplete")
+        # Abort can overtake an on-time report; retaining facts never resumes work.
         return retain_or_conflict(
             attempt.started, name, payload, "changed duplicate Started"
         )

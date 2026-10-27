@@ -37,6 +37,7 @@ from cephvr.acquisition.worker.cleanup_lifecycle import WorkerCleanupLifecycle
 from cephvr.acquisition.worker.recording_fault import RecordingFaultLifecycle
 from cephvr.acquisition.worker.recording_preparation import TrialRecordingPreparation
 from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
+from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
 from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
 from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
@@ -215,6 +216,129 @@ def test_cleanup_preserves_pending_terminal_writer_until_original_bound(
         assert events[1] == ("recycle", 500)
         assert "abort-after-bound" not in str(events)
         assert events.index("release-device") > events.index("release-buffers")
+
+
+def test_terminal_future_failure_is_logged_and_remains_unconfirmed(caplog):
+    work = control.WorkContext()
+    work.trial.session.session_id = "session"
+    work.trial.trial_id = "trial"
+    request = acq.WorkerInterrupt(command=acq.WorkerCommand(command_id="interrupt"))
+    request.command.target.work.CopyFrom(work)
+    future = Future()
+    future.set_exception(RuntimeError("encoder closure detail"))
+    trial = WorkerTrialState(
+        schedule=acq.WorkerSchedule(
+            outputs=[control.OutputPlan(output_key="trial:acquisition:behavioral_cam")]
+        ),
+        finished_future=future,
+        stop_request=request,
+        finish_deadline_ns=500,
+    )
+    reports = []
+    terminal = object.__new__(TrialRecordingTerminal)
+    terminal.recording = None
+    terminal.trial = trial
+    terminal.captures = SimpleNamespace(advance_due_stage=lambda: None)
+    terminal.recording_fault = SimpleNamespace(
+        cleanup_pending=False, faulted_session=False
+    )
+    terminal.state = SimpleNamespace(
+        context=acq.WorkerContext(
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+            worker=control.ProcessIdentity(role="camera", generation="worker"),
+        ),
+        state_revision=0,
+        finalize_scope=lambda *_args: None,
+    )
+    terminal._fill_transport_summary = lambda _evidence: None
+    terminal._source = lambda target: target
+    terminal._operation_deadline = lambda _command: 500
+    terminal._report_lifecycle = lambda _request, evidence, _deadline: reports.append(
+        evidence
+    )
+
+    terminal.advance_due_stages()
+
+    assert "encoder closure detail" in caplog.text
+    assert len(reports) == 1
+    assert reports[0].finished.outputs[0].closure == control.OUTPUT_CLOSURE_UNCONFIRMED
+    assert not reports[0].finished.outputs[0].HasField("artifact_present")
+
+
+def test_cleanup_waits_for_pulse_gated_terminal_until_original_finish_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    from cephvr.acquisition.worker import cleanup_lifecycle, trial_lifecycle
+
+    now = [150]
+    monkeypatch.setattr(cleanup_lifecycle, "host_time_ns", lambda: now[0])
+    monkeypatch.setattr(trial_lifecycle, "host_time_ns", lambda: now[0])
+    context = acq.WorkerContext(
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        worker=control.ProcessIdentity(role="camera", generation="worker"),
+    )
+    context.work.session.session_id = "session"
+    trial_state = WorkerTrialState(
+        end_marker=CaptureEndMarker(0, 100, 101, 0, None, True),
+        stop_request=acq.WorkerInterrupt(
+            command=acq.WorkerCommand(command_id="interrupt", target=context)
+        ),
+        finish_deadline_ns=200,
+    )
+    recording = SimpleNamespace(enabled=True, recording_queue=object())
+    trial = object.__new__(WorkerTrialLifecycle)
+    trial.trial_state = trial_state
+    trial.recording = recording
+    fail_cleanup_calls = []
+
+    def fail_cleanup(*, deadline_ns: int):
+        fail_cleanup_calls.append((now[0], deadline_ns))
+        future = Future()
+        future.set_result([])
+        return future
+
+    def recycle_finished(_deadline_ns: int) -> None:
+        recording.recording_queue = None
+
+    recording.fail_cleanup = fail_cleanup
+    recording.recycle_finished = recycle_finished
+    state = SimpleNamespace(
+        context=context,
+        warnings=None,
+        complete_operation=lambda *_args, **_kwargs: None,
+        finalize_scope=lambda *_args: None,
+        finalize_terminal_command=lambda *_args: None,
+    )
+    cleanup = WorkerCleanupLifecycle(
+        state,
+        SimpleNamespace(release_device=lambda: None),
+        SimpleNamespace(active=False, release=lambda: ()),
+        recording,
+        capacity=2,
+        extra_resources=lambda: {},
+        report_lifecycle=lambda *_args: None,
+        report_operation=lambda *_args: None,
+        shutdown=lambda _deadline: None,
+        recording_reconciled=lambda: None,
+        external_wake=lambda: None,
+        recording_finish_pending=lambda: trial.terminal_pending,
+    )
+    cleanup_request = acq.WorkerCommand(command_id="cleanup", target=context)
+
+    assert trial.terminal_pending  # cleanup arrives before OFF evidence/publication
+    assert not cleanup.begin_operation(
+        "Cleanup", cleanup_request, 300, acq.WorkerOperationReport()
+    )
+    now[0] = 199
+    cleanup.advance()
+    assert not fail_cleanup_calls
+    now[0] = 200
+    assert not trial.terminal_pending
+    cleanup.advance()
+
+    assert fail_cleanup_calls == [(200, 300)]
+    assert recording.recording_queue is None
 
 
 def test_cancel_setup_before_trial_recording_is_installed_is_confirmed() -> None:
@@ -1055,6 +1179,69 @@ def test_all_dropped_run_uses_only_explicit_never_created_predicate(
     assert not outputs[0].artifact_present
     assert dict(outputs[0].counts) == {"frames": 0}
     assert dict(outputs[1].counts) == {"video_frames": 0, "source_frames": 7}
+
+
+@pytest.mark.parametrize(
+    "case", ["interrupted", "shortened", "normal", "pulse", "accounting", "encoder"]
+)
+def test_zero_received_interruption_closes_files_without_inventing_activity(
+    tmp_path, case
+):
+    from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+    from cephvr.acquisition.recording.session_completion import finish_recording
+
+    video_path, log_path = tmp_path / "video.mp4", tmp_path / "frames.jsonl"
+    schedule = _schedule(video_path, log_path)
+    schedule.start_monotonic_ns, schedule.end_monotonic_ns = 100, 200
+    cutoff = 200 if case in {"interrupted", "normal"} else 120
+    end = CaptureEndMarker(0, cutoff, cutoff + 1, 0, None, case != "accounting")
+    completion = RecordingCompletionContext(
+        "interrupted" if case == "interrupted" else "completed",
+        cutoff,
+        cutoff + 1,
+        None,
+    )
+    encoder, video, frame_log = _Encoder("original"), _Video(), _FrameLog()
+    encoder.exit_code = 1 if case == "encoder" else 0
+    encoder.wait = lambda **_: encoder.exit_code
+    frame_log.selected_source_count = 0
+    rows = []
+    frame_log.append_completion = rows.append
+    diagnostics = RecordingDiagnostics(lambda *_: None)
+    outputs, _ = finish_recording(
+        end,
+        PulseEvidence(required=case == "pulse"),
+        completion,
+        schedule=schedule,
+        received=0,
+        submitted=0,
+        logged=0,
+        last_frame_id=-1,
+        diagnostics=diagnostics,
+        encoder=encoder,
+        frame_log=frame_log,
+        video_sync=video,
+        finalization=FinalizationProgress(),
+        video_path=video_path,
+        frame_log_path=log_path,
+        video_identity="original",
+        observe_video=lambda: video,
+        stat_identity=lambda _: "original",
+        clock_ns=lambda: 250,
+        original_deadline_ns=300,
+        cleanup_deadline_ns=300,
+    )
+    successful_closure = case in {"interrupted", "shortened"}
+    assert (outputs[0].closure == control.OUTPUT_CLOSURE_CLOSED) == successful_closure
+    assert outputs[1].closure == control.OUTPUT_CLOSURE_CLOSED
+    if successful_closure:
+        assert outputs[0].camera_video_content == control.CAMERA_VIDEO_CONTENT_NO_FRAMES
+        assert dict(outputs[0].counts) == {"frames": 0}
+    assert rows[0].outcome == "interrupted"
+    assert rows[0].final_received_frame_count == 0
+    assert diagnostics.contains("NO_VIDEO_FRAMES")
+    assert video.closed and video.sync_count == 1 and frame_log.closes == 1
+    assert encoder.stdin_closed and encoder.writes == 0 and not encoder.terminated
 
 
 def test_exact_path_replacement_never_proves_encoder_output_closure(

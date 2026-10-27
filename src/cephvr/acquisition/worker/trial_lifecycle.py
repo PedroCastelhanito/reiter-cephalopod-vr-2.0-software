@@ -12,6 +12,7 @@ from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.clock import host_time_ns
 
 from .capture_runtime import WorkerCaptureResources
 from .ports import command_from
@@ -138,7 +139,18 @@ class WorkerTrialLifecycle:
 
     @property
     def terminal_pending(self) -> bool:
-        return self.trial_state.finished_future is not None
+        if self.trial_state.finished_future is not None:
+            return True
+        runtime = self.recording
+        finish_deadline = self.trial_state.finish_deadline_ns
+        return bool(
+            self.trial_state.end_marker is not None
+            and self.trial_state.stop_request is not None
+            and runtime is not None
+            and runtime.enabled
+            and runtime.recording_queue is not None
+            and (finish_deadline is None or host_time_ns() < finish_deadline)
+        )
 
     @property
     def stop_request(self) -> object | None:
@@ -422,7 +434,10 @@ class WorkerTrialLifecycle:
         if (
             not isinstance(interruption, (acq.WorkerInterrupt, acq.WorkerStop))
             or schedule is None
-            or self.trial_state.stopped_schedule is not schedule
+            or (
+                schedule is not self.trial_state.schedule
+                and schedule is not self.trial_state.stopped_schedule
+            )
         ):
             return False
         command = command_from(request)

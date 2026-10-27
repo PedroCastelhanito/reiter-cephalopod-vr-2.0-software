@@ -25697,3 +25697,166 @@ def test_camera_role_dropdown_opens_by_mouse_and_selects_by_keyboard(
     finally:
         choice.hidePopup()
         window.appearance.select("standard", persist=False)
+
+
+@pytest.mark.parametrize("session_capture", (False, True))
+def test_managed_camera_acquisition_rate_is_independent_of_preview(
+    window, monkeypatch, session_capture
+):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    now = [10_000_000_000]
+    monkeypatch.setattr("cephvr.gui.cameras.host_time_ns", lambda: now[0])
+    panel = window.devices.cameras
+    panel.managed = True
+    serial = panel.drafts[0].serial
+    binding = ManagedCameras(
+        panel, SimpleNamespace(request=lambda *_a, **_k: True), lambda *_: False
+    )
+    state = pb.Snapshot()
+    state.configuration.revision = 1
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.behavioral.device.device_id = serial
+    settings.behavioral.enabled = True
+    settings.pulses.behavioral.requested_frequency_hz = 77
+    state.session.phase = (
+        pb.SESSION_PHASE_READY if session_capture else pb.SESSION_PHASE_CONFIGURATION
+    )
+    device = state.acquisition_devices.behavioral
+    if session_capture:
+        state.session.context.session_id = "session-run"
+        run_id = "session-run"
+        device.device.configured_id = "previous-camera"
+        device.preview_run_id = "previous-run"
+    else:
+        device.device_open = True
+        device.preview_running = True
+        device.preview_run_id = "manual-run"
+        run_id = "manual-run"
+    device.acquisition_rate.CopyFrom(
+        pb.CameraAcquisitionRate(
+            camera=1,
+            acquisition_run_id=run_id,
+            device_id=serial,
+            received_fps=29.75,
+            observed_monotonic_ns=9_500_000_000,
+            valid_until_monotonic_ns=24_500_000_000,
+        )
+    )
+    # No viewer exists, and preview/configured rates are deliberately different.
+    device.preview_visible = False
+    device.rates.source_fps = 12
+    device.rates.preview_fps = 8
+    binding.install(state)
+    panel.table.selectRow(0)
+    panel.refresh_controls()
+
+    def displayed():
+        return dict(row for row in panel.status_column.rows if row is not None)[
+            "ACQUISITION RATE"
+        ]
+
+    assert displayed() == "29.8 Hz"
+    assert not device.preview_visible
+    if session_capture:
+        for phase in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING):
+            state.session.phase = phase
+            state.trial.context.trial_id = "new-trial"
+            binding.install(state)
+            panel.refresh_controls()
+            assert displayed() == "29.8 Hz"
+    now[0] = 14_300_000_000
+    panel.rate_timer.timeout.emit()
+    assert displayed() == "29.8 Hz"
+    now[0] = 24_500_000_000
+    panel.rate_timer.timeout.emit()
+    assert displayed() == "—"
+    now[0] = 10_000_000_000
+    binding.install(state)
+    panel.refresh_controls()
+    assert displayed() == "29.8 Hz"
+    binding.disconnected()
+    assert displayed() == "—"
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    (
+        "run",
+        "device",
+        "reported_device",
+        "role",
+        "missing",
+        "nan",
+        "negative",
+        "future",
+        "ended",
+        "new_session",
+    ),
+)
+def test_managed_camera_acquisition_rate_rejects_unrelated_or_unusable_readback(
+    window, monkeypatch, invalid
+):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    monkeypatch.setattr("cephvr.gui.cameras.host_time_ns", lambda: 10_000_000_000)
+    panel = window.devices.cameras
+    panel.managed = True
+    serial = panel.drafts[0].serial
+    binding = ManagedCameras(
+        panel, SimpleNamespace(request=lambda *_a, **_k: True), lambda *_: False
+    )
+    state = pb.Snapshot()
+    state.configuration.revision = 1
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.behavioral.device.device_id = serial
+    state.session.phase = pb.SESSION_PHASE_READY
+    state.session.context.session_id = "session-run"
+    device = state.acquisition_devices.behavioral
+    rate = device.acquisition_rate
+    rate.CopyFrom(
+        pb.CameraAcquisitionRate(
+            camera=1,
+            acquisition_run_id="session-run",
+            device_id=serial,
+            received_fps=30,
+            observed_monotonic_ns=9_500_000_000,
+            valid_until_monotonic_ns=24_500_000_000,
+        )
+    )
+    if invalid == "run":
+        rate.acquisition_run_id = "previous-run"
+    elif invalid == "device":
+        rate.device_id = "different-camera"
+    elif invalid == "reported_device":
+        device.device.configured_id = "different-camera"
+        device.preview_run_id = "session-run"
+    elif invalid == "role":
+        rate.camera = 2
+    elif invalid == "missing":
+        rate.ClearField("received_fps")
+    elif invalid == "nan":
+        rate.received_fps = float("nan")
+    elif invalid == "negative":
+        rate.received_fps = -1
+    elif invalid == "future":
+        rate.observed_monotonic_ns = 10_000_000_001
+    elif invalid == "ended":
+        state.session.phase = pb.SESSION_PHASE_ENDED
+    elif invalid == "new_session":
+        state.session.context.session_id = "new-session"
+    binding.install(state)
+    panel.table.selectRow(0)
+    panel.refresh_controls()
+    assert (
+        dict(row for row in panel.status_column.rows if row is not None)[
+            "ACQUISITION RATE"
+        ]
+        == "—"
+    )

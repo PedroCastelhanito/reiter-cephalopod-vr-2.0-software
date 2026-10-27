@@ -57,13 +57,23 @@ def refresh_health_snapshot(
         if state.registered
         else control.SESSION_PHASE_CONFIGURATION
     )
+    now_ns = clock_ns()
+    rate = (
+        capture.acquisition_rate() if capture is not None and captures.active else None
+    )
+    if (
+        rate is not None
+        and not 0 <= now_ns - rate.observed_monotonic_ns < 3_000_000_000
+    ):
+        rate = None
     state.update_health_snapshot(
         work=work,
         session_phase=session_phase,
         trial_phase=trial_phase,
         progress_required=captures.active,
         last_progress_ns=last_progress_ns,
-        observed_ns=clock_ns(),
+        observed_ns=now_ns,
+        camera_acquisition_rate=rate,
     )
 
 

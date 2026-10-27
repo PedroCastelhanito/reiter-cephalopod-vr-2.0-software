@@ -11,6 +11,7 @@ import grpc
 
 from cephvr.acquisition.buffers.resource_port import WindowsResourcePort
 from cephvr.acquisition.configuration import load_defaults, load_file_policies
+from cephvr.acquisition.coordinator.cleanup_diagnostics import worker_cleanup_failure
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.executables import PythonWorkerExecutables
 from cephvr.acquisition.microcontroller_client import ControllerMicrocontrollerClient
@@ -323,52 +324,7 @@ def _revoke_peer(
 def _worker_cleanup_complete(
     worker: WorkerRecord, evidence: acq.WorkerCleanupEvidence
 ) -> bool:
-    expected = (
-        {item.resource_id for item in worker.setup_ready.attached_resources}
-        if worker.setup_ready is not None
-        else set()
-    )
-    if worker.preview is not None and worker.preview.allocation_id is not None:
-        expected.add(worker.preview.allocation_id)
-    expected.add(f"camera-device:{worker.launch.worker.generation}")
-    releases = {item.resource: item for item in evidence.resources}
-    if (
-        len(releases) != len(evidence.resources)
-        or not expected <= set(releases)
-        or any(
-            not item.released
-            or item.failure.code
-            or item.failure.message
-            or item.HasField("path")
-            for item in releases.values()
-        )
-    ):
-        return False
-    if len({item.output_key for item in evidence.outputs}) != len(evidence.outputs):
-        return False
-    for item in evidence.outputs:
-        if not item.output_key or not item.HasField("artifact_present"):
-            return False
-        if item.closure == control.OUTPUT_CLOSURE_CLOSED:
-            if not item.artifact_present or item.failure.ByteSize():
-                return False
-        elif item.closure == control.OUTPUT_CLOSURE_FAILED:
-            if not item.failure.code or not item.failure.message:
-                return False
-        elif item.closure == control.OUTPUT_CLOSURE_NOT_STARTED:
-            if (
-                item.artifact_present
-                or item.failure.ByteSize()
-                or item.camera_video_content
-                not in {
-                    control.CAMERA_VIDEO_CONTENT_UNSPECIFIED,
-                    control.CAMERA_VIDEO_CONTENT_NO_FRAMES,
-                }
-            ):
-                return False
-        else:
-            return False
-    return True
+    return worker_cleanup_failure(worker, evidence) is None
 
 
 def main() -> None:

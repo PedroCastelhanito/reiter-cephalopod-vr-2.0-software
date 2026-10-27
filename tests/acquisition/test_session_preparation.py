@@ -571,6 +571,7 @@ async def test_trial_publication_preserves_ready_heartbeat_during_off_preflight(
         current_session=lambda: slot.current,
         controller=cast(object, object()),
         lock=lock,
+        health_silence_ns=15_000_000_000,
     )
 
     async def heartbeat(stamp, *, wrong=False):

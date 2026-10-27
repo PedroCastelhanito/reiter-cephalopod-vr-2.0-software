@@ -1,0 +1,105 @@
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  7%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+.................................................................s.s.s.s [ 27%]
+...................................................F.................... [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+...........................s............................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+............s............................s.............................. [ 51%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 59%]
+.................................................s...................... [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+..................................................s..................... [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+..................................................................... [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+.......................................                                  [100%]
+================================== FAILURES ===================================
+_______ test_canceled_schedule_keeps_trial_health_until_session_cleanup _______
+
+    def test_canceled_schedule_keeps_trial_health_until_session_cleanup() -> None:
+        from cephvr.acquisition.worker.health_snapshot import refresh_health_snapshot
+    
+        session = control.WorkContext(session=control.SessionContext(session_id="session"))
+        work = control.WorkContext(
+            trial=control.TrialContext(session=session.session, trial_id="trial")
+        )
+        state = WorkerState(
+            acq.WorkerContext(),
+            control.ProcessIdentity(),
+            CommandLedger(
+                str(uuid4()),
+                max_records=16,
+                max_bytes=65536,
+                retention_ns=1_000_000_000,
+                result_reservation_bytes=4096,
+            ),
+        )
+        state.registered = True
+        trial = object.__new__(WorkerTrialLifecycle)
+        schedule = acq.WorkerSchedule()
+        schedule.command.target.work.CopyFrom(work)
+        trial.trial_state = WorkerTrialState(stopped_schedule=schedule)
+        captures = SimpleNamespace(capture=None, active=False, trial_admission_open=False)
+>       refresh_health_snapshot(state, trial, captures, session, False)
+
+tests\acquisition\test_worker_admission.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\worker\health_snapshot.py:38: in refresh_health_snapshot
+    if trial.terminal_pending
+       ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.acquisition.worker.trial_lifecycle.WorkerTrialLifecycle object at 0x000002BC5BF70490>
+
+    @property
+    def terminal_pending(self) -> bool:
+        if self.trial_state.finished_future is not None:
+            return True
+>       runtime = self.recording
+                  ^^^^^^^^^^^^^^
+E       AttributeError: 'WorkerTrialLifecycle' object has no attribute 'recording'
+
+src\cephvr\acquisition\worker\trial_lifecycle.py:144: AttributeError
+============================== warnings summary ===============================
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_worker_admission.py::test_canceled_schedule_keeps_trial_health_until_session_cleanup
+1 failed, 2906 passed, 9 skipped, 49 deselected, 6 warnings, 3 subtests passed in 29.63s

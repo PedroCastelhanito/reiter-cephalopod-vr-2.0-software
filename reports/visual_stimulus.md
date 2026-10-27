@@ -1,5 +1,20 @@
 # Visual Stimulus status
 
+Current Oct27 immediate-start Abort investigation under E05/E06/E13 and V12:
+normal finish now seals recording admissions while retaining the required late
+recipe Header; explicit cancellation stays final. Submitted-frame closure follows
+the accepted [completion predicate](../contracts/visual_stimulus/video-completion.md):
+exact final identity, accounting, successful encoder exit, synchronization and
+cleanup. Creator evidence remains required for never-created absence/deletion;
+it is not inferred from a late file appearance. Final identity is independently
+rechecked to reject replacement/disappearance. Deferred cleanup also retains its
+own original deadline despite intervening recipe-publication commands.
+Owning recording/lifecycle checks and final2907-test backend integration pass.
+Native Abort confirms Interrupted metadata and seven Closed outputs, followed by
+two60s trials crossing the retired end; six videos fully decode/count-match.
+Historical failed recordings remain Unconfirmed and retained in the
+[rate/scaling evidence](runtime-evidence-2026-10-27/rate-scaling/validation.json).
+
 ## Sparse-noise preparation — 2026-10-27
 
 `sparse-noise-recipes` implements the owner-requested seeded backend preparation

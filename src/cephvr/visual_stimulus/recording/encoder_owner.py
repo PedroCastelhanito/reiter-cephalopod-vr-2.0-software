@@ -106,6 +106,8 @@ class EncoderTrialOwner:
             finally:
                 sync.close()
                 self.video_sync = None
+        if self.video_sync_factory.identity(output_path) != identity:
+            raise RuntimeError("FFmpeg review-video file identity changed at closure")
         self.cleanup_confirmed = process.cleanup_complete
         return EncoderFinalization(
             exit_code=exit_code,

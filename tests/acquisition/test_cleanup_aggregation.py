@@ -11,6 +11,10 @@ from uuid import uuid4
 import pytest
 
 from cephvr.acquisition.coordinator.cleanup import CoordinatorCleanup
+from cephvr.acquisition.coordinator.cleanup_diagnostics import (
+    missing_worker_cleanup_failure,
+    worker_cleanup_failure,
+)
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
@@ -305,6 +309,100 @@ def _session() -> SessionRecord:
         ],
         cleanup_resources_revision=1,
     )
+
+
+@pytest.mark.parametrize(
+    ("evidence", "expected_reason"),
+    [
+        (
+            acq.WorkerCleanupEvidence(),
+            "behavioral camera worker generation camera-generation cleanup is missing native resource release evidence for camera-device:camera-generation",
+        ),
+        (
+            acq.WorkerCleanupEvidence(
+                resources=[
+                    control.ResourceRelease(
+                        resource="camera-device:camera-generation", released=False
+                    )
+                ]
+            ),
+            "behavioral camera worker generation camera-generation cleanup native resource remains unreleased: camera-device:camera-generation",
+        ),
+        (
+            acq.WorkerCleanupEvidence(
+                resources=[
+                    control.ResourceRelease(
+                        resource="camera-device:camera-generation", released=True
+                    )
+                ],
+                outputs=[
+                    control.OutputResult(
+                        output_key="behavioral_video",
+                        closure=control.OUTPUT_CLOSURE_CLOSED,
+                        artifact_present=False,
+                    )
+                ],
+            ),
+            "behavioral camera worker generation camera-generation cleanup is missing the closed output artifact behavioral_video",
+        ),
+    ],
+)
+def test_worker_cleanup_failure_identifies_missing_proof(evidence, expected_reason):
+    worker = SimpleNamespace(
+        context=SimpleNamespace(camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL),
+        launch=SimpleNamespace(
+            worker=control.ProcessIdentity(
+                role="camera", generation="camera-generation"
+            )
+        ),
+        setup_ready=None,
+        preview=None,
+    )
+
+    assert worker_cleanup_failure(worker, evidence) == expected_reason
+
+
+def test_missing_retained_cleanup_reason_is_exact_and_worker_scoped():
+    worker = SimpleNamespace(
+        launch=SimpleNamespace(
+            worker=control.ProcessIdentity(
+                role="camera", generation="camera-generation"
+            )
+        ),
+    )
+    assert missing_worker_cleanup_failure(worker) == (
+        "camera camera worker generation camera-generation cleanup retained evidence is missing"
+    )
+
+
+def test_failed_output_with_retained_reason_remains_valid_cleanup_evidence():
+    worker = SimpleNamespace(
+        context=SimpleNamespace(camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL),
+        launch=SimpleNamespace(
+            worker=control.ProcessIdentity(
+                role="camera", generation="camera-generation"
+            )
+        ),
+        setup_ready=None,
+        preview=None,
+    )
+    evidence = acq.WorkerCleanupEvidence(
+        resources=[
+            control.ResourceRelease(
+                resource="camera-device:camera-generation", released=True
+            )
+        ],
+        outputs=[
+            control.OutputResult(
+                output_key="behavioral_video",
+                closure=control.OUTPUT_CLOSURE_FAILED,
+                artifact_present=False,
+                failure=control.Failure(code="ENCODER_FAILED", message="close failed"),
+            )
+        ],
+    )
+
+    assert worker_cleanup_failure(worker, evidence) is None
 
 
 @pytest.mark.asyncio

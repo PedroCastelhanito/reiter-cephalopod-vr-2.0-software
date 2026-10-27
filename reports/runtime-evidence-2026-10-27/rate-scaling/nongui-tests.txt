@@ -1,0 +1,449 @@
+........................................................................ [  2%]
+........................................................................ [  5%]
+.F...F
+================================== FAILURES ===================================
+_____ test_camera_heartbeat_handoff_preserves_trial_evidence_fence[plain] _____
+
+case = 'plain'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("case", ["plain", "evidence", "expired", "trial_seen"])
+    async def test_camera_heartbeat_handoff_preserves_trial_evidence_fence(
+        case: str,
+    ) -> None:
+        session_work = control.WorkContext(
+            session=control.SessionContext(session_id="session")
+        )
+        trial_work = control.WorkContext(
+            trial=control.TrialContext(session=session_work.session, trial_id="trial")
+        )
+        parent = control.OperationContext(command_id="trial-prepare")
+        child = ChildOperation(
+            command_id="worker-prepare",
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=trial_work,
+            parent_operation=parent,
+            kind="prepare_trial",
+            deadline_ns=100,
+        )
+        worker = control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation="worker"
+        )
+        record = SimpleNamespace(
+            launch=SimpleNamespace(worker=worker, work=session_work),
+            trial=SimpleNamespace(
+                preparation=control.OperationContext(command_id=child.command_id)
+            ),
+            child_operations={child.command_id: child},
+            heartbeat=None,
+        )
+        session = SimpleNamespace(
+            work=session_work,
+            trial=SimpleNamespace(work=trial_work, preparation=parent),
+            cleanup_complete=False,
+            cleanup_command_id=None,
+        )
+        reports = cast(
+            WorkerTelemetryReports,
+            SimpleNamespace(
+                workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+            ),
+        )
+        heartbeat = control.HeartbeatReport(
+            source=worker,
+            work=session_work,
+            sent_monotonic_ns=50,
+            session_phase=control.SESSION_PHASE_READY,
+        )
+        if case == "evidence":
+            heartbeat.continuing_functions.add(
+                resource_id="behavioral.capture", functioning=True
+            )
+        if case == "trial_seen":
+            record.heartbeat = control.HeartbeatReport(
+                source=worker, work=trial_work, sent_monotonic_ns=40
+            )
+>       receipt = await WorkerTelemetryReports.report_heartbeat(
+            reports, heartbeat, deadline_ns=200, ingress_ns=101 if case == "expired" else 50
+        )
+
+tests\acquisition\test_coordinator.py:218: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(workers={1: namespace(launch=namespace(worker=role: "acquisition_behavioral_worker"
+generation: "worker"
+, w...ence_fence.<locals>.<lambda> at 0x00000213FFC14180>, lock=<asyncio.locks.Lock object at 0x00000213FFB8DC90 [unlocked]>)
+heartbeat = source {
+  role: "acquisition_behavioral_worker"
+  generation: "worker"
+}
+work {
+  session {
+    session_id: "session"
+  }
+}
+sent_monotonic_ns: 50
+session_phase: SESSION_PHASE_READY
+
+deadline_ns = 200, ingress_ns = 50
+
+    async def report_heartbeat(
+        self,
+        heartbeat: control.HeartbeatReport,
+        *,
+        deadline_ns: int,
+        ingress_ns: int,
+    ) -> control.ReportReceipt:
+        try:
+            if ingress_ns > deadline_ns:
+                raise ValueError("worker heartbeat missed its original deadline")
+            record = next(
+                item
+                for item in self.workers.values()
+                if item.launch.worker == heartbeat.source
+            )
+            if (
+                not _work_within_launch(heartbeat.work, record.launch.work)
+                or len(heartbeat.health_summary) > 2048
+            ):
+                raise ValueError("worker heartbeat differs from its registered context")
+            saved = control.HeartbeatReport.FromString(
+                heartbeat.SerializeToString(deterministic=True)
+            )
+            session = self.current_session()
+            rate_is_current = not saved.HasField("camera_acquisition_rate") or (
+                _valid_camera_rate(
+                    saved.camera_acquisition_rate,
+                    record,
+                    session,
+                    heartbeat.work,
+                    ingress_ns,
+                )
+            )
+            if not rate_is_current:
+                saved.ClearField("camera_acquisition_rate")
+            if session is not None and _work_within_launch(
+                heartbeat.work, session.work
+            ):
+                expected_work = (
+                    session.trial.work if session.trial is not None else session.work
+                )
+                preparation = (
+                    record.child_operations.get(record.trial.preparation.command_id)
+                    if record.trial is not None and record.trial.preparation is not None
+                    else None
+                )
+                handoff_liveness = (
+                    session.trial is not None
+                    and heartbeat.work == session.work
+                    and preparation is not None
+                    and preparation.kind == "prepare_trial"
+                    and preparation.work == expected_work
+                    and preparation.parent_operation == session.trial.preparation
+                    and preparation.deadline_ns is not None
+                    and ingress_ns <= preparation.deadline_ns
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_READY
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        record.heartbeat is None
+                        or record.heartbeat.work == session.work
+                    )
+                )
+                cleanup_liveness = (
+                    heartbeat.work == session.work
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_ENDED
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        session.cleanup_complete
+                        or any(
+                            child.kind == "cleanup"
+                            and child.work == session.work
+                            and child.parent_operation.command_id
+                            == session.cleanup_command_id
+                            and child.deadline_ns is not None
+                            and ingress_ns <= child.deadline_ns
+                            for child in record.child_operations.values()
+                        )
+                    )
+                )
+                if heartbeat.work != expected_work and not (
+                    handoff_liveness or cleanup_liveness
+                ):
+                    raise ValueError("worker heartbeat carries stale acquisition work")
+            elif record.launch.work.WhichOneof("work") is None and (
+                heartbeat.work.WhichOneof("work") is not None
+            ):
+                raise ValueError(
+                    "sessionless worker heartbeat cannot claim session work"
+                )
+            previous = record.heartbeat
+            if previous is not None:
+                if heartbeat.sent_monotonic_ns < previous.sent_monotonic_ns:
+                    raise ValueError("worker heartbeat timestamp moved backwards")
+                if heartbeat.sent_monotonic_ns == previous.sent_monotonic_ns:
+                    comparable = control.HeartbeatReport.FromString(
+                        previous.SerializeToString(deterministic=True)
+                    )
+                    current_without_rate = control.HeartbeatReport.FromString(
+                        saved.SerializeToString(deterministic=True)
+                    )
+                    comparable.ClearField("camera_acquisition_rate")
+                    current_without_rate.ClearField("camera_acquisition_rate")
+                    if comparable != current_without_rate:
+                        raise ValueError(
+                            "same worker heartbeat timestamp changed payload"
+                        )
+                    return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+            if saved.HasField("camera_acquisition_rate"):
+                rate = saved.camera_acquisition_rate
+                self._pending_camera_rates[record.context.camera] = (
+                    record.launch.worker.generation,
+                    control.CameraAcquisitionRate.FromString(
+                        rate.SerializeToString(deterministic=True)
+                    ),
+                )
+            async with self.lock:
+                record.heartbeat = saved
+            if saved.HasField("camera_acquisition_rate"):
+                self._start_camera_rate_delivery()
+            else:
+>               self._pending_camera_rates.pop(record.context.camera, None)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute '_pending_camera_rates'
+
+src\cephvr\acquisition\coordinator\evidence_telemetry.py:210: AttributeError
+_ test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope[pending] __
+
+case = 'pending'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "case", ["pending", "complete", "expired", "wrong_parent", "active", "ready"]
+    )
+    async def test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope(
+        case: str,
+    ) -> None:
+        work = control.WorkContext(session=control.SessionContext(session_id="session"))
+        trial = control.WorkContext(
+            trial=control.TrialContext(session=work.session, trial_id="trial")
+        )
+        worker = control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation="worker"
+        )
+        child = ChildOperation(
+            command_id="child",
+            camera=1,
+            work=work,
+            parent_operation=control.OperationContext(
+                command_id="other" if case == "wrong_parent" else "cleanup"
+            ),
+            kind="cleanup",
+            deadline_ns=100,
+        )
+        record = SimpleNamespace(
+            launch=SimpleNamespace(worker=worker, work=work),
+            trial=None,
+            child_operations={"child": child},
+            heartbeat=control.HeartbeatReport(
+                source=worker, work=trial, sent_monotonic_ns=40
+            ),
+        )
+        session = SimpleNamespace(
+            work=work,
+            trial=SimpleNamespace(work=trial),
+            cleanup_complete=case == "complete",
+            cleanup_command_id="cleanup",
+        )
+        reports = cast(
+            WorkerTelemetryReports,
+            SimpleNamespace(
+                workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+            ),
+        )
+        heartbeat = control.HeartbeatReport(
+            source=worker,
+            work=work,
+            sent_monotonic_ns=50,
+            session_phase=control.SESSION_PHASE_READY
+            if case == "ready"
+            else control.SESSION_PHASE_ENDED,
+        )
+        if case == "active":
+            heartbeat.continuing_functions.add(resource_id="capture", functioning=True)
+>       receipt = await WorkerTelemetryReports.report_heartbeat(
+            reports,
+            heartbeat,
+            deadline_ns=300,
+            ingress_ns=200 if case in ("complete", "expired") else 50,
+        )
+
+tests\acquisition\test_coordinator.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(workers={1: namespace(launch=namespace(worker=role: "acquisition_behavioral_worker"
+generation: "worker"
+, w...inal_scope.<locals>.<lambda> at 0x00000213FFCBD260>, lock=<asyncio.locks.Lock object at 0x00000213FFB31690 [unlocked]>)
+heartbeat = source {
+  role: "acquisition_behavioral_worker"
+  generation: "worker"
+}
+work {
+  session {
+    session_id: "session"
+  }
+}
+sent_monotonic_ns: 50
+session_phase: SESSION_PHASE_ENDED
+
+deadline_ns = 300, ingress_ns = 50
+
+    async def report_heartbeat(
+        self,
+        heartbeat: control.HeartbeatReport,
+        *,
+        deadline_ns: int,
+        ingress_ns: int,
+    ) -> control.ReportReceipt:
+        try:
+            if ingress_ns > deadline_ns:
+                raise ValueError("worker heartbeat missed its original deadline")
+            record = next(
+                item
+                for item in self.workers.values()
+                if item.launch.worker == heartbeat.source
+            )
+            if (
+                not _work_within_launch(heartbeat.work, record.launch.work)
+                or len(heartbeat.health_summary) > 2048
+            ):
+                raise ValueError("worker heartbeat differs from its registered context")
+            saved = control.HeartbeatReport.FromString(
+                heartbeat.SerializeToString(deterministic=True)
+            )
+            session = self.current_session()
+            rate_is_current = not saved.HasField("camera_acquisition_rate") or (
+                _valid_camera_rate(
+                    saved.camera_acquisition_rate,
+                    record,
+                    session,
+                    heartbeat.work,
+                    ingress_ns,
+                )
+            )
+            if not rate_is_current:
+                saved.ClearField("camera_acquisition_rate")
+            if session is not None and _work_within_launch(
+                heartbeat.work, session.work
+            ):
+                expected_work = (
+                    session.trial.work if session.trial is not None else session.work
+                )
+                preparation = (
+                    record.child_operations.get(record.trial.preparation.command_id)
+                    if record.trial is not None and record.trial.preparation is not None
+                    else None
+                )
+                handoff_liveness = (
+                    session.trial is not None
+                    and heartbeat.work == session.work
+                    and preparation is not None
+                    and preparation.kind == "prepare_trial"
+                    and preparation.work == expected_work
+                    and preparation.parent_operation == session.trial.preparation
+                    and preparation.deadline_ns is not None
+                    and ingress_ns <= preparation.deadline_ns
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_READY
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        record.heartbeat is None
+                        or record.heartbeat.work == session.work
+                    )
+                )
+                cleanup_liveness = (
+                    heartbeat.work == session.work
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_ENDED
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        session.cleanup_complete
+                        or any(
+                            child.kind == "cleanup"
+                            and child.work == session.work
+                            and child.parent_operation.command_id
+                            == session.cleanup_command_id
+                            and child.deadline_ns is not None
+                            and ingress_ns <= child.deadline_ns
+                            for child in record.child_operations.values()
+                        )
+                    )
+                )
+                if heartbeat.work != expected_work and not (
+                    handoff_liveness or cleanup_liveness
+                ):
+                    raise ValueError("worker heartbeat carries stale acquisition work")
+            elif record.launch.work.WhichOneof("work") is None and (
+                heartbeat.work.WhichOneof("work") is not None
+            ):
+                raise ValueError(
+                    "sessionless worker heartbeat cannot claim session work"
+                )
+            previous = record.heartbeat
+            if previous is not None:
+                if heartbeat.sent_monotonic_ns < previous.sent_monotonic_ns:
+                    raise ValueError("worker heartbeat timestamp moved backwards")
+                if heartbeat.sent_monotonic_ns == previous.sent_monotonic_ns:
+                    comparable = control.HeartbeatReport.FromString(
+                        previous.SerializeToString(deterministic=True)
+                    )
+                    current_without_rate = control.HeartbeatReport.FromString(
+                        saved.SerializeToString(deterministic=True)
+                    )
+                    comparable.ClearField("camera_acquisition_rate")
+                    current_without_rate.ClearField("camera_acquisition_rate")
+                    if comparable != current_without_rate:
+                        raise ValueError(
+                            "same worker heartbeat timestamp changed payload"
+                        )
+                    return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+            if saved.HasField("camera_acquisition_rate"):
+                rate = saved.camera_acquisition_rate
+                self._pending_camera_rates[record.context.camera] = (
+                    record.launch.worker.generation,
+                    control.CameraAcquisitionRate.FromString(
+                        rate.SerializeToString(deterministic=True)
+                    ),
+                )
+            async with self.lock:
+                record.heartbeat = saved
+            if saved.HasField("camera_acquisition_rate"):
+                self._start_camera_rate_delivery()
+            else:
+>               self._pending_camera_rates.pop(record.context.camera, None)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute '_pending_camera_rates'
+
+src\cephvr\acquisition\coordinator\evidence_telemetry.py:210: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_coordinator.py::test_camera_heartbeat_handoff_preserves_trial_evidence_fence[plain]
+FAILED tests/acquisition/test_coordinator.py::test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope[pending]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 2 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+2 failed, 148 passed, 49 deselected in 6.02s

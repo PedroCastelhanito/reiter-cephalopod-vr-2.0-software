@@ -201,6 +201,24 @@ These tests do not establish electrical pulse alignment or full-workload accepta
 [camera anchoring worklist](rig-verification.md#camera-no-wiring-anchoring) retain
 actual validation scope. Historical SP0003-123824 results keep their original scope.
 
+Oct27 approved measured acquisition rate now counts SDK receipts independently of
+viewer visibility and trial admission. Existing heartbeat delivery carries exact
+camera/run/device identity and source-derived expiry under A10/E08. Native two-trial
+rate-scaling validation records approximately29.97/59.95Hz through Ready, trial starts
+and gap;14 artifacts close and six videos fully decode/count-match. Native manual
+capture displays30.0/60.0Hz with viewers hidden, then clears on confirmed release;
+all11 saved settings remain identical. Uint32 scaling scratch halves memory and
+preserves exhaustive supported-depth byte equality; isolated scaling improves
+14.6–27.9%, without a full-workload FPS claim.
+Immediate-post-start Abort repairs now pass at T+13.642ms with confirmed cleanup
+in458.4ms, followed by two60s trials in the same runtime crossing the retired end.
+The new run closes14 artifacts; all six videos fully decode/count-match, with
+Behavior1799/1799 and Tracking3597/3597 contiguous frames. Experiment/trial metadata
+retains Interrupted for Abort; independent writer completion is not trial outcome.
+Historical failed scientific output remains retained as Unconfirmed. Zero-receipt
+interruption is locally covered, not claimed as a native zero-frame case.
+[Current rate/scaling evidence](runtime-evidence-2026-10-27/rate-scaling/validation.json).
+
 Oct21 `pilot-spikeglx-alignment-inspection`: SP0003-123824 camera trains match
 26979/89933 retained frames plus1/2 logged post-cutoff exclusions; native counters
 are contiguous and pulse/native-clock fit RMS is14.85/10.56 us. This supports

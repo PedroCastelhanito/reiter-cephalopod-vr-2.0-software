@@ -1342,7 +1342,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 166
+**Status:** Accepted · **Revision:** 168
 
 - In Protocol Self motion rows, align the last parameter field with the right edge
   of the Asset text field, excluding Browse. Preserve Linked and Advanced alignment
@@ -1497,7 +1497,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   connected status, Trigger source (Internal clock / External controller),
   controller-configured external Trigger rate and backend-received
   acquisition rate. Missing rate readbacks remain unknown; never substitute a local
-  edit or configured trigger frequency for measured acquisition rate.
+  edit or configured trigger frequency for measured acquisition rate. Show current
+  capture-worker receipt rate independently of Show/preview FPS. Clear it on
+  disconnect, capture-run/device change or stale source observation, including while
+  snapshots are silent; preserve continuous session rate across trial boundaries.
   Shared directory/stimulus path fields accept Ctrl and Command-style select-all,
   copy, cut and paste, preserving full path text and existing validation/edit locks.
   Focused paths use native text/selection painting even when read-only.

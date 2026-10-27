@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from concurrent.futures import Future
 
@@ -93,7 +94,19 @@ class TrialRecordingTerminal:
                 and not self.recording_fault.faulted_session
                 else future.result()
             )
-        except BaseException:
+        except BaseException as exc:
+            command = command_from(stop_request)
+            work = command.target.work
+            trial_id = work.trial.trial_id if work.WhichOneof("work") == "trial" else ""
+            logging.getLogger(__name__).error(
+                "camera %s trial %s Finished output closure is unconfirmed "
+                "for command %s: %s: %s",
+                camera_role_name(self.state.context.camera),
+                trial_id,
+                command.command_id,
+                type(exc).__name__,
+                str(exc)[:512],
+            )
             outputs = failed_outputs(
                 self.trial.schedule or self.trial.stopped_schedule,
                 control.OUTPUT_CLOSURE_UNCONFIRMED,

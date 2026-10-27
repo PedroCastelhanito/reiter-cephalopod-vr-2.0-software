@@ -72,8 +72,9 @@ class PixelPreparer:
         self._row_bytes = layout.width * self._channels * (self._container_bits // 8)
         self._output_bytes = self._row_bytes * layout.height
         self._preview_outputs: dict[int, bytearray] = {}
+        # A 16-bit source and target keep the rounded numerator within uint32.
         self._scale_scratch = self._numpy.empty(
-            layout.width * layout.height * self._channels, dtype=self._numpy.uint64
+            layout.width * layout.height * self._channels, dtype=self._numpy.uint32
         )
 
     def prepare_source_depth_into(

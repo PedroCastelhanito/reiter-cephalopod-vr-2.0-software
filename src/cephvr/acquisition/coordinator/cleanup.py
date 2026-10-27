@@ -6,6 +6,10 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 
+from cephvr.acquisition.coordinator.cleanup_diagnostics import (
+    missing_worker_cleanup_failure,
+    worker_cleanup_failure,
+)
 from cephvr.acquisition.coordinator.cleanup_report import CleanupReportBuilder
 from cephvr.acquisition.coordinator.commands import (
     retain_worker_command,
@@ -259,12 +263,20 @@ class CoordinatorCleanup:
                     f"{record.launch.worker.role} cleanup: "
                     f"{type(outcome).__name__}: {outcome}"
                 )
-            elif outcome is None or not self.worker_cleanup_complete(record, outcome):
-                failures.append(
-                    f"{record.launch.worker.role} cleanup evidence is incomplete"
-                )
+            elif outcome is None:
+                failures.append(missing_worker_cleanup_failure(record))
             else:
-                worker_cleanup[role] = outcome
+                if not self.worker_cleanup_complete(record, outcome):
+                    failure = worker_cleanup_failure(record, outcome)
+                    failures.append(
+                        failure
+                        or (
+                            f"{record.launch.worker.role} camera worker generation "
+                            f"{record.launch.worker.generation} cleanup evidence is invalid"
+                        )
+                    )
+                else:
+                    worker_cleanup[role] = outcome
         failures.extend(serial_failures)
         if failures:
             return _rejected(

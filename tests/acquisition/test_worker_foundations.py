@@ -1315,6 +1315,73 @@ def test_early_cutoff_retrieval_is_excluded_from_trial_accounting(
     assert all(result.released for result in results)
 
 
+def test_capture_rate_counts_receipts_and_expires_long_or_silent_windows() -> None:
+    from cephvr.acquisition.camera.types import NativePixelFormat, PixelLayout
+
+    layout = PixelLayout(
+        width=1,
+        height=1,
+        pixel_format=NativePixelFormat(
+            "Mono8", 1, 8, "mono", "unpacked", "byte", "lsb"
+        ),
+        row_stride_bytes=1,
+        image_payload_bytes=1,
+    )
+
+    class Result:
+        camera_frame_counter = None
+        camera_timestamp_ns = None
+        pixels = memoryview(b"\x01")
+        error_code = "INVALID_IMAGE"
+        error_message = "test invalid frame"
+
+        def __init__(self, valid_image: bool) -> None:
+            self.valid_image = valid_image
+            self.layout = layout
+
+        def release(self) -> None:
+            pass
+
+    class Adapter:
+        def __init__(self) -> None:
+            self.results = iter(Result(index % 4 != 0) for index in range(11))
+
+        def wait_for_frame_or_control(self, _timeout_ns: int) -> str:
+            return "frame"
+
+        def retrieve(self, _timeout_ns: int) -> Result:
+            return next(self.results)
+
+    timestamps = [
+        value
+        for tick in range(11)
+        for value in (1 + tick * 100_000_000, 2 + tick * 100_000_000)
+    ]
+    clock = iter(timestamps)
+    loop = CameraCaptureLoop(
+        adapter=Adapter(),
+        layout=layout,
+        wait_timeout_ns=lambda: 1,
+        frame_silence_timeout_ns=3_000_000_000,
+        clock_ns=lambda: next(clock),
+        camera_role=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        acquisition_run_id="run",
+        device_id="camera",
+    )
+    loop.capture_started(1)
+    for _ in range(11):
+        assert loop.capture_once(lambda: True)
+    measured = loop.acquisition_rate()
+    assert measured is not None
+    assert measured.received_fps == pytest.approx(10.0)
+    assert measured.observed_monotonic_ns == 1_000_000_001
+    loop.reset_trial_counters()
+    assert loop.acquisition_rate() == measured
+
+    loop._observe_receipt_rate(4_000_000_002)
+    assert loop.acquisition_rate() is None
+
+
 def test_manual_preview_capture_publishes_ordered_tracking_and_preview_pixels() -> None:
     from cephvr.acquisition.buffers.records import FrameDiagnostic
 
@@ -2477,6 +2544,13 @@ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() ->
         control_path_valid=True,
         observed_monotonic_ns=100,
     )
+    rate = control.CameraAcquisitionRate(
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        acquisition_run_id=str(uuid4()),
+        received_fps=59.5,
+        observed_monotonic_ns=110,
+        device_id="camera-A",
+    )
     state.update_continuing_snapshot((capture,))
     state.update_health_snapshot(
         work=None,
@@ -2485,9 +2559,14 @@ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() ->
         progress_required=True,
         last_progress_ns=100,
         observed_ns=100,
+        camera_acquisition_rate=rate,
     )
 
     fresh = state.heartbeat_report(150, health_silence_ns=100)
+    assert fresh.sent_monotonic_ns == 150
+    assert fresh.camera_acquisition_rate.observed_monotonic_ns == 110
+    assert fresh.camera_acquisition_rate.received_fps == pytest.approx(59.5)
+    assert fresh.camera_acquisition_rate.valid_until_monotonic_ns == 210
     assert fresh.continuing_functions[0].resource_id == "behavioral.capture"
     assert fresh.continuing_functions[0].functioning
     assert fresh.continuing_functions[0].control_path_valid
@@ -2496,6 +2575,7 @@ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() ->
     assert stale.continuing_functions[0].resource_id == "behavioral.capture"
     assert not stale.continuing_functions[0].functioning
     assert not stale.continuing_functions[0].control_path_valid
+    assert not stale.HasField("camera_acquisition_rate")
 
 
 @pytest.mark.parametrize("left_kind", ["none", "session", "trial"])

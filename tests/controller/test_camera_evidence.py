@@ -1375,3 +1375,258 @@ def test_preview_rates_follow_visibility_revision_and_reject_invalid_samples():
     assert not closed.behavioral.HasField("rates")
     report.preview_visibility.revision = 1
     assert merge_preview_visibility(report, closed) is None
+
+
+def _rate_fixture(tmp_path, *, session=False):
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    settings = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.behavioral.enabled = True
+    settings.behavioral.device.device_id = "camera-1"
+    run = _id()
+    if session:
+        scope = pb.SessionContext(
+            controller_generation=runtime.generation, session_id=run
+        )
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+        runtime.lifecycle.session.context.CopyFrom(scope)
+        runtime.projections.set_scope(pb.WorkContext(session=scope), 1)
+    else:
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        initial = _status(backend, _id(), succeeded=True)
+        initial.views.behavioral.preview_run_id = run
+        initial.views.behavioral.device.configured_id = "camera-1"
+        runtime.projections.accept_devices(initial)
+    report = svc.AcquisitionDeviceStatusReport(
+        views=pb.AcquisitionDeviceViews(source=backend),
+        camera_acquisition_rate=pb.CameraAcquisitionRate(
+            camera=1,
+            acquisition_run_id=run,
+            device_id="camera-1",
+            received_fps=29.9,
+            observed_monotonic_ns=900,
+            valid_until_monotonic_ns=15_000_000_900,
+        ),
+    )
+    return runtime, report
+
+
+@pytest.mark.parametrize("session", [False, True])
+async def test_acquisition_rate_preserves_status_revision_and_current_capture_scope(
+    tmp_path, session
+):
+    runtime, report = _rate_fixture(tmp_path, session=session)
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=1000)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    devices = runtime.projections.devices
+    assert devices.behavioral.acquisition_rate == report.camera_acquisition_rate
+    assert devices.HasField("state_revision") == (not session)
+    assert devices.HasField("observed_monotonic_ns") == (not session)
+    if session:
+        original = pb.WorkContext.FromString(
+            runtime.projections.work.SerializeToString()
+        )
+        report.work.CopyFrom(original)
+        runtime.projections.set_scope(
+            pb.WorkContext(
+                trial=pb.TrialContext(
+                    session=original.session, trial_id=_id(), trial_number=1
+                )
+            ),
+            1,
+        )
+        report.camera_acquisition_rate.observed_monotonic_ns = 950
+        report.camera_acquisition_rate.valid_until_monotonic_ns = 15_000_000_950
+        assert (
+            await runtime.report_projection("devices", report, ingress_ns=1000)
+        ).result == pb.COMMAND_RESULT_ACCEPTED
+    status = _status(report.views.source, _id(), succeeded=True)
+    status.work.CopyFrom(runtime.projections.work)
+    status.views.behavioral.preview_run_id = (
+        report.camera_acquisition_rate.acquisition_run_id
+    )
+    status.views.behavioral.device.configured_id = "camera-1"
+    assert runtime.projections.accept_devices(status) == session
+    assert (
+        runtime.projections.devices.behavioral.acquisition_rate
+        == report.camera_acquisition_rate
+    )
+    if session:
+        runtime.projections.set_scope(pb.WorkContext(), 1)
+    else:
+        status.views.state_revision += 1
+        status.views.behavioral.device_open = False
+        status.views.behavioral.preview_running = False
+        status.views.behavioral.preview_run_id = ""
+        assert runtime.projections.accept_devices(status)
+    assert not runtime.projections.devices.behavioral.HasField("acquisition_rate")
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "source",
+        "run",
+        "device",
+        "role",
+        "nan",
+        "negative",
+        "future",
+        "stale",
+        "operation",
+        "result",
+        "preview",
+        "aggregate",
+        "work",
+        "closed",
+        "cleanup",
+        "same_time",
+        "expiry",
+    ],
+)
+async def test_acquisition_rate_rejects_invalid_or_retired_evidence(tmp_path, mutation):
+    runtime, report = _rate_fixture(tmp_path)
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=1000)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    before = runtime.projections.devices.SerializeToString()
+    rate = report.camera_acquisition_rate
+    if mutation == "source":
+        report.views.source.backend_generation = _id()
+    elif mutation == "run":
+        rate.acquisition_run_id = _id()
+    elif mutation == "device":
+        rate.device_id = "other"
+    elif mutation == "role":
+        rate.camera = 0
+    elif mutation == "nan":
+        rate.received_fps = float("nan")
+    elif mutation == "negative":
+        rate.received_fps = -1
+    elif mutation == "future":
+        rate.observed_monotonic_ns = 1001
+    elif mutation == "stale":
+        rate.observed_monotonic_ns = 1
+    elif mutation == "operation":
+        report.operation.command_id = _id()
+    elif mutation == "result":
+        report.result.SetInParent()
+    elif mutation == "preview":
+        report.preview_visibility.SetInParent()
+    elif mutation == "aggregate":
+        report.views.state_revision = 1
+    elif mutation == "work":
+        report.work.session.session_id = _id()
+    elif mutation == "closed":
+        runtime.projections.devices.behavioral.preview_running = False
+    elif mutation == "cleanup":
+        runtime.projections.devices.behavioral.cleanup_pending = True
+    elif mutation == "same_time":
+        rate.received_fps = 30.1
+    elif mutation == "expiry":
+        rate.valid_until_monotonic_ns += 1
+    if mutation in ("closed", "cleanup"):
+        before = runtime.projections.devices.SerializeToString()
+    ingress = 15_000_000_900 if mutation == "stale" else 1000
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=ingress)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.projections.devices.SerializeToString() == before
+
+
+@pytest.mark.parametrize("phase", [pb.SESSION_PHASE_FINALIZING, pb.SESSION_PHASE_ENDED])
+async def test_session_acquisition_rate_rejects_stopped_lifecycle(tmp_path, phase):
+    runtime, report = _rate_fixture(tmp_path, session=True)
+    runtime.lifecycle.session.phase = phase
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=1000)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.projections.devices is None
+
+
+async def test_acquisition_rate_uses_authenticated_controller_rpc(tmp_path):
+    import grpc
+
+    from cephvr.control.v1 import services_pb2_grpc as wire
+    from cephvr.controller.service import ExperimentControllerService
+    from cephvr.shared.auth import Principal
+
+    runtime, report = _rate_fixture(tmp_path, session=True)
+
+    async def authenticate(*args):
+        raise AssertionError("camera telemetry must use peer authentication")
+
+    generation = report.views.source.backend_generation
+    service = ExperimentControllerService(
+        runtime,
+        client_authentication=authenticate,
+        peer_tokens={"acquisition": (generation, "rate-token")},
+    )
+    server = grpc.aio.server()
+    wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+    port = server.add_insecure_port("127.0.0.1:0")
+    await server.start()
+    try:
+        async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+            stub = wire.ExperimentControllerServiceStub(channel)
+            with pytest.raises(grpc.aio.AioRpcError) as caught:
+                await stub.ReportAcquisitionDeviceStatus(
+                    report,
+                    metadata=Principal("acquisition", generation, "wrong").metadata(),
+                    timeout=2,
+                )
+            assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+            assert runtime.projections.devices is None
+            result = await stub.ReportAcquisitionDeviceStatus(
+                report,
+                metadata=Principal("acquisition", generation, "rate-token").metadata(),
+                timeout=2,
+            )
+            assert result.result == pb.COMMAND_RESULT_ACCEPTED
+            assert (
+                runtime.projections.devices.behavioral.acquisition_rate.received_fps
+                == 29.9
+            )
+    finally:
+        await server.stop(0)
+        await service.aclose()
+
+
+async def test_headless_session_rate_ignores_prior_run_device_readback(tmp_path):
+    runtime, report = _rate_fixture(tmp_path, session=True)
+    prior = _status(report.views.source, _id(), succeeded=True)
+    prior.views.behavioral.device.configured_id = "retired-camera"
+    prior.views.behavioral.device_open = False
+    prior.views.behavioral.preview_running = False
+    prior.views.behavioral.preview_run_id = ""
+    runtime.projections.devices = prior.views
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=1000)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    prior.work.CopyFrom(runtime.projections.work)
+    prior.views.state_revision += 1
+    assert runtime.projections.accept_devices(prior)
+    assert (
+        runtime.projections.devices.behavioral.acquisition_rate
+        == report.camera_acquisition_rate
+    )
+    assert (
+        runtime.projections.devices.behavioral.device.configured_id == "retired-camera"
+    )
+    assert not runtime.projections.devices.behavioral.device_open
+
+
+async def test_acquisition_rate_expiry_uses_existing_health_policy(tmp_path):
+    runtime, report = _rate_fixture(tmp_path, session=True)
+    runtime.projections.health_silence_ns = 12_000_000_000
+    report.camera_acquisition_rate.valid_until_monotonic_ns = 12_000_000_900
+    # An unchanged five-second heartbeat cadence must not expire a valid sample at three seconds.
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=5_000_000_900)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert (
+        await runtime.report_projection("devices", report, ingress_ns=12_000_000_900)
+    ).result == pb.COMMAND_RESULT_REJECTED

@@ -1,0 +1,68 @@
+settings_before {"config\\backends\\acquisition_config.toml": "aef7394e443069b358daf3b08ddfee1badfb3ae32878c1292fc4b56f6642949e", "config\\backends\\experiment_config.toml": "2b12d05977ae3ce3dca5a3855077d8c2304627b134fbf50a3350b3146c1bfc63", "config\\backends\\gui_config.toml": "cea55fdf6c0579003c7a7f5b11ff5281e8313bd32c4e9121dfbc7d00a6dce806", "config\\backends\\microcontroller_config.toml": "f2a831fcc46376dab9d45f7cb69b726e9027b4cda5d9c6336352c0c5bcbe6c62", "config\\backends\\supervisor_config.toml": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe", "config\\backends\\synchronization_config.toml": "e9ed2538635d5d746ade6c174d09b20374f184d5a1d03f26f2276883eded136e", "config\\backends\\tracking_config.toml": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c", "config\\backends\\visual_stimulus_config.toml": "8f742be3b71749a8f6834889c49fba032d7a61d39fc88398e4b9aa79817f5419", "config\\last_configuration.json": "a77d465a8c66766e2e0f1fd67d45064c9226607b4cb5a4bea62e7b3f846ee3a5", "config\\runtime_gui.json": "0337d6e8d78199e9e4a9c55a9ddd667d2778da6bd3e0a9399fddaf41fe2d6854", "config\\review_draft.json": "96632640d9d0b01550217cc592603e0fc8d1d4fd980dd4df4c09f10e91f05d82"}
+live_candidate_validation {"experiment": {"completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, "acquisition": {"completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, "synchronization": {"completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, "tracking": {"completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, "visual_stimulus": {"completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}}
+manual_device_before_setup {"role": "behavioral", "view": {}, "native_validation": "deferred to normal Setup native validation and exact Ready"}
+manual_device_before_setup {"role": "tracking", "view": {}, "native_validation": "deferred to normal Setup native validation and exact Ready"}
+selected_cameras ["behavioral", "tracking"]
+command_attempt {"method": "UpdateConfiguration", "command_id": "7084b26f-b889-4331-a3a6-93846db1d59f"}
+command_result {"method": "UpdateConfiguration", "command_id": "7084b26f-b889-4331-a3a6-93846db1d59f", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "Setup", "command_id": "14995180-cb7c-4c9d-86e1-17f0d251bde0"}
+command_result {"method": "Setup", "command_id": "14995180-cb7c-4c9d-86e1-17f0d251bde0", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "CancelSetup", "command_id": "dad50811-bec4-469d-baa3-955fd4e1003f"}
+command_result {"method": "CancelSetup", "command_id": "dad50811-bec4-469d-baa3-955fd4e1003f", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "Setup", "command_id": "b7d840a4-4595-4738-b7c1-571900699408"}
+command_result {"method": "Setup", "command_id": "b7d840a4-4595-4738-b7c1-571900699408", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "StartSession", "command_id": "ce0e6974-53e4-49c8-b9d1-fa0e842ab10a"}
+command_result {"method": "StartSession", "command_id": "ce0e6974-53e4-49c8-b9d1-fa0e842ab10a", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+abort_timing {"observed_host_ns": 1097442661060200, "scheduled_start_ns": 1097442643054100, "trial_phase": 5}
+command_attempt {"method": "AbortNow", "command_id": "8314b7a6-85b5-4e8b-8138-b10682d64b9e"}
+command_result {"method": "AbortNow", "command_id": "8314b7a6-85b5-4e8b-8138-b10682d64b9e", "complete": true, "succeeded": false, "needs_input": false, "failure": "OPERATION_FAILED: cleanup could not be confirmed"}
+restoration_failed {"error": "ClientError('State synchronization failed: <AioRpcError of RPC that terminated with:\\n\\tstatus = StatusCode.UNAVAILABLE\\n\\tdetails = \"Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n\\tdebug_error_string = \"UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n>')", "blind_file_restore": false}
+settings_unchanged {"config\\backends\\acquisition_config.toml": true, "config\\backends\\experiment_config.toml": true, "config\\backends\\gui_config.toml": true, "config\\backends\\microcontroller_config.toml": true, "config\\backends\\supervisor_config.toml": true, "config\\backends\\synchronization_config.toml": true, "config\\backends\\tracking_config.toml": true, "config\\backends\\visual_stimulus_config.toml": true, "config\\last_configuration.json": true, "config\\runtime_gui.json": true, "config\\review_draft.json": true}
+control_release {"failure": null}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 432, in run
+    await command("AbortNow", wait_s=60)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 201, in command
+    require(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 30, in require
+    raise RuntimeError(message)
+RuntimeError: AbortNow failed/needs input: OPERATION_FAILED: cleanup could not be confirmed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 541, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 537, in main
+    asyncio.run(run(args))
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 451, in run
+    await restore()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 228, in restore
+    state = await wait_state(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-27\rate-scaling\native_start_abort.py", line 208, in wait_state
+    state = await asyncio.wait_for(client._wait(predicate), wait_s)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>

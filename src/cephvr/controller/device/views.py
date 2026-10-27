@@ -52,6 +52,49 @@ class DeviceViews:
             try:
                 if kind == "devices":
                     status = cast(svc.AcquisitionDeviceStatusReport, report)
+                    if status.HasField("camera_acquisition_rate"):
+                        rate = status.camera_acquisition_rate
+                        backend = next(
+                            (
+                                item
+                                for item in self.configuration.current.backends
+                                if item.backend_name == "acquisition"
+                                and item.WhichOneof("settings") == "acquisition"
+                            ),
+                            None,
+                        )
+                        if backend is None or rate.camera not in (1, 2, 3):
+                            raise ProjectionError(
+                                "camera acquisition rate has no configured role"
+                            )
+                        role = {1: "behavioral", 2: "tracking", 3: "eye_tracking"}[
+                            rate.camera
+                        ]
+                        camera_settings = getattr(backend.acquisition, role)
+                        phase = self.lifecycle.session.phase
+                        if phase != pb.SESSION_PHASE_CONFIGURATION and (
+                            phase
+                            not in (
+                                pb.SESSION_PHASE_SETTING_UP,
+                                pb.SESSION_PHASE_READY,
+                                pb.SESSION_PHASE_STARTING,
+                                pb.SESSION_PHASE_RUNNING,
+                            )
+                            or not backend.enabled
+                            or not camera_settings.enabled
+                        ):
+                            raise ProjectionError(
+                                "camera acquisition rate has no active capture scope"
+                            )
+                        expected_device_id = camera_settings.device.device_id
+                        changed = self.projections.accept_camera_acquisition_rate(
+                            status,
+                            expected_device_id=expected_device_id,
+                            ingress_ns=observed_ingress,
+                        )
+                        if changed:
+                            self.hooks.publish()
+                        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
                     if status.HasField("preview_visibility"):
                         changed = self.projections.accept_preview_visibility(status)
                         if changed:

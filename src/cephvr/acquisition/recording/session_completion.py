@@ -97,7 +97,12 @@ def finish_recording(
         logged=logged,
         last_frame_id=last_frame_id,
     )
-    if received and not submitted and not diagnostics.contains("NO_VIDEO_FRAMES"):
+    interrupted = completion.outcome == "interrupted" or (
+        received == 0
+        and end.recording_end_monotonic_ns is not None
+        and end.recording_end_monotonic_ns < schedule.end_monotonic_ns
+    )
+    if not submitted and not diagnostics.contains("NO_VIDEO_FRAMES"):
         diagnostics.record(
             "NO_VIDEO_FRAMES",
             native_code=None,
@@ -115,7 +120,9 @@ def finish_recording(
         and accounting_complete
         and end.excluded_accounting_complete
         and pulses.complete()
-        and received > 0
+        # Interrupted zero-receipt files can close truthfully; they establish
+        # neither Started nor normally successful acquisition.
+        and (received > 0 or interrupted)
     )
     finalization.late |= clock_ns() > original_deadline_ns
     exit_code, video_sync = close_encoder_and_sync_video(
@@ -134,8 +141,11 @@ def finish_recording(
     )
     log_completion = FrameLogCompletion(
         outcome=(
-            completion.outcome
-            if success_evidence and exit_code == 0 and not finalization.late
+            "completed"
+            if not interrupted
+            and success_evidence
+            and exit_code == 0
+            and not finalization.late
             else "interrupted"
         ),
         recording_end_monotonic_ns=(

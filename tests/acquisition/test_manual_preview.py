@@ -220,6 +220,44 @@ def test_preview_pixel_copy_matches_full_range_conversion(
     assert bytes(result.data) == expected  # No borrowed camera/source storage.
 
 
+@pytest.mark.parametrize("source_bits", [8, 10, 12, 16])
+@pytest.mark.parametrize("target_bits", [8, 10, 16])
+def test_full_range_scaling_uint32_matches_uint64_exhaustively(
+    source_bits, target_bits
+):
+    import numpy as np
+
+    from cephvr.shared.pixels.scaling import scale_full_range_into
+
+    class Image:
+        def __init__(self, pixels):
+            self.pixels = pixels
+
+        def GetBuffer(self):
+            return self.pixels
+
+    source_container_bits = 8 if source_bits == 8 else 16
+    source_dtype = np.uint8 if source_container_bits == 8 else np.dtype("<u2")
+    source = np.arange(1 << source_container_bits, dtype=source_dtype)
+    target_container_bits = 8 if target_bits == 8 else 16
+    outputs = []
+    for scratch_dtype in (np.uint64, np.uint32):
+        output = bytearray(source.size * (target_container_bits // 8))
+        scratch = np.empty(source.size, dtype=scratch_dtype)
+        scale_full_range_into(
+            np,
+            Image(source),
+            memoryview(output),
+            source_bits,
+            source_container_bits,
+            target_bits,
+            target_container_bits,
+            scratch,
+        )
+        outputs.append(output)
+    assert outputs[0] == outputs[1]
+
+
 @pytest.mark.parametrize(
     "message_type", [wire.CameraCommandRequest, wire.AcquisitionCameraCommand]
 )
@@ -539,6 +577,10 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
         assert native.GetWindowLongW(handle, -20) & 0x00000008  # WS_EX_TOPMOST
         assert native.GetWindowLongW(handle, -16) & 0x00C00000
         assert native.GetWindowLongW(handle, -20) & 0x00000001
+        native.GetClassLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        native.GetClassLongPtrW.restype = ctypes.c_size_t
+        assert not native.GetClassLongPtrW(handle, -14)
+        assert not native.GetClassLongPtrW(handle, -34)
         native.GetForegroundWindow.restype = ctypes.c_void_p
         foreground = native.GetForegroundWindow()
         position_preview_frame(handle, 410, 110)

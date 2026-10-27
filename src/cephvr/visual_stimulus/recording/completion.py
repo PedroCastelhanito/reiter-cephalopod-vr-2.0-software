@@ -59,9 +59,10 @@ def resolve_video_completion(
         "FRAMES_SUBMITTED" if counts.input_submitted_count > 0 else "NO_FRAMES"
     )
     if content == "FRAMES_SUBMITTED":
+        # Exact final file identity/sync proves nonempty closure; the stronger
+        # creator receipt governs empty-output ownership, never inferred here.
         closed = (
             artifact_present is True
-            and artifact_created_by_session is True
             and encoder_finalized
             and file_sync_and_close_confirmed
             and encoder_cleanup_confirmed
@@ -71,8 +72,7 @@ def resolve_video_completion(
         )
     if artifact_present is True:
         closed = (
-            artifact_created_by_session is True
-            and encoder_finalized
+            encoder_finalized
             and file_sync_and_close_confirmed
             and encoder_cleanup_confirmed
         )

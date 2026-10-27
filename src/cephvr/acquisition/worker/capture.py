@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import cast
 
 from cephvr.acquisition.buffers.pixel_pool import PixelBufferPool
 from cephvr.acquisition.buffers.queue import RecordingQueue
@@ -12,7 +13,9 @@ from cephvr.acquisition.buffers.records import FrameDiagnostic, FrameRecord
 from cephvr.acquisition.buffers.ring import SharedRing
 from cephvr.acquisition.camera.errors import CameraAdapterError
 from cephvr.acquisition.camera.types import CameraAdapter, GrabResult, PixelLayout
+from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.worker.warnings import WarningOccurrence
+from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.preview_rates import PreviewPacer
 
@@ -58,6 +61,9 @@ class CameraCaptureLoop:
         ] = lambda _: (),
         first_trial_frame: Callable[[FrameRecord], None] = lambda _: None,
         clock_ns: Callable[[], int] = host_time_ns,
+        camera_role: int = 0,
+        acquisition_run_id: str = "",
+        device_id: str = "",
     ) -> None:
         if (recording_queue is None) != (pixel_pool is None) and not (
             recording_queue is not None
@@ -101,6 +107,14 @@ class CameraCaptureLoop:
         self.diagnostics_for = diagnostics_for
         self.first_trial_frame = first_trial_frame
         self.clock_ns = clock_ns
+        self.camera_role = camera_role
+        self.acquisition_run_id = acquisition_run_id
+        self.device_id = device_id
+        self._rate_start_ns = 0
+        self._rate_last_ns = 0
+        self._rate_count = 0
+        self._received_fps: float | None = None
+        self._rate_sample_ns = 0
         self._acquisition_frame_id = 0
         self._trial_frame_id = 0
         self._received = 0
@@ -170,6 +184,21 @@ class CameraCaptureLoop:
 
     def capture_started(self, observed_ns: int) -> None:
         self._capture_start_ns = observed_ns
+        self._rate_start_ns = self._rate_last_ns = observed_ns
+        self._rate_count = 0
+        self._received_fps = None
+        self._rate_sample_ns = 0
+
+    def acquisition_rate(self) -> control.CameraAcquisitionRate | None:
+        if self._received_fps is None or not self.acquisition_run_id:
+            return None
+        return control.CameraAcquisitionRate(
+            camera=cast(camera_pb2.CameraRole, self.camera_role),
+            acquisition_run_id=self.acquisition_run_id,
+            received_fps=self._received_fps,
+            observed_monotonic_ns=self._rate_sample_ns,
+            device_id=self.device_id,
+        )
 
     def capture_once(self, capture_handoff: Callable[[], bool]) -> bool:
         """Wait once, then retrieve/copy/account one result if commands permit it."""
@@ -193,6 +222,7 @@ class CameraCaptureLoop:
             if receipt_ns <= 0 or receipt_ns < self._last_receipt_ns:
                 raise RuntimeError("camera host receipt clock regressed")
             self._last_receipt_ns = receipt_ns
+            self._observe_receipt_rate(receipt_ns)
             counter = result.camera_frame_counter
             timestamp = result.camera_timestamp_ns
             window = self.recording_window()
@@ -303,6 +333,32 @@ class CameraCaptureLoop:
         )
         if baseline > 0 and now_ns >= baseline + self.frame_silence_timeout_ns:
             raise RuntimeError("usable camera frame silence exceeded its limit")
+
+    def _observe_receipt_rate(self, receipt_ns: int) -> None:
+        if self._rate_count == 0:
+            self._rate_start_ns = self._rate_last_ns = receipt_ns
+            self._rate_count = 1
+            return
+        if (
+            receipt_ns - self._rate_last_ns >= 3_000_000_000
+            or receipt_ns - self._rate_start_ns >= 3_000_000_000
+        ):
+            self._rate_start_ns = receipt_ns
+            self._rate_count = 1
+            self._received_fps = None
+            self._rate_sample_ns = 0
+        else:
+            self._rate_count += 1
+            if receipt_ns - self._rate_start_ns >= 1_000_000_000:
+                self._received_fps = (
+                    (self._rate_count - 1)
+                    * 1_000_000_000
+                    / (receipt_ns - self._rate_start_ns)
+                )
+                self._rate_sample_ns = receipt_ns
+                self._rate_start_ns = receipt_ns
+                self._rate_count = 1
+        self._rate_last_ns = receipt_ns
 
     def _publish_tracking(self, record: FrameRecord, pixels: memoryview) -> None:
         ring = self.tracking_ring

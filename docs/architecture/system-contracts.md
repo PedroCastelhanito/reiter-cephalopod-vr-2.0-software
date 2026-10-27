@@ -218,13 +218,21 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 183
+**Status:** Accepted · **Revision:** 184
 
 - Stimulus preview placement may carry up to four unique logical projector targets
   with bounded desktop geometry; absent targets selects Combined. Reuse the existing
   authenticated lease/session/configuration/process scopes, 256-byte placement bound,
   owner identity and visibility reports. Camera placement rejects stimulus targets.
   V01 owns window/resource behavior; no frame pixels cross the control transport.
+
+- Optional camera acquisition-rate evidence travels in the existing worker heartbeat
+  and acquisition device-status report. Authenticate the exact current worker, role,
+  capture run and device; retain one latest observation per role with bounded,
+  best-effort forwarding. Delivery never gates heartbeat acknowledgement, readiness
+  or cleanup. Preserve source measurement time and derive expiry from that time
+  plus the existing process-silence bound; heartbeat cadence remains unchanged.
+  Stale telemetry is not health evidence and must not be restamped as current.
 
 - Optional PreviewRates travel through existing exact-run camera visibility and exact-
   session stimulus preview state, approximately once per second. Source FPS measures

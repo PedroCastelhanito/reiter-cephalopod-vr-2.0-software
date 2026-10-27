@@ -65,7 +65,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 <a id="e05"></a>
 ### E05 — Lifecycle and trial timing
 
-**Status:** Accepted · **Revision:** 99
+**Status:** Accepted · **Revision:** 100
 
 #### Lifecycle
 
@@ -233,7 +233,10 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   required output (the swap call of the first render group evaluated at or after T
   has returned); or, for tracking, a completed first frame evaluation under
   [T08](tracking.md#t08). Actual software start, that evidence and controller
-  receipt of the report must all occur by `T + 250 ms`.
+  receipt of the report must all occur by `T + 250 ms`. An interruption may overtake
+  this on-time report: retain its exact original evidence during interrupted
+  Finalizing/Ended without reviving activity, phase or outcome. Original identity,
+  activity and receipt deadlines still apply.
   An acquisition participant with no active cameras and enabled A11 Trial state
   uses the exact applied ON acknowledgement as its start observation, with no
   fabricated camera activity. It remains subject to the same liveness deadline.

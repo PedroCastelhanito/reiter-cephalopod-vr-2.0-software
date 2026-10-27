@@ -284,6 +284,10 @@ class LifecycleDriver:
             raise RuntimeError(
                 "recipe publication path differs from the reserved trial output"
             )
+        if trial.stopped and not trial.begun:
+            # Publication may finish after cancellation; its coordinator owns the
+            # recipe result, while this recorder must retain its cancellation.
+            return
         self.recording.publication(request)
 
     def initialize(self, request: visual_stimulus.InitializeDisplay) -> Future[None]:
@@ -586,7 +590,9 @@ class LifecycleDriver:
                     deferred_cleanup.append((command, deadline, shutdown, future))
                     continue
                 try:
-                    self.deadline_ns = min(deadline, self.deadline_ns)
+                    # A later recipe/preview command has its own deadline; this
+                    # cleanup retains the deadline captured at its admission.
+                    self.deadline_ns = deadline
                     if now_ns >= deadline:
                         raise TimeoutError("cleanup missed its retained deadline")
                     self.cleanup(command)

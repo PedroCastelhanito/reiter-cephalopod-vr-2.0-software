@@ -172,6 +172,77 @@ def test_disabled_or_save_off_camera_needs_no_encoder_discovery() -> None:
     )
 
 
+@pytest.mark.parametrize("source_bits", [8, 10, 12, 16])
+@pytest.mark.parametrize("target_bits", [8, 10])
+def test_recording_pixel_preparation_matches_uint64_sdk_reference(
+    source_bits: int, target_bits: int
+) -> None:
+    np = pytest.importorskip("numpy")
+    pytest.importorskip("pypylon")
+
+    from cephvr.acquisition.camera.native_formats import pylon_pixel_format
+    from cephvr.shared.pixels.preparer import PixelPreparer
+    from cephvr.shared.pixels.scaling import scale_full_range_into
+    from cephvr.shared.pixels.types import PixelLayout
+
+    maximum = (1 << source_bits) - 1
+    samples = np.array(
+        [0, 1, maximum // 4, maximum // 3, maximum // 2, maximum - 1, maximum, 0],
+        dtype=np.uint8 if source_bits == 8 else "<u2",
+    )
+    source = bytearray(samples.tobytes())
+    container_bits = 8 if source_bits == 8 else 16
+    layout = PixelLayout(
+        width=samples.size,
+        height=1,
+        pixel_format=pylon_pixel_format(f"Mono{source_bits}"),
+        row_stride_bytes=samples.size * (container_bits // 8),
+        image_payload_bytes=len(source),
+    )
+    preparer = PixelPreparer(layout)
+    image = preparer._convert(source)
+    target_container_bits = 8 if target_bits == 8 else 16
+    expected = bytearray(samples.size * (target_container_bits // 8))
+    try:
+        sdk_pixels = np.frombuffer(
+            image.GetBuffer(), dtype=np.uint8 if source_bits == 8 else "<u2"
+        )
+        assert sdk_pixels[-2] == (255 if source_bits == 8 else 65535)
+        if source_bits == target_bits:
+            expected[:] = memoryview(image.GetBuffer()).cast("B")
+        else:
+            scale_full_range_into(
+                np,
+                image,
+                memoryview(expected),
+                source_bits,
+                preparer._container_bits,
+                target_bits,
+                target_container_bits,
+                np.empty(samples.size, dtype=np.uint64),
+            )
+    finally:
+        image.Release()
+
+    assert preparer._scale_scratch.dtype == np.dtype(np.uint32)
+    assert preparer._scale_scratch.size == samples.size
+    output = bytearray(len(expected))
+    try:
+        prepared = preparer.prepare_recording_into(
+            source, output, target_bits=target_bits
+        )
+    finally:
+        preparer.close()
+    assert output == expected
+    assert prepared.effective_bits == target_bits
+    assert prepared.container_bits == target_container_bits
+    assert prepared.alignment == ("full" if target_bits == 8 else "msb")
+    if target_bits == 10 and source_bits != target_bits:
+        output_samples = np.frombuffer(output, dtype="<u2")
+        assert np.all(output_samples <= 1023 << 6)
+        assert np.all(output_samples & 0x3F == 0)
+
+
 @pytest.mark.parametrize(
     "mono,depth,expected",
     [

@@ -1,6 +1,6 @@
 """Camera inventory, editable drafts and controller-backed operator intents."""
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -29,6 +29,7 @@ from cephvr.gui.presets import trigger_hint
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
+from cephvr.shared.clock import host_time_ns
 
 
 class CamerasPanel(ResponsiveColumns):
@@ -50,6 +51,11 @@ class CamerasPanel(ResponsiveColumns):
         left, left_layout = column()
         right = StatusColumn()
         self.status_column = right
+        right.hud.setToolTip(
+            "Acquisition rate counts received camera images, including invalid images. "
+            "It updates with camera status reports and is separate from trigger and "
+            "preview rates. An em dash means unavailable or expired."
+        )
         self.console = right.console
         self.console.setPlainText(
             "Camera inventory uses local review samples."
@@ -74,6 +80,7 @@ class CamerasPanel(ResponsiveColumns):
         self.managed = False
         self.controller_trigger_rates: dict[str, float] = {}
         self.controller_trigger_sources: dict[str, str] = {}
+        self.controller_acquisition_rates: dict[str, tuple[float, int, int]] = {}
         self.operation_pending = False
         self.bulk_pending = False
         self.pending_action = PendingAction()
@@ -225,6 +232,10 @@ class CamerasPanel(ResponsiveColumns):
         if self.drafts:
             self.table.selectRow(0)
         self.refresh_controls()
+        self.rate_timer = QTimer(self)
+        self.rate_timer.setInterval(1000)
+        self.rate_timer.timeout.connect(self.refresh_status)
+        self.rate_timer.start()
 
     def refresh_inventory(self) -> None:
         if not self.can_operate and not self.managed:
@@ -625,7 +636,23 @@ class CamerasPanel(ResponsiveColumns):
         for editor in (*self.fields.values(), self.preset_field, self.trigger_source):
             editor.setEnabled(self.can_edit_camera_settings and draft is not None)
         self.role.setEnabled(self.can_edit_camera_settings and draft is not None)
+        self.refresh_status()
+        self.pending_action.refresh(self.can_control_devices)
+        self.controls_changed.emit()
+
+    def refresh_status(self) -> None:
+        """Expire optional telemetry without changing controls or preview placement."""
+        draft = self.selected
         rate = self.controller_trigger_rates.get(draft.serial) if draft else None
+        acquisition = (
+            self.controller_acquisition_rates.get(draft.serial) if draft else None
+        )
+        acquisition_text = (
+            f"{acquisition[0]:.1f} Hz"
+            if acquisition is not None
+            and acquisition[1] <= host_time_ns() < acquisition[2]
+            else "—"
+        )
         source = "—"
         if draft:
             source = (
@@ -649,8 +676,6 @@ class CamerasPanel(ResponsiveColumns):
                 ),
                 ("TRIGGER SOURCE", source),
                 ("TRIGGER RATE", f"{rate:g} Hz" if rate is not None else "—"),
-                ("ACQUISITION RATE", "—"),
+                ("ACQUISITION RATE", acquisition_text),
             )
         )
-        self.pending_action.refresh(self.can_control_devices)
-        self.controls_changed.emit()

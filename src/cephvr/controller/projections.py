@@ -8,7 +8,11 @@ from dataclasses import dataclass
 from cephvr.acquisition.v1 import messages_pb2 as acquisition
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.controller.device_projection import merge_devices, merge_preview_visibility
+from cephvr.controller.device_projection import (
+    merge_camera_acquisition_rate,
+    merge_devices,
+    merge_preview_visibility,
+)
 from cephvr.shared.identity import require_uuid4
 
 
@@ -51,14 +55,16 @@ class ProjectionStore:
         *,
         max_entries: int,
         max_payload_bytes: int,
+        health_silence_ns: int = 15_000_000_000,
     ) -> None:
         require_uuid4(controller_generation)
-        if min(max_entries, max_payload_bytes) <= 0:
+        if min(max_entries, max_payload_bytes, health_silence_ns) <= 0:
             raise ValueError("positive projection budgets required")
         self.generation = controller_generation
         self.peers = dict(peers)
         self.max_entries = max_entries
         self.max_payload_bytes = max_payload_bytes
+        self.health_silence_ns = health_silence_ns
         self.devices: pb.AcquisitionDeviceViews | None = None
         self.display: pb.VisualStimulusDisplayView | None = None
         self.warnings: dict[tuple[str, int, bytes], pb.AcquisitionWarningView] = {}
@@ -81,6 +87,9 @@ class ProjectionStore:
                 else None
             )
             self.warnings.clear()
+            if self.devices is not None:
+                for name in ("behavioral", "tracking", "eye_tracking"):
+                    getattr(self.devices, name).ClearField("acquisition_rate")
         elif configuration_revision != self.configuration_revision:
             self.previous_warning_scope = None
         elif self.work.WhichOneof("work") == "trial" and self.work != work:
@@ -180,14 +189,17 @@ class ProjectionStore:
     def accept_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> bool:
         self.validate_devices(report)
         view = report.views
+        session = self._session(self.work)
+        adopted = merge_devices(
+            view, self.devices, session_id=session.session_id if session else ""
+        )
         if self.devices:
             if view.state_revision < self.devices.state_revision:
                 return False
             if view.state_revision == self.devices.state_revision:
-                if view != self.devices:
+                if adopted != self.devices:
                     raise ProjectionError("device status revision changed payload")
                 return False
-        adopted = merge_devices(view, self.devices)
         self._budget(
             adopted.ByteSize() - (self.devices.ByteSize() if self.devices else 0)
         )
@@ -200,6 +212,33 @@ class ProjectionStore:
         self._source(report.views.source, "acquisition")
         try:
             adopted = merge_preview_visibility(report, self.devices)
+        except ValueError as exc:
+            raise ProjectionError(str(exc)) from exc
+        if adopted is None:
+            return False
+        self._budget(
+            adopted.ByteSize() - (self.devices.ByteSize() if self.devices else 0)
+        )
+        self.devices = adopted
+        return True
+
+    def accept_camera_acquisition_rate(
+        self,
+        report: rpc.AcquisitionDeviceStatusReport,
+        *,
+        expected_device_id: str,
+        ingress_ns: int,
+    ) -> bool:
+        self._source(report.views.source, "acquisition")
+        try:
+            adopted = merge_camera_acquisition_rate(
+                report,
+                self.devices,
+                session=self._session(self.work),
+                expected_device_id=expected_device_id,
+                ingress_ns=ingress_ns,
+                health_silence_ns=self.health_silence_ns,
+            )
         except ValueError as exc:
             raise ProjectionError(str(exc)) from exc
         if adopted is None:

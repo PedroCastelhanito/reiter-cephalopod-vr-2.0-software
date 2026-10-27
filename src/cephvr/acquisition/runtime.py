@@ -284,6 +284,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             current_session=lambda: self.state.session_slot.current,
             controller=controller,
             lock=self.lock,
+            health_silence_ns=workers.health_silence_ns,
             control_policies=self.control_policies,
             configuration_resolution=self.configuration_resolution,
             trial_lifecycle=self.trial_lifecycle,
