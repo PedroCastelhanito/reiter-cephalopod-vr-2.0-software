@@ -12244,3 +12244,7 @@ Owner defers representative illuminated-camera scene work; move eye-tracking-sou
 ### 2026-10-27 - [acquisition] [tracking] [visual_stimulus] Camera-scene deferral follow-through
 
 Reconciled the current queue with the owner decision: camera-scene work resumes only on explicit owner request with representative scene/illumination available. The dependent stimulus-review-encoding-cost comparison is also Deferred until that prerequisite is reopened. The completed device-layout promotion remains absent from TODO; physical input capture and outstanding native/optical acceptance retain their existing status. No runtime, device settings or concurrent task ownership changed.
+
+### 2026-10-27 - [repo] [gui] [visual_stimulus] Decision queue verified
+
+Read current TODO, architecture, owning reports and completion/deferral history; independent Astra review agrees no pair of non-deferred critical software decisions is established. Device-layout promotion was completed Oct19. Camera-scene/representative encoding, Tracking and other explicit deferrals stay closed to implementation. The active physical-speed mismatch still needs equal-distance physical travel measurements and current-session identity, not a new policy choice. Existing MCU latency and native acceptance work remains investigation under accepted rules. No new decision tasks or speculative settings changes added; no runtime/hardware test performed for this read-only audit.
