@@ -10,7 +10,7 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-- [ ] `repo-chat-reconcile-sync` [repo] Owner: Monitor chats and sync repo. Wait for both active implementation chats, reconcile completion and deferrals, preserve evidence during cleanup, validate the combined tree, commit and sync. New runtime behavior decisions remain deferred.
+No active implementation chats.
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
