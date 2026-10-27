@@ -161,6 +161,72 @@ def test_rotation_marker_arrowhead_and_device_width(app, angular, scale, style):
     dial.close()
 
 
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+@pytest.mark.parametrize("size", [(245, 130), (204, 220)])
+def test_waiting_motion_dial_readout_does_not_overlap_bottom_axis(
+    app, monkeypatch, style, size
+):
+    from PyQt6.QtCore import QRectF
+    from PyQt6.QtGui import QImage, QPainter
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui import preview_motion_dial
+    from cephvr.gui.preview_motion_data import DialSample
+    from cephvr.gui.theme import (
+        RETRO_PALETTES,
+        load_terminal_font,
+        phosphor_stylesheet,
+        retro_stylesheet,
+    )
+
+    load_terminal_font()
+    host = QWidget()
+    if style != "standard":
+        host.setStyleSheet(
+            retro_stylesheet(RETRO_PALETTES[style][0])
+            + (phosphor_stylesheet() if style == "amber_phosphor" else "")
+        )
+    canvas = QImage(size[0], size[1], QImage.Format.Format_ARGB32_Premultiplied)
+    text_bounds = {}
+
+    class ImagePainter(QPainter):
+        def __init__(self, _widget):
+            super().__init__(canvas)
+
+        def drawText(self, rect, *args):
+            if isinstance(rect, QRectF):
+                text_bounds[args[-1]] = self.transform().mapRect(rect)
+            return super().drawText(rect, *args)
+
+    monkeypatch.setattr(preview_motion_dial, "QPainter", ImagePainter)
+    dial = MotionDial()
+    dial.setParent(host)
+    dial.ensurePolished()
+    dial.resize(canvas.size())
+    dial.set_sample(
+        DialSample(
+            "Bottom",
+            "accent",
+            "texture",
+            "mm/s",
+            None,
+            None,
+            20,
+            20,
+            message="Waiting for trial",
+        )
+    )
+    dial.paintEvent(None)
+
+    bottom_axis = text_bounds["Back\n−90°"]
+    waiting = next(
+        bounds for text, bounds in text_bounds.items() if text.startswith("Waiting")
+    )
+    assert not bottom_axis.intersects(waiting)
+    assert waiting.bottom() <= canvas.height() - 1
+    host.close()
+
+
 def with_settings(*epochs):
     """Replace the review fixture's three epochs' settings, keeping their timing."""
 

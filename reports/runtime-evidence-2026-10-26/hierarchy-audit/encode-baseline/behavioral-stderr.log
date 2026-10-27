@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=2456x2568:rate=30.0,format=rgb24':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgb24, 2456x2568 [SAR 1:1 DAR 307:321], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\hierarchy-audit\encode-baseline\behavioral.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 2456x2568 [SAR 1:1 DAR 307:321], q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   19 fps=0.0 q=26.0 size=       0KiB time=00:00:00.63 bitrate=   0.4kbits/s speed=1.24x elapsed=0:00:00.51    frame=   56 fps= 54 q=28.0 size=       0KiB time=00:00:01.86 bitrate=   0.1kbits/s speed=1.81x elapsed=0:00:01.03    frame=   93 fps= 60 q=28.0 size=       0KiB time=00:00:03.10 bitrate=   0.1kbits/s speed=   2x elapsed=0:00:01.54    frame=  142 fps= 69 q=28.0 size=       0KiB time=00:00:04.73 bitrate=   0.0kbits/s speed=2.29x elapsed=0:00:02.06    [out#0/mp4 @ 0000023a9755f5c0] video:43388KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.003554%
+frame=  150 fps= 70 q=28.0 Lsize=   43389KiB time=00:00:05.00 bitrate=71089.2kbits/s speed=2.32x elapsed=0:00:02.15    

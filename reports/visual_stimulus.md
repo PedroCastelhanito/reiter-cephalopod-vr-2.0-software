@@ -1,5 +1,14 @@
 # Visual Stimulus status
 
+Oct26/27 hierarchical audit removes the renderer's unread duplicate resource field
+and unreachable inner start-time guard. `_sessions` keeps resource ownership;
+cutoff validation/order and cleanup semantics remain unchanged under V01/E06 and
+ARCH-002.113 rendering tests pass (6 excluded); static/boundary checks pass.
+Fresh60s recorded trial closes3554 stimulus frames, all fully decoded and matched.
+Seven software-evaluation gaps exceed25ms (maximum276.4823ms), all in the first0.932s;
+startup attribution and optical timing remain open. Synthetic2080Ti encoding passes
+baseline/double demand but cannot sustain quadruple demand. [Audit](runtime.md#hierarchical-audit--2026-10-2627).
+
 Oct26 lifecycle follow-up under [V01](../docs/architecture/visual_stimulus.md#v01)
 and [E06/E08](../docs/architecture/system-contracts.md#e06) is verified for the bounded
 cases. Confirmed-only catalogue/receipt retirement fixes repeated-Shutdown stale keys;

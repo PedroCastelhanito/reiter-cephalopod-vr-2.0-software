@@ -144,7 +144,7 @@ class MotionDial(QWidget):
         painter.setPen(QColor(colors.text if not sample.message else colors.label))
         text = dial_readout(sample)
         painter.drawText(
-            QRectF(4, 192, MotionDial.SIZE - 8, 18),
+            QRectF(4, 212, MotionDial.SIZE - 8, 18),
             Qt.AlignmentFlag.AlignCenter,
             painter.fontMetrics().elidedText(
                 text, Qt.TextElideMode.ElideRight, MotionDial.SIZE - 8

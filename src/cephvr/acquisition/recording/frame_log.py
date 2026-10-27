@@ -148,7 +148,7 @@ class FrameLogCompletion:
 
 
 class FrameLogWriter:
-    """Own one JSONL file and advance its line/frame counters only after writes."""
+    """Own one JSONL file and advance its frame counter only after writes."""
 
     def __init__(
         self,
@@ -177,7 +177,6 @@ class FrameLogWriter:
         self.syncer = syncer
         self.file: BinaryIO | None = None
         self.last_sync_ns = start_ns
-        self.line_count = 0
         self.frame_count = 0
         self.first_recorded_frame_id: int | None = None
         self._last_frame_id = -1
@@ -445,7 +444,6 @@ class FrameLogWriter:
         written = self.file.write(line)
         if written != len(line):
             raise OSError("frame-log append was incomplete")
-        self.line_count += 1
 
     def _sync(self, *, now_ns: int | None = None) -> None:
         if self.file is None or self._closed:

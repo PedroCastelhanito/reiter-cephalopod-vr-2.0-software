@@ -1,0 +1,260 @@
+{
+  "timestamp_utc": "2026-10-26T09:10:59.481696+00:00",
+  "source_revision": "a28ed14492a5fa9ef1c0c75e6c2c2687846aa19d",
+  "source_sha256": {
+    "src/cephvr/shared/pixels/scaling.py": "166f9b5644f9b06ec4c295f3d91e4ff96780fcd2a482a836b0e2e227f21006c6",
+    "src/cephvr/shared/pixels/preparer.py": "d0b33cdda6c0367a26b86a024af73f2702350c14308f18052d5136816ac60184"
+  },
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "2.4.4",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+  "maximum_intermediate": 4294868992,
+  "uint32_maximum": 4294967295,
+  "warmup_calls_per_dtype": 4,
+  "timed_rounds": 10,
+  "calls_per_round": 16,
+  "order": "alternate reference/alternative order each round",
+  "exhaustive_equality": [
+    {
+      "source_bits": 8,
+      "target_bits": 8,
+      "input_values": 256,
+      "output_sha256": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880"
+    },
+    {
+      "source_bits": 8,
+      "target_bits": 10,
+      "input_values": 256,
+      "output_sha256": "0d5093a22dbd2cb7c83f0ec093d8e48d68b62c83e4caa9c0519c7cb1489bf4af"
+    },
+    {
+      "source_bits": 8,
+      "target_bits": 16,
+      "input_values": 256,
+      "output_sha256": "f393097e80ec38db493eb054a0886181eb2c0e8cf7b5cdf1de392fbe94b0d1f5"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "869938ee80b05e83543d70283406e027c34859baed89de7cdfdf63a373fa5778"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "96e812d54ab33c45b21c1825d87cc24bd43861546f9c7cd364fbf4b07d0cade9"
+    },
+    {
+      "source_bits": 10,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "8eb27ff3c9acaa84b286d6e98401fe9bc7bc1afc12b8c26e861ea49cca3d284a"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "9389d3ce4a13dfbb9b8a88abe2f2167ea0baf5dacf502e8092b525c0d6227c6e"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "051881624967a2043183113a5f3b74b381c5e676a5bdf40d8a7770ece6ef0c49"
+    },
+    {
+      "source_bits": 12,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "6b6f29702ab4a077eb7c6deabcc514ccd1b5aa7b156e7c219ba648eaf4438b58"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 8,
+      "input_values": 65536,
+      "output_sha256": "5fad0004b724e6658d704fba464e470073452e50be14857a7a244f137e40eed0"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 10,
+      "input_values": 65536,
+      "output_sha256": "9717cd766c1028c3567b228c10b619129ab7e936c0a5f2a799ca160117ae4e4c"
+    },
+    {
+      "source_bits": 16,
+      "target_bits": 16,
+      "input_values": 65536,
+      "output_sha256": "68e419472d25e0b85e9917ccf692fd58245c5e95e9a46f07d1df81d2e9da246b"
+    }
+  ],
+  "timings": [
+    {
+      "shape": [
+        1080,
+        1920
+      ],
+      "source_bits": 16,
+      "target_bits": 8,
+      "uint64": {
+        "scratch_bytes": 16588800,
+        "samples_ms": [
+          2.38313125,
+          2.38000625,
+          2.33235,
+          2.43193125,
+          2.444275,
+          2.49569375,
+          2.41005,
+          2.48723125,
+          2.426425,
+          2.44599375
+        ],
+        "median_ms": 2.429178125
+      },
+      "uint32": {
+        "scratch_bytes": 8294400,
+        "samples_ms": [
+          1.86540625,
+          1.86076875,
+          1.86430625,
+          1.84501875,
+          1.90079375,
+          1.88205625,
+          1.97558125,
+          1.90233125,
+          1.94135,
+          1.93176875
+        ],
+        "median_ms": 1.891425
+      },
+      "median_time_reduction_percent": 22.1372454932674
+    },
+    {
+      "shape": [
+        1080,
+        1920
+      ],
+      "source_bits": 12,
+      "target_bits": 10,
+      "uint64": {
+        "scratch_bytes": 16588800,
+        "samples_ms": [
+          2.9209125,
+          3.31361875,
+          2.96305,
+          2.8828375,
+          2.81555,
+          2.83653125,
+          2.78039375,
+          2.8110375,
+          2.78479375,
+          2.8546125
+        ],
+        "median_ms": 2.845571875
+      },
+      "uint32": {
+        "scratch_bytes": 8294400,
+        "samples_ms": [
+          2.3739375,
+          2.376,
+          2.25848125,
+          2.26270625,
+          2.2575,
+          2.2271875,
+          2.25085625,
+          2.21825625,
+          2.229875,
+          2.2205875
+        ],
+        "median_ms": 2.254178125
+      },
+      "median_time_reduction_percent": 20.782948945895097
+    },
+    {
+      "shape": [
+        1024,
+        1280,
+        3
+      ],
+      "source_bits": 12,
+      "target_bits": 16,
+      "uint64": {
+        "scratch_bytes": 31457280,
+        "samples_ms": [
+          4.76815625,
+          4.93166875,
+          4.70716875,
+          4.98035,
+          4.73218125,
+          4.99706875,
+          4.734825,
+          4.86551875,
+          4.73915,
+          5.0421
+        ],
+        "median_ms": 4.8168375
+      },
+      "uint32": {
+        "scratch_bytes": 15728640,
+        "samples_ms": [
+          3.67941875,
+          3.60215,
+          3.67930625,
+          3.6405,
+          3.671925,
+          3.650325,
+          3.6757875,
+          3.6565375,
+          3.66103125,
+          3.65575625
+        ],
+        "median_ms": 3.658784375
+      },
+      "median_time_reduction_percent": 24.041772739894174
+    },
+    {
+      "shape": [
+        480,
+        640
+      ],
+      "source_bits": 8,
+      "target_bits": 16,
+      "uint64": {
+        "scratch_bytes": 2457600,
+        "samples_ms": [
+          0.3070125,
+          0.3174875,
+          0.3126125,
+          0.3063875,
+          0.31613125,
+          0.31153125,
+          0.31178125,
+          0.3115125,
+          0.3141,
+          0.30996875
+        ],
+        "median_ms": 0.31165624999999997
+      },
+      "uint32": {
+        "scratch_bytes": 1228800,
+        "samples_ms": [
+          0.257375,
+          0.25960625,
+          0.30985,
+          0.27293125,
+          0.2580625,
+          0.267075,
+          0.2849125,
+          0.25553125,
+          0.26969375,
+          0.2684125
+        ],
+        "median_ms": 0.26774375
+      },
+      "median_time_reduction_percent": 14.090043116414307
+    }
+  ],
+  "limitations": "CPU synthetic scaling only; no SDK, camera, GPU, native viewer, recording or rig workload. uint32 is a review alternative and is not integrated."
+}

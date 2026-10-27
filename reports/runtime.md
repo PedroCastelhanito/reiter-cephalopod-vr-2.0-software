@@ -1,5 +1,111 @@
 # Controller and supervisor status
 
+## Hierarchical audit — 2026-10-26/27
+
+`repo-hierarchy-audit-oct26`: Astra independently reviewed consequential choices
+and the final source diff; Sol investigated callers/performance and Luna implemented
+bounded cleanup. Under [ARCH-002](../architecture.md#arch-002), removed an unused
+frame-log line counter, a duplicate renderer resource reference (resources remain
+owned by `_sessions`), an unreachable inner start-time guard and redundant exception
+types covered by `Exception`. No policy, deadlines, output semantics or dependencies
+changed. Focused tests: controller58, acquisition95, rendering113 (6 excluded).
+Final repository Ruff/format (1023 files), Win32 mypy (871 source files),
+boundaries760/zero and whitespace pass. Vulture80 retains nine generated/native
+callback/test-interface advisories; none is a verified removable definition.
+Sandboxed controller tests stalled in Windows asyncio socketpair initialization;
+the loopback-enabled rerun passed. Broad offscreen GUI:1085 passed before the final
+paint fix; final paint regression:6 passed across3 themes/two sizes. Nongui local:
+2688 passed,5 skipped,3 subtests. Existing boundary size advisories retain their
+cohesive-owner exceptions; no new responsibilities or dependencies were added.
+
+Oct27 native inspection covers all main navigation pages, four Devices tabs,
+three Projectors subsections and four Tracking subsections. Camera role popup
+opens/dismisses with assignment intact; this does not explain the original report.
+COM8 connection reports protocol6, outputs stopped. Connect all opens both configured
+cameras; Monitor reports30/60fps sources and approximately20fps previews. Video Off
+reflows successfully. Tracking image remains black; physical cause is unresolved.
+No optical/DPI or exhaustive per-control acceptance is claimed. Initial desktop
+capture approval timed out; refreshed selection/activation enabled inspection.
+
+Fixed Per-projector mini polar-plot Back/−90°/Waiting-for-trial overlap by placing
+the existing footer below its axis label (G02); six final-source tests check real
+transformed text bounds/non-clipping. Fresh native activation timed out twice, so
+visual retest remains pending. Camera windows persisting over Protocol/Configure
+violate G01's existing leaving-Dashboard/runtime-layout hide/restore rule; their
+contract repair remains below. Protocol Trial preview opens/plays/closes successfully.
+[Interaction coverage and exclusions](runtime-evidence-2026-10-26/hierarchy-audit/gui-observations.md).
+
+The newly noticed emergency `emergency-1028181421275800-c73b3087-8fa7-40bd-ae7b-d05f4fa3727c.json`
+belongs to prior controller8799a1cb, at18:08:59JST Oct26, before audit launches at
+18:09:48/18:10:21. Its CHILD_EXITED record lacks child/cause detail; no current-patch
+regression is established. Retain it with the unresolved exit-diagnostic work.
+
+### Code to review / implement
+
+- Manual preview owner-release cleanup attempts to resume the remaining external
+  camera after the MCU has entered its releasing fence. That ON is correctly
+  rejected. Proposed repair must stop the whole retired owner set without resuming
+  it and retain already-confirmed exact ring-release evidence across cleanup retry;
+  never relax the MCU fence or accept generic missing proof. First conflict is
+  source-established; the second-stage rejected packet/retry chain needs reproduction.
+
+- Reproduced camera page-hide defect under existing G01: native owner follows the
+  visible main HWND, so hiding its Qt slot cannot suppress the camera window.
+  Proposed temporary display-suppression hint on the existing placement/update-only
+  path needs observer authority and stale-update review. Preserve capture, logical
+  Show state, manual placement and X-close identity. No protocol change made.
+
+- Proposed uint32 pixel-scaling scratch halves that buffer;12 exhaustive equality
+  cases pass and synthetic scaler timings improve14–24%. Production unchanged;
+  the8-to8 preview fast path bypasses scaling. [Method/results](runtime-evidence-2026-10-26/hierarchy-audit/pixel-benchmark/context.md).
+- Continuous acquisition remains accepted design awaiting coding authorization;
+  camera receive-rate telemetry and remaining device-layout promotion need their
+  owning contract/implementation work. Existing TODO entries remain authoritative.
+- Embedded-preview integration and off-GL-thread readback remain owner-deferred;
+  this audit does not promote either alternative. Physical geometry, darkness and
+  optical/electrical timing require measurements, not speculative code changes.
+- Per-trial `RecordingMetrics` accumulates queue/slot/readback observations but
+  current production code does not serialize its snapshot. Consider one bounded
+  terminal diagnostic export before attributing startup stalls or changing GL
+  ownership. Historical exported metrics are not evidence for this current run.
+
+Evidence directory: [hierarchy-audit](runtime-evidence-2026-10-26/hierarchy-audit/).
+
+Oct27 attempted30s recorded dummy was rejected before Setup by E05's60s minimum.
+The harness offline plan had bypassed full model validation; this is a harness
+error, not a runtime defect. Initial/rejection snapshots have identical controller
+generation, configuration revision/values, session and trial; every saved-file hash
+remains unchanged. During subsequent CLI lease release, manual preview cleanup
+failed with MCU unavailable/pending, then the worker's missing exact ring-release
+evidence was rejected. The supervisor shut down controller e6bd99f1 under E08.
+[Emergency](emergency-1081805269636400-75871685-c23f-4725-a030-1e1df97108a8.json)
+and [attempt log](runtime-evidence-2026-10-26/hierarchy-audit/native-recorded-30s-1.log)
+are retained. Exact failed-generation process-absence receipt permits a fresh,
+isolated Setup-owned run; this does not resolve the manual-preview failure.
+
+Fresh60s-1 rejected Setup because the harness had not created its recording root;
+exact runtime restoration and all11 file checks passed. The corrected60s-2 run
+completes exactly60 seconds,7/7 artifacts Closed, NewSession/restoration and normal
+Shutdown with all-owned-processes-absent receipt. Original pre-audit GUI/config JSON
+bytes were restored after shutdown. Three full decodes match source/video logs:
+Behavior1797, Tracking3596, stimulus3554; no reported invalid/capacity-drop/duplicate
+frames. Counts below nominal rates do not prove source loss or zero missed displays.
+Stimulus software evaluation has7 gaps>25ms (6>50ms), max276.4823ms, all in the
+first0.932s; later gaps stay≤25ms in this blank-scene trial. Attribution remains open
+without current stage metrics; physical/representative-scene timing is unvalidated.
+[Native assessment](runtime-evidence-2026-10-26/hierarchy-audit/native-recorded-60s-2/assessment.json).
+
+Synthetic unpaced encoding on the verified RTX2080Ti completed baseline, double-rate
+and quadruple-rate cases: nine videos fully decoded,5250 frames matched. Baseline
+and double-rate finished above demand; quadruple-rate achieved only75.6/147.6/193.7fps
+against120/240/240fps demands. This establishes a synthetic overload boundary, not
+full-pipeline headroom or physical timing. No alternative was integrated.
+[Encoder assessment](runtime-evidence-2026-10-26/hierarchy-audit/encoding-assessment.json).
+
+Cleanup removed77 verified cache directories (1434 files,71,448,959 bytes), retaining
+recordings, emergency reports and diagnostic evidence. One exact audit-owned hung
+sandbox pytest process was terminated; unrelated prior launchers were preserved.
+
 ## Commit preparation — 2026-10-26
 
 `repo-commit-sync-oct26`: retained current G01/G02/A10 implementation and dated
@@ -8271,7 +8377,7 @@ Historical workflow observations below retain their original scope.
 | Review/camera recording loss | Profile bounded drain/padding/copy behavior, test backpressure and prepare measured changes (V12/V28/A07). The recording owner still waits up to5ms between unresolved writes. This is a cost, not proven NVENC saturation. | Combined Windows/GPU/camera throughput, zero-loss and optical timing. |
 | Calibration loss and stale ordinary diagnostic bundle | Trace actual save/restore paths and validate regenerated all-VSync assets (G01/V01). Current normal-close tests pass; reported loss has no established root cause. | Actual closure-path reproduction and physical calibration. |
 | Windows projector overflow, hover lookup and native picker exception-hook failures | Improve portable layout/lifetime coverage and inspect source (G01/G02). Local layout passes do not resolve Windows failures. | Windows native/DPI/pytest compatibility. |
-| Long image protocols | Complete image readiness/lookahead/miss contracts; accepted bounded residency remains unimplemented (V04/V11). Critical miss behavior still requires an owner choice. | Native memory/performance and full-load acceptance after implementation. |
+| Long image protocols | Historical Oct13 status, superseded by [V04](../docs/architecture/visual_stimulus.md#v04) revision20 and [Oct22 evidence](#rig-checks-oct22); bounded residency and its miss policy are implemented. | Optical timing and representative full-load acceptance remain open. |
 
 Local generated bindings were stale: controller and ManagedGui imports failed on
 `MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING`, already present in authoritative contracts.

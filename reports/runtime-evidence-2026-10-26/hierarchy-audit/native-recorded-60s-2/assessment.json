@@ -1,0 +1,240 @@
+{
+  "session_id": "55f10639-ac99-4cd0-a4ae-e534bfece2ca",
+  "trial_id": "603a1eea-c920-4cd5-b64d-1db4fc421398",
+  "duration_ns": 60000000000,
+  "closed_artifacts": 7,
+  "cleanup_confirmed": true,
+  "cameras": {
+    "behavioral": {
+      "source_frames": 1797,
+      "real_video_frames": 1797,
+      "decoded_frames": 1797,
+      "source_to_video_exact": true,
+      "invalid_images": 0,
+      "dropped_sources": 0,
+      "duplicate_frames": 0,
+      "native_counter_first_last": [
+        0,
+        1796
+      ],
+      "native_counters_contiguous": true,
+      "first_receipt_after_start_ms": 73.0615,
+      "last_receipt_before_cutoff_ms": 16.3281,
+      "median_receipt_gap_ms": 33.3538,
+      "maximum_receipt_gap_ms": 36.3041,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 1082139900905700,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 1797,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 1797,
+          "selected_source_frame_count": 1797,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 1082079908436100,
+          "on_acknowledged_monotonic_ns": 1082079939863300,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 1082139916373100,
+          "off_acknowledged_monotonic_ns": 1082139947342000
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 1798
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    "tracking": {
+      "source_frames": 3596,
+      "real_video_frames": 3596,
+      "decoded_frames": 3596,
+      "source_to_video_exact": true,
+      "invalid_images": 0,
+      "dropped_sources": 0,
+      "duplicate_frames": 0,
+      "native_counter_first_last": [
+        0,
+        3595
+      ],
+      "native_counters_contiguous": true,
+      "first_receipt_after_start_ms": 33.0283,
+      "last_receipt_before_cutoff_ms": 6.2459,
+      "median_receipt_gap_ms": 16.68,
+      "maximum_receipt_gap_ms": 30.683,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 1082139900905700,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 3596,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 3596,
+          "selected_source_frame_count": 3596,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 1082079908436100,
+          "on_acknowledged_monotonic_ns": 1082079939863300,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 1082139916373100,
+          "off_acknowledged_monotonic_ns": 1082139947342000
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 3597
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    }
+  },
+  "stimulus": {
+    "render_groups": 3554,
+    "first_evaluation_after_start_ms": 5.6767,
+    "last_evaluation_before_cutoff_ms": 2.0769,
+    "median_evaluation_gap_ms": 16.655,
+    "maximum_evaluation_gap_ms": 276.4823,
+    "evaluation_gaps_over_25ms": 7,
+    "evaluation_gaps_over_50ms": 6,
+    "evaluation_gaps_over_25ms_samples": [
+      {
+        "previous_group": 0,
+        "next_group": 1,
+        "previous_group_after_start_s": 0.0056767,
+        "gap_ms": 82.1563
+      },
+      {
+        "previous_group": 2,
+        "next_group": 3,
+        "previous_group_after_start_s": 0.1068154,
+        "gap_ms": 263.6217
+      },
+      {
+        "previous_group": 3,
+        "next_group": 4,
+        "previous_group_after_start_s": 0.3704371,
+        "gap_ms": 55.8245
+      },
+      {
+        "previous_group": 4,
+        "next_group": 5,
+        "previous_group_after_start_s": 0.4262616,
+        "gap_ms": 276.4823
+      },
+      {
+        "previous_group": 5,
+        "next_group": 6,
+        "previous_group_after_start_s": 0.7027439,
+        "gap_ms": 70.1092
+      },
+      {
+        "previous_group": 6,
+        "next_group": 7,
+        "previous_group_after_start_s": 0.7728531,
+        "gap_ms": 113.7218
+      },
+      {
+        "previous_group": 8,
+        "next_group": 9,
+        "previous_group_after_start_s": 0.8984176,
+        "gap_ms": 32.5883
+      }
+    ],
+    "maximum_individual_submission_ms": 13.943,
+    "capture_observations": {
+      "admitted": 3554,
+      "transfer_complete": 3554,
+      "input_submitted": 3554
+    },
+    "submission_observations": {
+      "returned": 14216
+    },
+    "encoder_outcome": {
+      "kind": "encoder_outcome",
+      "admitted_count": 3554,
+      "input_submitted_count": 3554,
+      "capacity_drop_count": 0,
+      "selected_real_count": 3554,
+      "same_slot_omission_count": 0,
+      "encoded_frame_count": 3554,
+      "duplicate_frame_count": 0,
+      "final_input_group_id": 3553,
+      "cutoff_host_ns": 1082139900905700,
+      "exit_code": 0,
+      "eof_sent": true,
+      "drain_confirmed": true
+    },
+    "completion": {
+      "kind": "completion",
+      "cutoff_host_ns": 1082139900905700,
+      "last_group_id": 3553,
+      "state_count": 3554,
+      "submission_attempt_count": 14216,
+      "capture_admission_count": 3554,
+      "capture_drop_count": 0,
+      "same_slot_omission_count": 0,
+      "unresolved_attempt_count": 0,
+      "outcome": "completed"
+    }
+  },
+  "videos": {
+    "protocol-data\\RIGCHECK_090716_behavioral_cam.mp4": {
+      "width": 2456,
+      "height": 2568,
+      "pix_fmt": "yuvj444p",
+      "nb_read_frames": "1797",
+      "avg_frame_rate": "30/1",
+      "duration": "59.900000"
+    },
+    "protocol-data\\RIGCHECK_090716_stimulus.mp4": {
+      "width": 1280,
+      "height": 720,
+      "pix_fmt": "yuvj444p",
+      "nb_read_frames": "3554",
+      "avg_frame_rate": "60/1",
+      "duration": "59.233333"
+    },
+    "protocol-data\\RIGCHECK_090716_tracking_cam.mp4": {
+      "width": 1588,
+      "height": 1344,
+      "pix_fmt": "yuvj420p",
+      "nb_read_frames": "3596",
+      "avg_frame_rate": "60/1",
+      "duration": "59.933333"
+    }
+  },
+  "unavailable": [
+    "peak capture slots",
+    "readback stage maxima",
+    "queue stage maxima"
+  ],
+  "limits": "Blank60s/two-camera current-settings check only. Source counts are received in-interval images, not nominal pulse guarantees. Software evaluation gaps are not optical timing or stall attribution. No Tracking processing or representative-scene/full-load acceptance. Stage/slot metrics are not exported by current runtime."
+}

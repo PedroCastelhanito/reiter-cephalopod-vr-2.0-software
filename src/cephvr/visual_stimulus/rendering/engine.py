@@ -73,7 +73,6 @@ class RendererEngine:
         self._display: Any | None = None
         self._display_observation: DisplayInitialization | None = None
         self._prepared: PreparedSession | None = None
-        self._prepared_resources: object | None = None
         self._sessions: dict[str, tuple[PreparedSession, object]] = {}
         self._trial_id: str | None = None
         self._start_ns: int | None = None
@@ -319,14 +318,13 @@ class RendererEngine:
             resources = self._resource_provider(trial_id)
         existing = self._sessions.get(trial_id)
         if existing is not None and existing[0].artifact == artifact:
-            self._prepared, self._prepared_resources = existing
+            self._prepared = existing[0]
             return existing[0]
         if resources is None:
             raise RendererStateError(
                 "prepared trial requires its retained prepared resources"
             )
         self._port.prepare_trial(artifact, resources)
-        self._prepared_resources = resources
         self._prepared = PreparedSession.from_artifact(artifact)
         self._sessions[trial_id] = (self._prepared, resources)
         return self._prepared
@@ -336,7 +334,7 @@ class RendererEngine:
         selected = self._sessions.get(trial_id)
         if selected is None or not trial_id or start_ns < 0:
             raise RendererStateError("prepared trial and a valid start are required")
-        self._prepared, self._prepared_resources = selected
+        self._prepared = selected[0]
         if self._trial_id is not None and not self._stopped:
             raise RendererStateError("the preceding trial has not stopped")
         self._trial_id, self._start_ns = trial_id, start_ns
@@ -657,8 +655,6 @@ class RendererEngine:
         ):
             raise RendererStateError("cutoff precedes the last rendered update")
         if cutoff_ns is not None:
-            if self._start_ns is None:
-                raise RendererStateError("active trial has no retained start time")
             if cutoff_ns < self._start_ns:
                 raise RendererStateError("cutoff precedes trial start")
             self._apply_due_boundaries(cutoff_ns)
@@ -690,7 +686,6 @@ class RendererEngine:
     def cleanup(self, deadline_ns: int | None = None) -> ResourceReleaseReport:
         self._assert_owner()
         self._prepared = None
-        self._prepared_resources = None
         self._sessions.clear()
         self._trial_id = None
         self._start_ns = None

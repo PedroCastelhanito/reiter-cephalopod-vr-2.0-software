@@ -11742,3 +11742,69 @@ origin is https://github.com/PedroCastelhanito/reiter-cephalopod-vr-2.0-software
 Task moved to Blocked pending that approval; this status-only follow-up records the
 actual outcome without marking synchronization complete. Hardware/native acceptance
 and historical missing screenshots remain unchanged.
+
+### 2026-10-26 - [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [shared] Begin hierarchical repository audit
+
+`repo-hierarchy-audit-oct26`: owner requests source/TODO audit, safe fixes, GUI
+interaction, bounded dummy rendering/encoding overload and alternative benchmarks,
+issue records, cleanup and commit/sync. Astra reviews consequential choices, Sol
+investigates source and Luna handles focused review/fixes. PC and connected-rig
+permission explicitly granted before desktop actions. Baseline a28ed144, clean
+working tree. Behavior/logic changes and deferred implementations require owner
+decision; experiment data, calibration and firmware remain protected. No new test
+or rig result is claimed by this start record.
+
+### 2026-10-27 - [repo] [gui] [controller] [acquisition] [visual_stimulus] [shared] Audit cleanup and initial native inspection
+
+`repo-hierarchy-audit-oct26`: three-source cleanup removes dead counter/reference,
+unreachable guard and redundant catch types; Astra final review finds no issue.
+266 focused tests pass,6 excluded; Ruff/format, Win32mypy3, boundaries760/zero,
+whitespace pass. Controller sandbox socketpair hangs resolved with loopback access.
+Isolated uint32 scratch benchmark:12 exhaustive equality cases,14–24% synthetic
+scaler reduction and half scratch; retained for owner review, not integrated.
+Native navigation/popups, COM8 protocol6 check, two-camera Connect and Monitor
+Video-Off reflow inspected; sources30/60fps, previews approximately20fps. Black
+Tracking scene unresolved. No exhaustive GUI/optical/DPI acceptance claimed.
+Prior-generation CHILD_EXITED report predates audit launches; preserved separately.
+Runtime report records scope, evidence and owner decisions; workload tests pending.
+
+Native follow-up: Per-projector plot direction/status overlap reproduced in Standard;
+camera windows persist over Protocol after Video Off/On and individual Show.
+Added `monitor-small-plot-label-overlap` and `preview-page-hide-audit` for owning
+reproduction/intent review. Trial preview Open/Play/Close passes; no complete
+per-control acceptance claimed. GUI offscreen suite still running before load tests.
+
+GUI suite completed1085 passes in324.79s after elevated default-temp/loopback access;
+sandbox attempt could not create xdist external temp directories. Plot overlap has
+a minimal footer-position fix and initial owning regression pass, broader checks
+pending. Camera page-hide needs explicit temporary-suppression transport/authority
+review and remains unimplemented. Recorded30s harness attempt rejected before Setup
+by accepted60s minimum; exact snapshots/configuration bytes unchanged. On CLI lease
+release, PREVIEW_STOP_FAILED/MCU pending preceded rejected exact-ring release proof
+and E08 shutdown. Added `preview-lease-release-ring-proof`; retain new emergency
+and stop further native load pending diagnosis. No recording/performance pass.
+
+### 2026-10-27 - [repo] [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [shared] Final audit validation and cleanup
+
+`repo-hierarchy-audit-oct26`: after exact failed-generation exit proof and harness
+validation repair, fresh60s-1 rejects absent recording root safely; corrected60s-2
+completes7/7 closed artifacts,1797/3596/3554 fully decoded camera/stimulus frames,
+NewSession, exact configuration restoration and normal Shutdown with owned-process
+absence. Three pre-audit settings JSONs restored byte-exact. This supersedes the
+previous pending-workload status, not the unresolved manual-preview cleanup defect.
+Stimulus startup has seven gaps>25ms, max276.4823ms; no physical timing pass claimed.
+RTX2080Ti synthetic baseline/double/quadruple cases fully decode nine videos/5250
+frames; quadruple demand exceeds throughput. No quality/policy or alternative adopted.
+
+Final checks:1085 offscreen GUI passes precede footer fix; six final footer cases
+pass. Final nongui2688 passed,5 skipped,3 subtests. Repository Ruff/format1023,
+Win32mypy871, boundaries760/zero and whitespace pass. Nine Vulture80 advisory
+signatures/generated imports retained. Astra reviewed final four-source change.
+Native final visual retest blocked by two activation timeouts; exhaustive controls,
+DPI, black Tracking scene and physical timing remain open. TODO/report triage retains
+behavior changes and uint32 scratch/metrics-export proposals for owner decision.
+
+Terminated one verified audit-owned hung sandbox pytest process. Removed77 verified
+in-repository cache directories,1434 files/71,448,959 bytes; all77 now absent.
+Preserved experiment recordings, unique diagnostic/emergency evidence, environment,
+configuration and unrelated prior launchers. Commit/sync follows final diff review.

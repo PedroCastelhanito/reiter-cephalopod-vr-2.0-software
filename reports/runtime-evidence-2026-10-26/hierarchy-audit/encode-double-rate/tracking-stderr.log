@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=1588x1344:rate=120.0,format=gray':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, gray, 1588x1344 [SAR 1:1 DAR 397:336], 120 fps, 120 tbr, 120 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\hierarchy-audit\encode-double-rate\tracking.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High) (avc1 / 0x31637661), yuv420p(pc, bt709/unknown/unknown, progressive), 1588x1344 [SAR 1:1 DAR 397:336], q=2-31, 120 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   47 fps=0.0 q=17.0 size=       0KiB time=00:00:00.39 bitrate=   0.6kbits/s speed=0.775x elapsed=0:00:00.50    frame=  119 fps=117 q=17.0 size=       0KiB time=00:00:00.99 bitrate=   0.2kbits/s speed=0.971x elapsed=0:00:01.02    frame=  191 fps=124 q=17.0 size=       0KiB time=00:00:01.59 bitrate=   0.1kbits/s speed=1.03x elapsed=0:00:01.53    frame=  265 fps=129 q=17.0 size=    9472KiB time=00:00:02.20 bitrate=35137.3kbits/s speed=1.07x elapsed=0:00:02.05    frame=  338 fps=131 q=17.0 size=    9472KiB time=00:00:02.81 bitrate=27548.5kbits/s speed=1.09x elapsed=0:00:02.57    frame=  411 fps=133 q=17.0 size=    9472KiB time=00:00:03.42 bitrate=22655.4kbits/s speed=1.11x elapsed=0:00:03.08    frame=  484 fps=134 q=17.0 size=    9472KiB time=00:00:04.03 bitrate=19238.4kbits/s speed=1.12x elapsed=0:00:03.60    frame=  583 fps=141 q=17.0 size=   19200KiB time=00:00:04.85 bitrate=32374.6kbits/s speed=1.18x elapsed=0:00:04.12    [out#0/mp4 @ 000001320a8bcf80] video:23023KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.015423%
+frame=  600 fps=144 q=17.0 Lsize=   23026KiB time=00:00:05.00 bitrate=37726.5kbits/s speed= 1.2x elapsed=0:00:04.15    

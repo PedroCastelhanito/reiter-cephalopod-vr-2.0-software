@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=2456x2568:rate=120.0,format=rgb24':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgb24, 2456x2568 [SAR 1:1 DAR 307:321], 120 fps, 120 tbr, 120 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\hierarchy-audit\encode-quadruple-rate\behavioral.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 2456x2568 [SAR 1:1 DAR 307:321], q=2-31, 120 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   19 fps=0.0 q=37.0 size=       0KiB time=00:00:00.15 bitrate=   1.4kbits/s speed=0.306x elapsed=0:00:00.51    frame=   55 fps= 53 q=40.0 size=       0KiB time=00:00:00.45 bitrate=   0.5kbits/s speed=0.444x elapsed=0:00:01.03    frame=   92 fps= 60 q=40.0 size=       0KiB time=00:00:00.76 bitrate=   0.3kbits/s speed=0.499x elapsed=0:00:01.53    frame=  129 fps= 63 q=40.0 size=       0KiB time=00:00:01.07 bitrate=   0.2kbits/s speed=0.524x elapsed=0:00:02.05    frame=  166 fps= 65 q=40.0 size=       0KiB time=00:00:01.38 bitrate=   0.2kbits/s speed=0.539x elapsed=0:00:02.56    frame=  203 fps= 66 q=40.0 size=       0KiB time=00:00:01.69 bitrate=   0.1kbits/s speed=0.548x elapsed=0:00:03.08    frame=  241 fps= 67 q=39.0 size=       0KiB time=00:00:02.00 bitrate=   0.1kbits/s speed=0.558x elapsed=0:00:03.60    frame=  278 fps= 67 q=40.0 size=   34304KiB time=00:00:02.31 bitrate=121303.0kbits/s speed=0.562x elapsed=0:00:04.11    frame=  315 fps= 68 q=40.0 size=   34304KiB time=00:00:02.62 bitrate=107054.7kbits/s speed=0.567x elapsed=0:00:04.63    frame=  352 fps= 68 q=40.0 size=   34304KiB time=00:00:02.93 bitrate=95801.8kbits/s speed=0.569x elapsed=0:00:05.15    frame=  389 fps= 69 q=40.0 size=   34304KiB time=00:00:03.24 bitrate=86689.5kbits/s speed=0.572x elapsed=0:00:05.66    frame=  430 fps= 70 q=40.0 size=   34304KiB time=00:00:03.58 bitrate=78423.8kbits/s speed=0.579x elapsed=0:00:06.18    frame=  484 fps= 72 q=40.0 size=   34304KiB time=00:00:04.03 bitrate=69674.0kbits/s speed=0.602x elapsed=0:00:06.70    frame=  539 fps= 75 q=40.0 size=   64768KiB time=00:00:04.49 bitrate=118125.3kbits/s speed=0.622x elapsed=0:00:07.21    frame=  594 fps= 77 q=40.0 size=   64768KiB time=00:00:04.95 bitrate=107187.8kbits/s speed=0.64x elapsed=0:00:07.73    [out#0/mp4 @ 0000015a98dff740] video:77067KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.004614%
+frame=  600 fps= 77 q=40.0 Lsize=   77070KiB time=00:00:05.00 bitrate=126271.7kbits/s speed=0.642x elapsed=0:00:07.79    

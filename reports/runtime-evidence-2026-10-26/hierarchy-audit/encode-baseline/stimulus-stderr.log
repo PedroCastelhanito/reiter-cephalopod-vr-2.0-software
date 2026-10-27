@@ -1,0 +1,15 @@
+Input #0, lavfi, from 'testsrc2=size=1280x720:rate=60.0,format=rgba':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, rgba, 1280x720 [SAR 1:1 DAR 16:9], 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-26\hierarchy-audit\encode-baseline\stimulus.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 60 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   67 fps=0.0 q=29.0 size=       0KiB time=00:00:01.11 bitrate=   0.2kbits/s speed=2.18x elapsed=0:00:00.51    frame=  172 fps=167 q=29.0 size=       0KiB time=00:00:02.86 bitrate=   0.1kbits/s speed=2.78x elapsed=0:00:01.03    frame=  268 fps=173 q=31.0 size=    9216KiB time=00:00:04.46 bitrate=16902.5kbits/s speed=2.89x elapsed=0:00:01.54    [out#0/mp4 @ 00000212656fa4c0] video:10917KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.020610%
+frame=  300 fps=176 q=30.0 Lsize=   10920KiB time=00:00:05.00 bitrate=17890.5kbits/s speed=2.93x elapsed=0:00:01.70    

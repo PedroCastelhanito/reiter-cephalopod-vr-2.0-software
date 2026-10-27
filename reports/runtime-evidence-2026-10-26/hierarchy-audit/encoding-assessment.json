@@ -1,0 +1,113 @@
+{
+  "candidate_sha256": "c4c04f1071c07a0ed0517ec671b2ef95227f3a19a37ec58b2f4c5011b87b0e4f",
+  "gpu": {
+    "ordinal": 1,
+    "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+    "name": "NVIDIA GeForce RTX 2080 Ti"
+  },
+  "runs": 3,
+  "validated_videos": 9,
+  "total_decoded_frames": 5250,
+  "rows": [
+    {
+      "run": "encode-baseline",
+      "source": "behavioral",
+      "target_fps": 30.0,
+      "measured_frames_per_elapsed_s": 66.08033439514423,
+      "target_ratio": 2.2026778131714746,
+      "requested_and_decoded_frames": 150,
+      "elapsed_s": 2.2699642998632044,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-baseline",
+      "source": "tracking",
+      "target_fps": 60.0,
+      "measured_frames_per_elapsed_s": 131.38001037340004,
+      "target_ratio": 2.189666839556667,
+      "requested_and_decoded_frames": 300,
+      "elapsed_s": 2.283452400006354,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-baseline",
+      "source": "stimulus",
+      "target_fps": 60.0,
+      "measured_frames_per_elapsed_s": 165.09263677076854,
+      "target_ratio": 2.7515439461794755,
+      "requested_and_decoded_frames": 300,
+      "elapsed_s": 1.8171616001054645,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-double-rate",
+      "source": "behavioral",
+      "target_fps": 60.0,
+      "measured_frames_per_elapsed_s": 71.88780097348564,
+      "target_ratio": 1.1981300162247606,
+      "requested_and_decoded_frames": 300,
+      "elapsed_s": 4.173169799847528,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-double-rate",
+      "source": "tracking",
+      "target_fps": 120.0,
+      "measured_frames_per_elapsed_s": 141.25494186465536,
+      "target_ratio": 1.1771245155387946,
+      "requested_and_decoded_frames": 600,
+      "elapsed_s": 4.247638999950141,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-double-rate",
+      "source": "stimulus",
+      "target_fps": 120.0,
+      "measured_frames_per_elapsed_s": 184.89942997466707,
+      "target_ratio": 1.5408285831222257,
+      "requested_and_decoded_frames": 600,
+      "elapsed_s": 3.2450072998180985,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-quadruple-rate",
+      "source": "behavioral",
+      "target_fps": 120.0,
+      "measured_frames_per_elapsed_s": 75.63972295635887,
+      "target_ratio": 0.6303310246363238,
+      "requested_and_decoded_frames": 600,
+      "elapsed_s": 7.932340000057593,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-quadruple-rate",
+      "source": "tracking",
+      "target_fps": 240.0,
+      "measured_frames_per_elapsed_s": 147.59425242876105,
+      "target_ratio": 0.6149760517865044,
+      "requested_and_decoded_frames": 1200,
+      "elapsed_s": 8.130397900007665,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    },
+    {
+      "run": "encode-quadruple-rate",
+      "source": "stimulus",
+      "target_fps": 240.0,
+      "measured_frames_per_elapsed_s": 193.66206360248842,
+      "target_ratio": 0.8069252650103684,
+      "requested_and_decoded_frames": 1200,
+      "elapsed_s": 6.19636070006527,
+      "quality_filter_args_exact": true,
+      "all_exit_and_decode_checks_pass": true
+    }
+  ],
+  "limits": "Finite five-second frame counts, unpaced lavfi/filter/encoder jobs, three concurrent jobs per case; startup included and jobs finish at different times. Synthetic bf0/one-second keyframe/fragmented MP4 controls differ from production camera mux and durability. No camera, GL readback, pipe, representative scene, scientific or full-load headroom claim; 4x completes but misses requested real-time rates. Production codec/filter/quality arguments unchanged; no defaults integrated."
+}

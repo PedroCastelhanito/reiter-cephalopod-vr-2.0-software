@@ -1,0 +1,17 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "088663E88CB14B5E0A17126D71E0A05CB3E62BD52C11E5783D7914AECCD5C77C",
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\last_configuration.json"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "96632640D9D0B01550217CC592603E0FC8D1D4FD980DD4DF4C09F10E91F05D82",
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\review_draft.json"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "42FEA5AE434B608DCAFC312116AB07BF5ACBE3D0CA9529F70D4E923186012C46",
+    "Path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\runtime_gui.json"
+  }
+]

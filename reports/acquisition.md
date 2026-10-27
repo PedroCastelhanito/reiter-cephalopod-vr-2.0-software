@@ -1,5 +1,16 @@
 # Acquisition status
 
+Oct26/27 hierarchical audit removes only the unread `FrameLogWriter.line_count`;
+scientific frame counts, append checks and durability remain unchanged under A07
+and ARCH-002.95 owning tests pass, with Ruff/format/Win32mypy and boundaries checked.
+Two configured cameras connect natively on Oct27 (30/60Hz source readout, about20Hz
+preview); Tracking scene remains black. Fresh60s recorded trial closes all outputs;
+Behavior1797 and Tracking3596 frames fully decode and match source logs, with no
+reported invalid/capacity-drop/duplicate frames. This does not establish optical
+acceptance or zero source loss. Manual-preview lease release separately fails its
+MCU/ring cleanup proof; repair remains for owner review.
+[Current audit and review candidates](runtime.md#hierarchical-audit--2026-10-2627).
+
 Oct26 camera preview preparation is independent under A10rev73: each existing
 reader owns private copy, SDK conversion, channel order and viewport resampling;
 native window operations remain shared. One in-flight operation per viewer and

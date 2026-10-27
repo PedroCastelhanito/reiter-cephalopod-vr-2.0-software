@@ -1,5 +1,14 @@
 # Rig verification — outstanding checks
 
+- [ ] [gui] [acquisition] Verify the final motion-dial footer natively and complete
+  remaining per-control/DPI coverage after desktop activation recovers. Reproduce
+  manual-preview owner-release cleanup with exact ring evidence and page-hide
+  behavior after owner-approved repairs.
+- [ ] [visual_stimulus] Attribute the Oct27 startup evaluation gaps (max276.4823ms)
+  with current stage evidence and representative scenes; preserve physical timing
+  acceptance. The60s closed recording and synthetic encoder boundary do not close
+  this check. [Current audit](runtime.md#hierarchical-audit--2026-10-2627).
+
 <a id="camera-native-caption"></a>
 - [ ] [gui] [acquisition] After normal restart, verify camera icon-free native title colors
   across GUI themes, drag/resize/Snap and mixed-DPI placement. Verify either camera

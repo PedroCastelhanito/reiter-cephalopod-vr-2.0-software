@@ -25,10 +25,7 @@ from cephvr.controller.state import (
     LimitsState,
 )
 from cephvr.shared.deadlines import remaining_seconds
-from cephvr.shared.resources import (
-    ResourceCatalogueError,
-    validate_cleanup_fence_update,
-)
+from cephvr.shared.resources import validate_cleanup_fence_update
 
 ReportReceiver = Callable[
     [pb.LifecycleReport, int], Coroutine[Any, Any, pb.ReportReceipt]
@@ -376,7 +373,7 @@ class CleanupWorkflow:
                 return False
             attempt.registered_context = deepcopy(updated)
             return True
-        except (ResourceCatalogueError, TimeoutError, Exception):
+        except Exception:
             return False
 
     async def cancel_setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
