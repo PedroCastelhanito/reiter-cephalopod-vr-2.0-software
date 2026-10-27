@@ -12227,3 +12227,12 @@ loop-variable name. Both corrected without runtime behavior change; reruns pass.
 Evidence and provenance: reports/runtime-evidence-2026-10-27/rate-scaling/validation.json.
 Full-workload, optical/electrical alignment and physical DPI remain on rig checklist.
 Concurrent stimulus-authoring work is preserved outside this completed change.
+
+### 2026-10-27 - [repo] Completed rate/scaling synchronization
+
+Committed and pushed cc9a4a54 to the authorized origin/main repository. Temporary
+reconciliation/staging helpers were removed after checking workspace paths; no
+owned evidence-directory cache remains. Retained diagnostics/settings snapshots
+are versioned as approved; ignored scientific recordings remain local. Concurrent
+GUI/stimulus-authoring changes were preserved outside this commit. Staged Python
+syntax and whitespace checks pass; no force push or history rewrite was used.
