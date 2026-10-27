@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 
 from cephvr.acquisition.coordinator.commands import (
@@ -14,6 +15,10 @@ from cephvr.acquisition.coordinator.configuration_resolution import (
 )
 from cephvr.acquisition.coordinator.session_catalogue import SessionCatalogue
 from cephvr.acquisition.coordinator.session_preparation import SessionPreparation
+from cephvr.acquisition.coordinator.session_pulses import (
+    deliver_session_pulse_evidence,
+    session_off_failure,
+)
 from cephvr.acquisition.coordinator.session_tracking import SessionTrackingConfirmation
 from cephvr.acquisition.coordinator.session_validation import validate_setup_request
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
@@ -183,6 +188,7 @@ class SessionSetup:
             )
             await self._wait_worker_setup(records, deadline_ns)
             self._require_live_setup(session, deadline_ns)
+            await self.preparation.start_capture(session, deadline_ns)
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("camera worker Setup missed its original deadline")
@@ -369,7 +375,59 @@ class SessionSetup:
         else:
             session.cleanup_deadline_ns = min(session.cleanup_deadline_ns, deadline_ns)
         session.setup_cancelled = True
+        session.capture_started.set()
         session.resolution_confirmed.set()
+        if session.pulse_resolution is not None:
+            try:
+                await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Setup cancellation ON-boundary cancellation is unconfirmed"
+                )
+            roles = (
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
+                "trial_state",
+            )
+            issued_ns = self.clock()
+            connection_id = (
+                self.pulse.observation.connection_id
+                if self.pulse.observation is not None
+                else ""
+            )
+            try:
+                evidence = await self.serial.off(
+                    roles,
+                    scheduled_boundary_ns=None,
+                    stop_issued_ns=issued_ns,
+                    deadline_ns=deadline_ns,
+                )
+            except Exception as exc:
+                evidence = session_off_failure(
+                    roles,
+                    connection_id,
+                    issued_ns,
+                    mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT
+                    if isinstance(exc, TimeoutError)
+                    else mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+                )
+                logging.getLogger(__name__).exception(
+                    "Setup cancellation pulse stop remains unconfirmed"
+                )
+            try:
+                await deliver_session_pulse_evidence(
+                    session,
+                    self.workers.workers,
+                    evidence,
+                    deadline_ns=deadline_ns,
+                    lock=self.lock,
+                    clock=self.clock,
+                )
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Setup cancellation pulse stop remains unconfirmed"
+                )
         for record in tuple(self.workers.workers.values()):
             if record.launch.work.WhichOneof("work") != "session":
                 continue

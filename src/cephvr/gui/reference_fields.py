@@ -69,7 +69,8 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             image_control.setEnabled(not image.motion.custom.isChecked())
             image.motion.custom.toggled.connect(image_control.setDisabled)
     elif arena is not None:
-        result.extend(arena.cells)
+        if editor.tracking_available:
+            result.extend(arena.cells)
     elif looming is not None:
         unit = "mm" if "mm" in editor.units.text() else "°"
         result.extend(

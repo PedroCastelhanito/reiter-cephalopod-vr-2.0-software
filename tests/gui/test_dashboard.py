@@ -9155,10 +9155,13 @@ def test_spikeglx_sources_preserve_maps_and_follow_enablement(window: DashboardW
     assert not panel.add_input.isEnabled()
 
 
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
+@pytest.mark.parametrize("width", [1175, 720])
 def test_projector_config_tabs_keep_column_width_and_table_drafts(
-    window: DashboardWindow, app: QApplication
+    window: DashboardWindow, app: QApplication, style: str, width: int
 ):
-    window.resize(1175, 800)
+    window.appearance.select(style, persist=False)
+    window.resize(width, 800)
     window.page_buttons[2].click()
     window.devices.tabs.setCurrentIndex(2)
     panel = window.devices.projectors
@@ -9166,12 +9169,31 @@ def test_projector_config_tabs_keep_column_width_and_table_drafts(
     for index in (0, 1, 2, 0):
         panel.setup_tabs.setCurrentIndex(index)
         app.processEvents()
+        app.processEvents()
         widths.append(
             (
                 panel.config_scroll.viewport().width(),
                 panel.configuration.width(),
                 panel.columns[1].x(),
             )
+        )
+        card = (panel.rig_editor, panel.measurements, panel.vsync_card)[index]
+        origin = panel.columns[0]
+        previous_bottom = (
+            panel.configuration.mapTo(origin, QPoint()).y()
+            + panel.configuration.height()
+        )
+        title_center = card.caption.mapTo(origin, QPoint()).y() + (
+            card.caption.height() / 2
+        )
+        tabs_top = panel.setup_tabs.mapTo(origin, QPoint()).y()
+        tabs_bottom = tabs_top + panel.setup_tabs.height()
+        assert abs((tabs_top - previous_bottom) - (title_center - tabs_bottom)) <= 1
+        card_positions = (panel.configuration.geometry(), panel.setup_pages.geometry())
+        panel.setup_tab_alignment.center()
+        assert card_positions == (
+            panel.configuration.geometry(),
+            panel.setup_pages.geometry(),
         )
     assert len(set(widths)) == 1
     assert not hasattr(panel.timing, "pacing")
@@ -15307,10 +15329,19 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
     manager = ManagedGui(
         runtime, bridge, gui_history_path=tmp_path / "runtime_gui.json"
     )
+    # Toggle requests schedule placement even with periodic checks disabled.
+    manager.preview_viewers.layout_timer.stop()
+    manager.stimulus_preview.timer.stop()
+    for source in (runtime.dashboard, runtime.devices.cameras):
+        manager.preview_layout_updates.timer.stop()
+        source.preview_requested.emit("not-a-preview", True)
+        assert manager.preview_layout_updates.timer.isActive()
+    manager.preview_layout_updates.timer.stop()
     for status in ("completed", "failed", "rejected", "unconfirmed"):
         manager.stimulus_preview.pending = True
         bridge.operation_finished.emit("set_stimulus_preview", "preview", status, "")
         assert not manager.stimulus_preview.pending
+        assert manager.preview_layout_updates.timer.isActive()
     from cephvr.control.v1 import types_pb2 as pb
 
     refreshes = []
@@ -16673,6 +16704,88 @@ def test_rejected_controller_configuration_restores_edit_tracking(window, reload
     assert manager.dirty and manager.edit_serial == before + 1
     assert manager.reload(state)
     assert not manager.stale and not manager.dirty and not manager.last_error
+
+
+def test_no_tracking_runtime_hides_features_and_ignores_saved_enablement(app):
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    target = DashboardWindow(sample=True, tracking_available=False)
+    try:
+        assert target.page_buttons[3].isHidden()
+        target.select_page(3)
+        assert target.stack.currentIndex() == 0
+        assert target.protocol.session_mode.isHidden()
+        assert target.protocol.session_mode.count() == 1
+        assert target.protocol.session_mode.currentText() == "Open-loop"
+        target.recordings.install_values({"velocities": True})
+        assert target.recordings.velocities.isHidden()
+        assert target.recordings.velocity_label.isHidden()
+        assert not target.recordings.velocities.isChecked()
+        assert not target.recordings.velocities.isEnabled()
+        assert not target.protocol.tracking_active
+        composer = target.protocol.editor.subgroup.composer
+        for row in composer.rows.values():
+            assert not row.parameters.tracking_available
+            if row.parameters.feedback is not None:
+                assert row.parameters.feedback.isHidden()
+
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                target.dashboard,
+                target.protocol,
+                target.recordings,
+                target.devices.cameras,
+                target.devices.projectors,
+                target.tracking,
+            ),
+            tracking_available=False,
+        )
+        state = pb.Snapshot(controller_generation="controller")
+        state.configuration.revision = state.configuration_values.revision = 1
+        base = state.configuration_values.current
+        base.mode = pb.SESSION_MODE_CLOSED_LOOP
+        saved = base.backends.add(backend_name="tracking", enabled=True)
+        saved.tracking.save_tracking_data = True
+        saved.tracking.input_camera_role = 1
+        assert manager.install(state)
+        assert target.protocol.session_mode.currentText() == "Open-loop"
+        assert not target.recordings.velocities.isChecked()
+        target.apply_view(
+            DashboardView(
+                phase=Phase.CONFIGURATION,
+                connected=True,
+                has_control=True,
+                configuration_wired=True,
+            )
+        )
+        target.protocol.editor.add_button.click()
+        visual = base.backends.add(backend_name="visual_stimulus", enabled=True)
+        visual.visual_stimulus.display.profile_json = valid_display_json()
+        target.devices.projectors.timing.mode.setCurrentText("VSync on pulse display")
+        candidate = manager.collect(base)
+        assert candidate.mode == pb.SESSION_MODE_OPEN_LOOP
+        disabled = next(b for b in candidate.backends if b.backend_name == "tracking")
+        assert not disabled.enabled and not disabled.tracking.save_tracking_data
+        assert disabled.tracking.input_camera_role == 1
+        assert saved.enabled and saved.tracking.save_tracking_data
+        composer.set_subject_height("0")
+        composer.mode.setCurrentIndex(1)
+        for row in composer.rows.values():
+            assert not {"Longitudinal", "Lateral", "Angular"}.intersection(
+                title for title, _control in row.columns
+            )
+            if row.parameters.feedback is not None:
+                assert row.parameters.feedback.isHidden()
+        target.apply_view(DashboardView())
+        assert target.dashboard.backend_indicators["Tracking"].isHidden()
+    finally:
+        target.close()
 
 
 def test_calibration_adjustment_steps_preserve_drafts(app):
@@ -18796,9 +18909,13 @@ def test_phosphor_combo_popup_and_dialog_icons_follow_amber(
         app.processEvents()
 
 
+@pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
 def test_microcontroller_io_cards_share_standard_card_padding(
-    window: DashboardWindow, app: QApplication
+    window: DashboardWindow, app: QApplication, style: str
 ) -> None:
+    from cephvr.gui.components import Card
+
+    window.appearance.select(style, persist=False)
     panel = window.devices.microcontroller
     window.page_buttons[2].click()
     window.devices.select_from_rail(1, -1)
@@ -18806,6 +18923,10 @@ def test_microcontroller_io_cards_share_standard_card_padding(
     reference = panel.configuration.body.contentsMargins()
     assert panel.io.body.contentsMargins() == reference
     assert panel.triggers.body.contentsMargins() == reference
+    for card in (panel.configuration, panel.io, panel.triggers):
+        assert isinstance(card, Card)
+        assert card.property("nestedCard") is not True
+        assert card.property("openFrame") is not True
 
     # Add buttons share the left/right edges of the sibling connection button.
     def span(widget: QWidget) -> tuple[int, int]:
@@ -21512,6 +21633,150 @@ def test_managed_preview_relayout_requires_visible_run_and_control(
         DashboardView(connected=True, has_control=False, previews=panel.view.previews)
     )
     viewers.relayout()
+    assert len(calls) == 2
+
+
+def test_managed_preview_workspace_suppression_preserves_show_state(window):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+
+    panel = window.devices.cameras
+    panel.managed = True
+    camera = panel.drafts[0]
+    panel.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            previews=(PreviewView(camera.key, "Camera", active=True, visible=True),),
+        )
+    )
+    state = pb.Snapshot()
+    device = state.acquisition_devices.behavioral
+    device.preview_running = device.preview_visible = True
+    device.preview_run_id = "exact-preview-run"
+    active = False
+    available = True
+    calls = []
+    hint = rpc.PreviewWindowPlacement(
+        x=-100,
+        y=20,
+        side=320,
+        gui_window_handle=11,
+        gui_process_id=12,
+        gui_process_creation_time_100ns=13,
+    )
+
+    def placement(_key):
+        if not available:
+            raise RuntimeError("placement unavailable")
+        return hint.SerializeToString()
+
+    viewers = ManagedPreviewViewers(
+        lambda: state,
+        panel,
+        lambda *args, **kw: calls.append((args, kw)) or True,
+        placement,
+        lambda: active,
+    )
+    viewers.layout_timer.stop()
+
+    viewers.workspace_changed()
+    hidden = rpc.PreviewWindowPlacement.FromString(calls[-1][1]["placement"])
+    assert calls[-1][0][1] == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+    assert hidden.update_existing_only and hidden.camera_display_suppressed
+    assert device.preview_visible and device.preview_run_id == "exact-preview-run"
+    viewers.command_finished("camera", False, "stale owner")
+    viewers.workspace_changed()
+    assert len(calls) == 2
+    retry = rpc.PreviewWindowPlacement.FromString(calls[-1][1]["placement"])
+    assert retry.camera_display_suppressed
+
+    active = True
+    viewers.workspace_changed()
+    restored = rpc.PreviewWindowPlacement.FromString(calls[-1][1]["placement"])
+    assert restored.update_existing_only and not restored.camera_display_suppressed
+    assert device.preview_visible
+    viewers.command_finished("camera", False, "stale owner")
+    available = False
+    viewers.workspace_changed()
+    assert len(calls) == 3
+    available = True
+    viewers.workspace_changed()
+    assert len(calls) == 4
+    restore_retry = rpc.PreviewWindowPlacement.FromString(calls[-1][1]["placement"])
+    assert restore_retry.HasField("camera_display_suppressed")
+    assert not restore_retry.camera_display_suppressed
+
+    active = False
+    viewers.workspace_changed()
+    device.preview_visible = False  # Native X/Show off wins over a stale restore.
+    active = True
+    viewers.workspace_changed()
+    assert len(calls) == 5
+
+
+def test_preview_layout_events_drain_camera_updates_without_polling(window, app):
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+    from cephvr.gui.preview_layout_updates import PreviewLayoutUpdates
+
+    panel = window.devices.cameras
+    keys = [camera.key for camera in panel.drafts[:2]]
+    previews = tuple(PreviewView(key, key, active=True, visible=True) for key in keys)
+    panel.apply_view(DashboardView(connected=True, has_control=True, previews=previews))
+    state = pb.Snapshot()
+    for role in ("behavioral", "tracking"):
+        device = getattr(state.acquisition_devices, role)
+        device.preview_running = device.preview_visible = True
+        device.preview_run_id = role
+    calls = []
+
+    def queue(role, kind, **options):
+        assert not panel.operation_pending
+        panel.operation_pending = True
+        calls.append(
+            (role, rpc.PreviewWindowPlacement.FromString(options["placement"]))
+        )
+        return True
+
+    hint = rpc.PreviewWindowPlacement(x=10, y=20, side=256)
+    viewers = ManagedPreviewViewers(
+        lambda: state, panel, queue, lambda _key: hint.SerializeToString()
+    )
+    viewers.layout_timer.stop()
+    updates = PreviewLayoutUpdates(window, (window.preview_slot,), (viewers.relayout,))
+    for x in (20, 30, 40):
+        hint.x = x
+        app.sendEvent(window.preview_slot, QEvent(QEvent.Type.LayoutRequest))
+    assert not calls
+    app.processEvents()
+    assert len(calls) == 1 and calls[0][1].x == 40
+    assert calls[0][1].update_existing_only
+    app.processEvents()
+    assert len(calls) == 1  # Preserve the single command slot.
+    panel.operation_pending = False
+    updates.schedule("camera", True, "completed")
+    app.processEvents()
+    assert [role for role, _ in calls] == [1, 2]
+    panel.operation_pending = False
+    updates.schedule()
+    app.processEvents()
+    assert len(calls) == 2  # No duplicate hint after the layout settles.
+    panel.apply_view(
+        DashboardView(connected=True, has_control=False, previews=previews)
+    )
+    hint.x = 50
+    updates.schedule()
+    app.processEvents()
+    assert len(calls) == 2
+    viewers.disconnected()
+    panel.apply_view(
+        DashboardView(connected=False, has_control=False, previews=previews)
+    )
+    updates.schedule()
+    app.processEvents()
     assert len(calls) == 2
 
 

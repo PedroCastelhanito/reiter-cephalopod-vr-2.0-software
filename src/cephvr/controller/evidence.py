@@ -119,7 +119,7 @@ def started_satisfied(
     expected: Set[int | str]
     if role == "acquisition":
         expected = camera_roles
-        if external_camera_roles or trial_state_required:
+        if trial_state_required:
             pulse = report.acquisition_pulse_on
             if (
                 not _trial_level_satisfied(pulse, trial_state_required, running=True)
@@ -134,14 +134,11 @@ def started_satisfied(
                 <= pulse.dispatched_monotonic_ns
                 <= pulse.acknowledged_monotonic_ns
                 <= ingress_ns
-                or not pulse.HasField("behavioral_selected")
-                or not pulse.HasField("tracking_selected")
-                or pulse.behavioral_selected
-                != (camera.CAMERA_ROLE_BEHAVIORAL in external_camera_roles)
-                or pulse.tracking_selected
-                != (camera.CAMERA_ROLE_TRACKING in external_camera_roles)
+                or not _camera_roles_satisfied(pulse, frozenset())
             ):
                 return False
+        elif report.HasField("acquisition_pulse_on"):
+            return False
     elif role == "visual_stimulus":
         expected = visual_stimulus_outputs
     else:
@@ -214,10 +211,14 @@ def stopped_satisfied(
     )
     if (not expected_sources and not trial_state_only) or sources != expected_sources:
         return False
-    if external_camera_roles or trial_state_required:
+    pulse_required = trial_state_required or bool(
+        interruption_issued_ns and external_camera_roles
+    )
+    if pulse_required:
         pulse = report.acquisition_pulse_off
-        if trial_state_only and pulse.eye_tracking_selected:
-            return False
+        selected_roles = (
+            external_camera_roles if interruption_issued_ns else frozenset()
+        )
         if (
             report.context.backend.backend_name != "acquisition"
             or not _trial_level_satisfied(pulse, trial_state_required, running=False)
@@ -230,12 +231,7 @@ def stopped_satisfied(
             < pulse.dispatched_monotonic_ns
             <= pulse.acknowledged_monotonic_ns
             <= report.actual_stop_monotonic_ns
-            or not pulse.HasField("behavioral_selected")
-            or not pulse.HasField("tracking_selected")
-            or pulse.behavioral_selected
-            != (camera.CAMERA_ROLE_BEHAVIORAL in external_camera_roles)
-            or pulse.tracking_selected
-            != (camera.CAMERA_ROLE_TRACKING in external_camera_roles)
+            or not _camera_roles_satisfied(pulse, selected_roles)
         ):
             return False
         if interruption_issued_ns:
@@ -243,6 +239,8 @@ def stopped_satisfied(
                 return False
         elif pulse.scheduled_boundary_monotonic_ns != end_ns:
             return False
+    elif report.HasField("acquisition_pulse_off"):
+        return False
     return True
 
 
@@ -375,4 +373,18 @@ def _trial_level_satisfied(
         and output.enabled
         and output.HasField("running")
         and output.running == running
+    )
+
+
+def _camera_roles_satisfied(
+    evidence: pulses.PulseCommandEvidence, expected: Set[int]
+) -> bool:
+    return bool(
+        evidence.HasField("behavioral_selected")
+        and evidence.behavioral_selected == (camera.CAMERA_ROLE_BEHAVIORAL in expected)
+        and evidence.HasField("tracking_selected")
+        and evidence.tracking_selected == (camera.CAMERA_ROLE_TRACKING in expected)
+        and evidence.HasField("eye_tracking_selected")
+        and evidence.eye_tracking_selected
+        == (camera.CAMERA_ROLE_EYE_TRACKING in expected)
     )

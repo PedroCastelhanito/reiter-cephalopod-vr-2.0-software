@@ -147,6 +147,7 @@ class TrialRecordingPreparation:
             session.device_id,
             session.session_config_reference,
             session.camera_clock,
+            capture_generation=self._bootstrap.context.worker.generation,
         )
         identity.validate()
         runtime.prepare_trial(

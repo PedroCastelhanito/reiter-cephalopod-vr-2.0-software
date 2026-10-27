@@ -103,9 +103,18 @@ class HighGuiPreview:
                 self._pending_placement is not None
                 and self._pending_placement.snap_to_grid
             )
+            pending_suppression = self._pending_placement
             self._pending_placement = rpc.PreviewWindowPlacement.FromString(
                 placement.SerializeToString()
             )
+            if (
+                pending_suppression is not None
+                and pending_suppression.HasField("camera_display_suppressed")
+                and not self._pending_placement.HasField("camera_display_suppressed")
+            ):
+                self._pending_placement.camera_display_suppressed = (
+                    pending_suppression.camera_display_suppressed
+                )
             self._pending_placement.snap_to_grid |= pending_snap
 
     def _take_placement(self) -> rpc.PreviewWindowPlacement | None:
@@ -303,6 +312,28 @@ class HighGuiPreview:
                     self.on_rates(self, *rates, now_ns)
                 placement = self._take_placement()
                 if (
+                    placement is not None
+                    and placement.HasField("camera_display_suppressed")
+                    and (
+                        owner is None
+                        or self.placement is None
+                        or not placement.update_existing_only
+                        or (
+                            placement.gui_window_handle,
+                            placement.gui_process_id,
+                            placement.gui_process_creation_time_100ns,
+                        )
+                        != (
+                            self.placement.gui_window_handle,
+                            self.placement.gui_process_id,
+                            self.placement.gui_process_creation_time_100ns,
+                        )
+                    )
+                ):
+                    raise RuntimeError(
+                        "Temporary preview visibility requires its exact GUI owner"
+                    )
+                if (
                     owner is not None
                     and placement is not None
                     and self.placement is not None
@@ -325,7 +356,15 @@ class HighGuiPreview:
                 if placement is not None and self.native_handle:
                     color_preview_caption(self.native_handle, placement)
                 was_minimized = owner_minimized
-                owner_minimized = owner.sync() if owner is not None else False
+                if placement is not None and placement.HasField(
+                    "camera_display_suppressed"
+                ):
+                    assert owner is not None
+                    owner_minimized = owner.set_suppressed(
+                        placement.camera_display_suppressed
+                    )
+                else:
+                    owner_minimized = owner.sync() if owner is not None else False
                 if was_minimized and not owner_minimized and owner is not None:
                     geometry.arranged(owner.geometry(), owner.placement_revision())
                     if placement is None:

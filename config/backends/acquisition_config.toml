@@ -2,7 +2,7 @@
 # Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
-policy_version = 22
+policy_version = 23
 
 [rpc]
 # Fixed acquisition service endpoint; loopback-only, shared by all its clients.

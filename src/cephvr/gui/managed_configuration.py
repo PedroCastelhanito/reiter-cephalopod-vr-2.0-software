@@ -44,8 +44,11 @@ class ConfigurationPages:
 class ManagedConfiguration:
     """Own UI/base identity; drafts are never silently rebased."""
 
-    def __init__(self, pages: ConfigurationPages) -> None:
+    def __init__(
+        self, pages: ConfigurationPages, *, tracking_available: bool = True
+    ) -> None:
         self.pages = pages
+        self.tracking_available = tracking_available
         self.generation = ""
         self.revision: int | None = None
         self.stale = False
@@ -178,7 +181,7 @@ class ManagedConfiguration:
             else None
         )
         serial = self._tracking_serial()
-        if tracking is not None and serial:
+        if self.tracking_available and tracking is not None and serial:
             # Decode before touching any widget so an incomplete or invalid Tracking
             # submessage cannot leave the other pages half-installed.
             self.pages.tracking.configuration_draft(tracking, source_serial=serial)
@@ -250,7 +253,7 @@ class ManagedConfiguration:
                 in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
                 and self.pages.projectors.restore_assignment_draft()
             )
-            if tracking is not None and serial:
+            if self.tracking_available and tracking is not None and serial:
                 self.pages.tracking.install_configuration(
                     tracking, source_serial=serial
                 )
@@ -344,6 +347,12 @@ class ManagedConfiguration:
                     ].isChecked()
 
         tracking_backend = self._backend(candidate, "tracking")
+        if not self.tracking_available:
+            if tracking_backend is not None:
+                tracking_backend.enabled = False
+                if tracking_backend.HasField("tracking"):
+                    tracking_backend.tracking.save_tracking_data = False
+            return candidate
         tracking_required = self.pages.protocol.tracking_active
         if tracking_backend is None and (
             tracking_required

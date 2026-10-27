@@ -1,0 +1,29 @@
+{
+  "captures_preserved_while_hidden": {
+    "behavioral": {
+      "preview_run_id": "2c968304-5fd0-461d-b003-b0414a7900c3",
+      "preview_running": true,
+      "preview_prepared": true,
+      "preview_visible": true,
+      "device_open": true
+    },
+    "tracking": {
+      "preview_run_id": "47bd5531-c4ec-4562-8658-585066f4a394",
+      "preview_running": true,
+      "preview_prepared": true,
+      "preview_visible": true,
+      "device_open": true
+    }
+  },
+  "native_observations": [
+    "Cameras visible",
+    "Configure hidden",
+    "Monitor restored",
+    "Protocol hidden",
+    "Cameras restored"
+  ],
+  "limitations": [
+    "Native X-close and drag not directly targetable by desktop helper; local regressions pass"
+  ],
+  "initial_connect_rejection": "GUI rejected stale configuration after CLI restoration; explicit Reload controller configuration followed by Connect All succeeded without settings edits."
+}

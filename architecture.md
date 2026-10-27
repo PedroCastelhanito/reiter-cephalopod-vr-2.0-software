@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-10-26
+Last updated: 2026-10-27
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -62,10 +62,10 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 29 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 26 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 337 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 164 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 339 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 166 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 35 |
@@ -73,9 +73,9 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 99 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 79 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 63 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 182 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 183 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 5 |
-| <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
+| <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 23 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 18 |
 | <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 26 |
 | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 32 |
@@ -87,15 +87,15 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
-| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 67 |
+| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 68 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 51 |
-| <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 17 |
-| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 73 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 53 |
+| <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 18 |
+| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 75 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 54 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 36 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 17 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 13 |
-| <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 20 |
+| <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 21 |
 | <a id="v05"></a>[V05](docs/architecture/visual_stimulus.md#v05) | Declarative parameter animation | Accepted | 6 |
 | <a id="v06"></a>[V06](docs/architecture/visual_stimulus.md#v06) | Epoch durations and trial duration | Accepted | 5 |
 | <a id="v07"></a>[V07](docs/architecture/visual_stimulus.md#v07) | Stimulus state continuity and trial initialization | Accepted | 5 |
@@ -103,7 +103,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="v09"></a>[V09](docs/architecture/visual_stimulus.md#v09) | Video clip completion | Accepted | 4 |
 | <a id="v10"></a>[V10](docs/architecture/visual_stimulus.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
 | <a id="v11"></a>[V11](docs/architecture/visual_stimulus.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |
-| <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 19 |
+| <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 20 |
 | <a id="v13"></a>[V13](docs/architecture/visual_stimulus.md#v13) | Trial replay from program and actual render evidence | Accepted | 13 |
 | <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 5 |
 | <a id="v15"></a>[V15](docs/architecture/visual_stimulus.md#v15) | Four calibrated off-axis surface views | Accepted | 22 |
@@ -335,12 +335,14 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 25
+**Status:** Undecided · **Revision:** 26
 
 - The owner has authorized GUI implementation following Tracking implementation
   and review. GUI is the current stage, beginning with reference review and operator
   workflow/layout design. Existing controller, supervisor, acquisition host, Visual
-  Stimulus and Tracking work remains in scope for required integration and shared helpers.
+  Stimulus work remains in scope for required integration and shared helpers.
+  Tracking development is paused until the owner requests its return; current
+  runtime launches omit it under E08 and hide its GUI features under G01.
 - The owner has authorized completing managed GUI/backend configuration, commands,
   diagnostics and development checks against the shared review layout. Reuse existing
   backend ownership and lifecycle mechanisms; E15 native/device/scientific/full-load

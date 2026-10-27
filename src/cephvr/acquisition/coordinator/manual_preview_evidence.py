@@ -98,20 +98,42 @@ class ManualPreviewEvidence:
                 "manual preview cleanup differs from its exact ring releases"
             )
         retained = []
+        preview = worker.preview
         for allocation, attachment in expected:
             release = provided.get(allocation)
             resource = self._resource(worker, allocation, attachment)
-            if (
-                release is None
-                or not release.released
-                or release.failure.code
-                or release.failure.message
-                or release.HasField("path")
-                or resource is None
+            proof = (allocation, attachment.sync.transfer_id)
+            if release is None and (
+                exact
+                or allocation in self.resources
+                or preview is None
+                or proof not in preview.confirmed_ring_releases
             ):
                 raise ValueError(
                     "manual preview cleanup does not prove its exact ring release"
                 )
+            if release is None:
+                continue
+            if (
+                not release.released
+                or release.failure.code
+                or release.failure.message
+                or release.HasField("path")
+            ):
+                raise ValueError(
+                    "manual preview cleanup does not prove its exact ring release"
+                )
+            if resource is None:
+                if (
+                    allocation in self.resources
+                    or exact
+                    or preview is None
+                    or proof not in preview.confirmed_ring_releases
+                ):
+                    raise ValueError(
+                        "manual preview cleanup does not prove its exact ring release"
+                    )
+                continue
             snapshot = self.ledger.snapshot(resource.ledger_key)
             if not any(
                 item.peer_instance_id == worker.launch.worker.generation
@@ -121,10 +143,14 @@ class ManualPreviewEvidence:
                 raise ValueError(
                     "manual preview producer release transfer is not retained"
                 )
-            retained.append((resource.ledger_key, attachment.sync.transfer_id))
-        for key, transfer in retained:
+            retained.append((resource.ledger_key, attachment.sync.transfer_id, proof))
+        for key, transfer, _proof in retained:
             self.ledger.confirm_release(
                 key,
                 peer_instance_id=worker.launch.worker.generation,
                 transfer_id=transfer,
+            )
+        if preview is not None:
+            preview.confirmed_ring_releases.update(
+                proof for _key, _transfer, proof in retained
             )

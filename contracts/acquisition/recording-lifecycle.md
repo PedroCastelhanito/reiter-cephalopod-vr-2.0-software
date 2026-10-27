@@ -13,7 +13,8 @@ claim exists in this mode. Sessionless manual preview remains unsaved.
 
 ## Launch ordering
 
-1. Setup validates resolved tools/settings, source conversion and attachments.
+1. Setup validates resolved tools/settings, source conversion and attachments, starts
+   continuous acquisition and confirms usable delivery under A10. Trial admission stays sealed.
 2. PrepareTrial confirms prior closure and prepares the recording thread, its
    in-process queue, private buffers and encoding plan. No FFmpeg process or trial
    file exists yet. Ready confirms this preparation; it cannot claim NVENC
@@ -58,44 +59,35 @@ worker copy to the supervisor). Stopped stays prompt: it never waits for the rec
 thread to drain. Stop/Interrupt fences future execution but does not discard already
 admitted frames; the recording thread drains them.
 
-If control work arrives during terminal capture drain, yield without stopping the
-SDK grab queue or sealing an incomplete end marker. After servicing control, resume
-the same generation, fixed cutoff, first stop observation, margin end and original
-deadline, retaining counts from every retrieved/released result. Cleanup waits for
-this continuation before releasing capture resources. SDK queue shutdown follows
-complete purge or the original deadline/failure; a wake alone is not a drain failure.
+Normal trial end stops only admission and the enabled Trial-state HIGH. On the SDK
+owner, seal rings and the old recording queue after the last admitted record, retain
+bounded excluded receipts observed before sealing, and detach that trial's recording
+buffers. SDK acquisition and camera trigger phase continue; no purge or rearm occurs.
+Normal Stopped confirms trial activity ended and required Trial state LOW, without
+claiming physical camera stop. It never waits for an arbitrary intertrial drain.
 
-At cutoff, stop admitting new trial pixels and frame records immediately, but keep
-retrieving/ releasing excluded results through the same bounded capture loop. For an
-externally triggered camera, wait for the original OFF attempt's terminal outcome
-(confirmed application, rejection, timeout, transport failure or not dispatched), then
-drain for the prepared per-camera margin. A failed OFF never proves outputs off;
-continue best-effort cleanup under the original bounds. Free-running cameras stop frame
-generation promptly, then drain buffered results without generating more images. The
-margin must cover exposure + transport/SDK delivery allowance + one applied frame
-period. Resolve it before Ready from camera settings and an explicit file-only rig
-allowance; do not infer a bound from an empty queue or a nominal bandwidth figure.
-
-Camera activity stopping, bounded retrieval of already buffered results, and accounting
-closure are distinct. Stopped still requires actual camera activity ended and selected
-MCU outputs confirmed off within E05's original deadline; admission sealing alone is
-insufficient. If the SDK cannot separate acquisition stop from buffer drain, that drain
-must also fit the stop-report budget. Never report the camera stopped while still active.
-Retrieval/accounting after proven activity stop may use remaining finalization time.
-Stop/Interrupt operation completion acknowledges that physical-stop proof promptly;
-it does not await SDK shutdown or finalize the work scope. The same continuation
-retains the original Finished bound and publishes the end marker/Finished before
-cleanup releases capture ownership.
-The original finalization deadline caps all drain/cleanup; no fresh timeout on OFF reply,
-empty retrieval or repeated Stop. Recheck control/deadlines between retrieved results.
+Session cancellation/end, Abort/interruption and required faults physically stop
+capture. Deliver camera OFF terminal evidence separately under exact session scope;
+then drain excluded buffered results for the prepared margin, retaining the original
+deadline. Failed/missing OFF cannot prove successful output stop. Free-running cameras
+stop generation promptly. The configured margin covers exposure, transfer/SDK allowance
+and one frame period; it is not inferred from an empty queue or nominal bandwidth.
+Control handoffs yield and resume the same drain generation/cutoff/margin, retaining
+counts without flushing or sealing an incomplete marker. Cleanup waits for this
+continuation. Physical stop, bounded retrieval and file closure remain distinct;
+no repeated Stop, OFF reply or empty retrieval starts a fresh timeout.
 
 ## End marker
 
-After all in-trial frame records and bounded excluded retrieval/final purge are sealed,
+After all in-trial frame records and applicable bounded excluded observations are sealed,
 the capture thread enqueues exactly one in-process end marker behind the last record. It
 carries the in-trial received count, the cutoff, the post-cutoff excluded count,
-optional last native counter, actual capture-stop time and a post-cutoff
-accounting-complete flag. Nothing follows it for that trial. Count excluded retrieved
+optional last native counter, separate admission-stop or physical capture-stop
+observation and a scoped post-cutoff accounting flag. Normal continuous closure has
+no physical capture-stop time: its admission observation must match the retained
+normal Stopped proof and its cutoff must equal scheduled end. This path cannot repair
+an interrupted trial's missing physical-stop proof. Nothing follows the marker for
+that trial. Count excluded retrieved
 results plus disjoint countable purge discards; never count an image twice. Unknown
 purge/SDK-stop discards make the total `null` and accounting incomplete, not zero.
 Missing native last-counter evidence alone does not make accounting incomplete; never
@@ -108,10 +100,18 @@ seal, the marker remains missing; finalization reports incomplete/unconfirmed ou
 under its original deadline. A late pretrial purge cannot revise a sealed trial. The
 marker does not release pending records or establish durability.
 
-Successful normal closure requires the end marker with complete post-cutoff
-accounting, the camera's Stopped evidence and, for external cameras, the terminal
-ON/OFF observations delivered by `RecordPulseEvidence`. Free-running cameras have no
-pulse-command obligation. Record failures as terminal outcomes with absent ACK/
+Schema6 labels normal post-cutoff counts `admission_snapshot` with the observation
+time; they do not claim total late/intertrial/physical-stop accounting. Physical-stop
+counts retain their separate scope. Preserve only observed last pretrial, first/last
+admitted and first excluded native/host records; absent boundary context stays null.
+The header binds session/camera to exact worker capture generation. No restart is
+allowed in that generation, and unverified absolute frame/pulse offsets stay null.
+
+Successful normal closure requires the end marker with complete scoped accounting,
+the camera's matching admission Stopped proof and, when enabled, terminal Trial-state
+ON/OFF observations delivered by trial-scoped `RecordPulseEvidence`. This applies to
+free-running and external cameras alike. Session-scoped camera OFF serves physical
+cleanup and cannot replace Trial-state evidence. Record failures as terminal outcomes with absent ACK/
 application proof; receiving a failure is not successful device stopping. The
 recording thread retains the evidence for the completion line rather than closing
 first. Missing required evidence at the original deadline yields incomplete/

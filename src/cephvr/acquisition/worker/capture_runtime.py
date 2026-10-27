@@ -18,6 +18,7 @@ from cephvr.acquisition.camera.types import (
 )
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.worker.capture import CameraCaptureLoop, CaptureWindow
 from cephvr.acquisition.worker.capture_drain import TerminalCaptureDrain
 from cephvr.acquisition.worker.frame_diagnostics import FrameDiagnosticTracker
@@ -62,10 +63,17 @@ class WorkerCaptureResources:
         self._stop_deadline_ns: int | None = None
         self._terminal_drain: TerminalCaptureDrain | None = None
         self._capture_handoff: Callable[[], bool] = lambda: True
+        self.session_pulse_off: mcu.PulseCommandEvidence | None = None
+        self.session_applied_off: mcu.PulseCommandEvidence | None = None
+        self.readiness_deadline_ns: int | None = None
 
     @property
     def active(self) -> bool:
         return self._active
+
+    @property
+    def trial_admission_open(self) -> bool:
+        return self._window is not None
 
     @property
     def admission_stop_ns(self) -> int | None:
@@ -189,6 +197,7 @@ class WorkerCaptureResources:
                 tracking_ring=tracking,
                 preview_ring=preview,
                 session_preview=session_preview,
+                session_capture=preview_run_id is None,
                 preview_max_hz=self._preview_max_hz,
                 recording_window=lambda: self._window,
                 warning_occurrence=self.warning_occurrence,
@@ -234,7 +243,32 @@ class WorkerCaptureResources:
             self.adapter.arm_external_trigger()
         else:
             self.adapter.start_free_running()
+        self.capture.capture_started(host_time_ns())
         self._active = True
+
+    def start_session(self) -> None:
+        """Start SDK acquisition without opening any trial consumer admission."""
+        if self.capture is None or self._active or self._timing is None:
+            raise RuntimeError("session capture is not prepared or already active")
+        self.session_pulse_off = None
+        self.session_applied_off = None
+        if self._timing == "external_trigger":
+            self.adapter.arm_external_trigger()
+        else:
+            self.adapter.start_free_running()
+        self.capture.capture_started(host_time_ns())
+        self._active = True
+
+    @property
+    def session_off_confirmed(self) -> bool:
+        evidence = self.session_applied_off
+        return not self.requires_external_trigger or bool(
+            evidence is not None
+            and evidence.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED
+            and evidence.HasField("applied")
+            and evidence.applied
+            and evidence.HasField("acknowledged_monotonic_ns")
+        )
 
     def set_window(self, window: CaptureWindow | None) -> None:
         self._window = window
@@ -243,8 +277,8 @@ class WorkerCaptureResources:
         self, queue: RecordingQueue, pixel_pool: PixelBufferPool | None
     ) -> None:
         capture = self.capture
-        if capture is None or self._active:
-            raise RuntimeError("recording buffers require prepared, stopped capture")
+        if capture is None or self._window is not None:
+            raise RuntimeError("recording buffers require closed trial admission")
         if not queue.metadata_only and (
             pixel_pool is None or pixel_pool.capacity < queue.capacity_frames + 2
         ):
@@ -254,11 +288,9 @@ class WorkerCaptureResources:
 
     def begin_trial(self) -> None:
         capture = self.capture
-        if capture is None or self._active:
-            raise RuntimeError("trial counters require prepared, stopped capture")
+        if capture is None or self._window is not None:
+            raise RuntimeError("trial counters require closed trial admission")
         capture.reset_trial_counters()
-        if self._diagnostics is not None:
-            self._diagnostics.reset()
 
     def prepare_trial(
         self,
@@ -268,8 +300,8 @@ class WorkerCaptureResources:
         should_continue_drain: Callable[[], bool],
     ) -> PurgeEvidence:
         """Verify the locked capture state and prepare this trial before Ready."""
-        if self.capture is None or self._active:
-            raise RuntimeError("trial preparation requires stopped prepared capture")
+        if self.capture is None or self._window is not None:
+            raise RuntimeError("trial preparation requires closed trial admission")
         if self._timing is None or self._locked_settings is None:
             raise RuntimeError("confirmed camera capture state is unavailable")
         if run_id.int == 0 or run_id.version != 4:
@@ -293,19 +325,9 @@ class WorkerCaptureResources:
         if not _same_layout(expected_layout, current_layout):
             raise ValueError("camera image layout drifted after confirmed Setup")
 
-        purged = self.adapter.purge_stale_frames(
-            deadline_ns, should_continue_drain=should_continue_drain
-        )
-        if not purged.accounting_complete:
-            raise RuntimeError("stale SDK frame accounting is incomplete")
-        self.adapter.configure_capture(self._timing, self._sdk_buffer_count)
-        if self._timing == "external_trigger":
-            # Coordinator gates PrepareTrial on confirmed MCU output OFF.
-            self.adapter.arm_external_trigger()
-
         self._scheduled_run_id = run_id
         self.begin_trial()
-        return purged
+        return PurgeEvidence(0, None, True)
 
     def remove_recording(self) -> None:
         capture = self.capture
@@ -333,8 +355,8 @@ class WorkerCaptureResources:
 
     def cancel_schedule(self) -> None:
         """Fence a released pre-T schedule before it can start capture later."""
-        if self._active:
-            raise RuntimeError("active capture schedule cannot be cancelled")
+        if self._window is not None:
+            raise RuntimeError("open trial admission cannot be cancelled")
         self._scheduled_start_ns = None
         self._scheduled_end_ns = None
         self._scheduled_run_id = None
@@ -344,7 +366,7 @@ class WorkerCaptureResources:
     def next_deadline_ns(self) -> int | None:
         if self._active and self._admission_stop_ns is not None:
             return self._stop_deadline_ns
-        if self._scheduled_start_ns is not None and not self._active:
+        if self._scheduled_start_ns is not None and self._window is None:
             return self._scheduled_start_ns
         if (
             self._scheduled_end_ns is not None
@@ -358,12 +380,17 @@ class WorkerCaptureResources:
         now = host_time_ns() if now_ns is None else now_ns
         if (
             self._scheduled_start_ns is not None
-            and not self._active
+            and self._window is None
             and now >= self._scheduled_start_ns
         ):
             if not self._released:
                 raise RuntimeError("scheduled start arrived before exact release")
-            self.start()
+            if not self._active:
+                self.start()
+            else:
+                assert self._scheduled_run_id is not None
+                for ring in self._rings.values():
+                    ring.open_admission(self._scheduled_run_id)
             assert self._scheduled_end_ns is not None
             self.set_window(
                 CaptureWindow(self._scheduled_start_ns, self._scheduled_end_ns)
@@ -399,6 +426,19 @@ class WorkerCaptureResources:
         for ring in self._rings.values():
             ring.seal()
         return deadline_ns
+
+    def close_trial_admission(self, deadline_ns: int) -> int:
+        """Seal one trial on the SDK owner, keeping its acquisition generation live."""
+        self.seal_admission(deadline_ns)
+        assert self._admission_stop_ns is not None
+        self._window = None
+        self._scheduled_start_ns = None
+        self._scheduled_end_ns = None
+        self._scheduled_run_id = None
+        self._released = False
+        self._stop_deadline_ns = None
+        self._admission_stop_ns = None
+        return host_time_ns()
 
     def stop(
         self,
@@ -530,6 +570,12 @@ class WorkerCaptureResources:
             timeout = min(timeout, max(0, min(limits) - now))
             return timeout
         deadline = self.next_deadline_ns()
+        if self.readiness_deadline_ns is not None:
+            deadline = (
+                min(deadline, self.readiness_deadline_ns)
+                if deadline is not None
+                else self.readiness_deadline_ns
+            )
         if deadline is not None:
             timeout = min(timeout, max(0, deadline - host_time_ns()))
         return timeout

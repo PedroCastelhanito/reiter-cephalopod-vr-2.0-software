@@ -19,6 +19,7 @@ from cephvr.acquisition.recording.identity import RecordingIdentity
 from cephvr.acquisition.recording.progress_watchdog import EncoderProgressWatchdog
 from cephvr.acquisition.recording.session import RecordingSession
 from cephvr.acquisition.recording.session_cleanup import cancel_before_start
+from cephvr.acquisition.recording.session_completion import terminal_capture_proof
 from cephvr.acquisition.recording.session_contracts import (
     PulseEvidence,
     RecordingCompletionContext,
@@ -39,6 +40,34 @@ from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
 from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
 from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
+
+
+@pytest.mark.parametrize(
+    "end,observed,matched",
+    [(200, 210, 210), (200, 210, None), (200, 210, 211), (150, 160, 160)],
+)
+def test_continuous_terminal_requires_matched_normal_admission_proof(
+    end, observed, matched
+):
+    from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+
+    proof = terminal_capture_proof(
+        CaptureEndMarker(
+            1, end, None, 0, None, True, admission_stop_monotonic_ns=observed
+        ),
+        RecordingCompletionContext(
+            "completed", end, None, None, stopped_admission_stop_monotonic_ns=matched
+        ),
+        schedule=acq.WorkerSchedule(start_monotonic_ns=100, end_monotonic_ns=200),
+        received=1,
+        logged=1,
+        last_frame_id=0,
+    )
+    assert proof == (
+        end == 200 and observed == matched,
+        end == 200 and observed == matched,
+        True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -791,7 +820,7 @@ def test_recording_session_preserves_all_images_and_timestamps_without_padding(
     # Closure, including retries, must never submit invented tail images.
     session.finish(end, PulseEvidence(), completion, deadline_ns=start_ns + 600)
     lines = [json.loads(line) for line in log_path.read_text().splitlines()]
-    assert lines[0]["schema_version"] == 5
+    assert lines[0]["schema_version"] == 6
     assert lines[0]["identity"]["camera_role"] == role
     assert lines[0]["video"] == {
         "enabled": True,

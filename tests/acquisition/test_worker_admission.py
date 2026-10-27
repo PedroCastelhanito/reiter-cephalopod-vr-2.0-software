@@ -52,7 +52,7 @@ def test_canceled_schedule_keeps_trial_health_until_session_cleanup() -> None:
     schedule = acq.WorkerSchedule()
     schedule.command.target.work.CopyFrom(work)
     trial.trial_state = WorkerTrialState(stopped_schedule=schedule)
-    captures = SimpleNamespace(capture=None, active=False)
+    captures = SimpleNamespace(capture=None, active=False, trial_admission_open=False)
     refresh_health_snapshot(state, trial, captures, session, False)
     assert state.health_work == work
     cleanup = acq.WorkerLifecycleEvidence()

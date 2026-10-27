@@ -1,0 +1,10 @@
+{
+  "src/cephvr/acquisition/coordinator/manual_preview.py": true,
+  "src/cephvr/acquisition/coordinator/manual_preview_evidence.py": true,
+  "src/cephvr/acquisition/coordinator/state/workers.py": true,
+  "src/cephvr/acquisition/runtime.py": true,
+  "src/cephvr/controller/device/owner_cleanup.py": true,
+  "src/cephvr/visual_stimulus/recording/native.py": true,
+  "src/cephvr/visual_stimulus/recording/session.py": true,
+  "contracts/cephvr/control/v1/services.proto": true
+}

@@ -1,0 +1,20 @@
+........................................................................ [ 23%]
+........................................................................ [ 46%]
+........................................................................ [ 69%]
+........................................................................ [ 92%]
+.......................                                                  [100%]
+============================== warnings summary ===============================
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+311 passed, 2 deselected, 6 warnings in 1.69s

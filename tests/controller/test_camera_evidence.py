@@ -241,6 +241,93 @@ def test_initial_camera_warning_scope_matches_loaded_configuration(
         runtime.projections.accept_warnings(report)
 
 
+def test_session_warning_scope_survives_trials_only_for_exact_session_revision(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.warnings import (
+        WarningOccurrence,
+        WorkerWarningLedger,
+    )
+    from cephvr.controller.projections import ProjectionError
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    session = pb.SessionContext(controller_generation=_id(), session_id=_id())
+    session_work = pb.WorkContext(session=session)
+    revision = runtime.configuration_state.revision
+    runtime.projections.set_scope(session_work, revision)
+    ledger = WorkerWarningLedger(
+        acq.WorkerContext(
+            worker=pb.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=_id()
+            ),
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        )
+    )
+    ledger.begin_scope(session_work, configuration_revision=revision)
+    report = svc.AcquisitionWarningReport(source=backend)
+    observed = 0
+
+    def publish_session_view() -> None:
+        nonlocal observed
+        observed += 1
+        report.view.CopyFrom(
+            ledger.observe(
+                WarningOccurrence("NATIVE_COUNTER_GAP", observed, session_scope=True)
+            )
+        )
+        assert runtime.projections.accept_warnings(report)
+
+    publish_session_view()
+    trial1 = pb.WorkContext(
+        trial=pb.TrialContext(session=session, trial_id=_id(), trial_number=1)
+    )
+    runtime.projections.set_scope(trial1, revision)
+    publish_session_view()
+    assert runtime.projections.warnings
+
+    trial2 = pb.WorkContext(
+        trial=pb.TrialContext(session=session, trial_id=_id(), trial_number=2)
+    )
+    runtime.projections.set_scope(trial2, revision)
+    publish_session_view()
+    retained = next(iter(runtime.projections.warnings.values()))
+    assert retained.work == session_work
+    assert retained.configuration_revision == revision
+    assert retained.warnings[0].acquisition_occurrence.count == 3
+
+    trial3 = pb.WorkContext(
+        trial=pb.TrialContext(session=session, trial_id=_id(), trial_number=3)
+    )
+    runtime.projections.set_scope(trial3, revision)
+    publish_session_view()
+    retained = next(iter(runtime.projections.warnings.values()))
+    assert retained.warnings[0].acquisition_occurrence.count == 4
+
+    report.view.configuration_revision = revision + 1
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+    report.view.configuration_revision = revision
+    report.view.ClearField("configuration_revision")
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+    report.view.CopyFrom(retained)
+    foreign_session = pb.SessionContext(
+        controller_generation=_id(), session_id=session.session_id
+    )
+    report.view.work.session.CopyFrom(foreign_session)
+    report.view.warnings[0].acquisition_occurrence.work.CopyFrom(report.view.work)
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+    report.view.CopyFrom(retained)
+    report.view.work.CopyFrom(trial1)
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+
 def test_late_setup_warning_is_limited_to_the_just_retired_session_scope(
     tmp_path: Path,
 ) -> None:
@@ -737,6 +824,102 @@ async def test_failed_release_dispatch_frees_the_slot_for_a_cleanup_retry(
         )
     assert runtime.device_state.camera_operation is None
     assert await cleanup._finish_existing_operation(runtime.clock() + 50_000_000)
+
+
+async def test_owner_cleanup_stop_preview_marks_internal_retirement(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    bind_ledger(runtime)
+    commands = []
+
+    class Backend:
+        context = backend
+
+        async def execute_camera_command(self, command: Any, *, deadline_ns: int):
+            commands.append(command)
+            raise ConnectionError("link lost")
+
+    cleanup = cast(ManualControlCleanup, runtime.publisher.owner_lost.__self__)  # type: ignore[union-attr]
+    settings = pb.AcquisitionSettings()
+    settings.behavioral.device.device_id = "cam"
+    policies = acquisition_pb.AcquisitionFilePolicies()
+    policies.cameras.add(camera=BEHAVIORAL)
+    view = pb.CameraDeviceView(
+        device_open=True,
+        preview_running=True,
+        preview_prepared=True,
+        preview_run_id=_id(),
+        cleanup_pending=True,
+    )
+    with pytest.raises(ConnectionError):
+        await cleanup._release_camera(
+            cast(Any, Backend()),
+            settings,
+            policies,
+            BEHAVIORAL,
+            view,
+            svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
+            runtime.clock() + 1_000_000_000,
+            _id(),
+        )
+
+    assert commands[0].retiring_owner
+
+
+async def test_owner_cleanup_continues_to_remaining_roles_after_stop_failure(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    runtime.device_state.manual_effects_admitted = True
+    settings = pb.AcquisitionSettings()
+    settings.behavioral.device.device_id = "behavioral"
+    settings.tracking.device.device_id = "tracking"
+    runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition.CopyFrom(settings)
+    views = pb.AcquisitionDeviceViews(source=backend)
+    for role_name in ("behavioral", "tracking", "eye_tracking"):
+        view = getattr(views, role_name)
+        view.device_open = False
+        view.preview_running = False
+        view.cleanup_pending = False
+    for role_name, preview_id in (("behavioral", _id()), ("tracking", _id())):
+        view = getattr(views, role_name)
+        view.device_open = True
+        view.preview_running = True
+        view.preview_prepared = True
+        view.preview_run_id = preview_id
+        view.cleanup_pending = True
+    runtime.projections.devices = views
+    cleanup = cast(ManualControlCleanup, runtime.publisher.owner_lost.__self__)  # type: ignore[union-attr]
+    policies = acquisition_pb.AcquisitionFilePolicies()
+    cleanup.file_policy_loader = lambda _roles: {"acquisition": policies}
+    attempted = []
+
+    async def fail_role(
+        _backend, _settings, _policies, role, _view, kind, deadline_ns, _operation_id
+    ):
+        attempted.append((role, kind, deadline_ns))
+        raise RuntimeError("stop remains unconfirmed")
+
+    cleanup._release_camera = fail_role  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeError, match="behavioral:.*tracking:"):
+        await cleanup.run()
+
+    assert [role for role, _kind, _deadline in attempted] == [
+        BEHAVIORAL,
+        camera_pb.CAMERA_ROLE_TRACKING,
+    ]
+    assert len({deadline for _role, _kind, deadline in attempted}) == 1
 
 
 async def test_owner_cleanup_failure_retries_with_warning_and_no_interruption(

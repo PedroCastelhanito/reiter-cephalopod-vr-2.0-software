@@ -1,5 +1,15 @@
 # Tracking status
 
+Oct27 `runtime-tracking-disabled`: owner pauses Tracking development until requested
+again under [ARCH-001](../architecture.md#arch-001). Current runtime entry points
+omit the process through the existing [E08](../docs/architecture/system-contracts.md#e08)
+role set; [G01](../docs/architecture/gui.md#g01) hides GUI features and disables
+participation/velocity saving in submitted configurations. Dormant implementation
+and other settings remain. Camera preview/video recording remains acquisition-owned.
+Current local validation and restart boundary are recorded in the
+[runtime report](runtime.md#tracking-paused-in-current-runtime--2026-10-27);
+scientific/native acceptance in the [rig checklist](rig-verification.md) is unchanged.
+
 Oct26 `repo-cleanup-and-code-review`: Astra/Luna source/caller audit found no safe
 additional dead-code deletion or justified optimization in Tracking. All116 local
 non-rig Tracking tests pass in the final backend suite. Runtime behavior and

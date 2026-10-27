@@ -6,7 +6,6 @@ from collections.abc import Iterable
 
 from cephvr.acquisition.coordinator.session_payloads import role_name
 from cephvr.acquisition.state import SessionRecord, TrialRecord
-from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import types_pb2 as control
 
 
@@ -43,25 +42,11 @@ def _outputs_match(
 
 
 def _trial_output_roles(session: SessionRecord) -> tuple[int | str, ...]:
-    """Select external cameras and the enabled trial-level output."""
+    """Trial boundaries change only Trial state; camera pulses are session-owned."""
     settings = session.confirmed_settings
-    roles: list[int | str] = []
-    for role, name in (
-        (camera.CAMERA_ROLE_BEHAVIORAL, "behavioral"),
-        (camera.CAMERA_ROLE_TRACKING, "tracking"),
-        (camera.CAMERA_ROLE_EYE_TRACKING, "eye_tracking"),
-    ):
-        if role not in session.required_cameras:
-            continue
-        device = getattr(settings, name).device
-        if (
-            device.HasField("frame_timing")
-            and device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-        ):
-            roles.append(role)
     if settings is not None and settings.pulses.trial_state_enabled:
-        roles.append("trial_state")
-    return tuple(roles)
+        return ("trial_state",)
+    return ()
 
 
 def _trial_finished(trial: TrialRecord) -> bool:

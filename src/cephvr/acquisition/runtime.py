@@ -287,6 +287,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             control_policies=self.control_policies,
             configuration_resolution=self.configuration_resolution,
             trial_lifecycle=self.trial_lifecycle,
+            clock=clock,
         )
         self.manual_devices.bind_retained_operation_reconciler(
             lambda record, child, retained, deadline, ingress: (
@@ -476,6 +477,19 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
     async def execute_camera_command(
         self, request: wire.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
+        if request.HasField("retiring_owner") and (
+            not request.retiring_owner
+            or request.kind != wire.CAMERA_COMMAND_KIND_STOP_PREVIEW
+            or request.command.work.WhichOneof("work") is not None
+        ):
+            return control.CommandAdmission(
+                command_id=request.command.command_id,
+                result=control.COMMAND_RESULT_REJECTED,
+                failure=control.Failure(
+                    code="CAMERA_COMMAND_KIND",
+                    message="Owner retirement is valid only for a manual Stop Preview",
+                ),
+            )
         if request.command.work.WhichOneof("work") is not None and request.kind in {
             wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
             wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW,

@@ -311,6 +311,7 @@ message PreviewWindowPlacement {
   optional uint32 stimulus_background_rgb = 11; // Display-only GUI surround, packed 0xRRGGBB.
   optional uint32 camera_caption_rgb = 13; // Native title background, packed 0xRRGGBB.
   optional uint32 camera_caption_text_rgb = 14; // Native title text, packed 0xRRGGBB.
+  optional bool camera_display_suppressed = 15; // Camera only: temporarily hide an existing native viewer.
   map<string, uint32> stimulus_surface_colors = 12; // Display-only face outline colors, packed 0xRRGGBB.
 }
 message CameraCommandRequest {
@@ -337,6 +338,7 @@ message AcquisitionCameraCommand {
   optional uint32 preview_output_bit_depth = 11;
   AcquisitionSettings settings = 12; // Complete controller-accepted Configuration draft.
   PreviewWindowPlacement preview_placement = 13; // Display-only; never camera/recording settings.
+  optional bool retiring_owner = 14; // Internal Stop Preview cleanup after controller-owner loss.
   // Supplied transport must equal this role's file policy; no alternative source.
   // Full controller-selected device settings, not an operator-to-device bypass.
 }

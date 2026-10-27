@@ -357,10 +357,17 @@ carries the successful grouped ON observation; StoppedReport carries grouped OFF
 Scope them through the enclosing ReportContext; stale generations/requests cannot
 satisfy newer work. Retain failure/late evidence through existing operation/recovery
 views without replacing original issuance/deadlines or declaring another success.
-The coordinator sends each terminal grouped ON/OFF observation to every affected
-camera worker (`RecordPulseEvidence`). Camera workers use OFF's
-outcome to anchor bounded excluded-frame drain; this call never sends a serial command
-or changes the cutoff. Use the same registered context/idempotency/deadline checks.
+The coordinator sends terminal Trial-state ON/OFF to every trial camera worker under
+trial-scoped `RecordPulseEvidence`, independently of camera trigger mode. Normal trial
+commands select no camera output. Setup camera ON and physical session camera OFF
+remain session-owned; deliver camera OFF to each selected worker under session scope
+before cleanup can release capture. Workers validate the exact session, role and
+connection and retain its first terminal outcome; later valid safety OFF on that
+connection cannot rewrite earlier proof. Physical OFF anchors bounded excluded drain;
+retain the first validated successful LOW separately when a later safety OFF resolves
+physical cleanup after a failed attempt, without repairing the earlier trial outcome.
+normal Trial-state OFF closes admission only. This RPC sends no serial command and
+never changes the cutoff. Registered identity/idempotency/deadline checks still apply.
 Terminal outcomes include APPLIED, REJECTED, TIMED_OUT, TRANSPORT_FAILED and
 NOT_DISPATCHED. Emit a failed/not-dispatched outcome even when no serial write occurred;
 never invent dispatch/ACK times, request IDs or firmware state for an unsent command.

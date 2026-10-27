@@ -293,6 +293,29 @@ def test_preview_gui_owner_requires_complete_identity(
     assert valid_preview_placement(request) is valid
 
 
+@pytest.mark.parametrize(
+    "message_type", [wire.CameraCommandRequest, wire.AcquisitionCameraCommand]
+)
+def test_preview_suppression_requires_existing_exact_gui_owner(
+    message_type: object,
+) -> None:
+    from cephvr.shared.preview_placement import valid_preview_placement
+
+    request = message_type(kind=wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW)
+    hint = request.preview_placement
+    hint.side = 128
+    hint.camera_display_suppressed = True
+    assert not valid_preview_placement(request)
+    hint.update_existing_only = True
+    assert not valid_preview_placement(request)
+    hint.gui_window_handle = 11
+    hint.gui_process_id = 12
+    hint.gui_process_creation_time_100ns = 13
+    assert valid_preview_placement(request)
+    request.kind = wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+    assert not valid_preview_placement(request)
+
+
 @pytest.mark.windows
 @pytest.mark.skipif(sys.platform != "win32", reason="Win32 HighGUI windows")
 @pytest.mark.parametrize("slow_first", [False, True])
@@ -579,6 +602,39 @@ def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
             assert reader.done.result(timeout=5), reader.failure
             producer_ring.close()
             ring.close()
+
+
+def test_highgui_placement_coalescing_preserves_suppression_intent() -> None:
+    import threading
+
+    from cephvr.acquisition.preview.highgui import HighGuiPreview
+
+    reader = object.__new__(HighGuiPreview)
+    reader._layout_lock = threading.Lock()
+    reader._pending_placement = None
+    reader.update_placement(
+        wire.PreviewWindowPlacement(
+            update_existing_only=True, camera_display_suppressed=True
+        )
+    )
+    reader.update_placement(
+        wire.PreviewWindowPlacement(x=10, y=20, side=256, update_existing_only=True)
+    )
+    carried = reader._take_placement()
+    assert carried is not None and carried.camera_display_suppressed
+
+    reader.update_placement(
+        wire.PreviewWindowPlacement(
+            update_existing_only=True, camera_display_suppressed=True
+        )
+    )
+    reader.update_placement(
+        wire.PreviewWindowPlacement(
+            update_existing_only=True, camera_display_suppressed=False
+        )
+    )
+    superseded = reader._take_placement()
+    assert superseded is not None and not superseded.camera_display_suppressed
 
 
 @pytest.mark.parametrize(
@@ -903,11 +959,13 @@ async def test_backend_window_release_gates_native_owner(
             self.done: Future[bool] = Future()
             self.failure = "" if released else "native release unconfirmed"
             self.visible = not released
+            self.placement = placement
             self.layouts = []
             previews.append(self)
 
         def update_placement(self, placement):
             self.layouts.append(placement)
+            self.placement = placement
 
         def start(self) -> None:
             self.ready.set_result(None)
@@ -932,11 +990,26 @@ async def test_backend_window_release_gates_native_owner(
         started=True,
         preview_output_bit_depth=8,
     )
-    await owner.show(1, preview, deadline_ns=1_000_000_000)
+    bound = wire.PreviewWindowPlacement(
+        x=10,
+        y=20,
+        side=240,
+        gui_window_handle=11,
+        gui_process_id=12,
+        gui_process_creation_time_100ns=13,
+    )
+    await owner.show(1, preview, deadline_ns=1_000_000_000, placement=bound)
     assert not ledger.may_close_owner(key)
     assert ledger.snapshot(key).transfers[0].attached
     refresh = wire.PreviewWindowPlacement(
-        x=10, y=20, side=240, update_existing_only=True
+        x=10,
+        y=20,
+        side=240,
+        gui_window_handle=11,
+        gui_process_id=12,
+        gui_process_creation_time_100ns=13,
+        update_existing_only=True,
+        camera_display_suppressed=True,
     )
     await owner.show(1, preview, deadline_ns=1_000_000_000, placement=refresh)
     assert len(previews) == 1 and previews[0].layouts == [refresh]
@@ -945,6 +1018,11 @@ async def test_backend_window_release_gates_native_owner(
         assert ledger.may_close_owner(key)
         assert not owner.owns(1)
         await owner.show(1, preview, deadline_ns=1_000_000_000, placement=refresh)
+        assert len(previews) == 1 and not owner.owns(1)
+        invalid = wire.PreviewWindowPlacement.FromString(refresh.SerializeToString())
+        invalid.update_existing_only = False
+        with pytest.raises(ValueError, match="existing viewer"):
+            await owner.show(1, preview, deadline_ns=1_000_000_000, placement=invalid)
         assert len(previews) == 1 and not owner.owns(1)
     else:
         with pytest.raises(RuntimeError, match="release unconfirmed"):
@@ -2182,6 +2260,57 @@ def test_manual_preview_cleanup_confirms_both_rings_only_after_complete_proof(
         )
 
 
+def test_manual_preview_cleanup_retry_preserves_exact_release_proof() -> None:
+    reports, record, attachments, ledger, resources, worker = (
+        _manual_preview_evidence_case(tracking=True)
+    )
+    cleanup = acq.WorkerCleanupEvidence()
+    for attachment in attachments:
+        cleanup.resources.add(resource=attachment.buffer.allocation_id, released=True)
+        ledger.confirm_attachment(
+            resources[attachment.buffer.allocation_id].ledger_key,
+            peer_instance_id=worker.generation,
+            transfer_id=attachment.sync.transfer_id,
+        )
+
+    reports.confirm_cleanup(record, cleanup, exact=True)
+    resources.clear()
+    del cleanup.resources[:]
+    reports.confirm_cleanup(record, cleanup, exact=False)
+
+
+def test_manual_preview_cleanup_retry_does_not_accept_unproven_missing_ring() -> None:
+    reports, record, attachments, _ledger, resources, _worker = (
+        _manual_preview_evidence_case(tracking=False)
+    )
+    cleanup = acq.WorkerCleanupEvidence()
+    cleanup.resources.add(resource=attachments[0].buffer.allocation_id, released=True)
+    resources.clear()
+
+    with pytest.raises(ValueError, match="exact ring release"):
+        reports.confirm_cleanup(record, cleanup, exact=False)
+
+
+def test_manual_preview_cleanup_retry_rejects_mismatched_live_ring() -> None:
+    reports, record, attachments, ledger, resources, worker = (
+        _manual_preview_evidence_case(tracking=False)
+    )
+    cleanup = acq.WorkerCleanupEvidence()
+    cleanup.resources.add(resource=attachments[0].buffer.allocation_id, released=True)
+    ledger.confirm_attachment(
+        resources[attachments[0].buffer.allocation_id].ledger_key,
+        peer_instance_id=worker.generation,
+        transfer_id=attachments[0].sync.transfer_id,
+    )
+    reports.confirm_cleanup(record, cleanup, exact=True)
+
+    resources[attachments[0].buffer.allocation_id].attachment.sync.transfer_id = str(
+        uuid4()
+    )
+    with pytest.raises(ValueError, match="not retained"):
+        reports.confirm_cleanup(record, cleanup, exact=False)
+
+
 def test_tracking_worker_attachment_preserves_resource_ledger_transfer_id() -> None:
     worker = control.ProcessIdentity(role="camera_worker", generation=str(uuid4()))
     tracking = control.ProcessIdentity(role="tracking", generation=str(uuid4()))
@@ -2825,6 +2954,109 @@ async def test_normal_stop_reports_camera_closed_when_claim_close_fails(
     assert worker_registry.workers[role] is worker
     assert worker.preview is preview and preview.stopping
     assert pulse.claim_release_pending
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("target_external", [True, False])
+async def test_owner_retirement_stops_only_target_without_resuming_remaining_roles(
+    monkeypatch: pytest.MonkeyPatch, target_external: bool
+) -> None:
+    from cephvr.acquisition.coordinator import manual_preview as preview_module
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    role = camera.CAMERA_ROLE_BEHAVIORAL
+    other_role = camera.CAMERA_ROLE_TRACKING
+    preview = WorkerPreview(
+        run_id="retiring-owner-run",
+        configuration_revision=1,
+        allocation_id="ring",
+        resolved_camera=camera.CameraResolvedState(),
+        started=True,
+    )
+    worker = SimpleNamespace(context=SimpleNamespace(camera=role), preview=preview)
+
+    class Port:
+        async def stop_preview(self, request, *, deadline_ns):
+            assert request.release_device
+            preview.started = False
+            preview.stopped_event.set()
+            preview.cleanup_event.set()
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    child = ChildOperation(
+        command_id="stop-child",
+        camera=role,
+        work=control.WorkContext(),
+        parent_operation=control.OperationContext(),
+        kind="stop_preview",
+    )
+    monkeypatch.setattr(
+        preview_module,
+        "retain_worker_command",
+        lambda *_args, **_kwargs: (acq.WorkerCommand(), child, Port()),
+    )
+
+    async def completed(*_args, **_kwargs):
+        return control.OperationState(complete=True, succeeded=True)
+
+    monkeypatch.setattr(preview_module, "wait_child_operation", completed)
+    serial = SimpleNamespace(off=AsyncMock(), on=AsyncMock())
+    monkeypatch.setattr(
+        preview_module, "retain_applied_pulse_state", lambda *_args, **_kwargs: None
+    )
+    idle_release = AsyncMock()
+    monkeypatch.setattr(preview_module, "release_idle_claim", idle_release)
+    flow = SimpleNamespace(
+        workers=SimpleNamespace(workers={role: worker}),
+        configuration=SimpleNamespace(settings=control.AcquisitionSettings()),
+        pulse=PulseRecord(
+            observation=mcu.MicrocontrollerObservation(connection_id="mcu")
+        ),
+        serial=serial,
+        clock=lambda: 1,
+        lock=asyncio.Lock(),
+        windows=SimpleNamespace(close=AsyncMock()),
+        transfers=SimpleNamespace(retire_and_release=AsyncMock()),
+        device_status=SimpleNamespace(
+            progress=AsyncMock(),
+            resolve_camera=lambda *_args, **_kwargs: None,
+            update_camera_state=lambda *_args, **_kwargs: None,
+        ),
+        resources={},
+        resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
+        results=SimpleNamespace(
+            report_failure=AsyncMock(),
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED
+                )
+            ),
+        ),
+    )
+    flow._external_roles = lambda _adding_role: (
+        [role, other_role] if target_external else [other_role]
+    )
+    request = wire.AcquisitionCameraCommand(
+        camera=role,
+        preview_run_id=preview.run_id,
+        retiring_owner=True,
+        command=wire.BackendCommand(command_id="retire-stop"),
+    )
+
+    result = await ManualPreview._stop(flow, request, 1000)
+
+    assert result.result == control.COMMAND_RESULT_ACCEPTED
+    if target_external:
+        serial.off.assert_awaited_once_with(
+            (role,),
+            scheduled_boundary_ns=None,
+            stop_issued_ns=1,
+            deadline_ns=1000,
+        )
+    else:
+        serial.off.assert_not_awaited()
+    serial.on.assert_not_awaited()
+    idle_release.assert_not_awaited()
 
 
 @pytest.mark.asyncio

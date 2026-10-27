@@ -422,41 +422,8 @@ class WorkerLifecycleReports:
                 return await self.trial_lifecycle.report(
                     record, evidence, ingress_ns=ingress_ns
                 )
-            if aggregate is not None:
-                report_deadline = deadline_ns
-                pending: control.ReadyReport | None = aggregate
-                if session is not None:
-                    async with self.lock:
-                        pending = session.pending_ready_report
-                        report_deadline = (
-                            session.pending_ready_deadline_ns or deadline_ns
-                        )
-                        if session.pending_ready_attempts >= 3:
-                            return _report_rejected(
-                                "READY_REPORT_UNCONFIRMED",
-                                "controller did not accept the retained Ready report",
-                            )
-                        session.pending_ready_attempts += 1
-                if pending is None:
-                    return _report_rejected(
-                        "READY_REPORT_MISSING", "pending Ready report was lost"
-                    )
-                if ingress_ns > report_deadline:
-                    return _report_rejected(
-                        "READY_REPORT_EXPIRED", "original Ready report deadline expired"
-                    )
-                receipt = await self.controller.report_lifecycle(
-                    control.LifecycleReport(ready=pending), deadline_ns=report_deadline
-                )
-                if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-                    return receipt
-                if session is not None:
-                    async with self.lock:
-                        session.ready_report = deepcopy(pending)
-                        session.pending_ready_report = None
-                        session.pending_ready_deadline_ns = None
-                        session.pending_ready_attempts = 0
-                        session.ready_confirmed.set()
+            if aggregate is not None and session is not None:
+                return await self.ready_reports.report_setup_ready(session, deadline_ns)
             return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
         except (ValueError, RuntimeError) as exc:
             return _report_rejected("INVALID_EVIDENCE", str(exc))

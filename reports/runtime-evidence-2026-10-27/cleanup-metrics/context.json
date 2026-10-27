@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-27",
+  "baseline_revision": "943ef25ac882e80dd5ef565b387f48ac506e7f0d",
+  "authorization": "Owner approved cleanup repair, terminal metrics export, startup investigation and connected rig tests.",
+  "native_generation": "b73b1909-eff4-42bb-bd66-4729d0286868",
+  "source_manifest": "source-before-native.json",
+  "scope": "Two cameras, blank60s open-loop stimulus, no Tracking processing; native stderr redirected to regular file. Native metrics source reviewed; cleanup final revision requires fresh restart.",
+  "capture_slots": 15,
+  "concurrency": "Unrelated GUI/launcher edits were made in shared workspace; source fingerprints retained. No other workload intentionally launched by this chat during recordings.",
+  "limitations": [
+    "Software clocks are not optical timing.",
+    "Worst-stage maxima may refer to different frames.",
+    "Diagnostic stderr payload bounded, OS write latency not guaranteed.",
+    "First native run does not reproduce prior276ms gap."
+  ],
+  "native_release_generation": "8d2417d3-0d95-4b74-b6de-ce5412271a0d",
+  "native_release": "Successful two-camera headless lease-release with stable closed views and no new diagnostics; no reacquisition.",
+  "authorized_active_session_stop": "Owner explicitly approved graceful AbortNow of SP0004-113102; output log complete=true,outcome=interrupted; normal shutdown exact process absence.",
+  "final_generation_exit": "final-generation-exit.json"
+}

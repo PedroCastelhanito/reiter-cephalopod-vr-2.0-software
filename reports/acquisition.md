@@ -8,7 +8,13 @@ preview); Tracking scene remains black. Fresh60s recorded trial closes all outpu
 Behavior1797 and Tracking3596 frames fully decode and match source logs, with no
 reported invalid/capacity-drop/duplicate frames. This does not establish optical
 acceptance or zero source loss. Manual-preview lease release separately fails its
-MCU/ring cleanup proof; repair remains for owner review.
+MCU/ring cleanup proof. Owner-approved A10rev74 repair is now implemented and
+locally tested: exact proof retention, targeted retirement OFF/no ON and independent
+role cleanup under the same deadline. After the owner explicitly authorized graceful
+stop of an intervening active session, a fresh native two-camera headless release
+confirms closed device/run/cleanup views and released MCU ownership without shutdown
+or new diagnostics; settings unchanged. Forced-failure retry and native-viewer
+variants remain rig checks. Final nongui integration2698 passed,5 skipped,3 subtests.
 [Current audit and review candidates](runtime.md#hierarchical-audit--2026-10-2627).
 
 Oct26 camera preview preparation is independent under A10rev73: each existing
@@ -162,25 +168,38 @@ continuous-capture implementation or firmware change is included. See the
 
 ## Continuous camera acquisition design — 2026-10-21
 
-Owner explicitly selected design recording before implementation. Accepted
-[A10rev70](../docs/architecture/acquisition.md#a10)/[A11rev52](../docs/architecture/acquisition.md#a11),
-with A02/A07/A09 and E05/E11/E12 amendments, supersede trial-only capture.
-No runtime, firmware, operator settings or executable policy was changed.
-Existing policy22 and lifecycle/wire/schema contracts still encode trial-only
-capture and per-trial camera ON/OFF; they require coordinated formalization with
-the implementation, not an isolated policy toggle. Repository source inspection
-identified coordinator trial preparation/pulses, worker capture/drain/recording
-completion and controller evidence gates as affected. Existing independent protocol6
-output masks provide the simpler mechanism; no new process or firmware scheduling
-protocol is selected. Actual warm-up/continuity and cleanup remain unverified.
+The owner authorized implementation on Oct27 and selected receipt-based files with
+explicit source/pulse association evidence. [A09](../docs/architecture/acquisition.md#a09),
+[A10](../docs/architecture/acquisition.md#a10) and
+[A11](../docs/architecture/acquisition.md#a11) retain original receipt membership,
+physical cleanup proof and deadlines. Policy23 implements continuous Setup-to-session
+capture using existing protocol6 camera/Trial output masks. SDK acquisition starts
+once during Setup; camera ON and usable fresh delivery precede Ready. Normal trials
+open/close recording admission and Trial state without restarting camera acquisition.
+Cancellation, Abort and session cleanup retain separate physical OFF/SDK-stop proof.
+No firmware, wiring, rates or encoder quality change is included.
 
-The former first-trigger/first-saved-source assumption is superseded for continuous
-capture. Pulse/counter correspondence must remain explicit across trial boundaries
-and across the later start of SpikeGLX saving; receipt-gated files may omit some
-gate-selected boundary exposures. No new physical anchor or timing accuracy is
-claimed. Historical SP0003-123824 measurements retain their original scope. Next
-work is indexed as `continuous-camera-acquisition`; rig checks are consolidated
-under [camera anchoring](rig-verification.md#camera-no-wiring-anchoring).
+Schema6 retains exact encoded-index→trial-source mapping, native timestamps/counters
+and capture generation. Four bounded boundary records provide last pretrial, first
+admitted, last admitted and first observed excluded source context. Absolute pulse
+alignment is explicitly unknown; a zero post-cutoff admission snapshot cannot claim
+there were no subsequent gap frames. Host receipt at T is not a hardware trigger or
+exposure anchor. No encoded-frame-zero/first-pulse guarantee is asserted.
+
+Final nongui integration passes2786 tests/5 skipped/49 deselected with6 existing
+dependency warnings and3 subtests. Focused GUI/native-owner suppression checks pass.
+Original deadline, cancellation, duplicate readiness, failed OFF and interrupted
+physical cleanup were reviewed independently. On Oct27, two native60s trials with
+a3s gap complete with14/14 artifacts closed and six videos fully decoded/count-matched.
+Behavior retains1798/1799 frames and Tracking3597/3597; counters are contiguous within
+each trial and advance across the gap under unchanged capture generations. Schema6
+mapping, receipt bounds and boundary context pass. A separate Ready cancellation and
+immediate Abort while PREPARING pass with confirmed cleanup. All11 saved settings
+remain unchanged and both test generations have exact process-absence receipts.
+These tests do not establish electrical pulse alignment or full-workload acceptance.
+[Current evidence](runtime-evidence-2026-10-27/continuous-preview/) and the single
+[camera anchoring worklist](rig-verification.md#camera-no-wiring-anchoring) retain
+actual validation scope. Historical SP0003-123824 results keep their original scope.
 
 Oct21 `pilot-spikeglx-alignment-inspection`: SP0003-123824 camera trains match
 26979/89933 retained frames plus1/2 logged post-cutoff exclusions; native counters

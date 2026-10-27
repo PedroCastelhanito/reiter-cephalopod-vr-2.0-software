@@ -1,0 +1,121 @@
+[
+  {
+    "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_LOG.json",
+    "complete": true,
+    "outcome": "interrupted",
+    "outputs": [
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:acquisition:behavioral_cam_frames",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_behavioral_cam_frames.jsonl",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "counts": {
+          "video_frames": 6414,
+          "source_frames": 6414
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "6b3ed82c-7960-4666-a444-1d54afcb5ea2"
+        },
+        "output_tag": "behavioral_cam_frames",
+        "extension": "jsonl",
+        "format": "jsonl",
+        "schema_version": 5
+      },
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:acquisition:behavioral_cam",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_behavioral_cam.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "frames": 6414
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "6b3ed82c-7960-4666-a444-1d54afcb5ea2"
+        },
+        "output_tag": "behavioral_cam",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 1
+      },
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:acquisition:tracking_cam_frames",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_tracking_cam_frames.jsonl",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "counts": {
+          "video_frames": 12830,
+          "source_frames": 12830
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "6b3ed82c-7960-4666-a444-1d54afcb5ea2"
+        },
+        "output_tag": "tracking_cam_frames",
+        "extension": "jsonl",
+        "format": "jsonl",
+        "schema_version": 5
+      },
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:acquisition:tracking_cam",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_tracking_cam.mp4",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "camera_video_content": "CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED",
+        "counts": {
+          "frames": 12830
+        },
+        "backend": {
+          "backend_name": "acquisition",
+          "backend_generation": "6b3ed82c-7960-4666-a444-1d54afcb5ea2"
+        },
+        "output_tag": "tracking_cam",
+        "extension": "mp4",
+        "format": "mp4",
+        "schema_version": 1
+      },
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:visual_stimulus:stimulus_LOG",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_stimulus_LOG.json",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "counts": {
+          "documents": 1
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "45362d9a-a2d2-4e5c-ba25-4174b5abba5f"
+        },
+        "output_tag": "stimulus_LOG",
+        "extension": "json",
+        "format": "json",
+        "schema_version": 2
+      },
+      {
+        "output_key": "b9bab06b-ceab-422c-b45c-f55ef66bfa54:visual_stimulus:stimulus_frames",
+        "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_stimulus_frames.jsonl",
+        "closure": "OUTPUT_CLOSURE_CLOSED",
+        "artifact_present": true,
+        "counts": {
+          "render_groups": 12827
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "45362d9a-a2d2-4e5c-ba25-4174b5abba5f"
+        },
+        "output_tag": "stimulus_frames",
+        "extension": "jsonl",
+        "format": "jsonl",
+        "schema_version": 6
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\ReiterU_PC\\Desktop\\tmp\\20261027_ephys-pilot\\SP0004-113102\\protocol-data\\0004_113110_stimulus_LOG.json",
+    "complete": null,
+    "outcome": null,
+    "outputs": null
+  }
+]

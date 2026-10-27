@@ -80,6 +80,7 @@ class StimulusParameters(QWidget):
         self.pending_profiles: dict[str, str] = {}
         self.arena_limits: ArenaLimits | None = None
         self.feedback: FeedbackMappings | None = None
+        self.tracking_available = True
         self.retain = QCheckBox("Retain state")
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
@@ -123,10 +124,11 @@ class StimulusParameters(QWidget):
             app.focusChanged.connect(self.finish_edit)
 
     def set_closed_loop(self, closed: bool) -> None:
-        self.closed_loop = closed
+        self.closed_loop = closed and self.tracking_available
         if self.feedback is not None:
+            self.feedback.setVisible(self.tracking_available)
             self.feedback.set_closed_loop(
-                closed
+                self.closed_loop
                 and (
                     self.program is None
                     or self.program.category != "media_presentation"
@@ -269,6 +271,7 @@ class StimulusParameters(QWidget):
             movement.changed.connect(self.mark_changed)
             self.forms.append(movement)
             self.primary.addWidget(movement)
+            movement.setVisible(self.tracking_available)
         if looming:
             size = LoomingSize(values, schema, definitions)
             size.changed.connect(self.mark_changed)
@@ -336,6 +339,7 @@ class StimulusParameters(QWidget):
             setting,
             [channel.model_dump(mode="json") for channel in program.input_channels],
         )
+        self.feedback.setVisible(self.tracking_available)
         self.feedback.set_closed_loop(
             self.closed_loop and program.category != "media_presentation"
         )

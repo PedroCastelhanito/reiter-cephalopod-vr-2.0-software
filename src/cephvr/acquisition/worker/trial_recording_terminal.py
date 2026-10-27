@@ -200,12 +200,16 @@ class TrialRecordingTerminal:
         completion = RecordingCompletionContext(
             "completed"
             if marker.excluded_accounting_complete
-            and marker.actual_stop_monotonic_ns is not None
+            and (
+                marker.actual_stop_monotonic_ns is not None
+                or marker.admission_stop_monotonic_ns is not None
+            )
             and pulses.complete()
             else "interrupted",
             marker.recording_end_monotonic_ns,
             marker.actual_stop_monotonic_ns,
             self.trial.transport_summary,
+            marker.admission_stop_monotonic_ns,
         )
         self.trial.finished_future = runtime.finish(
             marker, pulses, completion, deadline_ns=deadline_ns

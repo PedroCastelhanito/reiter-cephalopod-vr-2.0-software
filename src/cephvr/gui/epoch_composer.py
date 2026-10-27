@@ -31,6 +31,7 @@ class EpochComposer(QWidget):
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
         self.closed_loop = False
+        self.tracking_available = True
         self.subject_height_mm: float | None = 0.0
         self.pending_assets: set[str] = set()
         self.active_mode = 0
@@ -68,6 +69,7 @@ class EpochComposer(QWidget):
         reference = ProjectorReference(face)
         reference.parameters.asset_root = self.asset_root
         reference.parameters.duration_override = self.duration_value()
+        reference.parameters.tracking_available = self.tracking_available
         reference.parameters.set_closed_loop(self.closed_loop)
         reference.parameters.committed.connect(
             lambda program: self.accept(program, reference)
@@ -102,6 +104,7 @@ class EpochComposer(QWidget):
     def set_closed_loop(self, closed: bool) -> None:
         self.closed_loop = closed
         for row in self.rows.values():
+            row.parameters.tracking_available = self.tracking_available
             row.parameters.set_closed_loop(closed)
 
     def set_asset_root(self, path: str) -> None:

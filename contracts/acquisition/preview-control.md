@@ -40,16 +40,29 @@ Session Setup first stops/releases manual preview; a manual preview allocation i
 never converted into a session allocation. When `[preview] session_preview_max_hz`
 is positive (default 10; 0 = off), Setup allocates one session-scoped PREVIEW slot per
 enabled camera and reports a session preview_run_id for it. The capture thread copies
-the newest valid in-trial frame into it at most at that rate; capture runs only during
-trials, so nothing is published between trials. Session preview never gates capture,
+the newest valid in-trial frame into it at most at that rate. Capture remains active
+from Setup through session cleanup, but nothing is published between trials.
+Session preview never gates capture,
 pulses, recording, tracking, Ready or trial start, and a viewer is never required.
 The slot is released at session cleanup, not when a viewer closes.
+
+An update-only SHOW placement may carry optional `camera_display_suppressed` for
+the exact existing preview run and authenticated GUI owner identity, including its
+native window. Hidden owning pages suppress the native viewer without changing
+logical Show, capture or manual placement. Returning to a visible owning page
+restores that viewer; an absent or X-closed viewer is never allocated by this hint.
+Geometry updates retain pending suppression unless explicitly replaced.
 
 The coordinator allocates a fresh manual-preview run UUID for each actual capture
 start or configuration restart, not for viewer attachment. Equivalent already-running
 Start returns existing state. Stop retires that run; a delayed command cannot revive
 it. The slot descriptor has no fixed consumer; its transfer ledger binds each authorized
 viewer to an exact process generation. At most one viewer may be attached at a time.
+Controller owner cleanup marks its internal Stop Preview commands as retiring the
+owner. Acquisition turns OFF only that camera's external trigger and does not resume
+other preview roles; it retains the MCU claim until the remaining external previews
+have also been stopped. The controller continues through all camera roles under the
+original cleanup deadline and retains a failure if any role remains unconfirmed.
 
 ## Start capture
 

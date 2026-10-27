@@ -18,6 +18,7 @@ class RecordingsCard(Card):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.cameras = cameras
         self.can_edit = False
+        self.tracking_available = True
         self.body.setSpacing(SIZES.group_gap)
         self.data_group, self.video_group = EditingCard("Data"), EditingCard("Videos")
         self.data_grid, self.video_grid = QGridLayout(), QGridLayout()
@@ -74,7 +75,7 @@ class RecordingsCard(Card):
             control.blockSignals(False)
         self.velocities.blockSignals(True)
         self.velocities.setChecked(
-            bool(values.get("velocities"))
+            self.tracking_available and bool(values.get("velocities"))
             if values.get("velocities") is not None
             else False
         )
@@ -93,10 +94,11 @@ class RecordingsCard(Card):
             if key != "stimulus"
         ]
         video_items.append((self.source_labels["stimulus"], self.record["stimulus"]))
-        data_items = [
-            (self.velocity_label, self.velocities),
-            (self.spikeglx_label, self.spikeglx),
-        ]
+        self.velocity_label.setVisible(self.tracking_available)
+        self.velocities.setVisible(self.tracking_available)
+        data_items = [(self.spikeglx_label, self.spikeglx)]
+        if self.tracking_available:
+            data_items.insert(0, (self.velocity_label, self.velocities))
         for grid, items in (
             (self.data_grid, data_items),
             (self.video_grid, video_items),
@@ -113,7 +115,7 @@ class RecordingsCard(Card):
         self.changed.emit()
 
     def refresh_controls(self) -> None:
-        self.velocities.setEnabled(self.can_edit)
+        self.velocities.setEnabled(self.can_edit and self.tracking_available)
         active = {}
         for camera in self.cameras.drafts:
             active[camera.key] = camera.enabled

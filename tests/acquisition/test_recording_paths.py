@@ -125,7 +125,7 @@ def test_frame_log_header_matches_declared_and_planned_cadence_schema(
         header["schema_version"]
         == declaration["schema_version"]
         == planned.schema_version
-        == 5
+        == 6
     )
     assert "video_frame" in declaration["format"]["line_types"]
     assert "source_host_receipt_ns" in planned.fields["video_frame"]
@@ -133,7 +133,7 @@ def test_frame_log_header_matches_declared_and_planned_cadence_schema(
 
 @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
 @pytest.mark.parametrize(
-    "ending", ["completed", "interrupted", "cancelled", "write_failure"]
+    "ending", ["completed", "continuous", "interrupted", "cancelled", "write_failure"]
 )
 def test_metadata_only_session_retains_sources_without_video_resources(
     tmp_path, role, ending
@@ -231,10 +231,33 @@ def test_metadata_only_session_retains_sources_without_video_resources(
     assert session.process_available() == 2
     end = 150 if ending == "interrupted" else 200
     now[0] = end
+    continuous = ending == "continuous"
+    outcome = "completed" if continuous else ending
     results = session.finish(
-        CaptureEndMarker(2, end, end, 0, None, True),
+        CaptureEndMarker(
+            2,
+            end,
+            None if continuous else end,
+            0,
+            None,
+            True,
+            admission_stop_monotonic_ns=end if continuous else None,
+            accounting_observed_monotonic_ns=end,
+            boundary_context=(
+                FrameRecord(0, 90, 100, 1000, True, None),
+                FrameRecord(0, 110, 101, 1001, True, None),
+                FrameRecord(1, 120, 102, 1002, False, "INVALID_IMAGE"),
+                None,
+            ),
+        ),
         PulseEvidence(),
-        RecordingCompletionContext(ending, end, end, None),
+        RecordingCompletionContext(
+            outcome,
+            end,
+            None if continuous else end,
+            None,
+            stopped_admission_stop_monotonic_ns=end if continuous else None,
+        ),
         deadline_ns=300,
     )
     assert results[0].closure == control.OUTPUT_CLOSURE_CLOSED
@@ -255,7 +278,14 @@ def test_metadata_only_session_retains_sources_without_video_resources(
     assert rows[2]["invalid_code"] == "INVALID_IMAGE"
     assert rows[-1]["timing"]["final_received_frame_count"] == 2
     assert rows[-1]["video"]["recorded_frame_count"] == 0
-    assert rows[-1]["outcome"] == ending
+    assert rows[-1]["outcome"] == outcome
+    assert rows[-1]["post_cutoff"]["scope"] == (
+        "admission_snapshot" if continuous else "physical_stop"
+    )
+    assert rows[-1]["post_cutoff"]["observed_monotonic_ns"] == end
+    assert rows[-1]["boundary_context"]["last_pretrial"]["camera_frame_counter"] == 100
+    assert rows[-1]["boundary_context"]["first_excluded"] is None
+    assert rows[-1]["boundary_context"]["absolute_pulse_offset"] is None
     assert len(list(tmp_path.iterdir())) == 1
 
 

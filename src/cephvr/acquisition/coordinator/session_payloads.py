@@ -146,17 +146,12 @@ async def prepare_worker_payloads(
             )
         if recording is not None:
             camera_setup.recording.CopyFrom(recording)
-            if (
-                setting.device.HasField("frame_timing")
-                and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-            ):
-                if session.pulse_resolution is None:
-                    raise ValueError(
-                        "external-trigger recording has no applied pulse configuration"
-                    )
-                camera_setup.pulse_configuration.CopyFrom(
-                    session.pulse_resolution.applied
-                )
+        if session.pulse_resolution is not None:
+            camera_setup.pulse_configuration.CopyFrom(session.pulse_resolution.applied)
+        elif setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER:
+            raise ValueError(
+                "external-trigger capture has no applied pulse configuration"
+            )
         camera_setup.outputs.extend(outputs)
         camera_setup.owned_functions.extend(session.prepared_functions.get(role, ()))
         child, operation, _port = retain_worker_command(

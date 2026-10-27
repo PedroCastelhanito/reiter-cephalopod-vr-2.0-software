@@ -35,6 +35,67 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("delivery_fails", [False, True])
+async def test_setup_cancel_still_fans_out_after_serial_and_delivery_failures(
+    monkeypatch, delivery_fails
+):
+    from unittest.mock import AsyncMock
+
+    session = SessionRecord(
+        work=control.WorkContext(session=control.SessionContext(session_id="session")),
+        operation=control.OperationContext(command_id="setup"),
+        configuration_revision=1,
+        required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        pulse_resolution=mcu.PulseConfigurationResolution(),
+    )
+    port = SimpleNamespace(cancel_setup=AsyncMock())
+    record = SimpleNamespace(
+        launch=SimpleNamespace(work=session.work), port=port, alive=True
+    )
+    serial = SimpleNamespace(
+        cancel_on_reservations=AsyncMock(side_effect=RuntimeError("cancel failed")),
+        off=AsyncMock(side_effect=TimeoutError("OFF timeout")),
+    )
+    delivered = []
+
+    async def deliver(actual_session, workers, evidence, **kwargs):
+        assert (
+            actual_session.setup_cancelled and actual_session.capture_started.is_set()
+        )
+        assert kwargs["deadline_ns"] == 100
+        delivered.append(evidence)
+        if delivery_fails:
+            raise RuntimeError("worker evidence rejected")
+
+    monkeypatch.setattr(
+        "cephvr.acquisition.coordinator.session.deliver_session_pulse_evidence", deliver
+    )
+    monkeypatch.setattr(
+        "cephvr.acquisition.coordinator.session.retain_worker_command",
+        lambda worker, **kwargs: (acq.WorkerCommand(), object(), worker.port),
+    )
+    owner = SimpleNamespace(
+        serial=serial,
+        pulse=PulseRecord(
+            observation=mcu.MicrocontrollerObservation(connection_id="exact")
+        ),
+        workers=SimpleNamespace(workers={camera.CAMERA_ROLE_BEHAVIORAL: record}),
+        lock=asyncio.Lock(),
+        clock=lambda: 10,
+    )
+    await SessionSetup.cancel(owner, session, deadline_ns=100)
+    serial.off.assert_awaited_once()
+    port.cancel_setup.assert_awaited_once()
+    assert port.cancel_setup.await_args.kwargs["deadline_ns"] == 100
+    assert len(delivered) == 1
+    assert delivered[0].connection_id == "exact"
+    assert delivered[0].outcome == mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT
+    assert not delivered[0].request_id and not delivered[0].applied
+    assert not delivered[0].HasField("acknowledged_monotonic_ns")
+    assert session.cleanup_deadline_ns == 100 and not session.cleanup_complete
+
+
 class _SerialOwner:
     def __init__(self) -> None:
         self.closed = False
@@ -690,3 +751,73 @@ def test_dummy_setup_keeps_capture_without_output_or_recording_scope():
     scopes = role_prepared_functions(session, "behavioral", worker, identity.process)
     assert [scope.resource_id for scope in scopes] == ["behavioral.capture"]
     assert list(scopes[0].affected_closure_resource_ids) == ["behavioral.capture"]
+
+
+@pytest.mark.parametrize(
+    "fault", [None, "wrong_mask", "not_running", "trial_high", "cancelled", "late"]
+)
+async def test_session_capture_on_is_camera_only_and_gates_ready(fault):
+    request, configuration, identity = _setup_request()
+    settings = request.settings.acquisition
+    settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    settings.pulses.trial_state_enabled = True
+    session = SessionRecord(
+        work=request.command.work,
+        operation=control.OperationContext(command_id="setup"),
+        configuration_revision=1,
+        required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        confirmed_settings=settings,
+    )
+    pulse = PulseRecord(observation=mcu.MicrocontrollerObservation(connection_id="mcu"))
+    now = [10]
+
+    async def on(roles, *, scheduled_boundary_ns, deadline_ns):
+        assert roles == (camera.CAMERA_ROLE_BEHAVIORAL,)
+        assert scheduled_boundary_ns is None and deadline_ns == 100
+        evidence = mcu.PulseCommandEvidence(
+            command=mcu.PULSE_BOUNDARY_COMMAND_ON,
+            connection_id="mcu",
+            request_id="on",
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=True,
+            behavioral_selected=True,
+            tracking_selected=False,
+            eye_tracking_selected=False,
+            trial_state_selected=False,
+            dispatched_monotonic_ns=10,
+            acknowledged_monotonic_ns=11,
+        )
+        evidence.resulting_state.behavioral.running = fault != "not_running"
+        evidence.resulting_state.trial_state.running = fault == "trial_high"
+        if fault == "wrong_mask":
+            evidence.tracking_selected = True
+        if fault == "cancelled":
+            session.setup_cancelled = True
+        if fault == "late":
+            now[0] = 101
+        return evidence
+
+    preparation = SessionPreparation(
+        identity=identity,
+        configuration=configuration,
+        session_slot=SessionSlot(current=session),
+        pulse=pulse,
+        workers=SimpleNamespace(),
+        serial=SimpleNamespace(on=on),
+        resources={},
+        resource_ledger=SimpleNamespace(),
+        resource_port=SimpleNamespace(),
+        controller=SimpleNamespace(),
+        catalogue=SimpleNamespace(),
+        session_config_reference=lambda _: "session",
+        clock=lambda: now[0],
+    )
+    if fault:
+        with pytest.raises(RuntimeError):
+            await preparation.start_capture(session, 100)
+        assert not session.capture_started.is_set() and session.capture_pulse_on is None
+    else:
+        await preparation.start_capture(session, 100)
+        assert session.capture_started.is_set()
+        assert session.capture_pulse_on.behavioral_selected
+        assert not session.capture_pulse_on.trial_state_selected

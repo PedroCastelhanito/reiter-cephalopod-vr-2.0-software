@@ -32,6 +32,7 @@ from cephvr.gui.components import Card, combo
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
 from cephvr.gui.editing_card import EditingCard
+from cephvr.gui.layouts import CenterTabsInGap
 from cephvr.gui.projector_assignments import (
     AssignmentPreferences,
     sync_assignment_controls,
@@ -281,6 +282,16 @@ class ProjectorsPanel(DevicePanel):
         self.setup_tabs.currentChanged.connect(self.setup_pages.setCurrentIndex)
         layout.insertWidget(2, self.setup_tabs)
         layout.insertWidget(3, self.setup_pages)
+        self.setup_tab_alignment = CenterTabsInGap(
+            self.setup_tabs,
+            self.configuration,
+            self.setup_pages,
+            (
+                self.rig_editor.caption,
+                self.measurements.caption,
+                self.vsync_card.caption,
+            ),
+        )
         right = self.status_column.layout()
         assert isinstance(right, QVBoxLayout)
         self.status_column.hud_card.hide()

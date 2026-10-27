@@ -10,6 +10,7 @@ from cephvr.acquisition.buffers.records import FrameRecord
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
 
 from .capture_runtime import WorkerCaptureResources
@@ -162,7 +163,10 @@ class WorkerTrialLifecycle:
         if self.recording is not None and self.recording.enabled:
             return
         marker = self.trial_state.end_marker
-        if marker is None or marker.actual_stop_monotonic_ns is None:
+        if marker is None or (
+            marker.actual_stop_monotonic_ns is None
+            and marker.admission_stop_monotonic_ns is None
+        ):
             return
         evidence = acq.WorkerLifecycleEvidence()
         evidence.finished.activity_stopped = True
@@ -304,7 +308,7 @@ class WorkerTrialLifecycle:
             or not command.target.work.trial.trial_id
         ):
             raise ValueError("trial preparation lacks exact trial identity")
-        if self.trial_state.schedule is not None or self.captures.active:
+        if self.trial_state.schedule is not None:
             raise RuntimeError("prior trial capture has not closed")
         if self.trial_state.finished_future is not None:
             if not self.trial_state.finished_future.done():
@@ -342,6 +346,10 @@ class WorkerTrialLifecycle:
             self.trial_state.transport_start = None
 
     def record_pulse_evidence(self, request: object) -> None:
+        command = command_from(request)
+        if command.target.work.WhichOneof("work") == "session":
+            self._record_session_off(request)
+            return
         schedule = self.trial_state.schedule or self.trial_state.stopped_schedule
         if not self._interrupted_schedule_matches(request, schedule):
             self._require_ready_session_callback(request)
@@ -357,6 +365,55 @@ class WorkerTrialLifecycle:
             and self.trial_state.pulses.off is not None
         ):
             self.stop_finalizer.publish_if_ready(self.trial_state.finish_deadline_ns)
+
+    def _record_session_off(self, request: object) -> None:
+        if not isinstance(request, acq.WorkerPulseEvidence):
+            raise TypeError("session OFF requires typed pulse evidence")
+        pulse = request.evidence
+        target = request.command.target
+        expected = self.bootstrap.context.work
+        if (
+            request.camera != self.bootstrap.context.camera
+            or target.work != expected
+            or expected.WhichOneof("work") != "session"
+            or pulse.command != mcu.PULSE_BOUNDARY_COMMAND_OFF
+            or not getattr(
+                pulse, f"{camera_role_name(self.bootstrap.context.camera)}_selected"
+            )
+            or not pulse.connection_id
+            or pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_UNSPECIFIED
+            or (pulse.outcome != mcu.PULSE_COMMAND_OUTCOME_APPLIED and pulse.applied)
+        ):
+            raise ValueError("session OFF differs from the exact capture owner")
+        if pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED and (
+            not pulse.applied
+            or not pulse.request_id
+            or not pulse.HasField("dispatched_monotonic_ns")
+            or not pulse.HasField("acknowledged_monotonic_ns")
+            or pulse.acknowledged_monotonic_ns < pulse.dispatched_monotonic_ns
+            or not pulse.HasField("resulting_state")
+            or not pulse.resulting_state.HasField(camera_role_name(request.camera))
+            or not getattr(
+                pulse.resulting_state, camera_role_name(request.camera)
+            ).HasField("running")
+            or getattr(pulse.resulting_state, camera_role_name(request.camera)).running
+        ):
+            raise ValueError("session OFF lacks confirmed selected output stop")
+        prior = self.captures.session_pulse_off
+        if prior is not None:
+            if prior.connection_id != pulse.connection_id:
+                raise ValueError("session terminal OFF changed MCU connection")
+        else:
+            self.captures.session_pulse_off = mcu.PulseCommandEvidence.FromString(
+                pulse.SerializeToString(deterministic=True)
+            )
+        if (
+            pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED
+            and self.captures.session_applied_off is None
+        ):
+            self.captures.session_applied_off = mcu.PulseCommandEvidence.FromString(
+                pulse.SerializeToString(deterministic=True)
+            )
 
     def _interrupted_schedule_matches(
         self, request: object, schedule: acq.WorkerSchedule | None
@@ -395,6 +452,14 @@ class WorkerTrialLifecycle:
     def camera_first_frame(self, record: object) -> None:
         if not isinstance(record, FrameRecord):
             raise TypeError("first camera activity lacks an exact frame record")
+        schedule = self.trial_state.schedule
+        if schedule is None or not (
+            self.trial_state.released
+            and schedule.start_monotonic_ns
+            <= record.acquisition_time_ns
+            < schedule.end_monotonic_ns
+        ):
+            return
         self.activity.camera_frame(record)
         self._maybe_report_started()
 

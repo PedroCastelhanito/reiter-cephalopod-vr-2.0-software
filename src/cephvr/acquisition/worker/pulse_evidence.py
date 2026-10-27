@@ -53,15 +53,7 @@ class TrialPulseEvidence:
         ):
             raise ValueError("pulse evidence differs from the exact scheduled trial")
         pulse = request.evidence
-        selected = (
-            pulse.behavioral_selected
-            if camera_role == camera.CAMERA_ROLE_BEHAVIORAL
-            else pulse.tracking_selected
-            if camera_role == camera.CAMERA_ROLE_TRACKING
-            else pulse.eye_tracking_selected
-            if camera_role == camera.CAMERA_ROLE_EYE_TRACKING
-            else False
-        )
+        selected = pulse.trial_state_selected
         if (
             not pulse.connection_id
             or pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_UNSPECIFIED
@@ -77,7 +69,16 @@ class TrialPulseEvidence:
                 raise ValueError(
                     "not-dispatched pulse evidence contains execution proof"
                 )
-        elif not pulse.request_id:
+        elif not pulse.request_id and not (
+            pulse.outcome
+            in {
+                mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT,
+                mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+            }
+            and not pulse.HasField("dispatched_monotonic_ns")
+            and not pulse.HasField("acknowledged_monotonic_ns")
+            and not pulse.HasField("applied")
+        ):
             raise ValueError("dispatched pulse evidence lacks its request identity")
         if pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_APPLIED:
             if (

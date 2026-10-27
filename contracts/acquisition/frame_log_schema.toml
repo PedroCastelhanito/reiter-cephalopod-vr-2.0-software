@@ -3,7 +3,7 @@
 # One append-only JSON Lines frame log per recorded camera/trial, next to that
 # camera's MP4: a header, received-image rows, encoded-image mappings and completion.
 contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
-schema_version = 5 # v4 used host-time slots and identified padding; never reinterpret old logs.
+schema_version = 6 # v5 lacks continuous-generation/boundary scope; never reinterpret old logs.
 camera_roles = ["behavioral", "tracking", "eye_tracking"]
 camera_tags = ["behavioral_cam", "tracking_cam", "eye_tracking_cam"]
 video_pattern = "<trial_prefix>_<camera_role>_cam.mp4"
@@ -25,7 +25,9 @@ crash_state = "valid_up_to_last_complete_line_missing_completion_means_incomplet
 fields = ["type", "schema_version", "identity", "clocks", "video"]
 
 [header.identity]
-fields = ["session_id", "trial_id", "trial_number", "camera_role", "device_id", "session_config_reference", "recording_identity_version"]
+fields = ["session_id", "trial_id", "trial_number", "camera_role", "device_id", "session_config_reference", "recording_identity_version", "capture_generation"]
+# capture_generation is the exact worker generation; together with session_id and
+# camera_role it scopes one uninterrupted SDK acquisition. null = historical/unbound.
 recording_identity_version = 1 # recording-identity.md binds the same IDs into MP4 tags.
 
 [header.clocks]
@@ -72,7 +74,7 @@ endpoint = "no_padding_at_actual_cutoff"
 
 [completion]
 # Appended once at closure after drain/reconciliation; absent after a crash.
-fields = ["type", "outcome", "timing", "video", "pulses", "post_cutoff", "transport_summary", "diagnostics"]
+fields = ["type", "outcome", "timing", "video", "pulses", "post_cutoff", "boundary_context", "transport_summary", "diagnostics"]
 outcome_values = ["completed", "interrupted"] # Same values as SESSION_LOG trial outcomes.
 
 [completion.timing]
@@ -100,7 +102,15 @@ outcome_values = "PulseCommandOutcome enum names; null = unavailable, never succ
 [completion.post_cutoff]
 # Frames received at/after the camera cutoff through terminal retrieval/purge,
 # excluded from frame lines under A09. See recording-lifecycle.md.
-fields = ["accounting_complete", "excluded_frame_count", "last_native_counter"]
+fields = ["accounting_complete", "excluded_frame_count", "last_native_counter", "scope", "observed_monotonic_ns"]
+# admission_snapshot stops at the owner admission seal while SDK capture continues;
+# physical_stop covers bounded terminal retrieval. Neither claims electrical delivery.
+
+[completion.boundary_context]
+fields = ["last_pretrial", "first_admitted", "last_admitted", "first_excluded", "absolute_pulse_offset"]
+# Each optional observed boundary record contains only host_receipt_ns,
+# camera_frame_counter, camera_timestamp_ns and valid_image; missing context is null.
+# absolute_pulse_offset remains null until separately verified correspondence exists.
 
 [completion.transport_summary]
 # One compact SDK transport-counter summary per camera/trial; null = unknown.

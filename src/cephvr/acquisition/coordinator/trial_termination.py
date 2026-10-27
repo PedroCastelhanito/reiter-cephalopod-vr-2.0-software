@@ -12,13 +12,17 @@ from cephvr.acquisition.coordinator.commands import retain_worker_command
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
 )
+from cephvr.acquisition.coordinator.session_pulses import (
+    deliver_session_pulse_evidence,
+    session_off_failure,
+    session_output_roles,
+)
 from cephvr.acquisition.coordinator.trial_helpers import (
     _rejected,
     _trial_output_roles,
 )
 from cephvr.acquisition.coordinator.trial_pulses import (
     TrialPulseBoundaries,
-    _failure_evidence,
 )
 from cephvr.acquisition.coordinator.trial_validation import valid_pulse
 from cephvr.acquisition.ports import SerialOwnerPort
@@ -137,7 +141,9 @@ class TrialTermination:
             )
             if aborted:
                 trial.interrupted = True
-        selected = _trial_output_roles(session)
+        selected = (
+            session_output_roles(session) if aborted else _trial_output_roles(session)
+        )
         scheduled_off = (
             internal
             and not aborted
@@ -157,6 +163,7 @@ class TrialTermination:
                 request.issued_monotonic_ns,
                 deadline_ns,
                 already_off=scheduled_off,
+                capture_session=session if aborted else None,
             )
         )
         failures: list[str] = []
@@ -222,6 +229,7 @@ class TrialTermination:
         deadline_ns: int,
         *,
         already_off: bool = False,
+        capture_session: SessionRecord | None = None,
     ) -> list[str]:
         if already_off:
             return []
@@ -232,6 +240,11 @@ class TrialTermination:
             failures.append(f"ON-boundary cancellation failed: {exc}")
         if not selected:
             return failures
+        connection_id = (
+            self.pulse.observation.connection_id
+            if self.pulse.observation is not None
+            else ""
+        )
         try:
             evidence = await self.serial.off(
                 selected,
@@ -240,17 +253,17 @@ class TrialTermination:
                 deadline_ns=deadline_ns,
             )
         except TimeoutError:
-            evidence = _failure_evidence(
+            evidence = session_off_failure(
                 selected,
-                mcu.PULSE_BOUNDARY_COMMAND_OFF,
+                connection_id,
                 issued_ns,
                 mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT,
             )
             failures.append("MCU OFF missed its original deadline")
         except Exception as exc:
-            evidence = _failure_evidence(
+            evidence = session_off_failure(
                 selected,
-                mcu.PULSE_BOUNDARY_COMMAND_OFF,
+                connection_id,
                 issued_ns,
                 mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
             )
@@ -271,6 +284,18 @@ class TrialTermination:
             failures.append(
                 "MCU OFF outcome was " + mcu.PulseCommandOutcome.Name(evidence.outcome)
             )
+        if capture_session is not None:
+            try:
+                await deliver_session_pulse_evidence(
+                    capture_session,
+                    self.workers,
+                    evidence,
+                    deadline_ns=deadline_ns,
+                    lock=self.lock,
+                    clock=self.clock,
+                )
+            except Exception as exc:
+                failures.append(f"session OFF evidence delivery failed: {exc}")
         # A later safety OFF cannot replace the trial's immutable terminal outcome.
         if trial is not None and retain_trial_off:
             try:
@@ -301,6 +326,7 @@ class TrialTermination:
                     request.command.command_id, "SESSION_STALE", "session changed"
                 )
             session.interrupted = True
+            session.capture_started.set()
             self.session_slot.interrupted = True
             if session.trial is not None:
                 session.trial.interrupted = True
@@ -311,13 +337,14 @@ class TrialTermination:
                 ):
                     if task is not None and task is not asyncio.current_task():
                         task.cancel()
-        selected = _trial_output_roles(session)
+        selected = session_output_roles(session)
         serial_task = asyncio.create_task(
             self._force_outputs_off(
                 session.trial,
                 selected,
                 request.issued_monotonic_ns,
                 deadline_ns,
+                capture_session=session,
             )
         )
         failures: list[str] = []

@@ -11835,3 +11835,240 @@ local HEAD both resolve to a3e273eac5e671175ffa3b5a0c028ab561266195. This resolv
 prior automatic-review blocker. Removed the completed sync task from TODO; remaining
 native checks and owner decisions are unchanged. This documentation reconciliation
 is committed and synchronized separately, with final equality checked afterward.
+
+### 2026-10-27 - [acquisition] [controller] [supervisor] [visual_stimulus] Approved cleanup and timing diagnostics
+
+Owner approved `preview-lease-release-ring-proof` implementation/testing and
+`recording-stage-metrics-export` implementation plus startup-delay investigation.
+Preserve MCU fences, exact cleanup evidence, trial clocks and encoding policy.
+Luna owns focused implementations; Astra independently reviews guarantees and native
+verification plan. Root owns integration, architecture/report reconciliation and
+bounded rig execution. No further behavior-changing startup remedy is accepted.
+
+### 2026-10-27 - [gui] Microcontroller main section cards
+
+`mcu-main-section-cards`: restored connection, Inputs and Outputs as shared main
+framed cards per owner screenshot/request; G02rev165 and root register updated.
+Existing controls/state retained; no dependency or device behavior changes.
+20 focused offscreen tests pass across three themes, including narrow/wide group
+layout; initial six default-temp fixture errors resolve with workspace basetemp.
+Changed-file Ruff/format, MCU Win32 mypy, boundaries760/zero and whitespace pass.
+Visually inspected isolated offscreen Retro fixture; managed app not restarted,
+no physical/DPI acceptance claimed. Current evidence is in reports/runtime.md.
+Local implementation task complete; unrelated ongoing repair work preserved.
+
+### 2026-10-27 - [gui] Center Projectors tabs within the card gap
+
+`projector-tabs-center-gap`: implemented G02rev166 owner request with focused layout
+helper; only tab position moves after layout, preserving surrounding card positions
+and overall section gap. Removed initial nested-layout attempt after geometry checks
+exposed Qt surplus spacing. Settled geometry test also distinguishes existing lazy
+page-size changes from positioning.12 focused tests pass across three themes/two
+widths; scoped Ruff/format, Win32 mypy2, boundaries760/zero and whitespace pass.
+Visually inspected isolated Amber offscreen fixture; managed app not restarted,
+native/DPI acceptance unclaimed. Local task complete; ongoing other chats preserved.
+
+### 2026-10-27 - [gui] [tracking] [launcher] Pause Tracking in current runtime
+
+`runtime-tracking-disabled`: owner requested disabling Tracking and hiding related
+GUI features until development resumes. Current runtime entry points select the
+existing no-Tracking launch role set. Bootstrap controls GUI availability, including
+GUI-only reopening. Hide navigation/page access, status, velocity saving, mode,
+feedback and arena Tracking gains; submit open-loop with backend/saving disabled
+while retaining other dormant settings and all implementation. Acquisition camera
+preview/video recording remains independent. Updated ARCH-001rev26, G01rev338,
+E08rev183/E10rev23, development guide and current runtime/Tracking reports.
+ARCH-002 review retains focused owners/helpers, with no dependency or new policy
+option; existing large-file advisories reviewed without unrelated refactoring.
+
+Validation: focused no-Tracking regression passes; final18 GUI behavior cases pass,
+followed by4 arena/feedback/no-Tracking passes after final gain-control hiding.
+All64 non-windows/non-rig launcher cases pass. GUI/launcher Win32 mypy210,
+Ruff check/format213, backend boundaries760/zero and whitespace pass;23 added local
+links/anchors checked. Offscreen Dashboard capture visually inspected. Two broader
+GUI selections stalled after20/10 passes and were interrupted; no broad-suite pass
+claimed. Initial test fixture assumptions and launcher reopen-default conflict were
+corrected before passing checks. CIM inspection was unavailable; no process-state
+claim follows. Evidence/context: reports/runtime-evidence-2026-10-27/tracking-disabled/.
+Local task complete; application not restarted. Fresh full launch required for
+activation; no native/hardware/full-load acceptance claimed. Concurrent work retained.
+
+### 2026-10-27 - [acquisition] [controller] [supervisor] [visual_stimulus] Cleanup repair and startup diagnostics implemented
+
+`preview-lease-release-ring-proof`: A10rev74 private retiring_owner backend flag
+preserves ordinary stop behavior, uses target-only OFF/no ON and retains shared MCU
+claim until other external previews release. Independent role cleanup continues
+under one attempt deadline and aggregates errors. Exact per-preview ring receipts
+survive allocation removal for generic cleanup retry, never relaxing unknown or
+mismatched evidence. Local helper regression reproduces the old rejection; full
+native failed-stop/retry chain remains unproven. Generated19 contract sources via
+owning tool. Astra source review found no remaining actionable defect.
+
+`recording-stage-metrics-export`: V12rev20 emits one exact process/session/trial/config
+JSON snapshot after recording-thread exit; success, failure, repeat-poll and export
+error cases preserve closure. Scope includes evidence-only recording. Owning modules
+pass311 tests,2 excluded,6 existing dependency warnings; full recording module81
+passes. First permitted async run exposed three incomplete fixtures, corrected and
+rerun. Ruff/format10, Win32mypy7, boundaries760/zero pass. Sandbox socketpair/hardlink
+restrictions required permitted execution; assertions unchanged. Stderr output is
+size-bounded, not isolated from OS write latency.
+
+Two60s native recordings close7/7 outputs each, all six videos fully decode and match
+frame logs (B1797/1797,T3595/3596,S3601/3600), exactly one metric row per trial. Early
+FFmpeg-input backpressure144.462/145.4227ms repeats, peak11/9 of15 slots with no capacity
+drops. Max evaluation gaps38.0735/32.3304ms; prior276ms gap unreproduced/unattributed.
+No buffer/thread/quality/warm-up behavior change. Both runs restore all11 settings
+files; normal shutdown has exact owned-process absence. Evidence/source manifests:
+reports/runtime-evidence-2026-10-27/cleanup-metrics/.
+
+Fresh final cleanup generation d960f94d native probe found separately started running
+session SP0004-113102; preflight refused before lease acquisition or camera commands.
+No experiment stopped and no settings restored over active work. Native cleanup test
+is pending rig availability; owner asked how to schedule it. Concurrent GUI/launcher
+and shared-document edits are preserved. Metrics-export task is complete; historical
+startup investigation remains indexed by stimulus-encode-benchmark.
+
+### 2026-10-27 - [acquisition] [controller] [supervisor] [visual_stimulus] Authorized session stop and native cleanup verification
+
+Owner explicitly approved normal stopping of active SP0004-113102 for the remaining
+cleanup test. Exact-session AbortNow succeeded, cleanup confirmed, trial log retained
+complete=true/outcome=interrupted with six output records; partial outputs preserved.
+Normal Shutdown and exact process-absence receipt followed. No blind configuration
+restoration over active work occurred.
+
+`preview-lease-release-ring-proof`: fresh generation8d2417d3 two configured external
+cameras started headlessly, exact ReleaseControl admitted, both camera device/run/
+cleanup views closed and MCU ownership cleared after158.3602ms observed host interval.
+Read-only3s stability observation has no new diagnostics/reacquisition. All11 settings
+files unchanged; normal Shutdown and exact owned-process absence confirmed. This
+completes normal owner-release repair verification; forced-failure retry and native
+viewer-detach variants remain in the rig checklist. Exact omitted-ring retry/negative
+proof cases pass locally, without claiming the full native failure chain reproduced.
+Final nongui integration2698 passed,5 skipped,3 subtests,6 dependency warnings in18.03s.
+Scoped Ruff/format10, Win32mypy7, boundaries760/zero and whitespace pass. No buffer,
+threading, quality or startup warm-up remedy adopted. Historical276ms gap remains open.
+
+### 2026-10-27 - [gui] Preview toggle placement without polling waits
+
+`preview-transition-placement`: owner reports native windows briefly overlapping
+after preview toggles and requests click-triggered updates. G01rev339 now records
+coalesced immediate placement after Qt layout, plus command-completion draining;
+existing200ms checks remain fallback. Focused scheduler preserves manager authority,
+run identity, close priority and manual-placement/Snap rules. No capture/recording
+or native transport change; no dependency added. Initial patch application failed
+on unmatched documentation context and was corrected without partial application.
+Initial4 tests pass; final8 pass in30.92s with periodic timers stopped in the new
+regressions. Scoped Ruff/format and Win32 mypy2, boundaries761/zero and whitespace
+pass after formatting. Base943ef25a plus current working-tree changes; other chats'
+edits retained. No desktop/rig action or restart by this chat. Local implementation
+complete; native smoothness/remaining IPC latency follows the existing
+preview-interaction-transitions task and single rig checklist.
+
+### 2026-10-27 - [gui] [acquisition] [controller] [spikeglx] Approved preview suppression and continuous acquisition
+
+Owner approved preview page-hide repair and continuous camera acquisition coding
+and testing. Clarified first-frame/pulse question: retain accepted receipt-gated
+files with explicit source/pulse alignment evidence, not a strict first-encoded-frame
+identity guarantee. A09/E11 online membership remains unchanged; missing/unverified
+absolute hardware association stays unknown. Luna handles preview visibility; Sol
+handles continuous worker capture; root integrates coordinator/contracts and Astra
+reviews ownership/timing guarantees. Existing concurrent work remains preserved.
+
+
+### 2026-10-27 - [visual_stimulus] Reproducible sparse-noise preparation
+
+`sparse-noise-recipes`: owner authorized implementation and selected density-derived
+fixed active counts plus independent seeded per-screen sequences. V04rev21 and its
+contract/schema/example now define bounded pre-Setup generation of ordinary image
+programs, compact grid PNGs and retained recipe/geometry/generator provenance.
+Calibrated millimetre sizing, nearest sampling and existing runtime resource,
+clock/hold and scientific evidence paths are reused. ARCH-002 adds no dependency,
+process, shader family or whole-runtime reference; tests extend the resource owner.
+Python API and CLI implemented; no GUI recipe picker or native app restart.
+
+Verification:211 resource/compiler/rendering tests pass,6 native/rig deselected;
+Win32mypy168 sources, scoped Ruff/format4,12-schema drift, boundaries764/zero and
+whitespace pass. CLI prepares the600-pattern/four-screen example against fixture
+geometry. Initial temp restrictions and repository-only fixture errors were resolved
+with the separate writable visualization root. Two tiny-grid test assumptions about
+random uniqueness were corrected; repeats are valid. Patch context mismatches were
+corrected without partial application. Evidence/source hashes and exact commands:
+reports/runtime-evidence-2026-10-27/sparse-noise/context.json.
+Local implementation complete; physical size/color/onsets/combined workload remain
+in the single rig checklist. External bundle retention and matching generator/Python
+versions remain necessary for regeneration; generated assets are authoritative.
+
+### 2026-10-27 - [acquisition] [controller] Continuous capture coordinator integration
+
+`continuous-camera-acquisition`: owner selected receipt-based files with explicit
+source-frame/pulse association evidence; unknown absolute pulse alignment remains
+unknown. Setup now waits for exact worker arming, starts camera-only pulses and
+gates Ready on confirmed ON plus usable-frame evidence. Normal trial boundaries
+select Trial state only; session cancellation/Abort/cleanup retain physical OFF
+evidence separately before final cleanup. Existing owner modules/helpers were
+reviewed under ARCH-002; a focused session-pulse helper separates session/trial
+ownership without new RPCs or dependencies. Initial attempted test command named
+a nonexistent cleanup module and ran no tests; corrected owning suites passed
+103 tests, pulse suite41, then extended Setup gate suite29. Higher-model Ready
+review/implementation passes coordinator153 tests. Restricted Windows asyncio
+runs stalled; permitted local runs passed. These are implementation checks, not
+rig acceptance; full integration and native verification remain in progress.
+
+### 2026-10-27 - [acquisition] [controller] [gui] Continuous lifecycle review and verification
+
+`continuous-camera-acquisition` and `preview-page-hide-audit`: updated current
+backend reports in place. Review repaired failed/unknown MCU OFF delivery while
+retaining original cleanup deadlines, sibling fanout and independent release proof;
+Setup Ready uses a fresh-clock serialized delivery barrier. Preview authority,
+coalescing, absent-view rejection and retry checks pass. Acquisition876/3 deselected
+and controller760/4 skipped/13 deselected pass before final ambient-warning and
+pre-T Abort corrections. Initial test launch reached Configuration and normal
+Shutdown succeeded with exact process-absence receipt; no trial/hardware benchmark
+ran in that generation. A stale previous endpoint refused read-only RPC; no
+pre-existing process was stopped.
+
+One report edit used Windows default encoding and failed before writing content.
+Recovered acquisition report from HEAD plus the exact two prior recorded edits,
+verified the diff preserves both, then applied the new section using explicit UTF-8.
+No source or experiment data was affected. Native two-trial/gap and preview checks
+remain pending the final reviewed source. Evidence: continuous-preview directory.
+
+### 2026-10-27 - [acquisition] [controller] [gui] Continuous capture and page-hide completion
+
+`continuous-camera-acquisition` and `preview-page-hide-audit`: implemented and
+reviewed using Luna/Sol implementation with Astra lifecycle/safety review. Final
+nongui integration passes2786/5 skipped/49 deselected,3 subtests and6 dependency
+warnings; final focused GUI/native-owner suppression passes2. Existing scoped
+ruff, Windows-target mypy and backend-boundary checks pass. Native two60s trials
+with3s gap close14 artifacts; all six videos fully decode and count-match.
+Behavior1798/1799 and Tracking3597/3597 retain contiguous trial counters with
+unchanged capture generations and advancing gap counters. Schema6 mappings and
+receipt boundary checks pass; absolute pulse offset remains explicitly unknown.
+
+Native Cameras/Monitor show both viewers; Configure/Protocol hide them without
+changing capture identity, device ownership or logical Show. Normal Disconnect
+closes both devices/viewers. Desktop helper could not address native X-close in
+its separate camera process; that variant and manual-drag/DPI stay in the rig
+checklist, with local preservation coverage. A stale GUI draft was rejected before
+manual connection; normal Reload controller configuration resolves it without
+overwriting the draft silently. Separate Ready CancelSetup and immediate PREPARING
+Abort pass with confirmed cleanup. Both runtimes normally shut down with exact
+owned-process absence; all11 saved settings files remain unchanged. Source
+fingerprints confirm the runtime was unchanged during testing. Corrected a stale
+trial-only capture sentence in the preview contract after testing.
+
+TODO removes these implemented tasks; remaining physical alignment/full-load and
+native UI variants stay open. Next recommendations are measured Camera HUD receive
+rate and uint32 scaling scratch; neither is approved or implemented here.
+[Commands, source provenance and raw results](reports/runtime-evidence-2026-10-27/continuous-preview/context.json).
+
+### 2026-10-27 - [repo] [acquisition] [gui] Verification cleanup and synchronization
+
+Removed eight task-owned .pytest-continuous-* temporary directories after resolving
+each inside the workspace and rejecting links. Retained diagnostic/raw recording
+evidence and other chats' caches/work. Final boundary check covers764 modules with
+zero violations; size warnings retain existing cohesion review, with session pulse
+coordination extracted into its focused helper. Whitespace check passes.
+Preparing the owner-authorized repository synchronization, retaining completed
+concurrent GUI/tracking/sparse-noise changes and their existing verification records
+without attributing those implementations to this audit.

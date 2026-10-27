@@ -39,7 +39,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     command = launcher_command(
-        root, python, reopen_gui=args.reopen_gui, no_tracking=args.no_tracking
+        root,
+        python,
+        reopen_gui=args.reopen_gui,
+        no_tracking=args.no_tracking or not args.reopen_gui,
     )
     try:
         return subprocess.call(command, cwd=root)

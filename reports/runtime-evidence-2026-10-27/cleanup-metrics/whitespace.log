@@ -1,0 +1,12 @@
+warning: in the working copy of 'LOG.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'TODO.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'architecture.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'contracts/cephvr/control/v1/services.proto', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/acquisition.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/experiment.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/system-contracts.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'docs/architecture/visual_stimulus.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/acquisition.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/rig-verification.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/runtime.md', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'reports/visual_stimulus.md', CRLF will be replaced by LF the next time Git touches it

@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "Time": {
+      "additionalProperties": false,
+      "properties": {
+        "seconds": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "title": "Seconds",
+          "type": "string"
+        }
+      },
+      "required": [
+        "seconds"
+      ],
+      "title": "Time",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "const": 1,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "kind": {
+      "const": "sparse_noise",
+      "title": "Kind",
+      "type": "string"
+    },
+    "seed": {
+      "maximum": 18446744073709551615,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "surfaces": {
+      "items": {
+        "enum": [
+          "front",
+          "left",
+          "right",
+          "bottom"
+        ],
+        "type": "string"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "title": "Surfaces",
+      "type": "array"
+    },
+    "square_size_mm": {
+      "exclusiveMinimum": 0,
+      "title": "Square Size Mm",
+      "type": "number"
+    },
+    "active_density": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Active Density",
+      "type": "number"
+    },
+    "background_linear": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Background Linear",
+      "type": "number"
+    },
+    "pattern_count": {
+      "exclusiveMinimum": 0,
+      "title": "Pattern Count",
+      "type": "integer"
+    },
+    "pattern_duration": {
+      "$ref": "#/$defs/Time"
+    }
+  },
+  "required": [
+    "format_version",
+    "kind",
+    "seed",
+    "surfaces",
+    "square_size_mm",
+    "active_density",
+    "background_linear",
+    "pattern_count",
+    "pattern_duration"
+  ],
+  "title": "SparseNoiseRecipe",
+  "type": "object"
+}

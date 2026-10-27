@@ -17,7 +17,7 @@ from cephvr.acquisition.recording.identity import (
 from cephvr.platform.windows.paths import extended_path
 from cephvr.shared.ffmpeg_encoding_rules import _format_rate
 
-FRAME_LOG_SCHEMA_VERSION = 5
+FRAME_LOG_SCHEMA_VERSION = 6
 
 FRAME_LOG_FIELDS = {
     "header": ("type", "schema_version", "identity", "clocks", "video"),
@@ -29,6 +29,7 @@ FRAME_LOG_FIELDS = {
         "device_id",
         "session_config_reference",
         "recording_identity_version",
+        "capture_generation",
     ),
     "header.clocks": (
         "host_clock",
@@ -75,6 +76,7 @@ FRAME_LOG_FIELDS = {
         "video",
         "pulses",
         "post_cutoff",
+        "boundary_context",
         "transport_summary",
         "diagnostics",
     ),
@@ -101,6 +103,15 @@ FRAME_LOG_FIELDS = {
         "accounting_complete",
         "excluded_frame_count",
         "last_native_counter",
+        "scope",
+        "observed_monotonic_ns",
+    ),
+    "completion.boundary_context": (
+        "last_pretrial",
+        "first_admitted",
+        "last_admitted",
+        "first_excluded",
+        "absolute_pulse_offset",
     ),
     "completion.transport_summary": (
         "buffer_underruns",
@@ -125,6 +136,17 @@ class FileSync(Protocol):
     def sync(self, file_object: object) -> None: ...
 
 
+def _boundary_record(record: FrameRecord | None) -> dict[str, object] | None:
+    if record is None:
+        return None
+    return {
+        "host_receipt_ns": record.acquisition_time_ns,
+        "camera_frame_counter": record.camera_frame_counter,
+        "camera_timestamp_ns": record.camera_timestamp_ns,
+        "valid_image": record.valid_image,
+    }
+
+
 @dataclass(frozen=True)
 class FrameLogCompletion:
     outcome: str
@@ -145,6 +167,11 @@ class FrameLogCompletion:
     last_native_counter: int | None
     transport_summary: dict[str, int | None] | None
     diagnostics: tuple[dict[str, object], ...] = ()
+    post_cutoff_scope: str = "physical_stop"
+    post_cutoff_observed_monotonic_ns: int | None = None
+    boundary_context: tuple[
+        FrameRecord | None, FrameRecord | None, FrameRecord | None, FrameRecord | None
+    ] = (None, None, None, None)
 
 
 class FrameLogWriter:
@@ -360,6 +387,24 @@ class FrameLogWriter:
                     "accounting_complete": completion.post_cutoff_accounting_complete,
                     "excluded_frame_count": completion.excluded_frame_count,
                     "last_native_counter": completion.last_native_counter,
+                    "scope": completion.post_cutoff_scope,
+                    "observed_monotonic_ns": completion.post_cutoff_observed_monotonic_ns,
+                },
+                "boundary_context": {
+                    **{
+                        name: _boundary_record(record)
+                        for name, record in zip(
+                            (
+                                "last_pretrial",
+                                "first_admitted",
+                                "last_admitted",
+                                "first_excluded",
+                            ),
+                            completion.boundary_context,
+                            strict=True,
+                        )
+                    },
+                    "absolute_pulse_offset": None,
                 },
                 "transport_summary": completion.transport_summary,
                 "diagnostics": diagnostics,
@@ -411,6 +456,7 @@ class FrameLogWriter:
             "completion.video",
             "completion.pulses",
             "completion.post_cutoff",
+            "completion.boundary_context",
         ):
             if prefix.startswith(f"{line_type}."):
                 nested: dict[str, object] = value

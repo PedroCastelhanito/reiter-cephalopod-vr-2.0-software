@@ -511,11 +511,12 @@ def main() -> None:
         args.software_root / "config/backends/supervisor_config.toml"
     )
     try:
+        # Tracking development is paused; use the existing launch omission.
         run_launcher(
             software_root=args.software_root.resolve(),
             supervisor_config=supervisor_config.resolve(),
             interpreter=args.python.resolve(),
-            no_tracking=args.no_tracking,
+            no_tracking=True,
         )
     except ReplacementDeclined as exc:
         print(exc)

@@ -98,9 +98,11 @@ class _Worker:
 
 @pytest.mark.parametrize("interrupt", [False, True])
 @pytest.mark.parametrize("trial_level", [False, True])
+@pytest.mark.parametrize("adopted", [False, True])
 def test_safety_fanout_survives_off_failure_and_missing_worker(
     interrupt: bool,
     trial_level: bool,
+    adopted: bool,
 ) -> None:
     session_id = str(uuid4())
     session_work = control.WorkContext(
@@ -127,7 +129,7 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
             camera.CAMERA_ROLE_BEHAVIORAL,
             camera.CAMERA_ROLE_TRACKING,
         },
-        confirmed_settings=settings,
+        confirmed_settings=settings if adopted else None,
     )
     trial_work = control.WorkContext(
         trial=control.TrialContext(
@@ -223,11 +225,13 @@ def test_safety_fanout_survives_off_failure_and_missing_worker(
             issued_monotonic_ns=10,
             reason=control.Failure(code="TEST", message="prepared case"),
         )
-        admission = asyncio.run(termination.stop(stop_request, deadline_ns=100))
+        admission = asyncio.run(
+            termination.stop(stop_request, deadline_ns=100, aborted=True)
+        )
 
     assert admission.result == control.COMMAND_RESULT_REJECTED
     assert serial.cancel_called and serial.off_called
-    assert ("trial_state" in serial.selected) == trial_level
+    assert ("trial_state" in serial.selected) == (trial_level or not adopted)
     assert worker_port.interrupt_calls == int(interrupt)
     assert worker_port.stop_calls == int(not interrupt)
 
@@ -1088,6 +1092,40 @@ async def test_repeated_safety_off_preserves_first_trial_terminal_evidence(
     assert calls == [100, 200]  # Repeat safety OFF still reaches hardware.
     assert sent == [retained]
     assert trial.pulse_off.SerializeToString(deterministic=True) == retained
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("timeout", [False, True])
+async def test_safety_off_exception_retains_connection_and_unscheduled_boundary(
+    timeout,
+):
+    from unittest.mock import AsyncMock
+
+    trial = _trial()
+    sent = AsyncMock()
+    owner = SimpleNamespace(
+        serial=SimpleNamespace(
+            cancel_on_reservations=AsyncMock(),
+            off=AsyncMock(side_effect=TimeoutError() if timeout else RuntimeError()),
+        ),
+        pulse=PulseRecord(
+            observation=mcu.MicrocontrollerObservation(connection_id="exact")
+        ),
+        pulse_boundaries=SimpleNamespace(send_evidence=sent),
+    )
+    failures = await TrialTermination._force_outputs_off(
+        owner, trial, (camera.CAMERA_ROLE_BEHAVIORAL, "trial_state"), 100, 1000
+    )
+    assert failures
+    pulse = trial.pulse_off
+    assert pulse.connection_id == "exact"
+    assert pulse.stop_issued_monotonic_ns == 100
+    assert pulse.behavioral_selected and pulse.trial_state_selected
+    assert not pulse.HasField("scheduled_boundary_monotonic_ns")
+    assert not pulse.HasField("dispatched_monotonic_ns")
+    assert not pulse.HasField("acknowledged_monotonic_ns")
+    assert not pulse.applied and not pulse.request_id
+    sent.assert_awaited_once_with(trial, pulse, 1000)
 
 
 def test_dummy_started_requires_camera_callback_without_recording_activity():

@@ -19,6 +19,7 @@ from cephvr.acquisition.coordinator.session_payloads import (
     prepare_worker_payloads,
     role_name,
 )
+from cephvr.acquisition.coordinator.session_pulses import capture_output_roles
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import ControllerPort, ResourcePort, SerialOwnerPort
 from cephvr.acquisition.state import (
@@ -126,6 +127,52 @@ class SessionPreparation:
         )
         if self.session_slot.current is not None:
             self.session_slot.current.pulse_resolution = resolution
+
+    async def start_capture(self, session: SessionRecord, deadline_ns: int) -> None:
+        """Enable camera pulses only after every exact Setup operation proves armed."""
+        self._require_live(session, deadline_ns)
+        roles = capture_output_roles(session)
+        if roles:
+            invalidate_released_idle_proof(self.pulse)
+            evidence = await self.serial.on(
+                roles, scheduled_boundary_ns=None, deadline_ns=deadline_ns
+            )
+            self._require_live(session, deadline_ns)
+            if (
+                evidence.command != mcu.PULSE_BOUNDARY_COMMAND_ON
+                or evidence.outcome != mcu.PULSE_COMMAND_OUTCOME_APPLIED
+                or not evidence.applied
+                or not evidence.HasField("acknowledged_monotonic_ns")
+                or evidence.trial_state_selected
+                or not evidence.HasField("resulting_state")
+                or (
+                    session.confirmed_settings is not None
+                    and session.confirmed_settings.pulses.trial_state_enabled
+                    and (
+                        not evidence.resulting_state.trial_state.HasField("running")
+                        or evidence.resulting_state.trial_state.running
+                    )
+                )
+                or any(
+                    bool(getattr(evidence, role_name(role) + "_selected"))
+                    != (role in roles)
+                    for role in (
+                        camera.CAMERA_ROLE_BEHAVIORAL,
+                        camera.CAMERA_ROLE_TRACKING,
+                        camera.CAMERA_ROLE_EYE_TRACKING,
+                    )
+                )
+                or any(
+                    not getattr(evidence.resulting_state, role_name(role)).running
+                    for role in roles
+                )
+            ):
+                raise RuntimeError("session camera ON lacks exact applied evidence")
+            retain_applied_pulse_state(self.pulse, evidence, deadline_ns=deadline_ns)
+            session.capture_pulse_on = mcu.PulseCommandEvidence.FromString(
+                evidence.SerializeToString(deterministic=True)
+            )
+        session.capture_started.set()
 
     async def retire_manual_workers(self, deadline_ns: int) -> None:
         """Stop any manual preview before serial Configure or session Setup."""

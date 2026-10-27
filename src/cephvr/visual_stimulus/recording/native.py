@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import threading
@@ -91,6 +92,7 @@ class NativeRecording:
         self.ffmpeg_executable = ffmpeg_executable
         self.nvenc_owner = nvenc_owner
         self.review_input_pixel_format = review_input_pixel_format
+        self.owner_identity = owner_identity
         self.launcher = SupervisedEncoderLauncher(
             supervisor=supervisor,
             owner=owner,
@@ -419,6 +421,7 @@ class NativeRecording:
             sync_interval_ns=self.record_sync_interval_ns,
             periodic_sync=self._periodic_video_sync,
             failure_cleanup=self._failure_cleanup,
+            terminal_metrics=self._terminal_metrics_callback(),
             clock_ns=self.clock_ns,
         )
         self._capture_runtime = RecordingCaptureRuntime(
@@ -458,6 +461,7 @@ class NativeRecording:
             recipe_path=self._recipe_path,
             max_queued_evidence_bytes=self.evidence_pending_bytes,
             finalizer=self._finalize,
+            terminal_metrics=self._terminal_metrics_callback(),
             sync_interval_ns=self.record_sync_interval_ns,
             clock_ns=self.clock_ns,
         )
@@ -755,6 +759,33 @@ class NativeRecording:
             ),
             recording_capacity_drops=counts.capacity_drop_count,
         )
+
+    def _terminal_metrics_callback(self) -> Callable[[str, dict[str, object]], None]:
+        if self._artifact is None:
+            raise RuntimeError("terminal recording metrics lack trial identity")
+        identity = self._artifact.identity
+        process = self.owner_identity
+
+        def emit(outcome: str, metrics: dict[str, object]) -> None:
+            print(
+                json.dumps(
+                    {
+                        "event": "recording_metrics",
+                        "outcome": outcome,
+                        "process_role": process.role,
+                        "process_generation": process.generation,
+                        "session_id": identity.session_id,
+                        "trial_id": identity.trial_id,
+                        "configuration_revision": identity.configuration_revision,
+                        "metrics": metrics,
+                    },
+                    separators=(",", ":"),
+                ),
+                file=sys.stderr,
+                flush=True,
+            )
+
+        return emit
 
     def _pre_header_results(self) -> tuple[pb.OutputResult, ...]:
         """Classify Schedule cancellation before released T without inventing files."""

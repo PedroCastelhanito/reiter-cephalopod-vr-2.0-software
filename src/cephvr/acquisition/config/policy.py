@@ -14,9 +14,9 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-POLICY_VERSION = 22
+POLICY_VERSION = 23
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "4d351bb395617e43428c214cabe68a2270e42a38c68282754f775ab46f78655d"
+_POLICY_SHA256 = "89f249092eeab4a1028489bbe86f6561024940cf7285d91f88d173de9f39ec6b"
 
 _CONFIG_KEYS = frozenset(
     """
@@ -128,9 +128,12 @@ _POLICY_KEYS = frozenset(
 _FIXED_POLICY: dict[str, object] = {
     "cameras.roles": list(CAMERA_NAMES),
     "cameras.prepared_high_depth_alignment": "msb",
-    "cameras.post_cutoff_retrieval": "terminal_off_then_bounded_drain",
+    "cameras.acquisition_mode": "setup_through_session_cleanup",
+    "cameras.external_trigger_preparation": "setup_arm_then_camera_on_then_usable_ready",
+    "cameras.stale_buffer_cleanup": "physical_stop_only_no_trial_purge",
+    "cameras.post_cutoff_retrieval": "normal_admission_snapshot_physical_off_bounded_drain",
     "workers.capture_wait": "frame_command_or_deadline",
-    "recording.frame_log.capture_completion": "single_end_marker_after_drain_with_independent_stop_and_pulse_evidence",
+    "recording.frame_log.capture_completion": "trial_end_marker_admission_or_physical_stop_with_independent_trial_state_evidence",
     "recording.empty_video_result": "explicit_content_presence_and_closure",
 }
 

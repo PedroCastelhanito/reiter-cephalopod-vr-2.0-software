@@ -49,6 +49,7 @@ class CameraCaptureLoop:
         recording_queue: RecordingQueue | None = None,
         pixel_pool: PixelBufferPool | None = None,
         session_preview: bool = False,
+        session_capture: bool = False,
         preview_max_hz: float | None = None,
         recording_window: Callable[[], CaptureWindow | None] = lambda: None,
         warning_occurrence: Callable[[WarningOccurrence], None] = lambda _: None,
@@ -89,6 +90,7 @@ class CameraCaptureLoop:
         self.recording_queue = recording_queue
         self.pixel_pool = pixel_pool
         self.session_preview = session_preview
+        self.session_capture = session_capture
         self.preview_period_ns = (
             None
             if preview_max_hz is None
@@ -107,6 +109,7 @@ class CameraCaptureLoop:
         self._last_native_counter: int | None = None
         self._last_receipt_ns = 0
         self._last_usable_ns = 0
+        self._capture_start_ns = 0
         self._preview_pacer = (
             PreviewPacer(self.preview_period_ns)
             if self.preview_period_ns is not None
@@ -114,6 +117,11 @@ class CameraCaptureLoop:
         )
         self._trial_activity_reported = False
         self._first_usable_reported = False
+        self._last_nontrial: FrameRecord | None = None
+        self._last_pretrial: FrameRecord | None = None
+        self._first_admitted: FrameRecord | None = None
+        self._last_admitted: FrameRecord | None = None
+        self._first_excluded: FrameRecord | None = None
 
     @property
     def received_frame_count(self) -> int:
@@ -135,6 +143,19 @@ class CameraCaptureLoop:
     def last_excluded_counter(self) -> int | None:
         return self._last_excluded_counter
 
+    @property
+    def boundary_context(
+        self,
+    ) -> tuple[
+        FrameRecord | None, FrameRecord | None, FrameRecord | None, FrameRecord | None
+    ]:
+        return (
+            self._last_pretrial,
+            self._first_admitted,
+            self._last_admitted,
+            self._first_excluded,
+        )
+
     def reset_trial_counters(self) -> None:
         """Reset trial IDs only after prior capture and recording closure."""
         self._trial_frame_id = 0
@@ -142,8 +163,13 @@ class CameraCaptureLoop:
         self._excluded = 0
         self._last_excluded_counter = None
         self._trial_activity_reported = False
-        self._first_usable_reported = False
-        self._last_usable_ns = 0
+        self._last_pretrial = None
+        self._first_admitted = None
+        self._last_admitted = None
+        self._first_excluded = None
+
+    def capture_started(self, observed_ns: int) -> None:
+        self._capture_start_ns = observed_ns
 
     def capture_once(self, capture_handoff: Callable[[], bool]) -> bool:
         """Wait once, then retrieve/copy/account one result if commands permit it."""
@@ -206,8 +232,25 @@ class CameraCaptureLoop:
                 invalid_code,
                 diagnostics,
             )
-            if in_trial or (self.preview_ring is not None and not self.session_preview):
-                self._record_warnings(diagnostics, receipt_ns, frame_id)
+            if in_trial:
+                if self._first_admitted is None:
+                    self._last_pretrial = self._last_nontrial
+                    self._first_admitted = record
+                self._last_admitted = record
+            else:
+                self._last_nontrial = record
+                if (
+                    window is not None
+                    and receipt_ns >= window.end_ns
+                    and self._first_excluded is None
+                ):
+                    self._first_excluded = record
+            if (
+                self.session_capture
+                or in_trial
+                or (self.preview_ring is not None and not self.session_preview)
+            ):
+                self._record_warnings(diagnostics, receipt_ns, frame_id, in_trial)
             tracking_capture = in_trial or (
                 self.preview_ring is not None and not self.session_preview
             )
@@ -234,15 +277,15 @@ class CameraCaptureLoop:
                 if tracking_capture:
                     self._publish_tracking(record, pixels)
                 self._publish_preview(record, pixels, receipt_ns, in_trial)
-                if not self._first_usable_reported:
+                first_usable = not self._first_usable_reported
+                first_trial = in_trial and not self._trial_activity_reported
+                if first_usable or first_trial:
                     self._first_usable_reported = True
                     self.first_trial_frame(record)
                 if in_trial:
                     self._enqueue_recording(record, pixels, receipt_ns)
                     if not self._trial_activity_reported:
                         self._trial_activity_reported = True
-                        # The general callback above provides the same first-frame
-                        # evidence for trial capture and manual preview.
             else:
                 if in_trial:
                     self._enqueue_invalid_record(record, receipt_ns)
@@ -253,13 +296,12 @@ class CameraCaptureLoop:
 
     def _raise_if_usable_silence(self, now_ns: int) -> None:
         window = self.recording_window()
-        if (
-            window is not None
-            and now_ns < window.end_ns
-            and now_ns
-            >= max(window.start_ns, self._last_usable_ns)
-            + self.frame_silence_timeout_ns
-        ):
+        baseline = (
+            self._last_usable_ns
+            or self._capture_start_ns
+            or (window.start_ns if window is not None else 0)
+        )
+        if baseline > 0 and now_ns >= baseline + self.frame_silence_timeout_ns:
             raise RuntimeError("usable camera frame silence exceeded its limit")
 
     def _publish_tracking(self, record: FrameRecord, pixels: memoryview) -> None:
@@ -328,6 +370,7 @@ class CameraCaptureLoop:
         diagnostics: tuple[FrameDiagnostic, ...],
         observed_ns: int,
         frame_id: int,
+        in_trial: bool,
     ) -> None:
         for diagnostic in diagnostics:
             self.warning_occurrence(
@@ -339,6 +382,7 @@ class CameraCaptureLoop:
                         f"frame_id={frame_id}; {diagnostic.details or ''}", 1024
                     )
                     or "",
+                    session_scope=self.session_capture and not in_trial,
                 )
             )
 

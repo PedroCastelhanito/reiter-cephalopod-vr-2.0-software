@@ -147,7 +147,7 @@ the complete package's native DLLs are intentionally restricted to AMD64 Windows
 ```sh
 # Simulated design-review GUI; no device inventory or command touches the rig.
 python scripts/start_gui.py
-# Windows managed runtime: launcher, controller, backends and GUI.
+# Windows managed runtime: Tracking is currently paused and omitted.
 python scripts/start_runtime_gui.py
 # Open-loop application without a Tracking backend process for this launch.
 python scripts/start_runtime_gui.py --no-tracking
@@ -155,7 +155,13 @@ python scripts/start_runtime_gui.py --no-tracking
 python scripts/start_runtime_gui.py --reopen-gui
 ```
 
-`--no-tracking` fixes the application's role set until shutdown. The configured
+Current runtime entry points omit Tracking by default while its development is
+paused. The GUI hides Tracking navigation/status, velocity saving, closed-loop
+selection and feedback controls; submitted sessions are open-loop. Dormant settings
+and implementation remain available for later development. Existing feedback-based
+protocols still require normal validation; they are not rewritten as open-loop stimuli.
+
+`--no-tracking` remains accepted and fixes the application's role set until shutdown. The configured
 Tracking camera can still preview and record, but Tracking processing, velocity
 saving and Tracking diagnostics require a fresh full launch. Reopening the GUI
 preserves its application's role set; do not combine the two flags.

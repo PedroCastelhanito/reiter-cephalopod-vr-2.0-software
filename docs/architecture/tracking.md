@@ -5,7 +5,7 @@
 
 Records input, pipeline/camera scope, pose and image-flow methods (T01–T11), result
 delivery (A06) and compact recording scope (T14/T15). Complete initial estimator and
-pipeline declarations are bound. Tracking implementation is the selected stage under
+pipeline declarations are bound. Tracking development is currently paused under
 [ARCH-001](../../architecture.md#arch-001); progress and validation limits belong in
 the [Tracking report](../../reports/tracking.md).
 
@@ -28,8 +28,9 @@ throughput or rig validation; [T12](#t12) states runtime and verification scope.
 
 **Status:** water-flow and fin-flow pipelines, contour landmarks, estimator
 settings/evidence, worker ports and pipeline registration are declared in the
-[contract index](../../contracts/tracking/README.md). The owner has authorized runtime implementation under
-[ARCH-001](../../architecture.md#arch-001). Visual Stimulus freshness/hold is
+[contract index](../../contracts/tracking/README.md). Current runtime launches omit
+Tracking under [E08](system-contracts.md#e08), with GUI features hidden under
+[G01](gui.md#g01), until the owner requests development again. Visual Stimulus freshness/hold is
 [V26](visual_stimulus.md#v26).
 
 Configuration: [tracking_config.toml](../../config/backends/tracking_config.toml); fixed

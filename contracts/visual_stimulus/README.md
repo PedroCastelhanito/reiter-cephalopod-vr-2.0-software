@@ -10,6 +10,7 @@ contract closure is not rig acceptance.
 
 | Area | Owning contracts / concrete declarations |
 | --- | --- |
+| Sparse noise | [Recipe and preparation API](sparse-noise.md), [recipe schema](sparse-noise-recipe.schema.json), [example](examples/sparse-noise.json). |
 | Authoring, compilation and continuity | [Program/units/coordinates/compatibility](stimulus-schema.md), [complete settings](program-authoring.md), [canonical model](program_model.py)/[schema](program.schema.json), [fixed unit catalogue](parameter_catalogue.py), [shared primitives](schema_common.py), [prepared artifact](prepared-trial.schema.json), [compiler interface](preparation_types.pyi), [duration algorithm](durations.md), [transitions](prepared-plan.md). |
 | Display, geometry and color | [Display model](display_profile.py)/[schema](display-profile.schema.json), [geometric schema](geometric-profile.schema.json), [geometry/provider implementation binding](runtime-bindings.md), [projection](projection.md), [color stages](color-pipeline.md), [photometric model](photometric_profile.py). |
 | Media/resources | [Profiles](media-profiles.md), [protection](asset-lifetime.md), [manifest schema](resource-manifest.schema.json), [native adapters/reservation/cleanup](runtime-bindings.md), [provider interfaces](resource_types.pyi), [decoder interfaces](decoder_types.pyi). |

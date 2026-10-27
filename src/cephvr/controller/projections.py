@@ -110,17 +110,31 @@ class ProjectionStore:
             raise ProjectionError("report backend generation is not registered")
 
     def _scope_current(self, view: pb.AcquisitionWarningView) -> bool:
-        if not view.work.WhichOneof("work"):
+        view_kind = view.work.WhichOneof("work")
+        current_kind = self.work.WhichOneof("work")
+        if not view_kind:
             return (
-                not self.work.WhichOneof("work")
+                not current_kind
                 and view.HasField("configuration_revision")
                 and view.configuration_revision == self.configuration_revision
             )
-        return view.work == self.work or (
+        if view.work == self.work:
+            return (
+                view_kind != "session"
+                or view.HasField("configuration_revision")
+                and view.configuration_revision == self.configuration_revision
+            )
+        if view_kind == "session" and current_kind == "trial":
+            return (
+                view.work.session == self.work.trial.session
+                and view.HasField("configuration_revision")
+                and view.configuration_revision == self.configuration_revision
+            )
+        return (
             self.previous_warning_scope is not None
             and view.work == self.previous_warning_scope[0]
             and (
-                view.work.WhichOneof("work") != "session"
+                view_kind != "session"
                 or (
                     view.HasField("configuration_revision")
                     and view.configuration_revision == self.previous_warning_scope[1]

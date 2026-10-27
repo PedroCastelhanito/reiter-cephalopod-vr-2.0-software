@@ -36,6 +36,7 @@ class WorkerPreview:
     tracking_viewer: control.ProcessIdentity | None = None
     tracking_viewer_transfer_id: str | None = None
     tracking_viewer_released_event: asyncio.Event = field(default_factory=asyncio.Event)
+    confirmed_ring_releases: set[tuple[str, str]] = field(default_factory=set)
     started: bool = False
     stopping: bool = False
     started_event: asyncio.Event = field(default_factory=asyncio.Event)

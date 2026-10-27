@@ -14,7 +14,7 @@ implementation and validation status.
 | Sender → receiver | Calls and purpose |
 | --- | --- |
 | Coordinator → exact registered worker | ResolveCameraConfiguration; EditCamera; PreparePreview/StartPreview/StopPreview; SetupSession; PrepareTrial; ScheduleTrial; ReleaseTrial; StopTrial; CancelSetup; Cleanup; Shutdown |
-| Coordinator → camera worker | RecordPulseEvidence: grouped ON/OFF observations for bounded drain and the completion line's `pulses` (A07/A11) |
+| Coordinator → camera worker | RecordPulseEvidence: trial-scoped Trial-state ON/OFF for completion `pulses`, or session-scoped camera OFF for physical drain (A07/A11) |
 | Supervisor → exact registered worker | InterruptSession; authorized recovery Cleanup; Shutdown, under shared safety authority |
 | Coordinator/supervisor → worker | GetState and GetRetainedResult for initial synchronization or reconciliation |
 | Worker → coordinator | ReportWorkerOperation for command progress/completion; ReportWorkerLifecycle for Ready/Started/Stopped/Finished/Cleanup; ReportWorkerWarnings for bounded diagnostic aggregates |
@@ -105,6 +105,13 @@ Setup, mutate newer configuration or allocate more buffers. Resolution success a
 is neither Setup Ready nor permission to acquire images.
 
 ## Lifecycle and reconciliation
+
+Successful SetupSession operation completion confirms configured/attached resources
+and SDK acquisition armed/started. It does not imply Ready: the separate Ready report
+requires a fresh usable receipt on that acquisition before the original deadline.
+The coordinator enables session camera outputs only after exact arm completions and
+requires successful ON plus every usable-frame Ready before aggregate Ready. Stale or
+cancelled Setup cannot regain authority through either later report.
 
 The [worker evidence table](README.md#setup-and-per-trial-preparation-payloads) defines each
 worker's obligations. Every report contains one evidence kind, exact work/command

@@ -1012,6 +1012,20 @@ def test_runtime_gui_script_rejects_changing_roles_on_reopen(tmp_path):
     assert "fresh application launch" in result.stderr
 
 
+def test_launcher_defaults_to_no_tracking(monkeypatch):
+    import sys
+
+    from cephvr.launcher import main as launcher
+
+    observed = []
+    monkeypatch.setattr(sys, "argv", ["cephvr.launcher.main"])
+    monkeypatch.setattr(
+        launcher, "run_launcher", lambda **options: observed.append(options)
+    )
+    launcher.main()
+    assert observed[0]["no_tracking"] is True
+
+
 @pytest.mark.parametrize(
     "failure", [None, RuntimeError("launch probe"), KeyboardInterrupt()]
 )

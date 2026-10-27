@@ -59,13 +59,18 @@ The session-config reference points to the reserved session metadata, not a copy
    Required failures cancel preparation rather than substituting a device or settings.
 3. Once the final revision/layout is confirmed, create only the needed tracking rings
    and session preview slots, each with its event and ownership record. Send full
-   worker Setup payloads without trial files or capture.
+   worker Setup payloads without trial files or trial admission.
 4. Workers validate and attach resources, allocate the in-process recording queue and
-   private copies/conversion storage, and perform their device/input checks. Return
-   exact AttachedResource evidence with Ready only after obligations pass. The
-   coordinator waits for every required worker and required tracking consumer, plus
-   its own device/control obligations, before backend Ready. A session preview viewer
-   is never a Ready requirement.
+   private copies/conversion storage, and perform their device/input checks. Start
+   free-running acquisition or arm external acquisition with trial rings sealed.
+   Successful exact SetupSession operation completion proves this stage, not Ready.
+5. Coordinator waits for every successful arm operation, rechecks cancellation and
+   the original deadline, then enables only the active external camera outputs.
+   Retain the exact successful session ON separately from trial boundaries.
+6. Each worker reports Ready with its exact attachments only after a fresh usable
+   receipt on this acquisition generation before the original deadline. Aggregate
+   backend Ready requires those reports, successful session ON when applicable and
+   required tracking-consumer confirmation. Viewer attachment never gates Ready.
 
 No partial result, accepted command, live endpoint, successful memory open or another
 worker's acknowledgement substitutes for Ready. Failed/cancelled Setup cleans every
@@ -85,11 +90,13 @@ revision; never accept a replacement allocation without new Setup.
 
 Before dispatch, coordinator verifies prior closure/drain and safe ring reset to the
 new trial ID, with admission sealed. The camera worker performs fresh capture-critical
-readback, purges stale SDK frames and arms external capture with pulses off. It
+readback without stopping/purging/rearming continuous SDK acquisition. It
 verifies prior metadata and optional encoder closure, resets trial-only counters and
 the record queue, and prepares fresh recording resources. With video enabled, FFmpeg launches at
 ScheduleTrial acceptance. Resource IDs remain stable; new trial identity prevents late
 frames from being accepted as the new trial.
+Native counter/timestamp diagnostic baselines and usable-frame health continue
+across preparation, Ready and gaps; those observations never become trial Started.
 
 Fresh Ready includes the worker's exact attachment evidence for this trial and
 confirmed configuration revision. It still requires all device, processing and prior

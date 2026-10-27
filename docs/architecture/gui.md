@@ -16,7 +16,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 337
+**Status:** Accepted · **Revision:** 339
+
+- While Tracking development is paused, managed no-Tracking applications hide the
+  Tracking page/navigation, status indicator, velocity-saving option, session-mode
+  selector, arena Tracking gains and feedback controls. Submit open-loop sessions with Tracking disabled
+  and velocity saving off, including restored configurations. Retain dormant
+  Tracking implementation/settings for later owner-authorized development; camera
+  preview/video recording stays acquisition-owned under E08. Imported programs
+  retain normal validation; hiding feedback does not remove its declarations.
 
 - Protocol category is separate from session Control: Media presentation, Texture
   drift or 3D navigation. Preserve projector rows, row-local Layer management,
@@ -1157,7 +1165,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Video at narrower widths. Hide selectors whenever their existing interaction
   gates disable them (master off, authority, participation or recording); keep
   otherwise eligible selectors visible but disabled during pending requests so
-  toolbar and preview geometry stay stable. Pending placement updates do not
+  toolbar and preview geometry stay stable. Preview toggles request placement updates
+  after the current Qt layout pass. Coalesce settled preview-layout changes
+  into immediate placement updates and resume serial camera placement on command
+  completion; periodic placement checks remain a fallback. Preserve detached-window
+  ownership, manual placement/Snap and ordinary command authority. Pending placement updates do not
   imply closure or add a transient heading label. Keep master switches visible
   and restore selectors when usable.
   Hide the Video group and camera column when no active camera has video recording
@@ -1330,17 +1342,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 164
+**Status:** Accepted · **Revision:** 166
 
 - In Protocol Self motion rows, align the last parameter field with the right edge
   of the Asset text field, excluding Browse. Preserve Linked and Advanced alignment
   and responsive field reflow.
 - Configuration groups are unfilled by default, with headings and spacing rather
   than nested cards: Session/Subject, camera/preset/trigger,
-  MCU connection and I/O sections, and Tracking forms. Use an inner surface
+  and Tracking forms. Use an inner surface
   only when repeated rows or editors would otherwise be hard to distinguish.
   Protocol type and Assets folder each use a main framed card matching Configuration
   file, retaining their existing top-row widths and responsive stacking.
+  Microcontroller connection, Inputs and Outputs each use a main framed card
+  matching Configuration file, with shared title, inset and theme treatment.
   Unfilled groups retain the shared16px content inset and vertical padding so
   their fields/actions align with neighbouring sections. Dashboard Session/Subject
   and Data/Videos use their enclosing main card's inset without additional inner
@@ -1663,7 +1677,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   choosing a child opens its owning page and selects that child. Neither page
   reserves a second navigation column. Projectors' Geometry,
   Calibration and Synchronization tabs remain below Displays
-  in the content column, independent of the rail. Rails mirror/drive existing view
+  in the content column, independent of the rail. Center these tabs vertically
+  between the preceding card's bottom and the following section's title/border,
+  preserving the overall main-section gap across themes and tab changes.
+  Rails mirror/drive existing view
   tabs and preserve automatic session transitions and manual selection; control and authority gates are
   unchanged. The262px main sidebar fits complete selected device labels and markers beside their icons. Main page
   links are left-aligned; their child links are indented32px with12px text,16px

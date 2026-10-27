@@ -38,6 +38,7 @@ from cephvr.gui.managed_stimulus_preview import (
 )
 from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
+from cephvr.gui.preview_layout_updates import PreviewLayoutUpdates
 from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.projector_prerequisites import NO_PROJECTORS_MESSAGE
 from cephvr.gui.splash import StartupSplash
@@ -46,6 +47,7 @@ from cephvr.gui.view import DashboardView
 from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.shared.credentials import CredentialStore, default_runtime_root
+from cephvr.shared.managed_modules import no_tracking_from_bootstrap
 
 
 class ManagedGui(QObject):
@@ -131,7 +133,8 @@ class ManagedGui(QObject):
                 window.devices.projectors,
                 window.tracking,
                 window.devices.microcontroller,
-            )
+            ),
+            tracking_available=window.tracking_available,
         )
         cameras = window.devices.cameras
         cameras.managed = True
@@ -144,6 +147,18 @@ class ManagedGui(QObject):
                 "camera", role=role, kind=kind, **options
             ),
             lambda key: preview_window_placement(window, key).SerializeToString(),
+            lambda: (
+                (window.stack.currentIndex() == 0 and window.dashboard.runtime_layout)
+                or (
+                    window.stack.currentIndex() == 2
+                    and window.devices.tabs.currentIndex() == 0
+                )
+            ),
+        )
+        window.dashboard.layout_switched.connect(self.preview_viewers.workspace_changed)
+        window.stack.currentChanged.connect(self.preview_viewers.workspace_changed)
+        window.devices.tabs.currentChanged.connect(
+            self.preview_viewers.workspace_changed
         )
         self.stimulus_preview = ManagedStimulusPreview(
             window,
@@ -221,8 +236,27 @@ class ManagedGui(QObject):
         bridge.snapshot_received.connect(self.install_snapshot)
         bridge.connection_changed.connect(self.connection_changed)
         bridge.command_finished.connect(self.command_finished)
+        bridge.command_finished.connect(self.preview_viewers.command_finished)
         bridge.action_progress.connect(self.action_progress.requested)
         bridge.operation_finished.connect(self.operation_finished)
+        stimulus_area = window.dashboard.preview_workspace.stimulus_area
+        self.preview_layout_updates = PreviewLayoutUpdates(
+            window,
+            (window.preview_slot, stimulus_area),
+            (self.preview_viewers.relayout, self.stimulus_preview.relayout),
+        )
+        stimulus_area.layout_changed.connect(self.preview_layout_updates.schedule)
+        window.dashboard.preview_requested.connect(self.preview_layout_updates.schedule)
+        cameras.preview_requested.connect(self.preview_layout_updates.schedule)
+        workspace = window.dashboard.preview_workspace
+        for toggle in (
+            workspace.video_toggle,
+            workspace.advanced_toggle,
+            workspace.plots_toggle,
+        ):
+            toggle.toggled.connect(self.preview_layout_updates.schedule)
+        bridge.command_finished.connect(self.preview_layout_updates.schedule)
+        bridge.operation_finished.connect(self.preview_layout_updates.schedule)
         bridge.operation_finished.connect(self.display_operations.live.finished)
         bridge.command_finished.connect(self.display_operations.live.command_finished)
         bridge.connection_changed.connect(self.display_operations.live.disconnected)
@@ -936,7 +970,10 @@ def main(argv: list[str] | None = None, *, splash: StartupSplash | None = None) 
                 splash = StartupSplash(settings)
                 splash.begin()
             apply_theme(app)
-            window = ManagedDashboardWindow(settings=settings)
+            window = ManagedDashboardWindow(
+                settings=settings,
+                tracking_available=not no_tracking_from_bootstrap(bootstrap),
+            )
             bridge = ControllerBridge(
                 principal,
                 int(bootstrap["controller_port"]),

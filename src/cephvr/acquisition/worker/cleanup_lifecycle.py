@@ -192,6 +192,8 @@ class WorkerCleanupLifecycle:
         for resource, is_released in sorted(self.extra_resources().items()):
             evidence.cleanup.resources.add(resource=resource, released=is_released)
         self.report_lifecycle(request, evidence, deadline_ns)
+        if self.state.warnings is not None:
+            self.state.warnings.retire_session()
         if operation == "Shutdown":
             self.shutdown(deadline_ns)
 

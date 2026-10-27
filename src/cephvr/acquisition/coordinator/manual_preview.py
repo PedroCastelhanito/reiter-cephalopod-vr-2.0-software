@@ -407,10 +407,16 @@ class ManualPreview:
                 and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
             ):
                 active_roles = sorted(set(active_roles).union({request.camera}))
-        resume_roles = tuple(role for role in active_roles if role != request.camera)
+        remaining_roles = tuple(role for role in active_roles if role != request.camera)
+        stop_roles: tuple[int, ...]
+        if request.retiring_owner:
+            stop_roles = (request.camera,) if request.camera in active_roles else ()
+        else:
+            stop_roles = tuple(active_roles)
+        resume_roles = () if request.retiring_owner else remaining_roles
         device_cleanup_established = False
         try:
-            if active_roles:
+            if stop_roles:
                 await self.device_status.progress(
                     request.command,
                     request.camera,
@@ -425,7 +431,7 @@ class ManualPreview:
                     )
                 invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.off(
-                    tuple(active_roles),
+                    stop_roles,
                     scheduled_boundary_ns=None,
                     stop_issued_ns=self.clock(),
                     deadline_ns=deadline_ns,
@@ -534,7 +540,9 @@ class ManualPreview:
                     deadline_ns=deadline_ns,
                 )
                 retain_applied_pulse_state(self.pulse, on, deadline_ns=deadline_ns)
-            elif self.pulse.observation is not None:
+            elif self.pulse.observation is not None and (
+                not request.retiring_owner or not remaining_roles
+            ):
                 await release_idle_claim(
                     self.pulse, self.serial, deadline_ns=deadline_ns
                 )

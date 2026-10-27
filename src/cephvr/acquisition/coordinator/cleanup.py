@@ -15,6 +15,10 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
     clear_observation,
     invalidate_released_idle_proof,
 )
+from cephvr.acquisition.coordinator.session_pulses import (
+    deliver_session_pulse_evidence,
+    session_off_failure,
+)
 from cephvr.acquisition.coordinator.sessionless_cleanup import SessionlessCleanup
 from cephvr.acquisition.ports import (
     ControllerPort,
@@ -240,14 +244,14 @@ class CoordinatorCleanup:
             for role, record in tuple(self.workers.items())
             if record.context.work == session.work
         ]
+        serial_failures: list[str] = []
+        serial_released = await self._stop_and_close_serial(
+            session, deadline_ns, serial_failures
+        )
         worker_tasks = [
             self._cleanup_worker(record, request.command_id, session, deadline_ns)
             for _role, record in selected_workers
         ]
-        serial_failures: list[str] = []
-        serial_task = asyncio.create_task(
-            self._stop_and_close_serial(session, deadline_ns, serial_failures)
-        )
         outcomes = await asyncio.gather(*worker_tasks, return_exceptions=True)
         for (role, record), outcome in zip(selected_workers, outcomes, strict=True):
             if isinstance(outcome, BaseException):
@@ -261,11 +265,6 @@ class CoordinatorCleanup:
                 )
             else:
                 worker_cleanup[role] = outcome
-        try:
-            serial_released = await serial_task
-        except BaseException as exc:
-            failures.append(f"microcontroller cleanup: {exc}")
-            serial_released = False
         failures.extend(serial_failures)
         if failures:
             return _rejected(
@@ -405,19 +404,48 @@ class CoordinatorCleanup:
         if self.clock() >= deadline_ns:
             failures.append("serial cleanup deadline expired")
             return False
+        invalidate_released_idle_proof(self.pulse)
         try:
-            invalidate_released_idle_proof(self.pulse)
             await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
+        except Exception as exc:
+            failures.append(f"ON-boundary cancellation failed: {exc}")
+        roles = (
+            camera.CAMERA_ROLE_BEHAVIORAL,
+            camera.CAMERA_ROLE_TRACKING,
+            camera.CAMERA_ROLE_EYE_TRACKING,
+            "trial_state",
+        )
+        issued_ns = self.clock()
+        connection_id = (
+            self.pulse.observation.connection_id
+            if self.pulse.observation is not None
+            else ""
+        )
+        try:
             evidence = await self.serial.off(
-                (
-                    camera.CAMERA_ROLE_BEHAVIORAL,
-                    camera.CAMERA_ROLE_TRACKING,
-                    camera.CAMERA_ROLE_EYE_TRACKING,
-                    "trial_state",
-                ),
+                roles,
                 scheduled_boundary_ns=None,
-                stop_issued_ns=self.clock(),
+                stop_issued_ns=issued_ns,
                 deadline_ns=deadline_ns,
+            )
+        except Exception as exc:
+            evidence = session_off_failure(
+                roles,
+                connection_id,
+                issued_ns,
+                mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT
+                if isinstance(exc, TimeoutError)
+                else mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+            )
+            failures.append(f"microcontroller OFF failed: {exc}")
+        try:
+            await deliver_session_pulse_evidence(
+                session,
+                self.workers,
+                evidence,
+                deadline_ns=deadline_ns,
+                lock=self.lock,
+                clock=self.clock,
             )
             if (
                 evidence.outcome != mcu.PULSE_COMMAND_OUTCOME_APPLIED

@@ -11,9 +11,12 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
     retain_observation,
 )
+from cephvr.acquisition.coordinator.session_pulses import (
+    capture_output_roles,
+    capture_outputs_running,
+)
 from cephvr.acquisition.coordinator.trial_helpers import _trial_output_roles
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
-from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
@@ -62,13 +65,14 @@ class TrialPulseBoundaries:
     async def ensure_outputs_off(
         self, session: SessionRecord, deadline_ns: int
     ) -> None:
-        if not _trial_output_roles(session):
+        if not _trial_output_roles(session) and not capture_output_roles(session):
             return
         observation = await self.serial.status(deadline_ns=deadline_ns)
         if (
             not observation.HasField("state")
             or not observation.state.HasField("configuration_valid")
             or not observation.state.configuration_valid
+            or not capture_outputs_running(session, observation.state)
         ):
             raise RuntimeError("MCU state is not valid before trial preparation")
         settings = session.confirmed_settings
@@ -87,27 +91,30 @@ class TrialPulseBoundaries:
                 observation.SerializeToString(deterministic=True)
             ),
         )
+        if not _trial_output_roles(session):
+            return
         now = self.clock()
         off_deadline_ns = min(deadline_ns, now + self.serial_ack_timeout_ns)
         invalidate_released_idle_proof(self.pulse)
         off = await self.serial.off(
-            (
-                camera.CAMERA_ROLE_BEHAVIORAL,
-                camera.CAMERA_ROLE_TRACKING,
-                camera.CAMERA_ROLE_EYE_TRACKING,
-                "trial_state",
-            ),
+            ("trial_state",),
             scheduled_boundary_ns=None,
             stop_issued_ns=now,
             deadline_ns=off_deadline_ns,
         )
         if (
             off.outcome != mcu.PULSE_COMMAND_OUTCOME_APPLIED
+            or not off.applied
+            or not off.trial_state_selected
+            or off.behavioral_selected
+            or off.tracking_selected
+            or off.eye_tracking_selected
             or not off.HasField("resulting_state")
             or not _outputs_proven_off(off.resulting_state)
+            or not capture_outputs_running(session, off.resulting_state)
         ):
             raise RuntimeError(
-                "MCU outputs are not confirmed OFF before trial preparation"
+                "MCU Trial state is not confirmed LOW before trial preparation"
             )
         retain_applied_pulse_state(self.pulse, off, deadline_ns=off_deadline_ns)
 
@@ -200,9 +207,7 @@ class TrialPulseBoundaries:
             if (
                 worker.port is None
                 or worker.trial is None
-                or not getattr(
-                    evidence, f"{camera_role_name(worker.context.camera)}_selected"
-                )
+                or not evidence.trial_state_selected
             ):
                 continue
             command, _operation, port = retain_worker_command(
@@ -263,5 +268,5 @@ def _outputs_proven_off(state: mcu.MicrocontrollerState) -> bool:
         state.HasField(role)
         and getattr(state, role).HasField("running")
         and not getattr(state, role).running
-        for role in ("behavioral", "tracking", "eye_tracking", "trial_state")
+        for role in ("trial_state",)
     )

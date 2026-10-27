@@ -38,12 +38,20 @@ def terminal_capture_proof(
     last_frame_id: int,
 ) -> tuple[bool, bool, bool]:
     """Return exact stop, interval, and source-accounting proof for a cutoff."""
+    admission_closed = (
+        end.actual_stop_monotonic_ns is None
+        and end.admission_stop_monotonic_ns is not None
+        and end.admission_stop_monotonic_ns
+        == completion.stopped_admission_stop_monotonic_ns
+        and end.recording_end_monotonic_ns == schedule.end_monotonic_ns
+    )
     stop_matches = (
         end.recording_end_monotonic_ns == completion.stopped_recording_end_monotonic_ns
         and end.actual_stop_monotonic_ns == completion.stopped_actual_stop_monotonic_ns
+        and (end.actual_stop_monotonic_ns is not None or admission_closed)
     )
     timing_valid = (
-        end.actual_stop_monotonic_ns is not None
+        (end.actual_stop_monotonic_ns is not None or admission_closed)
         and schedule.start_monotonic_ns
         <= end.recording_end_monotonic_ns
         <= schedule.end_monotonic_ns
@@ -153,6 +161,12 @@ def finish_recording(
         ),
         transport_summary=completion.transport_summary,
         diagnostics=diagnostics.frame_log_groups(),
+        post_cutoff_scope="admission_snapshot"
+        if end.admission_stop_monotonic_ns is not None
+        else "physical_stop",
+        post_cutoff_observed_monotonic_ns=end.accounting_observed_monotonic_ns
+        or end.admission_stop_monotonic_ns,
+        boundary_context=end.boundary_context,
     )
     append_terminal_and_close(
         finalization,

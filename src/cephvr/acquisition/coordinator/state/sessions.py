@@ -143,6 +143,9 @@ class SessionRecord:
     ready_confirmed: asyncio.Event = field(default_factory=asyncio.Event)
     resolved_report: wire.AcquisitionResolutionReport | None = None
     pulse_resolution: mcu.PulseConfigurationResolution | None = None
+    capture_pulse_on: mcu.PulseCommandEvidence | None = None
+    capture_started: asyncio.Event = field(default_factory=asyncio.Event)
+    ready_delivery_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     tracking_input_report: wire.DataPreparationReport | None = None
     tracking_input_confirmation: wire.TrackingInputConfirmation | None = None
     tracking_input_confirmed: asyncio.Event = field(default_factory=asyncio.Event)

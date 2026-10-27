@@ -42,6 +42,122 @@ from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
 
+def _setup_ready_delivery_owner():
+    from cephvr.acquisition.coordinator.evidence_ready import WorkerReadyReports
+    from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=_id()
+    )
+    session = SessionRecord(
+        work=control.WorkContext(session=control.SessionContext(session_id=_id())),
+        operation=control.OperationContext(command_id=_id()),
+        configuration_revision=4,
+        required_cameras=set(),
+        confirmed_revision=4,
+        confirmed_settings=control.AcquisitionSettings(),
+        setup_deadline_ns=10_000_000_000,
+    )
+    state = SimpleNamespace(
+        current=session,
+        now_ns=1,
+        calls=[],
+        entered=asyncio.Event(),
+        reply=asyncio.Event(),
+    )
+
+    async def report_lifecycle(report, *, deadline_ns):
+        state.calls.append((report, deadline_ns))
+        state.entered.set()
+        await state.reply.wait()
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    owner = WorkerReadyReports(
+        backend=backend,
+        settings=control.AcquisitionSettings(),
+        workers={},
+        resources={},
+        resource_ledger=NativeResourceLedger(
+            max_resources=8, max_transfers_per_resource=4
+        ),
+        commands=CommandLedger(
+            backend.backend_generation,
+            10_000_000_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        current_session=lambda: state.current,
+        controller=SimpleNamespace(report_lifecycle=report_lifecycle),
+        lock=asyncio.Lock(),
+        clock=lambda: state.now_ns,
+    )
+    session.pending_ready_report = owner.build_setup_report(
+        session, session.setup_deadline_ns, state.now_ns
+    )
+    session.pending_ready_deadline_ns = session.setup_deadline_ns
+    return owner, session, state
+
+
+@pytest.mark.asyncio
+async def test_setup_ready_waits_for_capture_without_holding_evidence_lock() -> None:
+    owner, session, state = _setup_ready_delivery_owner()
+    first = asyncio.create_task(owner.report_setup_ready(session, 10_000_000_000))
+    await asyncio.sleep(0)
+    assert not first.done() and state.calls == []
+    async with owner.lock:
+        session.capture_started.set()
+    await asyncio.wait_for(state.entered.wait(), 1)
+    second = asyncio.create_task(owner.report_setup_ready(session, 10_000_000_000))
+    await asyncio.sleep(0)
+    assert len(state.calls) == 1
+    assert not session.ready_confirmed.is_set()
+    state.reply.set()
+    results = await asyncio.gather(first, second)
+    assert all(item.result == control.COMMAND_RESULT_ACCEPTED for item in results)
+    assert len(state.calls) == 1
+    assert session.ready_confirmed.is_set()
+    assert session.pending_ready_attempts == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stage", ["capture", "controller"])
+@pytest.mark.parametrize("fence", ["cancelled", "interrupted", "replaced", "expired"])
+async def test_setup_ready_cannot_promote_after_wait_fence(stage, fence) -> None:
+    owner, session, state = _setup_ready_delivery_owner()
+    task = asyncio.create_task(owner.report_setup_ready(session, 10_000_000_000))
+    await asyncio.sleep(0)
+    if stage == "controller":
+        session.capture_started.set()
+        await asyncio.wait_for(state.entered.wait(), 1)
+    if fence == "cancelled":
+        session.setup_cancelled = True
+    elif fence == "interrupted":
+        session.interrupted = True
+    elif fence == "replaced":
+        state.current = None
+    else:
+        state.now_ns = 10_000_000_001
+    session.capture_started.set()
+    state.reply.set()
+    receipt = await asyncio.wait_for(task, 1)
+    assert receipt.result == control.COMMAND_RESULT_REJECTED
+    assert not session.ready_confirmed.is_set()
+    assert session.ready_report is None
+    assert len(state.calls) == (1 if stage == "controller" else 0)
+
+
+@pytest.mark.asyncio
+async def test_setup_ready_missing_capture_gate_expires_at_original_deadline() -> None:
+    owner, session, state = _setup_ready_delivery_owner()
+    session.setup_deadline_ns = session.pending_ready_deadline_ns = 1_000_001
+    receipt = await owner.report_setup_ready(session, 10_000_000_000)
+    assert receipt.result == control.COMMAND_RESULT_REJECTED
+    assert receipt.failure.code == "READY_REPORT_EXPIRED"
+    assert state.calls == []
+    assert not session.ready_confirmed.is_set()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", ["plain", "evidence", "expired", "trial_seen"])
 async def test_camera_heartbeat_handoff_preserves_trial_evidence_fence(

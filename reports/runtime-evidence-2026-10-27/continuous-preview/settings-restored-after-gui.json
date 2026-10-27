@@ -1,0 +1,6 @@
+{
+  "runtime_configuration_exact_before_shutdown": true,
+  "all_owned_processes_absent": true,
+  "restored_files": [],
+  "all_eleven_match": true
+}

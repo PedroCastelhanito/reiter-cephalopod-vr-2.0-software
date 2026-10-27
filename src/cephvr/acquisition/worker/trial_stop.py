@@ -118,9 +118,19 @@ class TrialStopFinalizer:
         if not isinstance(request, (acq.WorkerStop, acq.WorkerInterrupt)):
             raise TypeError("stop continuation requires an exact Stop or Interrupt")
         report.operation.context.command_id = request.command.command_id
-        first_stop = self.trial.stop_request is None
+        first_stop = self.trial.stop_request is None or (
+            isinstance(request, acq.WorkerInterrupt)
+            and self.trial.end_marker is not None
+            and self.trial.end_marker.admission_stop_monotonic_ns is not None
+        )
         if first_stop:
             self.trial.stop_request = request
+            if (
+                isinstance(request, acq.WorkerInterrupt)
+                and self.trial.end_marker is not None
+                and self.trial.end_marker.admission_stop_monotonic_ns is not None
+            ):
+                self.trial.actual_stop_ns = None
         self._pending.append(
             PendingStopOperation(request, deadline_ns, report, complete)
         )
@@ -160,36 +170,67 @@ class TrialStopFinalizer:
 
     def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> bool:
         scheduled = self.trial.schedule or self.trial.stopped_schedule
+        if self.trial.schedule is None and self.trial.end_marker is None:
+            scheduled = None
+        request = self.trial.stop_request
+        normal = bool(
+            report_stopped
+            and isinstance(request, acq.WorkerStop)
+            and scheduled is not None
+            and request.issued_monotonic_ns >= scheduled.end_monotonic_ns
+            and not request.reason.ByteSize()
+        )
+        if normal and self.captures.active:
+            return self._close_continuing_trial(deadline_ns)
+        if (
+            self.captures.active
+            and scheduled is not None
+            and not self.captures.trial_admission_open
+            and host_time_ns() < scheduled.start_monotonic_ns
+        ):
+            self._cancel_trial_before_start(scheduled, deadline_ns)
+            scheduled = None
+        if self.captures.active and (
+            scheduled is None
+            or (
+                self.trial.end_marker is not None
+                and self.trial.end_marker.admission_stop_monotonic_ns is not None
+            )
+        ):
+            self.captures.seal_admission(deadline_ns)
+            if (
+                self.captures.requires_external_trigger
+                and self.captures.session_pulse_off is None
+                and host_time_ns() < deadline_ns
+            ):
+                self._stop_deadline_ns = deadline_ns
+                return False
+            stopped = self.captures.stop(
+                deadline_ns,
+                drain_margin_ns=int(
+                    self.bootstrap.file_policy.post_cutoff_drain_margin_ns
+                ),
+                terminal_off_confirmed=self.captures.session_off_confirmed,
+                resumable=True,
+            )
+            if stopped is None:
+                self._stop_deadline_ns = deadline_ns
+                return False
+            return True
         if not self.captures.active and self.trial.end_marker is not None:
             return True
         if self.captures.active:
             deadline_ns = self.captures.seal_admission(deadline_ns)
             if (
                 self.captures.requires_external_trigger
-                and self.trial.pulses.off is None
+                and self.captures.session_pulse_off is None
                 and host_time_ns() < deadline_ns
             ):
                 self.trial.stopped_schedule = scheduled
                 self._stop_deadline_ns = deadline_ns
                 return False
         if not self.captures.active and scheduled is not None:
-            self.captures.cancel_schedule()
-            if self.terminal.recording_trial_installed():
-                runtime = self.recording
-                if runtime is None:
-                    raise RuntimeError("recording trial has no writer runtime")
-                self.trial.finished_future = runtime.cancel_before_start(
-                    deadline_ns=deadline_ns
-                )
-                self.trial.finished_future.add_done_callback(
-                    lambda _future: self._external_wake()
-                )
-            self.captures.remove_recording()
-            self.trial.stopped_schedule = scheduled
-            self.trial.schedule = None
-            self.trial.released = False
-            self.trial.prepared = False
-            self._complete_warning_scope()
+            self._cancel_trial_before_start(scheduled, deadline_ns)
             return True
 
         scheduled_end = (
@@ -219,10 +260,7 @@ class TrialStopFinalizer:
 
         purge = self.trial.purge_evidence
         if self.captures.active:
-            off_terminal = (
-                not self.captures.requires_external_trigger
-                or self.terminal.off_terminal_confirmed()
-            )
+            off_terminal = self.captures.session_off_confirmed
             admission_stop = self.captures.admission_stop_ns
             if self.trial.finish_deadline_ns is None and admission_stop is not None:
                 self.trial.finish_deadline_ns = self.terminal.finish_deadline(
@@ -289,6 +327,8 @@ class TrialStopFinalizer:
                 excluded_accounting_complete=bool(
                     purge is not None and purge.accounting_complete
                 ),
+                boundary_context=capture.boundary_context,
+                accounting_observed_monotonic_ns=host_time_ns(),
             )
 
         marker = self.trial.end_marker
@@ -343,6 +383,78 @@ class TrialStopFinalizer:
                 self.trial.stop_request,
                 self.trial.finish_deadline_ns or deadline_ns,
             )
+        return True
+
+    def _cancel_trial_before_start(
+        self, scheduled: acq.WorkerSchedule, deadline_ns: int
+    ) -> None:
+        self.captures.cancel_schedule()
+        if self.terminal.recording_trial_installed():
+            runtime = self.recording
+            if runtime is None:
+                raise RuntimeError("recording trial has no writer runtime")
+            self.trial.finished_future = runtime.cancel_before_start(
+                deadline_ns=deadline_ns
+            )
+            self.trial.finished_future.add_done_callback(
+                lambda _future: self._external_wake()
+            )
+        self.captures.remove_recording()
+        self.trial.stopped_schedule = scheduled
+        self.trial.schedule = None
+        self.trial.released = False
+        self.trial.prepared = False
+        self._complete_warning_scope()
+
+    def _close_continuing_trial(self, deadline_ns: int) -> bool:
+        """Close trial-owned records on the SDK owner without stopping acquisition."""
+        from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
+
+        scheduled = self.trial.schedule or self.trial.stopped_schedule
+        assert scheduled is not None
+        if self.trial.end_marker is not None:
+            return True
+        self.captures.seal_admission(deadline_ns)
+        if self.trial.pulses.required and not self.terminal.off_terminal_confirmed():
+            if host_time_ns() < deadline_ns:
+                self._stop_deadline_ns = deadline_ns
+                return False
+            raise TimeoutError("trial LOW evidence missed original Stop deadline")
+        capture = self.captures.capture
+        if capture is None:
+            raise RuntimeError("continuing trial has no capture owner")
+        observed_ns = self.captures.close_trial_admission(deadline_ns)
+        self.trial.end_marker = CaptureEndMarker(
+            capture.received_frame_count,
+            scheduled.end_monotonic_ns,
+            None,
+            capture.excluded_frame_count,
+            capture.last_excluded_counter,
+            True,
+            admission_stop_monotonic_ns=observed_ns,
+            boundary_context=capture.boundary_context,
+            accounting_observed_monotonic_ns=observed_ns,
+        )
+        self.trial.actual_stop_ns = observed_ns
+        self.terminal.collect_transport_summary()
+        self.trial.finish_deadline_ns = self.terminal.finish_deadline(
+            deadline_ns, scheduled.end_monotonic_ns, scheduled.end_monotonic_ns
+        )
+        self._publish_stopped(observed_ns, scheduled.end_monotonic_ns, deadline_ns)
+        self.trial.stopped_reported = True
+        if self.terminal.recording_trial_installed():
+            self.terminal.publish_if_ready(self.trial.finish_deadline_ns)
+        self.captures.remove_recording()
+        self.trial.stopped_schedule = scheduled
+        self.trial.schedule = None
+        self.trial.released = False
+        self.trial.prepared = False
+        self._complete_warning_scope()
+        if self._capture_finished is not None and self.trial.stop_request is not None:
+            self._capture_finished(
+                self.trial.stop_request, self.trial.finish_deadline_ns
+            )
+            self._capture_finished = None
         return True
 
     def _publish_stopped(self, actual_ns: int, end_ns: int, deadline_ns: int) -> None:

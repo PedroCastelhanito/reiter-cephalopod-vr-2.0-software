@@ -511,6 +511,8 @@ def _valid_scope(name: str, target: acq.WorkerContext) -> bool:
     if not target.HasField("work"):
         return name in _NO_WORK_METHODS
     kind = target.work.WhichOneof("work")
+    if name == "RecordPulseEvidence":
+        return bool(kind in {"session", "trial"})
     if name in _TRIAL_METHODS:
         return bool(kind == "trial")
     if name in {"SetupSession", "CancelSetup", "InterruptSession"}:

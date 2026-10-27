@@ -21,13 +21,16 @@ class ManagedPreviewViewers:
         cameras: CamerasPanel,
         queue_camera: Callable[..., bool],
         placement: Callable[[str], bytes] | None = None,
+        workspace_visible: Callable[[], bool] = lambda: True,
     ) -> None:
         self.snapshot = snapshot
         self.cameras = cameras
         self.queue_camera = queue_camera
         self.placement = placement
+        self.workspace_visible = workspace_visible
         self._reported: dict[int, int] = {}
         self._layouts: dict[str, tuple[str, bytes]] = {}
+        self._suppression: dict[int, tuple[str, bool | None]] = {}
         self._pending_hides: dict[str, int] = {}
         self.layout_timer = QTimer(cameras)
         self.layout_timer.setInterval(200)
@@ -109,7 +112,11 @@ class ManagedPreviewViewers:
             self._hide_next()
             return
         state = self.snapshot()
-        if state is None or self.placement is None or not self.can_operate:
+        if state is None or not self.can_operate:
+            return
+        if self._sync_workspace_visibility(state):
+            return
+        if self.placement is None or not self.workspace_visible():
             return
         visible = {
             source.key for source in self.cameras.view.previews if source.visible
@@ -139,6 +146,70 @@ class ManagedPreviewViewers:
                 self._layouts[camera.key] = identity
             return
 
+    def workspace_changed(self) -> None:
+        """Apply the current visible preview-slot state without changing Show state."""
+        state = self.snapshot()
+        if state is not None and self.can_operate:
+            self._sync_workspace_visibility(state)
+
+    def command_finished(self, action: str, success: bool, _message: str) -> None:
+        if action == "camera" and not success:
+            self._suppression = {
+                role: (run_id, None)
+                for role, (run_id, _suppressed) in self._suppression.items()
+            }
+
+    def _sync_workspace_visibility(self, state: pb.Snapshot) -> bool:
+        if self.placement is None:
+            return False
+        workspace_visible = self.workspace_visible()
+        active: dict[int, tuple[str, bool]] = {}
+        for camera in self.cameras.drafts:
+            role = CAMERA_ROLES.get(camera.role)
+            if role is None:
+                continue
+            device = getattr(state.acquisition_devices, camera_role_name(role))
+            if not (
+                device.preview_running
+                and device.preview_visible
+                and device.preview_run_id
+            ):
+                continue
+            suppressed = not workspace_visible
+            identity = device.preview_run_id, suppressed
+            active[role] = identity
+            applied = self._suppression.get(role)
+            if applied is not None and applied[0] != device.preview_run_id:
+                applied = None
+                if not suppressed:
+                    self._suppression[role] = identity
+                    continue
+            if applied is None and role not in self._suppression and not suppressed:
+                # New viewers start visible; failures retain an explicit unknown state.
+                self._suppression[role] = identity
+                continue
+            if applied == identity:
+                continue
+            try:
+                hint = rpc.PreviewWindowPlacement.FromString(self.placement(camera.key))
+            except (DecodeError, ValueError, RuntimeError):
+                continue
+            hint.update_existing_only = True
+            hint.camera_display_suppressed = suppressed
+            if self.queue_camera(
+                role,
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+                placement=hint.SerializeToString(),
+            ):
+                self._suppression[role] = identity
+            return True
+        self._suppression = {
+            role: identity
+            for role, identity in self._suppression.items()
+            if active.get(role) is not None and active[role][0] == identity[0]
+        }
+        return False
+
     def _hide_next(self) -> None:
         """Close requests take priority over layout; cameras share one command slot."""
         if not self.can_operate or not self._pending_hides:
@@ -165,4 +236,5 @@ class ManagedPreviewViewers:
     def disconnected(self) -> None:
         self._reported.clear()
         self._layouts.clear()
+        self._suppression.clear()
         self._pending_hides.clear()

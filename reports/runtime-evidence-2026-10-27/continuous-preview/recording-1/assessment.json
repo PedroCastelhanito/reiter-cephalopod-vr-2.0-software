@@ -1,0 +1,427 @@
+{
+  "session_id": "03a026eb-555a-4356-936c-ada1e13c5f59",
+  "closed_artifacts": 14,
+  "cameras": {
+    "behavioral": [
+      {
+        "trial_number": 1,
+        "capture_generation": "c2ea22f6-6d83-4182-a4d1-4360f4e929ca",
+        "frame_count": 1798,
+        "native_first": 59,
+        "native_last": 1856,
+        "native_contiguous": true,
+        "boundary_context": {
+          "last_pretrial": {
+            "host_receipt_ns": 1092828967953100,
+            "camera_frame_counter": 58,
+            "camera_timestamp_ns": 1017663786259596,
+            "valid_image": true
+          },
+          "first_admitted": {
+            "host_receipt_ns": 1092829001407000,
+            "camera_frame_counter": 59,
+            "camera_timestamp_ns": 1017663819583590,
+            "valid_image": true
+          },
+          "last_admitted": {
+            "host_receipt_ns": 1092888944857700,
+            "camera_frame_counter": 1856,
+            "camera_timestamp_ns": 1017723763019043,
+            "valid_image": true
+          },
+          "first_excluded": {
+            "host_receipt_ns": 1092888978362500,
+            "camera_frame_counter": 1857,
+            "camera_timestamp_ns": 1017723796343361,
+            "valid_image": true
+          },
+          "absolute_pulse_offset": null
+        },
+        "first_receipt_after_start_ns": 43337800,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1092888958069200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1798,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1798,
+            "selected_source_frame_count": 1798,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1092828974714500,
+            "on_acknowledged_monotonic_ns": 1092829006280100,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1092888962004700,
+            "off_acknowledged_monotonic_ns": 1092888991505100
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 1,
+            "last_native_counter": 1857,
+            "scope": "admission_snapshot",
+            "observed_monotonic_ns": 1092888995883700
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1092828967953100,
+              "camera_frame_counter": 58,
+              "camera_timestamp_ns": 1017663786259596,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1092829001407000,
+              "camera_frame_counter": 59,
+              "camera_timestamp_ns": 1017663819583590,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1092888944857700,
+              "camera_frame_counter": 1856,
+              "camera_timestamp_ns": 1017723763019043,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1092888978362500,
+              "camera_frame_counter": 1857,
+              "camera_timestamp_ns": 1017723796343361,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      {
+        "trial_number": 2,
+        "capture_generation": "c2ea22f6-6d83-4182-a4d1-4360f4e929ca",
+        "frame_count": 1799,
+        "native_first": 1965,
+        "native_last": 3763,
+        "native_contiguous": true,
+        "boundary_context": {
+          "last_pretrial": {
+            "host_receipt_ns": 1092892547469400,
+            "camera_frame_counter": 1964,
+            "camera_timestamp_ns": 1017727365620106,
+            "valid_image": true
+          },
+          "first_admitted": {
+            "host_receipt_ns": 1092892580850000,
+            "camera_frame_counter": 1965,
+            "camera_timestamp_ns": 1017727398944100,
+            "valid_image": true
+          },
+          "last_admitted": {
+            "host_receipt_ns": 1092952558268900,
+            "camera_frame_counter": 3763,
+            "camera_timestamp_ns": 1017787375773261,
+            "valid_image": true
+          },
+          "first_excluded": {
+            "host_receipt_ns": 1092952591251800,
+            "camera_frame_counter": 3764,
+            "camera_timestamp_ns": 1017787409097390,
+            "valid_image": true
+          },
+          "absolute_pulse_offset": null
+        },
+        "first_receipt_after_start_ns": 8655600,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1092952572194400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 1799,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 1799,
+            "selected_source_frame_count": 1799,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1092892578604800,
+            "on_acknowledged_monotonic_ns": 1092892608376200,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1092952588950800,
+            "off_acknowledged_monotonic_ns": 1092952619422700
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 3765,
+            "scope": "admission_snapshot",
+            "observed_monotonic_ns": 1092952625641000
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1092892547469400,
+              "camera_frame_counter": 1964,
+              "camera_timestamp_ns": 1017727365620106,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1092892580850000,
+              "camera_frame_counter": 1965,
+              "camera_timestamp_ns": 1017727398944100,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1092952558268900,
+              "camera_frame_counter": 3763,
+              "camera_timestamp_ns": 1017787375773261,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1092952591251800,
+              "camera_frame_counter": 3764,
+              "camera_timestamp_ns": 1017787409097390,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      }
+    ],
+    "tracking": [
+      {
+        "trial_number": 1,
+        "capture_generation": "f4fb7995-0040-4f56-89b9-a894130a91a5",
+        "frame_count": 3597,
+        "native_first": 119,
+        "native_last": 3715,
+        "native_contiguous": true,
+        "boundary_context": {
+          "last_pretrial": {
+            "host_receipt_ns": 1092828961121700,
+            "camera_frame_counter": 118,
+            "camera_timestamp_ns": 1092827426916300,
+            "valid_image": true
+          },
+          "first_admitted": {
+            "host_receipt_ns": 1092828977788000,
+            "camera_frame_counter": 119,
+            "camera_timestamp_ns": 1092827443628150,
+            "valid_image": true
+          },
+          "last_admitted": {
+            "host_receipt_ns": 1092888955262000,
+            "camera_frame_counter": 3715,
+            "camera_timestamp_ns": 1092887421135820,
+            "valid_image": true
+          },
+          "first_excluded": {
+            "host_receipt_ns": 1092888971606500,
+            "camera_frame_counter": 3716,
+            "camera_timestamp_ns": 1092887437848390,
+            "valid_image": true
+          },
+          "absolute_pulse_offset": null
+        },
+        "first_receipt_after_start_ns": 19718800,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1092888958069200,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3597,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3597,
+            "selected_source_frame_count": 3597,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1092828974714500,
+            "on_acknowledged_monotonic_ns": 1092829006280100,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1092888962004700,
+            "off_acknowledged_monotonic_ns": 1092888991505100
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 2,
+            "last_native_counter": 3717,
+            "scope": "admission_snapshot",
+            "observed_monotonic_ns": 1092888995888700
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1092828961121700,
+              "camera_frame_counter": 118,
+              "camera_timestamp_ns": 1092827426916300,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1092828977788000,
+              "camera_frame_counter": 119,
+              "camera_timestamp_ns": 1092827443628150,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1092888955262000,
+              "camera_frame_counter": 3715,
+              "camera_timestamp_ns": 1092887421135820,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1092888971606500,
+              "camera_frame_counter": 3716,
+              "camera_timestamp_ns": 1092887437848390,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      },
+      {
+        "trial_number": 2,
+        "capture_generation": "f4fb7995-0040-4f56-89b9-a894130a91a5",
+        "frame_count": 3597,
+        "native_first": 3933,
+        "native_last": 7529,
+        "native_contiguous": true,
+        "boundary_context": {
+          "last_pretrial": {
+            "host_receipt_ns": 1092892574058000,
+            "camera_frame_counter": 3932,
+            "camera_timestamp_ns": 1092891040494910,
+            "valid_image": true
+          },
+          "first_admitted": {
+            "host_receipt_ns": 1092892591006700,
+            "camera_frame_counter": 3933,
+            "camera_timestamp_ns": 1092891057106680,
+            "valid_image": true
+          },
+          "last_admitted": {
+            "host_receipt_ns": 1092952567845200,
+            "camera_frame_counter": 7529,
+            "camera_timestamp_ns": 1092951034702820,
+            "valid_image": true
+          },
+          "first_excluded": {
+            "host_receipt_ns": 1092952584418100,
+            "camera_frame_counter": 7530,
+            "camera_timestamp_ns": 1092951051315250,
+            "valid_image": true
+          },
+          "absolute_pulse_offset": null
+        },
+        "first_receipt_after_start_ns": 18812300,
+        "completion": {
+          "type": "completion",
+          "outcome": "completed",
+          "timing": {
+            "recording_end_monotonic_ns": 1092952572194400,
+            "first_recorded_frame_id": 0,
+            "final_received_frame_count": 3597,
+            "accounting_complete": true
+          },
+          "video": {
+            "recorded_frame_count": 3597,
+            "selected_source_frame_count": 3597,
+            "duplicate_frame_count": 0
+          },
+          "pulses": {
+            "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "on_dispatched_monotonic_ns": 1092892578604800,
+            "on_acknowledged_monotonic_ns": 1092892608376200,
+            "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+            "off_dispatched_monotonic_ns": 1092952588950800,
+            "off_acknowledged_monotonic_ns": 1092952619422700
+          },
+          "post_cutoff": {
+            "accounting_complete": true,
+            "excluded_frame_count": 3,
+            "last_native_counter": 7532,
+            "scope": "admission_snapshot",
+            "observed_monotonic_ns": 1092952624003500
+          },
+          "boundary_context": {
+            "last_pretrial": {
+              "host_receipt_ns": 1092892574058000,
+              "camera_frame_counter": 3932,
+              "camera_timestamp_ns": 1092891040494910,
+              "valid_image": true
+            },
+            "first_admitted": {
+              "host_receipt_ns": 1092892591006700,
+              "camera_frame_counter": 3933,
+              "camera_timestamp_ns": 1092891057106680,
+              "valid_image": true
+            },
+            "last_admitted": {
+              "host_receipt_ns": 1092952567845200,
+              "camera_frame_counter": 7529,
+              "camera_timestamp_ns": 1092951034702820,
+              "valid_image": true
+            },
+            "first_excluded": {
+              "host_receipt_ns": 1092952584418100,
+              "camera_frame_counter": 7530,
+              "camera_timestamp_ns": 1092951051315250,
+              "valid_image": true
+            },
+            "absolute_pulse_offset": null
+          },
+          "transport_summary": {
+            "buffer_underruns": null,
+            "failed_buffers": 0,
+            "missed_frames": 0,
+            "resend_requests": null,
+            "resend_packets": null,
+            "resynchronizations": 0
+          },
+          "diagnostics": []
+        }
+      }
+    ]
+  },
+  "videos": {
+    "protocol-data\\RIGCHECK_120625_behavioral_cam.mp4": 1798,
+    "protocol-data\\RIGCHECK_120625_stimulus.mp4": 3602,
+    "protocol-data\\RIGCHECK_120625_tracking_cam.mp4": 3597,
+    "protocol-data\\RIGCHECK_120728_behavioral_cam.mp4": 1799,
+    "protocol-data\\RIGCHECK_120728_stimulus.mp4": 3604,
+    "protocol-data\\RIGCHECK_120728_tracking_cam.mp4": 3597
+  },
+  "physical_pulse_alignment": "unknown; no hardware anchor measured"
+}

@@ -15,7 +15,9 @@ from cephvr.acquisition.state import ResourceRecord, SessionRecord, WorkerRecord
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.software import software_version
 
 
@@ -32,6 +34,7 @@ class WorkerReadyReports:
         current_session: Callable[[], SessionRecord | None],
         controller: ControllerPort,
         lock: asyncio.Lock,
+        clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.backend = backend
         self.settings = settings
@@ -42,6 +45,75 @@ class WorkerReadyReports:
         self.current_session = current_session
         self.controller = controller
         self.lock = lock
+        self.clock = clock
+
+    async def report_setup_ready(
+        self, session: SessionRecord, deadline_ns: int
+    ) -> control.ReportReceipt:
+        """Publish retained worker readiness only after session capture starts."""
+        deadline_ns = min(
+            deadline_ns,
+            session.setup_deadline_ns or deadline_ns,
+            session.pending_ready_deadline_ns or deadline_ns,
+        )
+        try:
+            async with asyncio.timeout(
+                remaining_seconds(deadline_ns, clock=self.clock)
+            ):
+                await session.capture_started.wait()
+                async with session.ready_delivery_lock:
+                    async with self.lock:
+                        self._require_live_setup(session, deadline_ns)
+                        if session.ready_report is not None:
+                            return control.ReportReceipt(
+                                result=control.COMMAND_RESULT_ACCEPTED
+                            )
+                        pending = session.pending_ready_report
+                        current = self.build_setup_report(
+                            session, deadline_ns, self.clock()
+                        )
+                        if pending is None or current != pending:
+                            return _report_rejected(
+                                "READY_REPORT_MISSING",
+                                "retained Ready no longer matches current Setup evidence",
+                            )
+                        if session.pending_ready_attempts >= 3:
+                            return _report_rejected(
+                                "READY_REPORT_UNCONFIRMED",
+                                "controller did not accept the retained Ready report",
+                            )
+                        session.pending_ready_attempts += 1
+                        pending = deepcopy(pending)
+                    receipt = await self.controller.report_lifecycle(
+                        control.LifecycleReport(ready=pending),
+                        deadline_ns=deadline_ns,
+                    )
+                    if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                        return receipt
+                    async with self.lock:
+                        self._require_live_setup(session, deadline_ns)
+                        session.ready_report = pending
+                        session.pending_ready_report = None
+                        session.pending_ready_deadline_ns = None
+                        session.pending_ready_attempts = 0
+                        session.ready_confirmed.set()
+                    return receipt
+        except TimeoutError:
+            return _report_rejected(
+                "READY_REPORT_EXPIRED", "original Ready report deadline expired"
+            )
+        except RuntimeError as exc:
+            return _report_rejected("READY_REPORT_STALE", str(exc))
+
+    def _require_live_setup(self, session: SessionRecord, deadline_ns: int) -> None:
+        if self.clock() >= deadline_ns:
+            raise TimeoutError("original Ready report deadline expired")
+        if (
+            self.current_session() is not session
+            or session.setup_cancelled
+            or session.interrupted
+        ):
+            raise RuntimeError("Setup changed before Ready confirmation")
 
     async def report_trial_ready(
         self, session: SessionRecord, ingress_ns: int

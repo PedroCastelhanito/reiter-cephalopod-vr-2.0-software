@@ -55,6 +55,7 @@ class RecordingSession:
         sync_interval_ns: int = 0,
         periodic_sync: Callable[[], None] | None = None,
         failure_cleanup: Callable[[], None] | None = None,
+        terminal_metrics: Callable[[str, dict[str, object]], None] | None = None,
         clock_ns: Callable[[], int] = time.perf_counter_ns,
     ) -> None:
         if max_queued_evidence_bytes <= 0:
@@ -74,6 +75,8 @@ class RecordingSession:
         self.sync_interval_ns = sync_interval_ns
         self.periodic_sync = periodic_sync
         self.failure_cleanup = failure_cleanup
+        self.terminal_metrics = terminal_metrics
+        self._terminal_metrics_reported = False
         self.clock_ns = clock_ns
         self._condition = threading.Condition()
         self._lines: deque[tuple[bytes | Callable[[], Record], int]] = deque()
@@ -236,6 +239,18 @@ class RecordingSession:
             error, result = self._error, self._result
         if self._thread.is_alive():
             return None
+        if not self._terminal_metrics_reported:
+            self._terminal_metrics_reported = True
+            if self.terminal_metrics is not None:
+                try:
+                    self.terminal_metrics(
+                        "recording_closed"
+                        if error is None and result is not None
+                        else "recording_thread_failed",
+                        self.metrics.snapshot(),
+                    )
+                except Exception:
+                    pass  # Diagnostic export cannot change closure evidence.
         if error is not None:
             raise RuntimeError(
                 f"Visual Stimulus recording thread failed: {error}"

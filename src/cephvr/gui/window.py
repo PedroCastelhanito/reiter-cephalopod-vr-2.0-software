@@ -41,8 +41,10 @@ class DashboardWindow(QMainWindow):
         sample: bool = False,
         settings: QSettings | None = None,
         device_review: bool = False,
+        tracking_available: bool = True,
     ) -> None:
         super().__init__()
+        self.tracking_available = tracking_available
         # Font registration invalidates Qt metrics; do it before sizing controls.
         load_terminal_font()
         self.setWindowTitle(
@@ -77,6 +79,7 @@ class DashboardWindow(QMainWindow):
             sidebar_layout.addWidget(control)
             self.page_buttons.append(control)
         self.page_buttons[0].setChecked(True)
+        self.page_buttons[3].setVisible(tracking_available)
         sidebar_layout.addStretch()
         sidebar_layout.addWidget(label("VERSION 2.0", "muted"))
         layout.addWidget(sidebar)
@@ -117,7 +120,9 @@ class DashboardWindow(QMainWindow):
         dashboard_controls = self.dashboard.columns[0].layout()
         assert isinstance(dashboard_controls, QVBoxLayout)
         dashboard_controls.insertWidget(2, self.recordings)
-        self.protocol = ProtocolPage(self.recordings, sample=sample)
+        self.protocol = ProtocolPage(
+            self.recordings, sample=sample, tracking_available=tracking_available
+        )
         subject_height = self.devices.projectors.rig_editor.fields["subject_z"]
         composer = self.protocol.editor.subgroup.composer
         subject_height.textChanged.connect(composer.set_subject_height)
@@ -192,6 +197,8 @@ class DashboardWindow(QMainWindow):
             super().customEvent(event)
 
     def select_page(self, index: int) -> None:
+        if index == 3 and not self.tracking_available:
+            return
         if index != 0 and self.dashboard.view.phase in RUNTIME_PHASES:
             self.page_buttons[self.stack.currentIndex()].setChecked(True)
             return
@@ -214,7 +221,9 @@ class DashboardWindow(QMainWindow):
         indicators["Cameras"].setVisible(
             any(camera.enabled for camera in self.devices.cameras.drafts)
         )
-        indicators["Tracking"].setVisible(self.protocol.tracking_active)
+        indicators["Tracking"].setVisible(
+            self.tracking_available and self.protocol.tracking_active
+        )
 
     def update_preview_slot(self) -> None:
         page = self.stack.currentIndex()

@@ -149,6 +149,7 @@ def test_cancel_setup_preserves_installed_recording_cleanup_in_worker_executor()
     executor.trial = SimpleNamespace(
         recording_preparation=preparation,
         trial_prepared=True,
+        stop_trial=lambda _deadline: events.append("capture-stop"),
     )
     executor.preparation = SimpleNamespace(
         cancel_setup=lambda: events.append("cancel-session")
@@ -160,7 +161,7 @@ def test_cancel_setup_preserves_installed_recording_cleanup_in_worker_executor()
 
     executor.execute("CancelSetup", request, deadline_ns)
 
-    assert events == ["cancel-trial", "cancel-session"]
+    assert events == ["cancel-trial", "cancel-session", "capture-stop"]
     assert preparation._session is active_session
     assert not executor.trial.trial_prepared
     assert state.operations[command_id].succeeded
@@ -181,6 +182,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
     preparation = object.__new__(WorkerSessionPreparation)
     preparation.state = state
     preparation.session_ready = True
+    preparation.captures = SimpleNamespace(readiness_deadline_ns=None)
 
     trial_work = control.WorkContext(
         trial=control.TrialContext(
@@ -282,7 +284,7 @@ def test_interrupt_keeps_session_fenced_but_admits_exact_stopped_trial_pulse() -
             request_id=str(uuid4()),
             command=mcu.PULSE_BOUNDARY_COMMAND_ON,
             outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
-            behavioral_selected=True,
+            trial_state_selected=True,
             applied=True,
             dispatched_monotonic_ns=90,
             acknowledged_monotonic_ns=95,
@@ -399,6 +401,7 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
         last_excluded_counter=None,
         recording_queue=None,
         pixel_pool=None,
+        boundary_context=(None, None, None, None),
     )
     captures._window = CaptureWindow(base - 100, base + 60_000_000_000)
     captures._scheduled_start_ns = base - 100
@@ -415,6 +418,7 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
     preparation = object.__new__(WorkerSessionPreparation)
     preparation.state = state
     preparation.session_ready = True
+    preparation.captures = captures
     lifecycle = WorkerTrialLifecycle(
         bootstrap,
         state,
@@ -516,7 +520,8 @@ def test_serialized_stop_seals_then_services_exact_off_before_sdk_stop(
         recording_reconciled=lambda: None,
         external_wake=wake.set,
     )
-    off.command.target.work.CopyFrom(work)
+    off.command.target.work.CopyFrom(context.work)
+    off.evidence.resulting_state.behavioral.running = False
 
     def execute(name, request, bound):
         executor.execute(name, request, bound)
@@ -743,10 +748,18 @@ def test_session_preparation_requires_exact_work_and_configuration_revision() ->
         preparation.require_ready_session(request)
 
 
-def test_session_and_trial_preparation_report_after_confirmed_resources() -> None:
+@pytest.mark.parametrize("ending", ["usable", "cancelled", "late"])
+def test_session_and_trial_preparation_report_after_confirmed_resources(
+    monkeypatch,
+    ending,
+) -> None:
     from cephvr.acquisition.v1 import runtime_pb2
 
     context = _worker_context()
+    clock = [10]
+    monkeypatch.setattr(
+        "cephvr.acquisition.worker.session_preparation.host_time_ns", lambda: clock[0]
+    )
     state = _worker_state(context)
     state.confirmed_configuration_revision = 5
     bootstrap = cast(
@@ -763,6 +776,9 @@ def test_session_and_trial_preparation_report_after_confirmed_resources() -> Non
             events.append("adopted")
 
     class Captures:
+        def start_session(self) -> None:
+            events.append("capture-start")
+
         def prepare(
             self, _camera: object, *, session_preview: bool
         ) -> tuple[object, ...]:
@@ -808,9 +824,31 @@ def test_session_and_trial_preparation_report_after_confirmed_resources() -> Non
     setup.command.target.work.CopyFrom(session_work)
     setup.camera.device.frame_timing = camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
     setup.camera.capture.session_preview_max_hz = 10
+    setup.camera.pulse_configuration.state.trial_state.enabled = True
 
     preparation.setup_session(setup, 100, trial)  # type: ignore[arg-type]
 
+    assert not preparation.session_ready
+    assert not any(isinstance(item, tuple) and item[0] == "report" for item in events)
+    assert not preparation.first_usable_frame(FrameRecord(0, 9, 41, 899, True, None))
+    assert not preparation.session_ready
+    if ending == "cancelled":
+        preparation.cancel_setup()
+        assert not preparation.first_usable_frame(
+            FrameRecord(0, 11, 42, 900, True, None)
+        )
+        assert not preparation.session_ready
+        return
+    if ending == "late":
+        clock[0] = 100
+        with pytest.raises(TimeoutError, match="original Setup deadline"):
+            preparation.advance_due_stage()
+        assert not preparation.first_usable_frame(
+            FrameRecord(0, 99, 42, 900, True, None)
+        )
+        assert not preparation.session_ready
+        return
+    assert preparation.first_usable_frame(FrameRecord(0, 11, 42, 900, True, None))
     assert preparation.session_ready
     assert trial.pulse_required
     setup_report = events[-1]
@@ -859,6 +897,10 @@ def test_coordinator_loss_fences_paths_and_reuses_first_cleanup_deadline(
     executor.preview = SimpleNamespace(
         fence=lambda: events.append("preview-fenced"),
         advance_due_stage=lambda: events.append("preview-advance"),
+    )
+    executor.preparation = SimpleNamespace(
+        cancel_setup=lambda: None,
+        advance_due_stage=lambda: None,
     )
     executor.health = SimpleNamespace(
         coordinator_lost=lambda **kwargs: events.append(("health-loss", kwargs))
@@ -995,6 +1037,87 @@ def test_warning_text_is_bounded_without_splitting_utf8() -> None:
     message = view.warnings[0].message
     assert len(message.encode("utf-8")) <= 1024
     assert message.endswith(" [truncated]")
+
+
+def test_continuous_gap_warning_preserves_completed_trial_and_session_scope():
+    source = _worker_context()
+    session = control.WorkContext(
+        session=control.SessionContext(session_id=str(uuid4()))
+    )
+    trial = control.WorkContext(
+        trial=control.TrialContext(session=session.session, trial_id=str(uuid4()))
+    )
+    ledger = WorkerWarningLedger(source)
+    ledger.begin_scope(session, configuration_revision=4)
+    ledger.observe(WarningOccurrence("NATIVE_COUNTER_GAP", 10, session_scope=True))
+    ledger.begin_scope(trial)
+    ledger.observe(WarningOccurrence("INVALID_IMAGE", 20))
+    completed = ledger.complete_scope()
+    ledger.observe(WarningOccurrence("NATIVE_COUNTER_GAP", 30, session_scope=True))
+    assert ledger.views(trial) == (completed,)
+    session_view = ledger.views(session)[0]
+    assert session_view.warnings[0].acquisition_occurrence.count == 2
+    assert session_view.warnings[0].acquisition_occurrence.work == session
+    assert len(ledger.views()) == 2
+    ledger.retire_session()
+    with pytest.raises(RuntimeError, match="no session scope"):
+        ledger.observe(WarningOccurrence("NATIVE_COUNTER_GAP", 40, session_scope=True))
+
+
+def test_session_failed_off_then_confirmed_safety_off_allows_cleanup(monkeypatch):
+    monkeypatch.setattr(
+        "cephvr.acquisition.worker.capture_runtime.host_time_ns", lambda: 100
+    )
+    context = _worker_context()
+    context.work.session.session_id = str(uuid4())
+    adapter = SimpleNamespace(
+        begin_terminal_drain=lambda: True,
+        confirm_drain_margin=lambda: None,
+        stop_capture=lambda *_, **__: PurgeEvidence(0, None, True),
+    )
+    captures = WorkerCaptureResources(adapter, context, lambda _: None)
+    captures._timing = "external_trigger"
+    captures._active = True
+    lifecycle = object.__new__(WorkerTrialLifecycle)
+    lifecycle.bootstrap = SimpleNamespace(context=context)
+    lifecycle.captures = captures
+    request = acq.WorkerPulseEvidence(
+        command=acq.WorkerCommand(target=context),
+        camera=context.camera,
+        evidence=mcu.PulseCommandEvidence(
+            command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+            connection_id="connection",
+            behavioral_selected=True,
+            outcome=mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+        ),
+    )
+    lifecycle.record_pulse_evidence(request)
+    first_failure = mcu.PulseCommandEvidence.FromString(
+        request.evidence.SerializeToString()
+    )
+    assert not captures.session_off_confirmed
+    request.evidence.request_id = str(uuid4())
+    request.evidence.outcome = mcu.PULSE_COMMAND_OUTCOME_APPLIED
+    request.evidence.applied = True
+    request.evidence.dispatched_monotonic_ns = 90
+    request.evidence.acknowledged_monotonic_ns = 95
+    request.evidence.resulting_state.behavioral.running = False
+    lifecycle.record_pulse_evidence(request)
+    assert captures.session_off_confirmed
+    assert captures.session_pulse_off == first_failure
+    applied = mcu.PulseCommandEvidence.FromString(
+        captures.session_applied_off.SerializeToString()
+    )
+    request.evidence.request_id = str(uuid4())
+    lifecycle.record_pulse_evidence(request)
+    assert captures.session_applied_off == applied
+    request.evidence.connection_id = "other"
+    with pytest.raises(ValueError, match="changed MCU connection"):
+        lifecycle.record_pulse_evidence(request)
+    assert captures.stop(
+        1_000, terminal_off_confirmed=captures.session_off_confirmed
+    ).accounting_complete
+    assert not captures.active
 
 
 def test_worker_control_limits_follow_shared_transport_ceiling() -> None:
@@ -1323,6 +1446,77 @@ def test_cancel_after_release_before_t_prevents_later_camera_start() -> None:
     assert not adapter.started
 
 
+@pytest.mark.parametrize("external", [False, True])
+def test_pre_t_abort_cancels_recording_while_continuous_sdk_stop_resumes(
+    monkeypatch, external
+):
+    monkeypatch.setattr(
+        "cephvr.acquisition.worker.capture_runtime.host_time_ns", lambda: 100
+    )
+    monkeypatch.setattr(
+        "cephvr.acquisition.worker.trial_stop.host_time_ns", lambda: 100
+    )
+    stops = [None, PurgeEvidence(0, None, True)]
+    begun = []
+    adapter = SimpleNamespace(
+        begin_terminal_drain=lambda: begun.append("stop") or True,
+        confirm_drain_margin=lambda: None,
+        stop_capture=lambda *_, **__: stops.pop(0),
+    )
+    captures = WorkerCaptureResources(adapter, _worker_context(), lambda _: None)
+    captures._active = True
+    captures._timing = "external_trigger" if external else "free_running"
+    captures.capture = SimpleNamespace(recording_queue=object(), pixel_pool=None)
+    if external:
+        off = mcu.PulseCommandEvidence(
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=True,
+            acknowledged_monotonic_ns=95,
+        )
+        captures.session_pulse_off = off
+        captures.session_applied_off = off
+    captures.schedule(200, 300, uuid4())
+    captures.release_schedule()
+    schedule = acq.WorkerSchedule(start_monotonic_ns=200, end_monotonic_ns=300)
+    trial = WorkerTrialState(
+        schedule=schedule,
+        released=True,
+        prepared=True,
+        stop_request=acq.WorkerInterrupt(issued_monotonic_ns=100),
+    )
+    cancellations = []
+    future = Future()
+    future.set_result(
+        [
+            control.OutputResult(
+                closure=control.OUTPUT_CLOSURE_NOT_STARTED, artifact_present=False
+            )
+        ]
+    )
+    finalizer = object.__new__(TrialStopFinalizer)
+    finalizer.trial = trial
+    finalizer.captures = captures
+    finalizer.bootstrap = SimpleNamespace(
+        file_policy=SimpleNamespace(post_cutoff_drain_margin_ns=0)
+    )
+    finalizer.recording = SimpleNamespace(
+        cancel_before_start=lambda **_: cancellations.append("cancel") or future
+    )
+    finalizer.terminal = SimpleNamespace(recording_trial_installed=lambda: True)
+    finalizer._external_wake = lambda: None
+    finalizer._complete_warning_scope = lambda: None
+    assert not finalizer.stop_trial(1_000)
+    assert captures.active and captures.capture.recording_queue is None
+    assert trial.schedule is None and trial.stopped_schedule is schedule
+    assert finalizer.stop_trial(1_000)
+    assert not captures.active
+    assert trial.end_marker is None
+    assert cancellations == ["cancel"] and begun == ["stop"]
+    assert (
+        trial.finished_future.result()[0].closure == control.OUTPUT_CLOSURE_NOT_STARTED
+    )
+
+
 @pytest.mark.parametrize("generation_stopped", [False, True])
 @pytest.mark.parametrize("terminal_off", [False, True])
 def test_capture_stop_retains_first_cutoff_and_original_deadline(
@@ -1510,6 +1704,165 @@ def test_consecutive_non_saving_trials_reset_shared_trial_state() -> None:
         assert lifecycle.trial_state.transport_observed_ns is None
     assert len(captures.prepared) == 2
     assert activity.resets == 2
+
+
+@pytest.mark.parametrize("external", [False, True])
+def test_continuous_capture_spans_ready_trials_and_gap_without_native_restart(
+    monkeypatch, external
+):
+    clock = [50]
+    for module in ("capture_runtime", "trial_stop"):
+        monkeypatch.setattr(
+            f"cephvr.acquisition.worker.{module}.host_time_ns", lambda: clock[0]
+        )
+    layout = PixelLayout(
+        1, 1, NativePixelFormat("Mono8", 1, 8, "mono", "unpacked", "byte", "lsb"), 1, 1
+    )
+    settings = object()
+    events = []
+    released = []
+
+    class Adapter:
+        counter = 0
+
+        def arm_external_trigger(self):
+            events.append("arm")
+
+        def start_free_running(self):
+            events.append("start")
+
+        def read_settings(self):
+            return settings
+
+        def read_frame_timing(self):
+            return "external_trigger" if external else "free_running"
+
+        def read_layout(self):
+            return layout
+
+        def read_transport_counters(self):
+            return None
+
+        def wait_for_frame_or_control(self, _timeout):
+            return "frame"
+
+        def retrieve(self, _timeout):
+            self.counter += 1
+            return SimpleNamespace(
+                valid_image=True,
+                pixels=memoryview(b"x"),
+                layout=layout,
+                camera_frame_counter=self.counter,
+                camera_timestamp_ns=self.counter * 100,
+                release=lambda: released.append(self.counter),
+            )
+
+    adapter = Adapter()
+    context = _worker_context()
+    context.work.session.session_id = str(uuid4())
+    captures = WorkerCaptureResources(adapter, context, lambda _: None)
+    captures.layout = layout
+    captures._timing = adapter.read_frame_timing()
+    captures._locked_settings = settings
+    captures._sdk_buffer_count = 10
+    captures._frame_timeout_ns = 1_000
+    captures.capture = CameraCaptureLoop(
+        adapter=adapter,
+        layout=layout,
+        wait_timeout_ns=lambda: 1,
+        frame_silence_timeout_ns=1_000,
+        recording_window=lambda: captures._window,
+        clock_ns=lambda: clock[0],
+    )
+    state = _worker_state(context)
+    bootstrap = SimpleNamespace(
+        context=context,
+        file_policy=SimpleNamespace(post_cutoff_drain_margin_ns=0),
+        control_policies=control.ControlPolicies(
+            trial_finished=control.WaitPolicy(initial_ns=1_000)
+        ),
+    )
+    reports = []
+    lifecycle = WorkerTrialLifecycle(
+        bootstrap,
+        state,
+        adapter,
+        captures,
+        None,
+        report_lifecycle=lambda request, evidence, deadline: reports.append(evidence),
+        source=lambda target: target,
+        warning_occurrence=lambda _: None,
+        recording_warning_occurrence=lambda *_: None,
+        begin_warning_scope=lambda *_, **__: None,
+        complete_warning_scope=lambda: None,
+        external_wake=lambda: None,
+        recording_first_frame=lambda _: None,
+        recording_isolated=lambda *_: None,
+        require_ready_session=lambda _: None,
+        capability_resource_released=lambda *_: None,
+    )
+    captures.capture.first_trial_frame = lifecycle.camera_first_frame
+    captures.start_session()
+    captures.capture_once(lambda: True)
+    assert not reports  # A Ready/gap receipt cannot stand in for trial Started.
+    markers = []
+    for index, start in enumerate((100, 300), 1):
+        run_id = uuid4()
+        target = acq.WorkerContext.FromString(context.SerializeToString())
+        target.work.trial.session.CopyFrom(context.work.session)
+        target.work.trial.trial_id = str(run_id)
+        target.work.trial.trial_number = index
+        lifecycle.prepare_trial_state(
+            acq.WorkerPrepareTrial(command=acq.WorkerCommand(target=target)), 1_000
+        )
+        lifecycle.trial_prepared = True
+        schedule = acq.WorkerSchedule(
+            command=acq.WorkerCommand(command_id=str(uuid4()), target=target),
+            start_monotonic_ns=start,
+            end_monotonic_ns=start + 100,
+        )
+        lifecycle.schedule(schedule, 1_000)
+        lifecycle.release(
+            acq.WorkerRelease(
+                command=acq.WorkerCommand(target=target),
+                schedule_operation=control.OperationContext(
+                    command_id=schedule.command.command_id
+                ),
+                start_monotonic_ns=start,
+                end_monotonic_ns=start + 100,
+            ),
+            1_000,
+        )
+        clock[0] = start
+        captures.advance_due_stage()
+        captures.capture_once(lambda: True)
+        clock[0] = start + 100
+        captures.advance_due_stage()
+        captures.capture_once(lambda: True)
+        lifecycle.stop_request = acq.WorkerStop(
+            command=acq.WorkerCommand(target=target), issued_monotonic_ns=clock[0]
+        )
+        assert lifecycle.stop_trial(1_000, report_stopped=True)
+        marker = lifecycle.end_marker
+        assert marker.actual_stop_monotonic_ns is None
+        assert marker.admission_stop_monotonic_ns == clock[0]
+        assert marker.received_frame_count == marker.excluded_frame_count == 1
+        assert marker.boundary_context[1].frame_id == 0
+        markers.append(marker)
+        assert captures.active and captures._window is None
+        clock[0] += 50
+        captures.capture_once(lambda: True)
+    assert events == (["arm"] if external else ["start"])
+    assert [marker.boundary_context[1].camera_frame_counter for marker in markers] == [
+        2,
+        5,
+    ]
+    assert [marker.boundary_context[0].camera_frame_counter for marker in markers] == [
+        1,
+        4,
+    ]
+    assert len([report for report in reports if report.HasField("started")]) == 2
+    assert len(released) == 7
 
 
 def test_camera_owner_serializes_safety_work_ahead_of_committed_normal_work() -> None:

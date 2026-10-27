@@ -1,0 +1,24 @@
+Date: 2026-10-27 (Asia/Tokyo)
+Task: runtime-tracking-disabled
+Source: dirty shared working tree based on 943ef25a; concurrent unrelated work preserved.
+
+Screenshot method: QT_QPA_PLATFORM=offscreen, repository Python 3.11, QApplication,
+apply_theme, DashboardWindow(sample=True, tracking_available=False), show/processEvents,
+QWidget.grab. Isolated workspace QSettings (preview.ini). No device commands.
+Visibility asserts: Tracking navigation, velocity saving and status are hidden.
+dashboard-offscreen.png visually inspected. Sample camera video saving is acquisition,
+not Tracking processing. This is an offscreen design fixture, not a native rig run.
+
+Focused no-Tracking UI/configuration regression: 1 passed.
+Launcher non-windows/non-rig selection: 64 passed.
+Broad GUI selection: 188 collected; stalled after 20 passes, interrupted by Ctrl-C.
+30-case GUI follow-up: stalled after 10 passes, interrupted by Ctrl-C.
+No full-selection pass claimed. Final focused 18-case selection passed (52.86s).
+After hiding arena Tracking gains: 4 arena/feedback/no-Tracking cases passed (3.95s).
+Final Win32 mypy and Ruff check/format repeated successfully.
+Initial focused fixture failures and launcher reopen conflict corrected before passing.
+Win32 mypy GUI/launcher: 210 files, no issues.
+Ruff check GUI/launcher/script/owning tests: pass; format: 213 already formatted.
+Backend boundaries: 760 modules, zero violations; existing size advisories reviewed.
+23 added local links/anchors verified. git diff --check passed.
+Application not restarted; fresh full application launch needed for activation.

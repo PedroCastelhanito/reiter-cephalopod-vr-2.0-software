@@ -1,8 +1,16 @@
 """Shared responsive placement with stable editor ownership."""
 
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QTimer
+from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, QTimer
 from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import QFrame, QGridLayout, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QFrame,
+    QGridLayout,
+    QScrollArea,
+    QStackedWidget,
+    QTabBar,
+    QVBoxLayout,
+    QWidget,
+)
 
 from cephvr.gui.theme import SIZES
 
@@ -13,6 +21,41 @@ def column() -> tuple[QWidget, QVBoxLayout]:
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(SIZES.card_gap)
     return widget, layout
+
+
+class CenterTabsInGap(QObject):
+    """Center tabs in the visible card gap after Qt finishes placing sections."""
+
+    def __init__(
+        self,
+        tabs: QTabBar,
+        preceding: QWidget,
+        pages: QStackedWidget,
+        titles: tuple[QWidget, ...],
+    ) -> None:
+        super().__init__(tabs)
+        self.tabs, self.preceding, self.titles = tabs, preceding, titles
+        self.origin = tabs.parentWidget()
+        assert self.origin is not None
+        self.origin.installEventFilter(self)
+        pages.installEventFilter(self)
+        tabs.currentChanged.connect(lambda: QTimer.singleShot(0, self.center))
+
+    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
+        if event is not None and event.type() in (
+            QEvent.Type.LayoutRequest,
+            QEvent.Type.Resize,
+            QEvent.Type.Show,
+        ):
+            QTimer.singleShot(0, self.center)
+        return super().eventFilter(watched, event)
+
+    def center(self) -> None:
+        title = self.titles[self.tabs.currentIndex()]
+        top = self.preceding.mapTo(self.origin, QPoint()).y() + self.preceding.height()
+        bottom = title.mapTo(self.origin, QPoint()).y() + title.height() / 2
+        # Move only the tabs; retain Qt's card positions and any surplus spacing.
+        self.tabs.move(self.tabs.x(), round((top + bottom - self.tabs.height()) / 2))
 
 
 def advanced_grid() -> QGridLayout:

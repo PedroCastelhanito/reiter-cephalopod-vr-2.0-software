@@ -53,6 +53,17 @@ def valid_preview_placement(
             not hint.HasField(field) or getattr(hint, field) <= 0xFFFFFF
             for field in ("camera_caption_rgb", "camera_caption_text_rgb")
         )
+        and (
+            not hint.HasField("camera_display_suppressed")
+            or (
+                hint.update_existing_only
+                and bool(
+                    hint.gui_window_handle
+                    and hint.gui_process_id
+                    and hint.gui_process_creation_time_100ns
+                )
+            )
+        )
         and 128 <= hint.side <= 2048
         and abs(hint.x) <= 1_000_000
         and abs(hint.y) <= 1_000_000

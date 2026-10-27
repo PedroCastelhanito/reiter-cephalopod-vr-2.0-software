@@ -1,0 +1,2 @@
+src\cephvr\acquisition\coordinator\session_pulses.py:80: error: Argument "camera" to "WorkerPulseEvidence" has incompatible type "int"; expected "CameraRole | str | None"  [arg-type]
+Found 1 error in 1 file (checked 64 source files)

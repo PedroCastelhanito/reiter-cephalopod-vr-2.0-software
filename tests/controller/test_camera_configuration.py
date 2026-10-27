@@ -140,7 +140,12 @@ def test_session_camera_demand_preserves_operator_choices_and_output_plan(
         },
     )
     record.confirmed_settings = resolved
-    assert set(_trial_output_roles(record)) == record.required_cameras | {"trial_state"}
+    assert set(_trial_output_roles(record)) == {"trial_state"}
+    from cephvr.acquisition.coordinator.session_pulses import session_output_roles
+
+    assert set(session_output_roles(record)) == record.required_cameras | {
+        "trial_state"
+    }
     acquisition.behavioral.enabled = False
     assert (
         not session_camera_configuration(requested)

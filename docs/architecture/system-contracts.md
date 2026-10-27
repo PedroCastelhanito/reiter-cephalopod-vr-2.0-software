@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 182
+**Status:** Accepted · **Revision:** 183
 
 - Stimulus preview placement may carry up to four unique logical projector targets
   with bounded desktop geometry; absent targets selects Combined. Reuse the existing
@@ -249,7 +249,8 @@ design; runtime monitoring remains unimplemented.
   concurrently. Backends own workers, workers own helpers; the supervisor watches
   all descendants. Visual Stimulus registration and containment use the canonical
   backend identifier owned by [V01](visual_stimulus.md#v01).
-- An explicit no-Tracking launch omits the Tracking process, credentials, jobs and
+- Current runtime entry points select no-Tracking while the owner pauses Tracking
+  development. A no-Tracking launch omits the Tracking process, credentials, jobs and
   diagnostic consumer rings for that application lifetime. Only the full role set
   or this exact omission is supported; acquisition, Visual Stimulus and GUI retain
   their required identities, containment and cleanup. Tracking-dependent Setup or

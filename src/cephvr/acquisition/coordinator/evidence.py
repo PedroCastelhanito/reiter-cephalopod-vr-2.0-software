@@ -24,6 +24,7 @@ from cephvr.acquisition.state import (
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
 
@@ -46,6 +47,7 @@ class WorkerEvidenceCoordinator:
         control_policies: control.ControlPolicies | None = None,
         configuration_resolution: ConfigurationResolution | None = None,
         trial_lifecycle: TrialLifecycleReports | None = None,
+        clock: Callable[[], int] = host_time_ns,
     ) -> None:
         ready = WorkerReadyReports(
             backend=backend,
@@ -57,6 +59,7 @@ class WorkerEvidenceCoordinator:
             current_session=current_session,
             controller=controller,
             lock=lock,
+            clock=clock,
         )
         cleanup = WorkerCleanupEvidence(
             resources=resources, resource_ledger=resource_ledger, commands=commands

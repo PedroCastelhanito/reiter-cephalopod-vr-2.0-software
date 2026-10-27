@@ -81,6 +81,12 @@ def finish_metadata(
         last_native_counter=end.last_excluded_camera_counter if stop else None,
         transport_summary=completion.transport_summary,
         diagnostics=diagnostics.frame_log_groups(),
+        post_cutoff_scope="admission_snapshot"
+        if end.admission_stop_monotonic_ns is not None
+        else "physical_stop",
+        post_cutoff_observed_monotonic_ns=end.accounting_observed_monotonic_ns
+        or end.admission_stop_monotonic_ns,
+        boundary_context=end.boundary_context,
     )
     append_terminal_and_close(
         finalization,

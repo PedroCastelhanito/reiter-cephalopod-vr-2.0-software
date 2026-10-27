@@ -39,7 +39,7 @@ def refresh_health_snapshot(
             else control.TRIAL_PHASE_ENDED
             if trial.end_marker is not None
             else control.TRIAL_PHASE_RUNNING
-            if captures.active
+            if captures.trial_admission_open
             else control.TRIAL_PHASE_STARTING
         )
     else:

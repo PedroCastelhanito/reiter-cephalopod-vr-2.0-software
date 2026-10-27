@@ -1,5 +1,40 @@
 # Visual Stimulus status
 
+## Sparse-noise preparation — 2026-10-27
+
+`sparse-noise-recipes` implements the owner-requested seeded backend preparation
+module under [V04 revision21](../docs/architecture/visual_stimulus.md#v04).
+The owner selected density-derived fixed counts without replacement and independent
+reproducible per-screen streams. The [contract/schema/example](../contracts/visual_stimulus/sparse-noise.md)
+defines recipe generation and the command-line/Python API. Preparation emits standard
+image programs, compact RGBA grids and provenance; the legacy texture importer and
+GUI remain unchanged. Physical sizing uses supplied calibrated screen geometry,
+with centered full cells and background residual margins. Existing image residency,
+timing/holds, source protection and actual-image evidence retain their owners.
+
+ARCH-002 review selected existing image resources/compiler/scheduler rather than a
+new shader family, runtime RNG, process or dependency. The recipe model and focused
+preparer are separate from existing large owners; existing size advisories remain
+cohesion reviews, with no affected large source module extended. Tests extend the
+owning resource behavior module and exercise normal preparation, compilation and
+image scheduling. 211 affected resource/compiler/rendering tests pass, 6 native/rig
+cases deselected. Win32 mypy passes168 Visual Stimulus sources; scoped Ruff/format,
+12-schema drift check, boundaries764/zero violations and whitespace checks pass.
+The CLI prepares the supplied600-pattern/four-screen example against test geometry;
+this is no physical display measurement or runtime/rig presentation pass.
+
+Initial sandbox temp creation failed; repository-local temp then conflicted with an
+existing demo-fixture outside-repository requirement. Final tests use the separate
+authorized visualization workspace. Two tiny-grid assertions incorrectly assumed
+independent patterns could not coincide; corrected to reference pixels and sequence
+comparison, preserving legitimate random repetitions. No production defect was
+hidden by those corrections. Provenance, commands and scope are in
+[evidence](runtime-evidence-2026-10-27/sparse-noise/context.json).
+Native size/color/onset/combined-load acceptance remains in the
+[single rig checklist](rig-verification.md#sparse-noise-presentation).
+
+## Current runtime verification
+
 Oct26/27 hierarchical audit removes the renderer's unread duplicate resource field
 and unreachable inner start-time guard. `_sessions` keeps resource ownership;
 cutoff validation/order and cleanup semantics remain unchanged under V01/E06 and
@@ -8,6 +43,15 @@ Fresh60s recorded trial closes3554 stimulus frames, all fully decoded and matche
 Seven software-evaluation gaps exceed25ms (maximum276.4823ms), all in the first0.932s;
 startup attribution and optical timing remain open. Synthetic2080Ti encoding passes
 baseline/double demand but cannot sustain quadruple demand. [Audit](runtime.md#hierarchical-audit--2026-10-2627).
+
+Oct27 approved V12rev20 terminal export is implemented and verified natively in two
+unchanged60s runs: exactly one identity-bound metric row each; all six videos fully
+decode/count-match. Initial stdin input spans144.462/145.4227ms with34/22 zero-progress
+writes, peak11/9 of15 slots and no reported capacity drop. Max software-evaluation
+gaps38.0735/32.3304ms do not reproduce or explain the historical276ms gap. The first
+run's initial gap precedes its worst pipe interval. Input backpressure is established;
+encoder computation, GL first-use and physical timing attribution remain open. Keep
+buffers/threading/quality unchanged. [Current assessment](runtime.md#hierarchical-audit--2026-10-2627).
 
 Oct26 lifecycle follow-up under [V01](../docs/architecture/visual_stimulus.md#v01)
 and [E06/E08](../docs/architecture/system-contracts.md#e06) is verified for the bounded

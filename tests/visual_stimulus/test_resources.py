@@ -47,6 +47,237 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 
 
+def _sparse_recipe(**changes):
+    from cephvr.visual_stimulus.config.models.sparse_noise import (
+        parse_sparse_noise_json,
+    )
+
+    fields = {
+        "format_version": 1,
+        "kind": "sparse_noise",
+        "seed": 12345,
+        "surfaces": ["front", "left"],
+        "square_size_mm": 10.0,
+        "active_density": 0.2,
+        "background_linear": 0.5,
+        "pattern_count": 3,
+        "pattern_duration": {"seconds": "20"},
+    }
+    fields.update(changes)
+    return parse_sparse_noise_json(json.dumps(fields), max_bytes=10000)
+
+
+def _prepare_sparse(tmp_path, recipe=None, **changes):
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.visual_stimulus.resources.sparse_noise import prepare_sparse_noise
+
+    limits = {"max_cells": 10000, "max_patterns": 100, "max_document_bytes": 100000}
+    limits.update(changes)
+    return prepare_sparse_noise(
+        recipe or _sparse_recipe(), make_compile_context().display, tmp_path, **limits
+    )
+
+
+def test_sparse_noise_bundle_uses_reproducible_independent_screen_patterns(tmp_path):
+    import hashlib
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    first = _prepare_sparse(tmp_path / "first")
+    second = _prepare_sparse(
+        tmp_path / "second", _sparse_recipe(surfaces=["left", "front"])
+    )
+    single = _prepare_sparse(tmp_path / "single", _sparse_recipe(surfaces=["front"]))
+    changed = _prepare_sparse(tmp_path / "changed", _sparse_recipe(seed=12346))
+    assert first.read_bytes() == second.read_bytes()
+    program = parse_program_json(first.read_text(), max_bytes=100000)
+    provenance = json.loads((first.parent / "provenance.json").read_text())
+    assert (
+        provenance["program_sha256"] == hashlib.sha256(first.read_bytes()).hexdigest()
+    )
+    grids = {g["surface_id"]: g for g in provenance["grids"]}
+    hashes = []
+    for asset in program.assets:
+        image = decode_image(asset, (first.parent / asset.logical_path).read_bytes())
+        surface = asset.asset_id.split("-")[1]
+        grid = grids[surface]
+        pixels = image.pixels
+        assert image.width == grid["columns"] and image.height == grid["rows"]
+        assert np.count_nonzero(pixels[:, :, 3]) == grid["active_count"]
+        assert set(np.unique(pixels[:, :, :3])).issubset({0, 255})
+        assert (first.parent / asset.logical_path).read_bytes() == (
+            second.parent / asset.logical_path
+        ).read_bytes()
+        if surface == "front":
+            assert (first.parent / asset.logical_path).read_bytes() == (
+                single.parent / asset.logical_path
+            ).read_bytes()
+        hashes.append(hashlib.sha256(pixels.tobytes()).hexdigest())
+    # A tiny grid can legitimately repeat; these reference pixels pin seed semantics.
+    assert hashes[:2] == [
+        "cab68808dd74adb0accd7adb91ea49d17c8bc7281f0c57fa5cbcd6117cb202c9",
+        "11a9a2fb3cb66146fa6e703de533c3f386cda2eb4120c8faf8a19a36555e8247",
+    ]
+    assert any(
+        (first.parent / asset.logical_path).read_bytes()
+        != (changed.parent / asset.logical_path).read_bytes()
+        for asset in program.assets
+    )
+    for epoch in program.sequence:
+        assert epoch.duration.duration.ns() == 20_000_000_000
+        for setting in epoch.settings:
+            grid = grids[setting.space.mappings[0].surface_id]
+            assert setting.width.value / grid["columns"] == 10.0
+            assert setting.height.value / grid["rows"] == 10.0
+            assert setting.sampling == "nearest" and setting.kind == "image"
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"seed": True},
+        {"seed": -1},
+        {"seed": 1.5},
+        {"seed": 2**64},
+        {"active_density": -0.1},
+        {"active_density": 1.1},
+        {"square_size_mm": 0},
+        {"square_size_mm": float("inf")},
+        {"surfaces": ["front", "front"]},
+        {"pattern_duration": {"seconds": "0"}},
+        {"pattern_count": 1},
+        {"unexpected": 1},
+    ],
+)
+def test_sparse_noise_rejects_invalid_scientific_inputs(changes):
+    with pytest.raises(ValueError):
+        _sparse_recipe(**changes)
+
+
+@pytest.mark.parametrize(
+    "limits",
+    [
+        {"max_cells": 1},
+        {"max_patterns": 2},
+        {"max_document_bytes": 100},
+    ],
+)
+def test_sparse_noise_admission_precedes_output_creation(tmp_path, limits):
+    destination = tmp_path / "noise"
+    with pytest.raises(ValueError):
+        _prepare_sparse(destination, **limits)
+    assert not destination.exists()
+
+
+def test_sparse_noise_does_not_overwrite_and_cancellation_never_publishes(tmp_path):
+    path = _prepare_sparse(tmp_path / "existing")
+    original = path.read_bytes()
+    with pytest.raises(FileExistsError):
+        _prepare_sparse(path.parent)
+    assert path.read_bytes() == original
+    destination = tmp_path / "cancelled"
+
+    def cancel_after_first_image():
+        if destination.exists() and list(destination.glob("*.png")):
+            raise TimeoutError("cancelled")
+
+    with pytest.raises(TimeoutError, match="cancelled"):
+        _prepare_sparse(destination, check=cancel_after_first_image)
+    assert not (destination / "program.json").exists()
+
+
+def test_sparse_noise_full_cells_density_rounding_and_transparent_background(tmp_path):
+    import math
+
+    import numpy as np
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.visual_stimulus.resources.sparse_noise import resolve_grids
+
+    display = make_compile_context().display
+    recipe = _sparse_recipe(square_size_mm=13.0, active_density=0.0)
+    grids = resolve_grids(recipe, display, max_cells=10000)
+    for grid in grids:
+        surface = next(
+            s for s in display.geometry.surfaces if s.surface_id == grid.surface_id
+        )
+        assert (
+            0
+            <= math.dist(surface.bottom_left_mm, surface.bottom_right_mm)
+            - grid.width_mm
+            < 13
+        )
+        assert grid.active_count == 0
+    path = _prepare_sparse(tmp_path / "blank", recipe)
+    from PIL import Image
+
+    with Image.open(path.parent / "noise-front-0.png") as image:
+        assert not np.asarray(image)[:, :, 3].any()
+    with pytest.raises(ValueError, match="rounds to zero"):
+        resolve_grids(_sparse_recipe(active_density=1e-10), display, max_cells=10000)
+
+
+def test_sparse_noise_runs_through_resource_compiler_and_image_schedule(tmp_path):
+    from tests.visual_stimulus.support import make_compile_context, make_program
+
+    from cephvr.visual_stimulus.compiler import compile_trial
+    from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    path = _prepare_sparse(tmp_path / "noise")
+    source = path.read_text()
+    program = make_program(source)
+    context = make_compile_context(source)
+    closed = []
+
+    class Source:
+        def __init__(self, path):
+            self.path = path
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            closed.append(self.path)
+
+    budget = BoundedBudget(cpu_limit=10_000_000, gpu_limit=10_000_000)
+    bundle = prepare_resources(
+        program,
+        path.parent,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=100000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=100000,
+        source_factory=Source,
+        defer_images=True,
+    )
+    try:
+        plan = compile_trial(
+            program,
+            replace(context, manifest=bundle.manifest),
+            max_expanded_epochs=100,
+            max_prepared_plan_bytes=1_000_000,
+        )
+        assert [epoch.start_ns for epoch in plan.epochs] == [
+            0,
+            20_000_000_000,
+            40_000_000_000,
+        ]
+        schedule = ImageSchedule.build((plan,), {plan.identity.trial_id: bundle})
+        assert len(schedule.first) == 2
+        assert len(schedule.epochs[plan.identity.trial_id]) == 3
+        for image in schedule.sources.values():
+            assert len(image.load(lambda: None)) == image.width * image.height * 16
+    finally:
+        bundle.asset_set.close()
+    assert len(closed) == 6
+
+
 @pytest.mark.parametrize("path", [None, "textures/image.png"])
 def test_native_preparation_retains_intent_when_registration_receipt_is_lost(path):
     from cephvr.visual_stimulus.resources.session import NativePreparation

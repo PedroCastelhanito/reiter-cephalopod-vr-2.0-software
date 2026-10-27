@@ -521,9 +521,12 @@ these are not unanswered controller ownership choices.
 <a id="e10"></a>
 ### E10 — Modes and required participants
 
-**Status:** Accepted · **Revision:** 22
+**Status:** Accepted · **Revision:** 23
 
 - Support two session modes, open-loop Visual Stimulus and closed-loop Visual Stimulus; Visual Stimulus runs in both.
+  While Tracking development is paused under ARCH-001, current managed runtime
+  sessions use open-loop only, with Tracking and velocity saving disabled; G01
+  owns hidden controls/restored settings and E08 owns the omitted process.
 - Select one mode and one active-backend set for the whole session. Trial-specific
   gains may change, including gains that simulate open-loop behavior, without
   changing the session mode or participant set.

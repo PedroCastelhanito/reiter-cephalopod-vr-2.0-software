@@ -27,10 +27,13 @@ class RecordingIdentity:
     device_id: str
     session_config_reference: str
     camera_clock: camera.CameraClockDescriptor
+    capture_generation: str | None = None
 
     def validate(self) -> None:
         require_uuid4(self.session_id)
         require_uuid4(self.trial_id)
+        if self.capture_generation is not None:
+            require_uuid4(self.capture_generation)
         if self.trial_number < 1:
             raise ValueError("recording trial number must be one-based")
         if self.camera_role not in _ROLES:
@@ -61,6 +64,7 @@ class RecordingIdentity:
             "device_id": self.device_id,
             "session_config_reference": self.session_config_reference,
             "recording_identity_version": 1,
+            "capture_generation": self.capture_generation,
         }
 
     def mp4_tags(self) -> tuple[tuple[str, str], ...]:

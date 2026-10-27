@@ -216,6 +216,7 @@ class WorkerOperationExecutor:
                 self.trial.recording_preparation.cancel_setup()
                 self.preparation.cancel_setup()
                 self.trial.trial_prepared = False
+                self.trial.stop_trial(deadline_ns)
             elif name == "InterruptSession":
                 self._cancelled.set()
                 self.preparation.cancel_setup()
@@ -370,6 +371,7 @@ class WorkerOperationExecutor:
         if self._coordinator_loss.is_set() and not self._coordinator_loss_handled:
             self._handle_coordinator_loss()
         self.preview.advance_due_stage()
+        self.preparation.advance_due_stage()
         self.trial.advance_due_stages()
         self.cleanup.advance()
         self._refresh_health_snapshot()
@@ -390,6 +392,7 @@ class WorkerOperationExecutor:
         self._coordinator_loss_handled = True
         self._cancelled.set()
         self.preview.fence()
+        self.preparation.cancel_setup()
         deadline_ns = self._coordinator_loss_deadline_ns
         if deadline_ns is None:
             raise RuntimeError("coordinator loss has no retained detection deadline")
@@ -403,6 +406,7 @@ class WorkerOperationExecutor:
             for value in (
                 self.trial.next_deadline_ns(),
                 self.preview.next_deadline_ns,
+                self.preparation.readiness_deadline_ns,
             )
             if value is not None
         ]
@@ -441,6 +445,8 @@ class WorkerOperationExecutor:
 
     def camera_first_frame(self, record: object) -> None:
         if self.preview.first_usable_frame(record):
+            return
+        if self.preparation.first_usable_frame(record):
             return
         self.trial.camera_first_frame(record)
 

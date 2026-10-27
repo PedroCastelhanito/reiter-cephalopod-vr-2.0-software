@@ -7,6 +7,7 @@ from collections.abc import Callable
 from copy import deepcopy
 
 from cephvr.acquisition.coordinator.session_payloads import role_name
+from cephvr.acquisition.coordinator.session_pulses import session_output_roles
 from cephvr.acquisition.ports import ControllerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
@@ -293,9 +294,12 @@ class TrialLifecycleReports:
             if trial.stopped_report is not None:
                 return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
             if trial.pending_stopped_report is None:
-                if _trial_output_roles(session) and not pulse_off_satisfies_trial(
-                    trial
-                ):
+                required_outputs = (
+                    session_output_roles(session)
+                    if trial.interrupted
+                    else _trial_output_roles(session)
+                )
+                if required_outputs and not pulse_off_satisfies_trial(trial):
                     return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
                 ended: list[tuple[WorkerRecord, acq.WorkerStoppedEvidence]] = []
                 for role in sorted(session.required_cameras):

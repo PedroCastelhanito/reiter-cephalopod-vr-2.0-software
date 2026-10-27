@@ -329,7 +329,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 67
+**Status:** Accepted · **Revision:** 68
 
 **Files**
 
@@ -372,7 +372,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   raw-tick duplicate. Missing units/optional metadata warn and leave the field null,
   without dropping valid pixels or blocking Ready. Timestamps are exact JSON integers.
 - Retain one explicit mapping per encoded image to its original source ID and
-  host receipt time under A08; native timing remains on the source row. Schema v5
+  host receipt time under A08; native timing remains on the source row. Schema v6
   uses contiguous encoded indices without nominal slots or padding. Invalid images
   and capacity drops retain source rows with null video indices; video-disabled
   rows remain explicit. Completion distinguishes selected-source and submitted
@@ -417,7 +417,9 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   Normal trial closure neither purges nor stops A10's continuing capture, and never
   waits for an unbounded count of intertrial frames. Camera Stopped means trial
   admission stopped; physical capture/pulse stop is separate session/fault cleanup
-  evidence. The recording thread reconciles unique complete IDs, cutoff and applicable
+  evidence. Label excluded counts with their bounded observation scope/time; normal
+  admission snapshots never claim complete physical-stop or intertrial accounting.
+  The recording thread reconciles unique complete IDs, cutoff and applicable
   Trial-state outcomes before successful closure. Stop/finalization deadlines are unchanged; the
   [recording lifecycle](../../contracts/acquisition/recording-lifecycle.md) binds
   failures.
@@ -610,7 +612,7 @@ deferral (E15) remains.
 <a id="a09"></a>
 ### A09 — Source-frame identity
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
 - A camera frame belongs to a trial only if its host-monotonic receipt timestamp
   (A05) satisfies `trial_start <= receipt < trial_stop`, using the normal scheduled
@@ -636,6 +638,9 @@ deferral (E15) remains.
   exposed before the gate rises, or deliver an in-gate exposure after recording
   admission closes. Preserve A07 encoded-to-source mappings, native counters/timestamps,
   capture-generation identity and bounded boundary context across trial changes.
+  Scope one uninterrupted acquisition by session, camera and exact worker generation;
+  retain the observed last pretrial, first/last admitted and first excluded receipt
+  when available. Absent observations and unverified absolute pulse offsets stay null.
   Do not reset native acquisition identity, equate video indices to pulse indices,
   or treat Setup's first pulse as the first pulse in the later-started SpikeGLX file.
   Missing/ambiguous correspondence and gated pulses without saved images remain
@@ -663,7 +668,8 @@ deferral (E15) remains.
 - Non-trial frames and IDs serve only the transient live preview/tracking pipeline:
   no video frames, frame-log lines or per-frame session-log entries. E11 still
   excludes pre-roll/post-roll; only buffered in-trial data may finish writing after
-  the trial boundary.
+  the trial boundary. A07's fixed-size boundary metadata preserves observations,
+  without admitting their images or adding non-trial source rows.
 
 **Contract status:** native counter fields and validity flags are declared in the
 [adapter](../../contracts/acquisition/camera_adapter.pyi),
@@ -674,7 +680,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 73
+**Status:** Accepted · **Revision:** 75
 
 - Visible native camera previews report E08 PreviewRates from existing latest-frame IDs
   and acquisition timestamps, without adding capture-worker messages. One queued
@@ -692,6 +698,10 @@ stamping/filtering and the mappings still need runtime implementation.
   capture during Setup. This acquisition warm-up adds no invented stabilization
   duration or thermal/photometric guarantee. Failed/cancelled Setup stops capture and
   pulses with exact cleanup evidence.
+  A successful worker Setup operation confirms resources prepared and SDK acquisition
+  armed/started; it is not Ready. Coordinator camera ON requires every exact arm
+  completion, and aggregate Ready requires successful ON plus each worker's fresh
+  usable receipt before the original deadline. Policy version23 binds this lifetime.
 - Keep capture and external trigger phase continuous in Ready, through trials and
   intertrial gaps. Trial start/end gates only E11 recording/processing admission and
   A11 Trial state; it never restarts capture, resets native counters or purges live SDK
@@ -825,6 +835,13 @@ stamping/filtering and the mappings still need runtime implementation.
   reopens/verifies the camera.
 - On controlling-client disconnection or explicit release without an atomic handover,
   promptly stop preview/pulses and begin normal safe release (E03: no grace period).
+  Retire the whole departing manual owner set without restarting remaining camera
+  pulses between individual releases. Each retiring camera stops only its own
+  external output; retain the MCU claim until remaining external previews release.
+  Continue independent role cleanup under the same deadline and retain failures.
+  Ordinary explicit single-camera Stop retains its separate behavior. Cleanup retries may reuse only previously confirmed release
+  evidence for the same retained worker/run and exact ring allocation/transfer;
+  missing evidence remains a blocker and original deadlines remain unchanged.
   A new control claim cannot cancel cleanup or restart preview automatically; explicit
   restart waits for confirmed release. Active experiments are not stopped.
 - Connecting an additional camera preserves existing unchanged preview captures,
@@ -985,7 +1002,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 53
+**Status:** Accepted · **Revision:** 54
 
 **Board and firmware**
 
@@ -1098,6 +1115,11 @@ hardware information and later implementation; no new deferral is implied.
   observations separate under A07. Camera ON belongs to Setup after capture is armed;
   camera OFF belongs to session/fault cleanup, not normal trial boundaries. Retain
   session camera-pulse evidence separately from per-trial Trial-state evidence.
+  Deliver terminal camera OFF to workers under the exact session scope before cleanup
+  can release capture. Repeated safety OFF may confirm the same connection without
+  replacing the first retained terminal outcome or changing its deadline.
+  A later validated LOW may separately confirm physical cleanup, preserving the
+  earlier failed trial/session outcome and its original timing.
   [MCU timing](../../contracts/acquisition/microcontroller.md#host-boundary-and-evidence-binding)
   defines wire evidence and start/stop deadline limits. No early compensation or new
   firmware clock/scheduling protocol.

@@ -523,17 +523,25 @@ def test_open_uses_exact_assigned_serial_not_enumeration_order() -> None:
     assert adapter._interface == "usb3"
 
 
+@pytest.mark.parametrize("grabbing", [False, True])
+@pytest.mark.parametrize("drifted", [False, True])
 def test_trigger_timing_selects_and_verifies_exact_selector(
     monkeypatch: pytest.MonkeyPatch,
+    grabbing: bool,
+    drifted: bool,
 ) -> None:
     calls: list[tuple[str, str]] = []
-    values = {"TriggerSelector": "FrameStart", "TriggerMode": "Off"}
+    values = {
+        "TriggerSelector": "AcquisitionStart" if drifted else "FrameStart",
+        "TriggerMode": "Off",
+    }
     nodes = object()
     fake_camera = SimpleNamespace(GetNodeMap=lambda: nodes)
     adapter = BaslerCameraAdapter()
     adapter._camera = fake_camera
     adapter._device_info = object()
     adapter._opened = True
+    adapter._grabbing = grabbing
     monkeypatch.setattr(
         "cephvr.acquisition.camera.basler.get_node",
         lambda _nodes, name: object() if name in values else None,
@@ -547,8 +555,14 @@ def test_trigger_timing_selects_and_verifies_exact_selector(
         lambda _nodes, name: values.get(name),
     )
 
-    assert adapter.read_frame_timing() == "free_running"
-    assert calls == [("TriggerSelector", "FrameStart")]
+    if grabbing and drifted:
+        with pytest.raises(
+            CameraAdapterError, match="TriggerSelector readback differs"
+        ):
+            adapter.read_frame_timing()
+    else:
+        assert adapter.read_frame_timing() == "free_running"
+    assert calls == ([] if grabbing else [("TriggerSelector", "FrameStart")])
 
 
 def test_missing_trigger_mode_blocks_readiness(monkeypatch: pytest.MonkeyPatch) -> None:

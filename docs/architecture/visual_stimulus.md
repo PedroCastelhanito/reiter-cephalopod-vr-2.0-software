@@ -279,7 +279,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 21
+
+- Sparse-noise preparation expands an explicit seeded recipe into V02/V03 timed
+  image programs and compact grid assets before Setup. Density selects a fixed
+  rounded count of distinct cells per pattern; active cells independently choose
+  black/white with equal probability. Stable physical screen identities derive
+  independent reproducible sequences. Use V14/V15 calibrated millimetre sizes,
+  centered complete cells with background residual margins, and nearest sampling;
+  retain recipe/seed, generator provenance, resolved grids and exact generated assets
+  under the [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
+  Reuse existing image admission, clocks, readiness holds and V13 evidence; invalid
+  recipes, inactive selected outputs or exceeded bounds fail preparation.
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -608,7 +619,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 19
+**Status:** Accepted · **Revision:** 20
 
 - Outside [E04](supervisor.md#e04) dummy test sessions, the rendering worker runs one recording thread for required trial evidence
   (V28). E13 video saving additionally enables an FFmpeg/NVENC subprocess and the
@@ -628,8 +639,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   GPU orientation preserves tile sampling, codes, layout and projector pacing.
   Fresh readback bytearrays transfer exclusive ownership to the
   recording thread; borrowed inputs are copied. Keep fixed-size per-trial stage
-  timing/slot aggregates and timestamps only for admitted captures; emit diagnostics
-  on recording-thread exit without changing evidence or failure deadlines.
+  timing/slot aggregates and timestamps only for admitted captures; emit one bounded,
+  process/session/trial-identified JSON snapshot after recording-thread exit,
+  including failed exits, through the existing diagnostic stream. This advisory diagnostic is not recording-success or resource-release evidence;
+  diagnostic export failure never changes output outcomes or failure deadlines.
+  No per-frame diagnostic log or new timing-path work is introduced.
 - Launch FFmpeg at ScheduleTrial acceptance, off the render thread, with final paths;
   feed no frames before T (as A08). Launch failure before T is a required failure
   before release; cancellation before T terminates it and deletes only its own file.

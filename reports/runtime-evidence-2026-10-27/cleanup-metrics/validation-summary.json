@@ -1,0 +1,25 @@
+{
+  "recording_module": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_recording.py -q -m \"not windows and not rig\" --timeout=60",
+    "passed": 81,
+    "duration_s": 0.62,
+    "scope": "local owning tests, elevated filesystem access for native hardlinks; no rig evidence"
+  },
+  "owning_tests": {
+    "passed": 311,
+    "deselected": 2,
+    "warnings": 6
+  },
+  "nongui_integration": {
+    "passed": 2698,
+    "skipped": 5,
+    "subtests_passed": 3,
+    "warnings": 6,
+    "duration_s": 18.03
+  },
+  "ruff": "10 files pass",
+  "format": "10 files pass",
+  "mypy_win32": "7 source files pass",
+  "boundaries": "760 modules, zero violations; existing cohesion advisories",
+  "new_link_errors": []
+}

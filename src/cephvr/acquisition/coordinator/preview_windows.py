@@ -61,11 +61,39 @@ class PreviewWindows:
         placement: rpc.PreviewWindowPlacement | None = None,
     ) -> None:
         current = self._windows.get(role)
+        if (
+            placement is not None
+            and placement.HasField("camera_display_suppressed")
+            and (
+                not placement.update_existing_only
+                or not placement.gui_window_handle
+                or not placement.gui_process_id
+                or not placement.gui_process_creation_time_100ns
+            )
+        ):
+            raise ValueError(
+                "temporary preview visibility requires an existing viewer "
+                "and complete GUI owner identity"
+            )
         if current is not None:
             if current.run_id != preview.run_id:
                 raise RuntimeError("another exact preview run still owns a window")
             if not current.reader.done.done():
                 if placement is not None:
+                    if placement.HasField("camera_display_suppressed"):
+                        existing = current.reader.placement
+                        if existing is None or (
+                            existing.gui_window_handle,
+                            existing.gui_process_id,
+                            existing.gui_process_creation_time_100ns,
+                        ) != (
+                            placement.gui_window_handle,
+                            placement.gui_process_id,
+                            placement.gui_process_creation_time_100ns,
+                        ):
+                            raise ValueError(
+                                "temporary preview visibility must match its bound GUI owner"
+                            )
                     current.reader.update_placement(placement)
                 return
             if placement is not None and placement.update_existing_only:

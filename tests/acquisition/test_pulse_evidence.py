@@ -148,6 +148,8 @@ class _StatusSerial:
         self.observation.state.configuration_valid = True
         self.observation.state.watchdog_stopped = False
         self.observation.state.watchdog_ms = 3000
+        self.observation.state.behavioral.running = True
+        self.observation.state.trial_state.enabled = True
         self.observation.capabilities.protocol_version = 1
 
     async def status(self, *, deadline_ns: int) -> mcu.MicrocontrollerObservation:
@@ -164,12 +166,7 @@ class _StatusSerial:
         stop_issued_ns: int | None,
         deadline_ns: int,
     ) -> mcu.PulseCommandEvidence:
-        assert selected_roles == (
-            camera.CAMERA_ROLE_BEHAVIORAL,
-            camera.CAMERA_ROLE_TRACKING,
-            camera.CAMERA_ROLE_EYE_TRACKING,
-            "trial_state",
-        )
+        assert selected_roles == ("trial_state",)
         assert scheduled_boundary_ns is None
         assert stop_issued_ns is not None
         assert deadline_ns > stop_issued_ns
@@ -178,13 +175,14 @@ class _StatusSerial:
             watchdog_stopped=False,
             watchdog_ms=3000,
         )
-        result.behavioral.running = False
+        result.behavioral.running = True
         result.tracking.running = False
         result.eye_tracking.running = False
         result.trial_state.running = False
         return mcu.PulseCommandEvidence(
             connection_id=self.observation.connection_id,
             request_id="off-1",
+            trial_state_selected=True,
             dispatched_monotonic_ns=201,
             outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
             applied=True,
@@ -220,6 +218,7 @@ async def test_off_ack_does_not_forge_a_full_status_timestamp() -> None:
     )
     settings = control.AcquisitionSettings()
     settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    settings.pulses.trial_state_enabled = True
     session = SessionRecord(
         work=control.WorkContext(session=control.SessionContext(session_id="s-1")),
         operation=control.OperationContext(command_id="setup-1"),
@@ -234,7 +233,7 @@ async def test_off_ack_does_not_forge_a_full_status_timestamp() -> None:
     assert pulse.observation.observed_monotonic_ns == 123
     assert pulse.observation.capabilities_observed_monotonic_ns == 122
     assert pulse.observation.request_id == "status-1"
-    assert pulse.observation.state.behavioral.running is False
+    assert pulse.observation.state.behavioral.running is True
 
 
 def _trial_work() -> control.WorkContext:
@@ -243,6 +242,36 @@ def _trial_work() -> control.WorkContext:
     work.trial.trial_id = str(uuid4())
     work.trial.trial_number = 1
     return work
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("running", [False, True])
+async def test_trial_state_disabled_still_checks_continuous_camera_without_off(running):
+    from unittest.mock import AsyncMock
+
+    serial = _StatusSerial()
+    serial.observation.state.behavioral.running = running
+    serial.off = AsyncMock()
+    pulse = PulseRecord()
+    settings = control.AcquisitionSettings()
+    settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    settings.pulses.trial_state_enabled = False
+    session = SessionRecord(
+        work=control.WorkContext(session=control.SessionContext(session_id="session")),
+        operation=control.OperationContext(command_id="setup"),
+        configuration_revision=1,
+        required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        confirmed_settings=settings,
+    )
+    owner = SimpleNamespace(serial=serial, pulse=pulse)
+    if running:
+        await TrialPulseBoundaries.ensure_outputs_off(owner, session, 500)
+        assert pulse.observation == serial.observation
+    else:
+        with pytest.raises(RuntimeError, match="MCU state is not valid"):
+            await TrialPulseBoundaries.ensure_outputs_off(owner, session, 500)
+        assert pulse.observation is None
+    serial.off.assert_not_awaited()
 
 
 @pytest.mark.parametrize(
@@ -408,6 +437,7 @@ def _pulse(
         command=acq.WorkerCommand(command_id=command_id),
     )
     request.command.target.work.CopyFrom(work)
+    request.evidence.trial_state_selected = True
     request.evidence.connection_id = "mcu-generation"
     request.evidence.request_id = "pulse-request"
     request.evidence.command = mcu.PULSE_BOUNDARY_COMMAND_ON
@@ -481,6 +511,46 @@ def test_unspecified_terminal_pulse_does_not_mutate_retained_evidence() -> None:
         tracker.record(request, _schedule(work), camera.CAMERA_ROLE_BEHAVIORAL)
     assert tracker.connection_id is None
     assert tracker.on is None
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [mcu.PULSE_COMMAND_OUTCOME_TIMED_OUT, mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED],
+)
+@pytest.mark.parametrize(
+    "execution_field",
+    [None, "dispatched_monotonic_ns", "acknowledged_monotonic_ns", "applied"],
+)
+def test_unknown_request_failure_retains_only_absent_execution_proof(
+    outcome, execution_field
+):
+    from cephvr.acquisition.coordinator.session_pulses import session_off_failure
+
+    work = _trial_work()
+    evidence = session_off_failure(
+        (camera.CAMERA_ROLE_BEHAVIORAL, "trial_state"), "exact", 150, outcome
+    )
+    request = acq.WorkerPulseEvidence(
+        command=acq.WorkerCommand(target=acq.WorkerContext(work=work)),
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        evidence=evidence,
+    )
+    tracker = TrialPulseEvidence()
+    tracker.reset(required=True)
+    if execution_field is not None:
+        setattr(
+            request.evidence,
+            execution_field,
+            False if execution_field == "applied" else 150,
+        )
+        with pytest.raises(ValueError, match="request identity"):
+            tracker.record(request, _schedule(work), camera.CAMERA_ROLE_BEHAVIORAL)
+        assert tracker.off is None
+    else:
+        tracker.record(request, _schedule(work), camera.CAMERA_ROLE_BEHAVIORAL)
+        assert tracker.off is not None and tracker.connection_id == "exact"
+        assert tracker.off_boundary_ns == 150
+        assert not tracker.combined().complete()
 
 
 @pytest.mark.asyncio
@@ -591,7 +661,7 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
                 camera.CAMERA_ROLE_EYE_TRACKING: SimpleNamespace(
                     context=SimpleNamespace(camera=camera.CAMERA_ROLE_EYE_TRACKING),
                     port=object(),
-                    trial=object(),
+                    trial=None,
                 ),
             }
         ),
@@ -601,8 +671,7 @@ async def test_pulse_delivery_retains_exact_child_before_worker_ack(
         trial,
         mcu.PulseCommandEvidence(
             applied=True,
-            behavioral_selected=True,
-            tracking_selected=True,
+            trial_state_selected=True,
             command=pulse_command,
         ),
         100,
@@ -635,9 +704,7 @@ def test_trial_mask_selects_level_independently_of_camera_timing(
         required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
         confirmed_settings=settings,
     )
-    expected = ((camera.CAMERA_ROLE_BEHAVIORAL,) if external else ()) + (
-        ("trial_state",) if trial_enabled else ()
-    )
+    expected = ("trial_state",) if trial_enabled else ()
     assert _trial_output_roles(session) == expected
 
 

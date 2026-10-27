@@ -163,9 +163,9 @@ Do not introduce worker-specific copies of heartbeat or lifecycle timeouts.
 
 | Evidence | Capture thread | Recording thread (saving only) |
 | --- | --- | --- |
-| Ready | Session: confirmed device/settings and attachments. Trial: fresh checks, purge and external arming with pulses off. | Session: settings/tools and private storage confirmed. Trial: prior closure, recording queue/buffers/encoding plan prepared; FFmpeg launches at ScheduleTrial acceptance under A08, fed no frames before T. |
+| Ready | Session: confirmed device/settings/attachments and fresh usable continuous capture, with successful session camera ON when external. Trial: fresh locked readback and sealed/reset trial rings, without SDK purge/rearm. | Session: settings/tools and private storage confirmed. Trial: prior closure, recording queue/buffers/encoding plan prepared; FFmpeg launches at ScheduleTrial acceptance under A08, fed no frames before T. |
 | Started | Required usable-frame evidence at trial onset | Processing real in-trial frame input or its accounting; not an encoding or durability claim |
-| Stopped | Capture stopped and trial input sealed | Not required: buffered in-trial frames may still drain |
+| Stopped | Normal: trial admission sealed and applicable Trial state LOW; capture continues. Interrupt: physical stop evidence remains separate. | Not required: buffered in-trial frames may still drain |
 | Finished | All capture/accounting obligations and the end marker completed | Complete accounting, successful encoder finalization/exit and completion line and required frame-log/video sync (no MP4 inspection, A07) |
 | Cleanup | Confirm release of registered resources | Confirm closure/release or explicitly report failure/uncertainty |
 
@@ -180,8 +180,9 @@ A07's all-dropped-trial handling. The Started report retains E05's T + 250 ms de
 FFmpeg progress and online finalization/sync/closure remain independently required;
 normal file-content validation is external post hoc work under E05/A07.
 
-The capture thread's in-process end marker follows all accounting, bounded retrieval
-and purge; it contains final in-trial and excluded-frame evidence. It is separate from
+The capture thread's in-process end marker follows all trial accounting and its
+bounded admission snapshot, or physical-stop retrieval/purge; it contains explicitly
+scoped in-trial and excluded-frame evidence. It is separate from
 Stopped/Finished and never proves file closure. Closure reports must match the
 registered obligation set; an empty output/resource list is not automatic success.
 Use existing shared heartbeat/error types: heartbeats to the coordinator, errors directly to supervisor;
@@ -218,8 +219,8 @@ control gRPC, and no frame accounting crosses a process boundary.
 
 The recording thread receives frame records and final drop decisions from the capture
 thread in the same worker, appending only the complete acquisition-ordered prefix on the
-sync cycle or closure. The end marker follows all trial accounting and bounded
-retrieval/purge, counting in-trial images (including invalid/dropped) separately from
+sync cycle or closure. The end marker follows all trial accounting and applicable
+bounded observations, counting in-trial images (including invalid/dropped) separately from
 excluded receipts. Prompt stop reports remain separate. Reconcile unique IDs before
 Finished; native counter gaps never create invented received-frame lines.
 

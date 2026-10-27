@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 22
+policy_version = 23
 
 [platform]
 target_os = "windows"
@@ -45,10 +45,10 @@ setting_readback_mismatch = "warn_accept_actual"
 assignment = "explicit_device_id"
 role_device_policy = "distinct_enabled_devices"
 unknown_trigger_rate_limit = "warn_allow_setup"
-acquisition_mode = "trial_only"
-external_trigger_preparation = "armed_pulses_off"
-stale_buffer_cleanup = "counted_purge_keep_connection"
-post_cutoff_retrieval = "terminal_off_then_bounded_drain"
+acquisition_mode = "setup_through_session_cleanup"
+external_trigger_preparation = "setup_arm_then_camera_on_then_usable_ready"
+stale_buffer_cleanup = "physical_stop_only_no_trial_purge"
+post_cutoff_retrieval = "normal_admission_snapshot_physical_off_bounded_drain"
 exposure_mode = "manual"
 gain_mode = "manual"
 
@@ -126,7 +126,7 @@ video_correspondence = "sequential_encoded_image_to_original_source_and_timestam
 row_write_policy = "source_after_selection_encoded_mapping_after_input_submission"
 pending_records_owner = "camera_worker_recording_thread"
 metadata_transport = "in_process_with_frame"
-capture_completion = "single_end_marker_after_drain_with_independent_stop_and_pulse_evidence"
+capture_completion = "trial_end_marker_admission_or_physical_stop_with_independent_trial_state_evidence"
 append_schedule = "sync_cycle_and_closure"
 crash_state = "valid_to_last_complete_row"
 recovery = "none_external_post_hoc"

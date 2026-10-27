@@ -171,7 +171,8 @@ class BaslerCameraAdapter:
                 raise CameraAdapterError(
                     "UNSUPPORTED_FEATURE", "TriggerMode readback is unavailable"
                 )
-            set_enum(nodes, "TriggerSelector", "FrameStart")
+            if not self._grabbing:
+                set_enum(nodes, "TriggerSelector", "FrameStart")
             if read_value(nodes, "TriggerSelector") != "FrameStart":
                 raise CameraAdapterError(
                     "SDK_STATE", "TriggerSelector readback differs"

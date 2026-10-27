@@ -1,0 +1,405 @@
+{
+  "session_id": "85459aff-c768-400a-8c27-6ed9a0a8241d",
+  "trial_id": "3c11435d-771b-43d5-a133-b108416e53a0",
+  "duration_ns": 60000000000,
+  "closed_artifacts": 7,
+  "cleanup_confirmed": true,
+  "cameras": {
+    "behavioral": {
+      "source_frames": 1797,
+      "real_video_frames": 1797,
+      "decoded_frames": 1797,
+      "source_to_video_exact": true,
+      "invalid_images": 0,
+      "dropped_sources": 0,
+      "duplicate_frames": 0,
+      "native_counter_first_last": [
+        0,
+        1796
+      ],
+      "native_counters_contiguous": true,
+      "first_receipt_after_start_ms": 82.988,
+      "last_receipt_before_cutoff_ms": 6.7341,
+      "median_receipt_gap_ms": 33.3558,
+      "maximum_receipt_gap_ms": 34.7853,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 1090436485728100,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 1797,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 1797,
+          "selected_source_frame_count": 1797,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 1090376503069400,
+          "on_acknowledged_monotonic_ns": 1090376533103400,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 1090436494813300,
+          "off_acknowledged_monotonic_ns": 1090436523896900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 1798
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    },
+    "tracking": {
+      "source_frames": 3595,
+      "real_video_frames": 3595,
+      "decoded_frames": 3595,
+      "source_to_video_exact": true,
+      "invalid_images": 0,
+      "dropped_sources": 0,
+      "duplicate_frames": 0,
+      "native_counter_first_last": [
+        0,
+        3594
+      ],
+      "native_counters_contiguous": true,
+      "first_receipt_after_start_ms": 43.3125,
+      "last_receipt_before_cutoff_ms": 13.3411,
+      "median_receipt_gap_ms": 16.67935,
+      "maximum_receipt_gap_ms": 31.8031,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 1090436485728100,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 3595,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 3595,
+          "selected_source_frame_count": 3595,
+          "duplicate_frame_count": 0
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 1090376503069400,
+          "on_acknowledged_monotonic_ns": 1090376533103400,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 1090436494813300,
+          "off_acknowledged_monotonic_ns": 1090436523896900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 3596
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": []
+      }
+    }
+  },
+  "stimulus": {
+    "render_groups": 3601,
+    "first_evaluation_after_start_ms": 11.9414,
+    "last_evaluation_before_cutoff_ms": 3.1329,
+    "median_evaluation_gap_ms": 16.63195,
+    "maximum_evaluation_gap_ms": 38.0735,
+    "evaluation_gaps_over_25ms": 2,
+    "evaluation_gaps_over_50ms": 0,
+    "evaluation_gaps_over_25ms_samples": [
+      {
+        "previous_group": 0,
+        "previous_evaluation_host_ns": 1090376497669500,
+        "next_evaluation_host_ns": 1090376535743000,
+        "next_group": 1,
+        "previous_group_after_start_s": 0.0119414,
+        "gap_ms": 38.0735
+      },
+      {
+        "previous_group": 1799,
+        "previous_evaluation_host_ns": 1090406466673000,
+        "next_evaluation_host_ns": 1090406493771800,
+        "next_group": 1800,
+        "previous_group_after_start_s": 29.9809449,
+        "gap_ms": 27.0988
+      }
+    ],
+    "maximum_individual_submission_ms": 13.947,
+    "capture_observations": {
+      "admitted": 3601,
+      "transfer_complete": 3601,
+      "input_submitted": 3601
+    },
+    "submission_observations": {
+      "returned": 14404
+    },
+    "encoder_outcome": {
+      "kind": "encoder_outcome",
+      "admitted_count": 3601,
+      "input_submitted_count": 3601,
+      "capacity_drop_count": 0,
+      "selected_real_count": 3601,
+      "same_slot_omission_count": 0,
+      "encoded_frame_count": 3601,
+      "duplicate_frame_count": 0,
+      "final_input_group_id": 3600,
+      "cutoff_host_ns": 1090436485728100,
+      "exit_code": 0,
+      "eof_sent": true,
+      "drain_confirmed": true
+    },
+    "completion": {
+      "kind": "completion",
+      "cutoff_host_ns": 1090436485728100,
+      "last_group_id": 3600,
+      "state_count": 3601,
+      "submission_attempt_count": 14404,
+      "capture_admission_count": 3601,
+      "capture_drop_count": 0,
+      "same_slot_omission_count": 0,
+      "unresolved_attempt_count": 0,
+      "outcome": "completed"
+    }
+  },
+  "videos": {
+    "protocol-data\\RIGCHECK_112532_behavioral_cam.mp4": {
+      "width": 2456,
+      "height": 2568,
+      "pix_fmt": "yuvj444p",
+      "nb_read_frames": "1797",
+      "avg_frame_rate": "30/1",
+      "duration": "59.900000"
+    },
+    "protocol-data\\RIGCHECK_112532_stimulus.mp4": {
+      "width": 1280,
+      "height": 720,
+      "pix_fmt": "yuvj444p",
+      "nb_read_frames": "3601",
+      "avg_frame_rate": "60/1",
+      "duration": "60.016667"
+    },
+    "protocol-data\\RIGCHECK_112532_tracking_cam.mp4": {
+      "width": 1588,
+      "height": 1344,
+      "pix_fmt": "yuvj420p",
+      "nb_read_frames": "3595",
+      "avg_frame_rate": "60/1",
+      "duration": "59.916667"
+    }
+  },
+  "unavailable": [],
+  "recording_metrics": {
+    "event": "recording_metrics",
+    "outcome": "recording_closed",
+    "process_role": "visual_stimulus_renderer",
+    "process_generation": "6407443e-d2ec-428c-974e-b1c9d2236246",
+    "session_id": "85459aff-c768-400a-8c27-6ed9a0a8241d",
+    "trial_id": "3c11435d-771b-43d5-a133-b108416e53a0",
+    "configuration_revision": 2,
+    "metrics": {
+      "stages_ns": {
+        "readback_poll_ready": {
+          "count": 3601,
+          "total": 2413619200,
+          "max": 2187300
+        },
+        "readback_poll_pending": {
+          "count": 0,
+          "total": 0,
+          "max": 0
+        },
+        "capture_ready": {
+          "count": 3601,
+          "total": 9052780600,
+          "max": 19145100
+        },
+        "queue_wait": {
+          "count": 3601,
+          "total": 2858070100,
+          "max": 134226400
+        },
+        "normalization": {
+          "count": 3601,
+          "total": 2952900,
+          "max": 32500
+        },
+        "pipe_write": {
+          "count": 3635,
+          "total": 5890788700,
+          "max": 4720400
+        },
+        "frame_input": {
+          "count": 3601,
+          "total": 6033303900,
+          "max": 144462000
+        },
+        "slot_hold": {
+          "count": 3601,
+          "total": 18077090000,
+          "max": 148542100
+        }
+      },
+      "worst_stage_samples": {
+        "capture_ready": {
+          "group_id": 0,
+          "start_monotonic_ns": 1090376519925800,
+          "end_monotonic_ns": 1090376539070900,
+          "elapsed_ns": 19145100
+        },
+        "frame_input": {
+          "group_id": 2,
+          "video_frame_index": 2,
+          "start_monotonic_ns": 1090376559504400,
+          "write_attempts": 35,
+          "zero_progress_writes": 34,
+          "end_monotonic_ns": 1090376703966400,
+          "elapsed_ns": 144462000
+        },
+        "slot_hold": {
+          "group_id": 2,
+          "start_monotonic_ns": 1090376555452400,
+          "end_monotonic_ns": 1090376703994500,
+          "elapsed_ns": 148542100
+        },
+        "queue_wait": {
+          "group_id": 3,
+          "start_monotonic_ns": 1090376570016000,
+          "end_monotonic_ns": 1090376704242400,
+          "elapsed_ns": 134226400
+        },
+        "normalization": {
+          "group_id": 40,
+          "video_frame_index": 40,
+          "start_monotonic_ns": 1090377167191000,
+          "end_monotonic_ns": 1090377167223500,
+          "elapsed_ns": 32500
+        },
+        "readback_poll_ready": {
+          "group_id": 219,
+          "start_monotonic_ns": 1090380150985200,
+          "end_monotonic_ns": 1090380153172500,
+          "elapsed_ns": 2187300
+        },
+        "pipe_write": {
+          "group_id": 321,
+          "start_monotonic_ns": 1090381851165800,
+          "end_monotonic_ns": 1090381855886200,
+          "video_frame_index": 321,
+          "elapsed_ns": 4720400
+        }
+      },
+      "unfinished_frame_input": null,
+      "peak_capture_slots": 11,
+      "active_capture_slots": 0,
+      "queued_captures": 0,
+      "zero_progress_writes": 34,
+      "submitted_bytes": 13274726400,
+      "cancelled_captures": 0
+    }
+  },
+  "stage_gap_overlap": {
+    "capture_ready": {
+      "sample": {
+        "group_id": 0,
+        "start_monotonic_ns": 1090376519925800,
+        "end_monotonic_ns": 1090376539070900,
+        "elapsed_ns": 19145100
+      },
+      "after_trial_start_ms": 34.1977,
+      "overlapping_evaluation_gaps_over_25ms": [
+        {
+          "previous_group": 0,
+          "previous_evaluation_host_ns": 1090376497669500,
+          "next_evaluation_host_ns": 1090376535743000,
+          "next_group": 1,
+          "previous_group_after_start_s": 0.0119414,
+          "gap_ms": 38.0735
+        }
+      ]
+    },
+    "frame_input": {
+      "sample": {
+        "group_id": 2,
+        "video_frame_index": 2,
+        "start_monotonic_ns": 1090376559504400,
+        "write_attempts": 35,
+        "zero_progress_writes": 34,
+        "end_monotonic_ns": 1090376703966400,
+        "elapsed_ns": 144462000
+      },
+      "after_trial_start_ms": 73.7763,
+      "overlapping_evaluation_gaps_over_25ms": []
+    },
+    "slot_hold": {
+      "sample": {
+        "group_id": 2,
+        "start_monotonic_ns": 1090376555452400,
+        "end_monotonic_ns": 1090376703994500,
+        "elapsed_ns": 148542100
+      },
+      "after_trial_start_ms": 69.7243,
+      "overlapping_evaluation_gaps_over_25ms": []
+    },
+    "queue_wait": {
+      "sample": {
+        "group_id": 3,
+        "start_monotonic_ns": 1090376570016000,
+        "end_monotonic_ns": 1090376704242400,
+        "elapsed_ns": 134226400
+      },
+      "after_trial_start_ms": 84.2879,
+      "overlapping_evaluation_gaps_over_25ms": []
+    },
+    "normalization": {
+      "sample": {
+        "group_id": 40,
+        "video_frame_index": 40,
+        "start_monotonic_ns": 1090377167191000,
+        "end_monotonic_ns": 1090377167223500,
+        "elapsed_ns": 32500
+      },
+      "after_trial_start_ms": 681.4629,
+      "overlapping_evaluation_gaps_over_25ms": []
+    },
+    "readback_poll_ready": {
+      "sample": {
+        "group_id": 219,
+        "start_monotonic_ns": 1090380150985200,
+        "end_monotonic_ns": 1090380153172500,
+        "elapsed_ns": 2187300
+      },
+      "after_trial_start_ms": 3665.2571,
+      "overlapping_evaluation_gaps_over_25ms": []
+    },
+    "pipe_write": {
+      "sample": {
+        "group_id": 321,
+        "start_monotonic_ns": 1090381851165800,
+        "end_monotonic_ns": 1090381855886200,
+        "video_frame_index": 321,
+        "elapsed_ns": 4720400
+      },
+      "after_trial_start_ms": 5365.4377,
+      "overlapping_evaluation_gaps_over_25ms": []
+    }
+  },
+  "limits": "Blank60s/two-camera current-settings check only. Source counts are received in-interval images, not nominal pulse guarantees. Software evaluation gaps are not optical timing or stall attribution. No Tracking processing or representative-scene/full-load acceptance. Stage maxima are independently retained samples, not a correlated trace; interval overlap alone does not establish causation."
+}

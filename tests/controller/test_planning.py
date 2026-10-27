@@ -107,7 +107,7 @@ def test_schema_requires_actual_writer_definition_for_each_reserved_output() -> 
                 clocks={"host": "cephvr.host.perf_counter_ns.v1"},
             ),
             ("visual_stimulus", "stimulus_frames", "jsonl"): WriterSchema(
-                schema_version=5,
+                schema_version=6,
                 format="jsonl",
                 fields={"line": "evidence"},
                 units={},

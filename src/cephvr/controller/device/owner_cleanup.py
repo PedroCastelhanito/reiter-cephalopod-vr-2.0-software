@@ -153,40 +153,51 @@ class ManualControlCleanup:
             policies = await load_file_policies(
                 self.file_policy_loader, (deadline_ns - self.clock()) / 1e9
             )
+            failures = []
             for role, view in view_by_role:
                 if self.clock() >= deadline_ns:
                     break
                 if not manual_state_open(view) and not view.cleanup_pending:
                     continue
-                if (
-                    view.preview_running
-                    or view.preview_prepared
-                    or view.cleanup_pending
-                    and view.preview_run_id
-                ):
-                    final_view = await self._release_camera(
-                        backend,
-                        settings,
-                        policies,
-                        role,
-                        view,
-                        svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
-                        deadline_ns,
-                        owner_operation_id,
-                    )
-                else:
-                    final_view = view
-                if final_view.device_open or final_view.cleanup_pending:
-                    await self._release_camera(
-                        backend,
-                        settings,
-                        policies,
-                        role,
-                        final_view,
-                        svc.CAMERA_COMMAND_KIND_FINISH_EDITING,
-                        deadline_ns,
-                        owner_operation_id,
-                    )
+                try:
+                    if (
+                        view.preview_running
+                        or view.preview_prepared
+                        or view.cleanup_pending
+                        and view.preview_run_id
+                    ):
+                        final_view = await self._release_camera(
+                            backend,
+                            settings,
+                            policies,
+                            role,
+                            view,
+                            svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
+                            deadline_ns,
+                            owner_operation_id,
+                        )
+                    else:
+                        final_view = view
+                    if final_view.device_open or final_view.cleanup_pending:
+                        await self._release_camera(
+                            backend,
+                            settings,
+                            policies,
+                            role,
+                            final_view,
+                            svc.CAMERA_COMMAND_KIND_FINISH_EDITING,
+                            deadline_ns,
+                            owner_operation_id,
+                        )
+                except Exception as exc:
+                    failures.append(f"{camera_role_name(role)}: {exc}")
+                    if (
+                        self.device.camera_operation is not None
+                        and not await self._finish_existing_operation(deadline_ns)
+                    ):
+                        break
+            if failures:
+                raise RuntimeError("; ".join(failures))
             if self.clock() >= deadline_ns:
                 raise TimeoutError("manual camera cleanup deadline expired")
             await self._complete_cleanup(owner_operation_id)
@@ -334,6 +345,7 @@ class ManualControlCleanup:
         command.transport.CopyFrom(policy.transport)
         if kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW:
             command.preview_run_id = view.preview_run_id
+            command.retiring_owner = True
         async with self.lifecycle.lock:
             if self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION:
                 raise RuntimeError("Configuration ended during manual camera cleanup")

@@ -138,6 +138,7 @@ class RecordingCompletionContext:
     stopped_recording_end_monotonic_ns: int | None
     stopped_actual_stop_monotonic_ns: int | None
     transport_summary: dict[str, int | None] | None
+    stopped_admission_stop_monotonic_ns: int | None = None
 
 
 @dataclass(frozen=True)

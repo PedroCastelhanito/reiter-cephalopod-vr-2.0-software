@@ -85,6 +85,7 @@ class WindowsPreviewOwner:
         self.bound = False
         self.origin: tuple[int, int] | None = None
         self.minimized = False
+        self.suppressed = False
         self.placement_events: PlacementEvents | None = None
         try:
             if _pid(self.user, hwnd) != pid or self.user.GetAncestor(hwnd, 2) != hwnd:
@@ -135,13 +136,14 @@ class WindowsPreviewOwner:
                 or self.user.IsIconic(root)
                 or not self.user.IsWindowVisible(self.hwnd)
             )
+        hidden = minimized or self.suppressed
         if self.user.IsWindow(self.child) and (
-            minimized != self.minimized
-            or (not minimized and not self.user.IsWindowVisible(self.child))
+            hidden != self.minimized
+            or (not hidden and not self.user.IsWindowVisible(self.child))
         ):
-            self.user.ShowWindow(self.child, 0 if minimized else 4)
-        self.minimized = minimized
-        if not minimized:
+            self.user.ShowWindow(self.child, 0 if hidden else 4)
+        self.minimized = hidden
+        if not hidden:
             owner = self._rect(self.hwnd)
             origin = owner.left, owner.top
             if (
@@ -157,7 +159,12 @@ class WindowsPreviewOwner:
                 ):
                     raise ctypes.WinError(ctypes.get_last_error())
             self.origin = origin
-        return minimized
+        return hidden
+
+    def set_suppressed(self, suppressed: bool) -> bool:
+        """Hide a live viewer without changing its native owner or placement."""
+        self.suppressed = suppressed
+        return self.sync()
 
     def retarget(self, handle: int) -> None:
         """Switch display hosts only inside the already verified live GUI process."""

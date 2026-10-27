@@ -307,6 +307,80 @@ def _session() -> SessionRecord:
     )
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["timeout", "transport", "rejected"])
+@pytest.mark.parametrize("cancel_failed", [False, True])
+async def test_cleanup_delivers_terminal_off_failure_without_claiming_release(
+    monkeypatch, failure, cancel_failed
+):
+    from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+
+    owner, session = _cleanup_owner(), _session()
+    session.cleanup_resources.append(
+        control.ResourceObligation(resource="microcontroller-claim:COM8")
+    )
+    owner.pulse.observation = mcu.MicrocontrollerObservation(connection_id="exact")
+    evidence = mcu.PulseCommandEvidence(
+        connection_id="exact",
+        request_id="known-rejected-request",
+        command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+        behavioral_selected=True,
+        outcome=mcu.PULSE_COMMAND_OUTCOME_REJECTED,
+    )
+    serial = SimpleNamespace(
+        cancel_on_reservations=AsyncMock(
+            side_effect=RuntimeError("cancel failed") if cancel_failed else None
+        ),
+        off=AsyncMock(
+            return_value=evidence,
+            side_effect=TimeoutError("OFF timeout")
+            if failure == "timeout"
+            else RuntimeError("OFF transport failed")
+            if failure == "transport"
+            else None,
+        ),
+        close=AsyncMock(),
+    )
+    owner.serial = serial
+    capture = SimpleNamespace(session_pulse_off=None)
+    context = acq.WorkerContext(
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL, work=session.work
+    )
+    worker = SimpleNamespace(
+        bootstrap=SimpleNamespace(context=context), captures=capture
+    )
+
+    async def deliver(actual_session, workers, pulse, **kwargs):
+        assert actual_session is session and kwargs["deadline_ns"] == 100
+        WorkerTrialLifecycle._record_session_off(
+            worker,
+            acq.WorkerPulseEvidence(
+                command=acq.WorkerCommand(target=context),
+                camera=context.camera,
+                evidence=pulse,
+            ),
+        )
+
+    monkeypatch.setattr(
+        "cephvr.acquisition.coordinator.cleanup.deliver_session_pulse_evidence",
+        deliver,
+    )
+    failures = []
+    assert not await owner._stop_and_close_serial(session, 100, failures)
+    assert failures and not session.serial_owner_released
+    assert capture.session_pulse_off is not None
+    assert capture.session_pulse_off.connection_id == "exact"
+    assert not capture.session_pulse_off.applied
+    if failure != "rejected":
+        assert capture.session_pulse_off.stop_issued_monotonic_ns == 10
+        assert not capture.session_pulse_off.request_id
+        assert not capture.session_pulse_off.HasField("scheduled_boundary_monotonic_ns")
+        assert not capture.session_pulse_off.HasField("dispatched_monotonic_ns")
+        assert not capture.session_pulse_off.HasField("acknowledged_monotonic_ns")
+    serial.off.assert_awaited_once()
+    serial.close.assert_not_awaited()
+
+
 def test_cleanup_reports_never_dispatched_output_as_explicit_absence() -> None:
     report = _cleanup_owner().report_builder.build(
         _session(), "00000000-0000-4000-8000-000000000008", {}, True
@@ -318,6 +392,73 @@ def test_cleanup_reports_never_dispatched_output_as_explicit_absence() -> None:
     assert output.HasField("artifact_present")
     assert not output.artifact_present
     assert output.camera_video_content == control.CAMERA_VIDEO_CONTENT_NO_FRAMES
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("missing_port", [False, True])
+async def test_session_off_delivery_failure_does_not_skip_other_workers(
+    monkeypatch, missing_port
+):
+    from cephvr.acquisition.coordinator.session_pulses import (
+        deliver_session_pulse_evidence,
+        session_off_failure,
+    )
+
+    session = _session()
+    session.required_cameras = {
+        camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        camera_pb2.CAMERA_ROLE_TRACKING,
+    }
+    workers = {}
+    for role in session.required_cameras:
+        workers[role] = SimpleNamespace(
+            context=acq.WorkerContext(camera=role, work=session.work),
+            setup_operation=control.OperationContext(command_id=str(uuid4())),
+            port=SimpleNamespace(
+                record_pulse_evidence=AsyncMock(
+                    return_value=control.CommandAdmission(
+                        result=control.COMMAND_RESULT_REJECTED
+                        if role == camera_pb2.CAMERA_ROLE_BEHAVIORAL
+                        else control.COMMAND_RESULT_ACCEPTED
+                    )
+                )
+            ),
+        )
+    if missing_port:
+        workers[camera_pb2.CAMERA_ROLE_BEHAVIORAL].port = None
+    monkeypatch.setattr(
+        "cephvr.acquisition.coordinator.session_pulses.retain_worker_command",
+        lambda worker, **kwargs: (
+            acq.WorkerCommand(target=worker.context),
+            object(),
+            worker.port,
+        ),
+    )
+    monkeypatch.setattr(
+        "cephvr.acquisition.coordinator.session_pulses.wait_child_operation",
+        AsyncMock(return_value=control.OperationState(complete=True, succeeded=True)),
+    )
+    evidence = session_off_failure(
+        tuple(session.required_cameras),
+        "exact",
+        10,
+        mcu.PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED,
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="endpoint is unavailable" if missing_port else "worker rejected",
+    ):
+        await deliver_session_pulse_evidence(
+            session,
+            workers,
+            evidence,
+            deadline_ns=100,
+            lock=asyncio.Lock(),
+            clock=lambda: 10,
+        )
+    for worker in workers.values():
+        if worker.port is not None:
+            worker.port.record_pulse_evidence.assert_awaited_once()
 
 
 def test_cleanup_cannot_invent_never_started_for_dispatched_output() -> None:

@@ -1,19 +1,39 @@
 # Rig verification — outstanding checks
 
+<a id="sparse-noise-presentation"></a>
+- [ ] [visual_stimulus] Prepare a sparse-noise recipe against the actual display profile,
+  load its generated program with its bundle as asset root, and verify square side
+  lengths, background margins, polarity/color calibration and independent screen
+  patterns. Verify requested/actual asset identity and optical onset timing at the
+  chosen pattern duration under combined recording/tracking load; preserve existing
+  readiness-hold evidence. Repeat the saved bundle and compare recorded identities.
+  Local211 tests and fixture CLI generation do not close physical acceptance.
+  [Implementation and limits](visual_stimulus.md#sparse-noise-preparation--2026-10-27).
+
 - [ ] [gui] [acquisition] Verify the final motion-dial footer natively and complete
   remaining per-control/DPI coverage after desktop activation recovers. Reproduce
-  manual-preview owner-release cleanup with exact ring evidence and page-hide
-  behavior after owner-approved repairs.
+  forced-failure manual-preview cleanup retry with exact ring evidence, native
+  viewer detach and native X-close/manual-placement preservation. Oct27 page-hide
+  repair passes Cameras/Monitor versus Configure/Protocol with capture unchanged;
+  normal Disconnect closes both viewers/devices. Oct27 normal
+  headless two-camera lease release and exact missing-ring local regressions pass;
+  these do not replace forced-failure/native-viewer variants.
 - [ ] [visual_stimulus] Attribute the Oct27 startup evaluation gaps (max276.4823ms)
   with current stage evidence and representative scenes; preserve physical timing
   acceptance. The60s closed recording and synthetic encoder boundary do not close
-  this check. [Current audit](runtime.md#hierarchical-audit--2026-10-2627).
+  this check. Oct27 two diagnostic runs show144–145ms input backpressure but no
+  recurrence of276ms evaluation gap; preserve attribution as unresolved. [Current audit](runtime.md#hierarchical-audit--2026-10-2627).
 
 <a id="camera-native-caption"></a>
 - [ ] [gui] [acquisition] After normal restart, verify camera icon-free native title colors
   across GUI themes, drag/resize/Snap and mixed-DPI placement. Verify either camera
   opened second appears at its final slot immediately. Measure both camera
   preview FPS against20Hz cap while source30/60Hz and recording remain independent.
+  After the Oct27 event-driven placement change, toggle either camera, Video,
+  Advanced, Plots and projector selection/Combined/Per-projector layouts; verify
+  settled placement and transition latency, manual placement/Snap and rapid repeats.
+  Local tests remove polling waits; native atomic transitions remain unproven.
+  [Transition assessment](runtime.md#preview-transition-placement--2026-10-27).
   Isolated native slow-reader independence, stale-work rejection, chrome/pan/zoom/close
   and byte-identical8-bit preparation speedup pass; no live FPS improvement
   is claimed. [Assessment](runtime.md#native-camera-captions-and-preview-pacing--2026-10-26).
@@ -116,7 +136,8 @@ configuration/history restoration; failed-session unknown closure remains retain
 Do not repeat full workload or close its
 checkbox from dummy evidence. [Current assessment and raw evidence](runtime.md#current-rig-validation--2026-10-21).
 Physical pulse/optical, active-camera video-Off, fault/storage matrix and GUI appearance
-remain open. Continuous capture is design-only and was not certified.
+remain open. This historical run predates continuous capture; current Oct27 evidence
+is recorded under Camera no-wiring anchoring below.
 
 
 <a id="pilot-synchronization-verification"></a>
@@ -1360,14 +1381,20 @@ and loss accounting. Historical free-running runs retain their original scope.
 
 The Oct21 [A09/A10 design](../docs/architecture/acquisition.md#a09) supersedes the
 first-trigger/first-video-source assumption for continuous acquisition. Runtime
-implementation is pending. Retain existing wiring/rates; no ExposureActive wiring
+implementation is complete as of Oct27. Retain existing wiring/rates; no ExposureActive wiring
 or coded trigger phase is selected. Historical trial-only tests do not validate
 the new capture lifetime or boundary correspondence.
 
-- [ ] After implementation, verify usable frames before Setup Ready and uninterrupted
+- [ ] Complete electrical/full-load verification of usable frames before Setup Ready and uninterrupted
   camera pulse phase/capture across Ready and repeated trials/gaps, with no non-trial
   video frames. Verify Trial state LOW outside trials, normal trial-only closure,
   and actual device/pulse stopping on Cancel Setup, session end, Abort and faults.
+  Oct27 bounded software/native execution passes two60s trials/3s gap, unchanged
+  capture generations and advancing counters,14 closed outputs and six full-video
+  decodes/count matches. Ready cancellation and immediate PREPARING Abort also
+  confirm cleanup; all settings are restored and owned processes exit. No electrical
+  pulse-phase, fault-injection or combined-load pass is claimed.
+  [Current assessment and evidence](acquisition.md#continuous-camera-acquisition-design--2026-10-21).
 
 - [ ] Verify saved camera-trigger and Trial-state routes and select rising edges in
   the measured HIGH interval (start inclusive/end exclusive);

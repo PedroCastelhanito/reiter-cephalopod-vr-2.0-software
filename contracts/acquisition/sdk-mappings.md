@@ -195,11 +195,12 @@ remains separate: a diagnostic summary never proves the file saved successfully.
 
 ## Capture call scheduling
 
-Use Basler OneByOne with the worker-owned retrieve loop. StartGrabbing arms external
-capture with pulses off; free-running starts only at T. StopGrabbing and release/drain
-stale SDK results before fresh arming, retaining the camera connection. Never purge
-already admitted trial frames. Set MaxNumBuffer before grabbing from resolved camera
-settings, then verify readback. No SDK-owned callback grabbing loop.
+Use Basler OneByOne with the worker-owned retrieve loop. During Setup, StartGrabbing
+arms external capture before coordinator camera ON; free-running starts in Setup.
+Keep the same acquisition through Ready/trials/gaps, with no trial purge or rearm.
+Stop generation and release/drain SDK results only at physical session/fault cleanup.
+Never purge admitted trial frames. Set MaxNumBuffer before grabbing from resolved
+camera settings, then verify readback. No SDK-owned callback grabbing loop.
 
 Use the [capture-wait contract](capture-wait.md): jointly wait for the SDK grab-result
 object, command event and nearest deadline, then retrieve nonblocking and recheck

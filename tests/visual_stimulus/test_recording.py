@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
 import threading
 from pathlib import Path
@@ -459,11 +460,15 @@ def test_evidence_pending_budget_fails_instead_of_growing() -> None:
 
 def test_recording_session_cancel_before_header_reconciles_process_without_output(
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
     evidence = EvidenceWriter(max_pending_bytes=1024)
     events: list[str] = []
-    caplog.set_level("INFO", logger="cephvr.visual_stimulus.recording.session")
+    metrics: list[tuple[str, dict[str, object]]] = []
+
+    def fail_metrics_export(outcome: str, snapshot: dict[str, object]) -> None:
+        metrics.append((outcome, snapshot))
+        raise OSError("diagnostic output failed")
+
     worker = RecordingWorker(
         capture_slots=1,
         evidence=evidence,
@@ -479,6 +484,7 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
         finalizer=lambda _counts: (b"{}\n", b"{}\n"),
         startup=lambda: events.append("registered_child_started"),
         failure_cleanup=lambda: events.append("exact_child_reconciled"),
+        terminal_metrics=fail_metrics_export,
     )
     session.begin_cancel(deadline_ns=10)
     result = None
@@ -486,14 +492,55 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
         result = session.poll_finished()
         if result is not None:
             break
+        assert not metrics
         import time
 
         time.sleep(0.005)
     assert result is not None and not result.evidence_closed
     assert events == ["registered_child_started", "exact_child_reconciled"]
     assert not (tmp_path / "frames.jsonl").exists()
+    assert metrics == [("recording_closed", worker.metrics.snapshot())]
+    assert session.poll_finished() == result
+    assert len(metrics) == 1
 
-    assert not any("recording_metrics" in r.getMessage() for r in caplog.records)
+
+def test_recording_session_failure_exports_terminal_metrics_once(
+    tmp_path: Path,
+) -> None:
+    evidence = EvidenceWriter(max_pending_bytes=1024)
+    metrics: list[tuple[str, dict[str, object]]] = []
+
+    def fail_startup() -> None:
+        raise RuntimeError("recording startup failed")
+
+    def fail_metrics_export(outcome: str, snapshot: dict[str, object]) -> None:
+        metrics.append((outcome, snapshot))
+        raise OSError("diagnostic output failed")
+
+    session = RecordingSession(
+        worker=None,
+        evidence=evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=1024,
+        finalizer=lambda _counts: (),
+        startup=fail_startup,
+        terminal_metrics=fail_metrics_export,
+    )
+    for _ in range(100):
+        if not session._thread.is_alive():
+            break
+        import time
+
+        time.sleep(0.005)
+
+    with pytest.raises(RuntimeError, match="recording thread failed"):
+        session.poll_finished()
+    with pytest.raises(RuntimeError, match="recording thread failed"):
+        session.poll_finished()
+    assert len(metrics) == 1
+    assert metrics[0][0] == "recording_thread_failed"
+    assert metrics[0][1]["active_capture_slots"] == 0
 
 
 def test_recording_session_services_video_sync_independently_of_evidence_sync(
@@ -912,6 +959,8 @@ def test_capture_cancellation_releases_resources_despite_evidence_failure(
     session = object.__new__(RecordingSession)
     session.worker = worker
     session.evidence = evidence
+    session.terminal_metrics = None
+    session._terminal_metrics_reported = True
     session._condition = threading.Condition()
     session._closing = queue_sealed
     session.max_queued_evidence_bytes = 4096
@@ -1621,6 +1670,34 @@ def test_capture_metrics_bound_pending_frames_and_separate_waits() -> None:
     assert (
         worker.metrics.snapshot()["worst_stage_samples"]["queue_wait"]["group_id"] == 1
     )
+
+
+def test_terminal_recording_metrics_export_is_trial_scoped_and_once(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from cephvr.visual_stimulus.recording.native import NativeRecording
+
+    metrics = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=_Input(),
+        video_start_ns=0,
+    ).metrics
+    recording = NativeRecording.__new__(NativeRecording)
+    recording.owner_identity = NS(role="visual_stimulus", generation="exact-generation")
+    recording._artifact = NS(identity=_identity())
+
+    recording._terminal_metrics_callback()(
+        "recording_thread_failed", metrics.snapshot()
+    )
+
+    record = json.loads(capsys.readouterr().err)
+    assert record["event"] == "recording_metrics"
+    assert record["process_generation"] == "exact-generation"
+    assert record["session_id"] == "session"
+    assert record["trial_id"] == "trial"
+    assert record["outcome"] == "recording_thread_failed"
+    assert record["metrics"]["active_capture_slots"] == 0
 
 
 def test_invalid_capture_completion_preserves_reservation_and_cancel_releases_metrics() -> (

@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-27",
+  "task": "sparse-noise-recipes",
+  "base_revision": "943ef25ac882e80dd5ef565b387f48ac506e7f0d",
+  "source_scope": "Base plus uncommitted changes; concurrent acquisition/GUI/recording work preserved.",
+  "source_sha256": {
+    "src/cephvr/visual_stimulus/config/models/sparse_noise.py": "b9586a2211e875e03959ae2d903218983db919b555d3ebc83186a54a9cbcd7f9",
+    "src/cephvr/visual_stimulus/resources/sparse_noise.py": "a22d7f10297d1420f7cc0482c683dacfda873aa7ff6bd40ecd3733c8c5afaca1",
+    "tools/prepare_sparse_noise.py": "fb031e094ff1dd1edddaa509375f2f0cc9a652e40fbb4830a6ea8dd008c226a1",
+    "tests/visual_stimulus/test_resources.py": "6276ab89eacd8db3f6b7ccddf467d50c6ba696acab8415880a4232bcb846db1c",
+    "contracts/visual_stimulus/generate_schemas.py": "6ad6f6d613e9d1a3ffe9585a2d740318db9f97f8f6c429247091a9c1e17d1cd7",
+    "contracts/visual_stimulus/sparse-noise-recipe.schema.json": "e9ff46d894cb2c429a152c0bcd408ffb84c517911f1e27c325780c0e6d85d7b8",
+    "contracts/visual_stimulus/examples/sparse-noise.json": "811419f69607bffe809e0ee0d693e626112cc48e1c27d51bb89b67c126ecd350"
+  },
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_compilation.py tests/visual_stimulus/test_rendering.py -q -m \"not windows and not rig\" --basetemp C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-tests-4",
+      "result": "211 passed, 6 deselected in 2.08s"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus",
+      "result": "168 source files; passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/cephvr/visual_stimulus/config/models/sparse_noise.py src/cephvr/visual_stimulus/resources/sparse_noise.py tests/visual_stimulus/test_resources.py tools/prepare_sparse_noise.py",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff format --check src/cephvr/visual_stimulus/config/models/sparse_noise.py src/cephvr/visual_stimulus/resources/sparse_noise.py tests/visual_stimulus/test_resources.py tools/prepare_sparse_noise.py",
+      "result": "4 files formatted"
+    },
+    {
+      "command": ".venv/Scripts/python.exe contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "12 schemas; no drift"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+      "result": "764 modules, 0 violations; existing cohesion advisories reviewed, no large source owner extended"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed; existing Windows line-ending warnings"
+    },
+    {
+      "command": ".venv/Scripts/python.exe tools/prepare_sparse_noise.py --recipe contracts/visual_stimulus/examples/sparse-noise.json --display C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-cli/display.json --output C:/Users/ReiterU_PC/.codex/visualizations/2026/10/27/01a17b36-f780-7310-bb0a-a84bbbfefd97/sparse-cli/bundle",
+      "result": "passed using tests.visual_stimulus.support.valid_display_json fixture; 600 epochs, four screens"
+    }
+  ],
+  "intermediate_results": [
+    "Initial patch contexts failed atomically and were corrected.",
+    "Initial test run: 12 passed, 6 temp-directory errors in sandbox.",
+    "Two focused test attempts exposed invalid assumptions about random repeats; reference-pixel and sequence checks replace uniqueness assumptions.",
+    "Repository-temp broad run: 208 passed, 6 deselected, 3 demo-fixture errors because its samples require an external directory. Final external writable path resolves this without assertion changes."
+  ],
+  "limits": [
+    "No native projector/optical/full-load test or app restart.",
+    "No GUI recipe picker; explicit preparation CLI/API emits existing standard program format.",
+    "Retain external generated bundle; seed-only regeneration assumes matching generator/Python and geometry.",
+    "Existing image readiness holds and actual asset evidence unchanged."
+  ]
+}

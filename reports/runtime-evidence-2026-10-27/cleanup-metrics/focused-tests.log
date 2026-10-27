@@ -1,0 +1,493 @@
+........................................................................ [ 23%]
+........................................................................ [ 46%]
+............FF.................................................F........ [ 69%]
+........................................................................ [ 92%]
+.......................                                                  [100%]
+================================== FAILURES ===================================
+_ test_owner_retirement_stops_only_target_without_resuming_remaining_roles[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5EFED950>
+target_external = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("target_external", [True, False])
+    async def test_owner_retirement_stops_only_target_without_resuming_remaining_roles(
+        monkeypatch: pytest.MonkeyPatch, target_external: bool
+    ) -> None:
+        from cephvr.acquisition.coordinator import manual_preview as preview_module
+        from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+    
+        role = camera.CAMERA_ROLE_BEHAVIORAL
+        other_role = camera.CAMERA_ROLE_TRACKING
+        preview = WorkerPreview(
+            run_id="retiring-owner-run",
+            configuration_revision=1,
+            allocation_id="ring",
+            resolved_camera=camera.CameraResolvedState(),
+            started=True,
+        )
+        worker = SimpleNamespace(context=SimpleNamespace(camera=role), preview=preview)
+    
+        class Port:
+            async def stop_preview(self, request, *, deadline_ns):
+                assert request.release_device
+                preview.started = False
+                preview.stopped_event.set()
+                preview.cleanup_event.set()
+                return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    
+        child = ChildOperation(
+            command_id="stop-child",
+            camera=role,
+            work=control.WorkContext(),
+            parent_operation=control.OperationContext(),
+            kind="stop_preview",
+        )
+        monkeypatch.setattr(
+            preview_module,
+            "retain_worker_command",
+            lambda *_args, **_kwargs: (acq.WorkerCommand(), child, Port()),
+        )
+    
+        async def completed(*_args, **_kwargs):
+            return control.OperationState(complete=True, succeeded=True)
+    
+        monkeypatch.setattr(preview_module, "wait_child_operation", completed)
+        serial = SimpleNamespace(off=AsyncMock(), on=AsyncMock())
+        monkeypatch.setattr(
+            preview_module, "retain_applied_pulse_state", lambda *_args, **_kwargs: None
+        )
+        idle_release = AsyncMock()
+        monkeypatch.setattr(preview_module, "release_idle_claim", idle_release)
+        flow = SimpleNamespace(
+            workers=SimpleNamespace(workers={role: worker}),
+            configuration=SimpleNamespace(settings=control.AcquisitionSettings()),
+            pulse=PulseRecord(
+                observation=mcu.MicrocontrollerObservation(connection_id="mcu")
+            ),
+            serial=serial,
+            clock=lambda: 1,
+            windows=SimpleNamespace(close=AsyncMock()),
+            transfers=SimpleNamespace(retire_and_release=AsyncMock()),
+            device_status=SimpleNamespace(
+                progress=AsyncMock(),
+                resolve_camera=lambda *_args, **_kwargs: None,
+                update_camera_state=lambda *_args, **_kwargs: None,
+            ),
+            resources={},
+            resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
+            results=SimpleNamespace(
+                report_failure=AsyncMock(),
+                complete=AsyncMock(
+                    return_value=control.CommandAdmission(
+                        result=control.COMMAND_RESULT_ACCEPTED
+                    )
+                ),
+            ),
+        )
+        flow._external_roles = lambda _adding_role: (
+            [role, other_role] if target_external else [other_role]
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=role,
+            preview_run_id=preview.run_id,
+            retiring_owner=True,
+            command=wire.BackendCommand(command_id="retire-stop"),
+        )
+    
+>       result = await ManualPreview._stop(flow, request, 1000)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\acquisition\test_manual_preview.py:2967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(workers=namespace(workers={1: namespace(context=namespace(camera=1), preview=WorkerPreview(run_id='retiring-...tion test_owner_retirement_stops_only_target_without_resuming_remaining_roles.<locals>.<lambda> at 0x000001EF5EEC77E0>)
+request = command {
+  command_id: "retire-stop"
+}
+camera: CAMERA_ROLE_BEHAVIORAL
+preview_run_id: "retiring-owner-run"
+retiring_owner: true
+
+deadline_ns = 1000
+
+    async def _stop(
+        self, request: wire.AcquisitionCameraCommand, deadline_ns: int
+    ) -> control.CommandAdmission:
+        worker = self.workers.workers.get(request.camera)
+        preview = worker.preview if worker is not None else None
+        if (
+            worker is None
+            or preview is None
+            or preview.run_id != request.preview_run_id
+        ):
+            return _rejected(
+                request.command.command_id,
+                "PREVIEW_RUN",
+                "Stop Preview does not match the live run",
+            )
+        uncertain_preview = preview.stopping or not preview.started
+        preview.stopping = True
+        active_roles = self._external_roles(None)
+        if uncertain_preview:
+            setting = getattr(self.configuration.settings, role_name(request.camera))
+            if (
+                setting.HasField("device")
+                and setting.device.HasField("frame_timing")
+                and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            ):
+                active_roles = sorted(set(active_roles).union({request.camera}))
+        remaining_roles = tuple(role for role in active_roles if role != request.camera)
+        stop_roles: tuple[int, ...]
+        if request.retiring_owner:
+            stop_roles = (request.camera,) if request.camera in active_roles else ()
+        else:
+            stop_roles = tuple(active_roles)
+        resume_roles = () if request.retiring_owner else remaining_roles
+        device_cleanup_established = False
+        try:
+            if stop_roles:
+                await self.device_status.progress(
+                    request.command,
+                    request.camera,
+                    "Stopping external triggers�",
+                    deadline_ns=deadline_ns,
+                )
+                if self.pulse.observation is None:
+                    invalidate_released_idle_proof(self.pulse)
+                    retain_observation(
+                        self.pulse,
+                        await self.serial.connect(deadline_ns=deadline_ns),
+                    )
+                invalidate_released_idle_proof(self.pulse)
+                evidence = await self.serial.off(
+                    stop_roles,
+                    scheduled_boundary_ns=None,
+                    stop_issued_ns=self.clock(),
+                    deadline_ns=deadline_ns,
+                )
+                retain_applied_pulse_state(
+                    self.pulse, evidence, deadline_ns=deadline_ns
+                )
+            await self.device_status.progress(
+                request.command,
+                request.camera,
+                "Stopping capture and releasing camera�",
+                deadline_ns=deadline_ns,
+            )
+            if uncertain_preview:
+                # A late Start or timed-out Stop cannot be inferred from its
+                # admission result. Retire this exact worker through its existing
+                # Cleanup/read-only retained-result path before releasing ownership.
+                await self.windows.close(
+                    request.camera, preview.run_id, deadline_ns=deadline_ns
+                )
+                self.transfers.retire(preview)
+                if preview.viewer is not None:
+                    await _wait_preview_event(
+                        preview.viewer_released_event, deadline_ns, self.clock
+                    )
+                if preview.tracking_viewer is not None:
+                    await _wait_preview_event(
+                        preview.tracking_viewer_released_event,
+                        deadline_ns,
+                        self.clock,
+                    )
+                await self.workers.retire_sessionless_worker(
+                    request.camera, deadline_ns=deadline_ns
+                )
+                if self.workers.workers.get(request.camera) is worker:
+                    raise RuntimeError("uncertain preview worker cleanup remains owned")
+            else:
+                parent = control.OperationContext(command_id=request.command.command_id)
+                child, operation, port = retain_worker_command(
+                    worker,
+                    work=None,
+                    parent_operation=parent,
+                    kind="stop_preview",
+                    deadline_ns=deadline_ns,
+                    configuration_revision=preview.configuration_revision,
+                )
+                preview.stop_operation = control.OperationContext(
+                    command_id=operation.command_id
+                )
+                stop = acq.WorkerStopPreview(
+                    command=child,
+                    preview_run_id=preview.run_id,
+                    release_device=True,
+                )
+                receipt = await port.stop_preview(stop, deadline_ns=deadline_ns)
+                if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                    raise RuntimeError("manual preview stop was rejected")
+                state = await wait_child_operation(
+>                   operation, deadline_ns, self.lock, self.clock
+                                            ^^^^^^^^^
+                )
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'lock'
+
+src\cephvr\acquisition\coordinator\manual_preview.py:493: AttributeError
+_ test_owner_retirement_stops_only_target_without_resuming_remaining_roles[False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF2E2B2290>
+target_external = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("target_external", [True, False])
+    async def test_owner_retirement_stops_only_target_without_resuming_remaining_roles(
+        monkeypatch: pytest.MonkeyPatch, target_external: bool
+    ) -> None:
+        from cephvr.acquisition.coordinator import manual_preview as preview_module
+        from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+    
+        role = camera.CAMERA_ROLE_BEHAVIORAL
+        other_role = camera.CAMERA_ROLE_TRACKING
+        preview = WorkerPreview(
+            run_id="retiring-owner-run",
+            configuration_revision=1,
+            allocation_id="ring",
+            resolved_camera=camera.CameraResolvedState(),
+            started=True,
+        )
+        worker = SimpleNamespace(context=SimpleNamespace(camera=role), preview=preview)
+    
+        class Port:
+            async def stop_preview(self, request, *, deadline_ns):
+                assert request.release_device
+                preview.started = False
+                preview.stopped_event.set()
+                preview.cleanup_event.set()
+                return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    
+        child = ChildOperation(
+            command_id="stop-child",
+            camera=role,
+            work=control.WorkContext(),
+            parent_operation=control.OperationContext(),
+            kind="stop_preview",
+        )
+        monkeypatch.setattr(
+            preview_module,
+            "retain_worker_command",
+            lambda *_args, **_kwargs: (acq.WorkerCommand(), child, Port()),
+        )
+    
+        async def completed(*_args, **_kwargs):
+            return control.OperationState(complete=True, succeeded=True)
+    
+        monkeypatch.setattr(preview_module, "wait_child_operation", completed)
+        serial = SimpleNamespace(off=AsyncMock(), on=AsyncMock())
+        monkeypatch.setattr(
+            preview_module, "retain_applied_pulse_state", lambda *_args, **_kwargs: None
+        )
+        idle_release = AsyncMock()
+        monkeypatch.setattr(preview_module, "release_idle_claim", idle_release)
+        flow = SimpleNamespace(
+            workers=SimpleNamespace(workers={role: worker}),
+            configuration=SimpleNamespace(settings=control.AcquisitionSettings()),
+            pulse=PulseRecord(
+                observation=mcu.MicrocontrollerObservation(connection_id="mcu")
+            ),
+            serial=serial,
+            clock=lambda: 1,
+            windows=SimpleNamespace(close=AsyncMock()),
+            transfers=SimpleNamespace(retire_and_release=AsyncMock()),
+            device_status=SimpleNamespace(
+                progress=AsyncMock(),
+                resolve_camera=lambda *_args, **_kwargs: None,
+                update_camera_state=lambda *_args, **_kwargs: None,
+            ),
+            resources={},
+            resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
+            results=SimpleNamespace(
+                report_failure=AsyncMock(),
+                complete=AsyncMock(
+                    return_value=control.CommandAdmission(
+                        result=control.COMMAND_RESULT_ACCEPTED
+                    )
+                ),
+            ),
+        )
+        flow._external_roles = lambda _adding_role: (
+            [role, other_role] if target_external else [other_role]
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=role,
+            preview_run_id=preview.run_id,
+            retiring_owner=True,
+            command=wire.BackendCommand(command_id="retire-stop"),
+        )
+    
+>       result = await ManualPreview._stop(flow, request, 1000)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\acquisition\test_manual_preview.py:2967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(workers=namespace(workers={1: namespace(context=namespace(camera=1), preview=WorkerPreview(run_id='retiring-...tion test_owner_retirement_stops_only_target_without_resuming_remaining_roles.<locals>.<lambda> at 0x000001EF2EFDBC40>)
+request = command {
+  command_id: "retire-stop"
+}
+camera: CAMERA_ROLE_BEHAVIORAL
+preview_run_id: "retiring-owner-run"
+retiring_owner: true
+
+deadline_ns = 1000
+
+    async def _stop(
+        self, request: wire.AcquisitionCameraCommand, deadline_ns: int
+    ) -> control.CommandAdmission:
+        worker = self.workers.workers.get(request.camera)
+        preview = worker.preview if worker is not None else None
+        if (
+            worker is None
+            or preview is None
+            or preview.run_id != request.preview_run_id
+        ):
+            return _rejected(
+                request.command.command_id,
+                "PREVIEW_RUN",
+                "Stop Preview does not match the live run",
+            )
+        uncertain_preview = preview.stopping or not preview.started
+        preview.stopping = True
+        active_roles = self._external_roles(None)
+        if uncertain_preview:
+            setting = getattr(self.configuration.settings, role_name(request.camera))
+            if (
+                setting.HasField("device")
+                and setting.device.HasField("frame_timing")
+                and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            ):
+                active_roles = sorted(set(active_roles).union({request.camera}))
+        remaining_roles = tuple(role for role in active_roles if role != request.camera)
+        stop_roles: tuple[int, ...]
+        if request.retiring_owner:
+            stop_roles = (request.camera,) if request.camera in active_roles else ()
+        else:
+            stop_roles = tuple(active_roles)
+        resume_roles = () if request.retiring_owner else remaining_roles
+        device_cleanup_established = False
+        try:
+            if stop_roles:
+                await self.device_status.progress(
+                    request.command,
+                    request.camera,
+                    "Stopping external triggers�",
+                    deadline_ns=deadline_ns,
+                )
+                if self.pulse.observation is None:
+                    invalidate_released_idle_proof(self.pulse)
+                    retain_observation(
+                        self.pulse,
+                        await self.serial.connect(deadline_ns=deadline_ns),
+                    )
+                invalidate_released_idle_proof(self.pulse)
+                evidence = await self.serial.off(
+                    stop_roles,
+                    scheduled_boundary_ns=None,
+                    stop_issued_ns=self.clock(),
+                    deadline_ns=deadline_ns,
+                )
+                retain_applied_pulse_state(
+                    self.pulse, evidence, deadline_ns=deadline_ns
+                )
+            await self.device_status.progress(
+                request.command,
+                request.camera,
+                "Stopping capture and releasing camera�",
+                deadline_ns=deadline_ns,
+            )
+            if uncertain_preview:
+                # A late Start or timed-out Stop cannot be inferred from its
+                # admission result. Retire this exact worker through its existing
+                # Cleanup/read-only retained-result path before releasing ownership.
+                await self.windows.close(
+                    request.camera, preview.run_id, deadline_ns=deadline_ns
+                )
+                self.transfers.retire(preview)
+                if preview.viewer is not None:
+                    await _wait_preview_event(
+                        preview.viewer_released_event, deadline_ns, self.clock
+                    )
+                if preview.tracking_viewer is not None:
+                    await _wait_preview_event(
+                        preview.tracking_viewer_released_event,
+                        deadline_ns,
+                        self.clock,
+                    )
+                await self.workers.retire_sessionless_worker(
+                    request.camera, deadline_ns=deadline_ns
+                )
+                if self.workers.workers.get(request.camera) is worker:
+                    raise RuntimeError("uncertain preview worker cleanup remains owned")
+            else:
+                parent = control.OperationContext(command_id=request.command.command_id)
+                child, operation, port = retain_worker_command(
+                    worker,
+                    work=None,
+                    parent_operation=parent,
+                    kind="stop_preview",
+                    deadline_ns=deadline_ns,
+                    configuration_revision=preview.configuration_revision,
+                )
+                preview.stop_operation = control.OperationContext(
+                    command_id=operation.command_id
+                )
+                stop = acq.WorkerStopPreview(
+                    command=child,
+                    preview_run_id=preview.run_id,
+                    release_device=True,
+                )
+                receipt = await port.stop_preview(stop, deadline_ns=deadline_ns)
+                if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                    raise RuntimeError("manual preview stop was rejected")
+                state = await wait_child_operation(
+>                   operation, deadline_ns, self.lock, self.clock
+                                            ^^^^^^^^^
+                )
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'lock'
+
+src\cephvr\acquisition\coordinator\manual_preview.py:493: AttributeError
+_____ test_owner_cleanup_continues_to_remaining_roles_after_stop_failure ______
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-519/test_owner_cleanup_continues_t0')
+
+    async def test_owner_cleanup_continues_to_remaining_roles_after_stop_failure(
+        tmp_path: Path,
+    ) -> None:
+        from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _runtime(tmp_path, backend)
+        runtime.lifecycle.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        runtime.device_state.manual_effects_admitted = True
+        settings = pb.AcquisitionSettings()
+        settings.behavioral.device.device_id = "behavioral"
+        settings.tracking.device.device_id = "tracking"
+        runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition.CopyFrom(settings)
+>       views = svc.AcquisitionDeviceViews(source=backend)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionDeviceViews'
+
+tests\controller\test_camera_evidence.py:801: AttributeError
+============================== warnings summary ===============================
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+tests/acquisition/test_manual_preview.py::test_preview_pixel_copy_matches_full_range_conversion[Mono8-8]
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_manual_preview.py::test_owner_retirement_stops_only_target_without_resuming_remaining_roles[True]
+FAILED tests/acquisition/test_manual_preview.py::test_owner_retirement_stops_only_target_without_resuming_remaining_roles[False]
+FAILED tests/controller/test_camera_evidence.py::test_owner_cleanup_continues_to_remaining_roles_after_stop_failure
+3 failed, 308 passed, 2 deselected, 6 warnings in 1.81s

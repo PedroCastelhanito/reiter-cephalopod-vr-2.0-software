@@ -40,8 +40,15 @@ from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_
 class ProtocolPage(QWidget):
     participation_changed = pyqtSignal()
 
-    def __init__(self, recordings: RecordingsCard, *, sample: bool = False) -> None:
+    def __init__(
+        self,
+        recordings: RecordingsCard,
+        *,
+        sample: bool = False,
+        tracking_available: bool = True,
+    ) -> None:
         super().__init__()
+        self.tracking_available = tracking_available
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         self.config_scroll = QScrollArea()
@@ -71,7 +78,14 @@ class ProtocolPage(QWidget):
         top.setColumnStretch(2, 3)
         self.recordings = recordings
         self.can_edit = False
-        self.session_mode = combo(("Not set", "Open-loop", "Closed-loop"))
+        self.session_mode = combo(
+            ("Not set", "Open-loop", "Closed-loop")
+            if tracking_available
+            else ("Open-loop",)
+        )
+        self.session_mode.setVisible(tracking_available)
+        recordings.tracking_available = tracking_available
+        recordings.sync_cameras()
         self.session_mode.currentTextChanged.connect(self.participation_changed.emit)
         recordings.changed.connect(self.participation_changed.emit)
         self.program_card = Card("Protocol type")
@@ -100,6 +114,7 @@ class ProtocolPage(QWidget):
             alignment=Qt.AlignmentFlag.AlignTop,
         )
         self.editor = ProtocolEditor(sample=sample)
+        self.editor.subgroup.composer.tracking_available = tracking_available
         self._schedule_empty = False
         self.category_templates: dict[str, JSON] = {}
         self.editor.changed.connect(self.mark_changed)
@@ -205,7 +220,7 @@ class ProtocolPage(QWidget):
 
     @property
     def tracking_active(self) -> bool:
-        return (
+        return self.tracking_available and (
             self.session_mode.currentText() == "Closed-loop"
             or self.recordings.velocities.isChecked()
         )

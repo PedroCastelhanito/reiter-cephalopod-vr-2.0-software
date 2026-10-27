@@ -12,9 +12,15 @@ class ManagedDashboardWindow(DashboardWindow):
     close_requested = pyqtSignal()
 
     def __init__(
-        self, *, sample: bool = False, settings: QSettings | None = None
+        self,
+        *,
+        sample: bool = False,
+        settings: QSettings | None = None,
+        tracking_available: bool = True,
     ) -> None:
-        super().__init__(sample=sample, settings=settings)
+        super().__init__(
+            sample=sample, settings=settings, tracking_available=tracking_available
+        )
         self._close_after_save = False
 
     def closeEvent(self, event: QCloseEvent | None) -> None:

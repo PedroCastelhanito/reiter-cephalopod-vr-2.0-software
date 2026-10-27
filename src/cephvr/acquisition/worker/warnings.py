@@ -29,6 +29,7 @@ class WarningOccurrence:
     observed_ns: int
     native_code: str | None = None
     details: str = ""
+    session_scope: bool = False
 
 
 class WorkerWarningLedger:
@@ -44,6 +45,7 @@ class WorkerWarningLedger:
         self._revision = 0
         self._current: control.AcquisitionWarningView | None = None
         self._latest: control.AcquisitionWarningView | None = None
+        self._session: control.AcquisitionWarningView | None = None
         self._unavailable: set[str] = set()
 
     def begin_scope(
@@ -59,6 +61,8 @@ class WorkerWarningLedger:
             self._current = self._empty_view(
                 work, configuration_revision, preview_run_id
             )
+            if work.WhichOneof("work") == "session":
+                self._session = self._current
             self._revision += 1
             self._current.warning_revision = self._revision
             return _copy_view(self._current)
@@ -71,7 +75,11 @@ class WorkerWarningLedger:
         if occurrence.observed_ns <= 0:
             raise ValueError("warning observation time must be positive")
         with self._lock:
-            view = self._require_current()
+            view = (
+                self._session if occurrence.session_scope else self._require_current()
+            )
+            if view is None:
+                raise RuntimeError("continuous capture warning has no session scope")
             warning = next(
                 (
                     item
@@ -150,15 +158,27 @@ class WorkerWarningLedger:
         self, work: control.WorkContext | None = None
     ) -> tuple[control.AcquisitionWarningView, ...]:
         with self._lock:
-            values = (self._current, self._latest)
-            result: list[control.AcquisitionWarningView] = []
+            values = (self._current, self._latest, self._session)
+            result: dict[tuple[bytes, str], control.AcquisitionWarningView] = {}
             for item in values:
                 if item is None:
                     continue
                 if work is not None and item.work != work:
                     continue
-                result.append(_copy_view(item))
-            return tuple(result)
+                key = (
+                    item.work.SerializeToString(deterministic=True),
+                    item.preview_run_id,
+                )
+                prior = result.get(key)
+                if prior is None or item.warning_revision > prior.warning_revision:
+                    result[key] = _copy_view(item)
+            return tuple(result.values())
+
+    def retire_session(self) -> None:
+        with self._lock:
+            if self._current is self._session:
+                self._current = None
+            self._session = None
 
     def _empty_view(
         self,

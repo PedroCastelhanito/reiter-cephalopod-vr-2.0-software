@@ -125,6 +125,28 @@ def test_preview_owner_follows_translation_and_minimize_without_activation(
     assert native.closed == [555]
 
 
+def test_preview_owner_temporary_suppression_preserves_manual_position(
+    native: SimpleNamespace,
+) -> None:
+    owner = preview_owner.WindowsPreviewOwner("preview", 101, native.pid, 99)
+    try:
+        native.child_rect[:2] = [460, 570]
+        moves = len(native.moves)
+        assert owner.set_suppressed(True)
+        assert native.shows[-1] == (102, 0)
+        native.minimized = True
+        assert owner.sync()
+        assert owner.set_suppressed(False)
+        assert native.shows == [(102, 0)]
+        native.minimized = False
+        assert not owner.sync()
+        assert native.shows[-1] == (102, 4)
+        assert native.child_rect[:2] == [460, 570]
+        assert len(native.moves) == moves
+    finally:
+        owner.close()
+
+
 @pytest.mark.parametrize("mismatch", ["pid", "creation", "preview"])
 def test_preview_owner_rejects_foreign_and_recycled_identity(
     native: SimpleNamespace, mismatch: str
