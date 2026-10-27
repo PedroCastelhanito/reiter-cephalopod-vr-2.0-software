@@ -116,7 +116,6 @@ Remaining entries require native/physical execution or missing reproduction evid
 
 ## Blocked
 
-- [ ] `repo-commit-sync-oct26` [repo] Sync the reviewed audit/fixes and existing local commits to origin/main. Owner: current audit chat. Blocked: automatic approval review rejected the Oct27 push; requires explicit approval of the GitHub destination and diagnostic evidence payload. Audit commit4bbd403e and local checks complete; remaining native/behavior work has individual entries. Done when origin/main equals HEAD. — [Log](LOG.md), [Audit](reports/runtime.md#hierarchical-audit--2026-10-2627)
 
 - [ ] `gui-full-rig-test` [gui] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [spikeglx] Finish physical per-control/menu/dialog and DPI acceptance. Status:600s Gaussian/output audit, native diagnostic repair/reuse,751 GUI and805 owner tests complete; blocked because native desktop capture hangs after required recovery. Offscreen evidence is separate. New read-only issue-hunt chat01a1536e-d045-7630-af42-ffcdf3d83e98 follows under parent ownership. — [Runtime](reports/runtime.md), [Rig checklist](reports/rig-verification.md) Oct27 audit adds1085 offscreen GUI passes, six final paint cases and bounded native navigation; exhaustive controls/DPI remain untested, fresh activation timed out twice.
 
