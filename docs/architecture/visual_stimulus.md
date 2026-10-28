@@ -303,7 +303,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 49
+**Status:** Accepted · **Revision:** 50
 
 - Asset admission uses E14's operator ceilings: CPU defaults to 2 GiB to admit
   bounded validation/conversion of the supplied 3840×2000 images; GPU retains the
@@ -514,17 +514,31 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   fetches prepared samples by integer framebuffer coordinates before the unchanged
   composition, calibration and output stages. Other image fits retain protected
   source loading. Bundle identity includes source interpretation, mapping/grid,
-  algorithm and pixel digest in the prepared trial; no cross-Setup cache reuse.
+  algorithm and pixel digest in the prepared trial.
   Prepare unique content/interpretation identities once across repeated assets, epochs
   and trials. Process at most16 unique images per batch, one decoded source at a
-  time, reusing GPU scratch and packing each batch into one indexed temporary file.
-  Report completed unique images, batch progress and reused references during Setup.
-  Temporary bundles live beside the asset root, with bounded preparation scratch
-  and disk-capacity admission. Release readers before deleting on Stop, failed or
-  cancelled Setup and shutdown. Windows delete-on-close removes files on process
-  exit; supervisor exit observation/startup recovers only verified unlocked empty
-  bundle directories. Cleanup failures retain ownership; originals and scientific
-  records are never removed by bundle cleanup.
+  time, reusing GPU scratch. Report completed unique images, batch progress,
+  reused bundles and reused references during Setup.
+- Fold bundles are persistent, one per unique image, in a visible `cephvr-bundles`
+  folder inside the asset (source) folder; the originals remain the only source of
+  truth. Each bundle's key binds the protected source SHA-256, interpretation, every
+  used projector's geometric calibration and display geometry, image fit/placement,
+  algorithm/shader version and the baking GPU name/driver. Setup protects and hashes
+  each source before computing the key. A matching bundle is reused with no bake;
+  per-load digest checks remain. A missing bundle is validated and baked. A stale
+  bundle (same image, different key) is replaced by a newly baked bundle, and the
+  operator is asked once per stale bundle, with an apply-to-all-remaining option,
+  whether to keep or delete the old one. The question is shown while the new bundle
+  bakes and never blocks Setup; an old bundle is deleted only after the new one is
+  confirmed complete and only on the operator's answer. Unanswered questions keep
+  the old bundle and are dismissed at Start. Several bundles for one image may coexist.
+  Bundles are published atomically (manifest last), read-only afterward, and a
+  failed or cancelled bake leaves no valid-looking entry. A key or digest
+  mismatch is a rebake, never partial reuse. Bundles are never removed by Stop,
+  failed Setup or shutdown; the operator-chosen deletion releases readers first.
+  Admission includes disk capacity and bounded preparation scratch; a read-only or
+  full asset folder fails Setup with a clear message. Originals and scientific
+  records are never removed by bundle management.
 - **Contracts:** [media profiles](../../contracts/visual_stimulus/media-profiles.md);
   [color pipeline](../../contracts/visual_stimulus/color-pipeline.md);
   [asset lifetime contract](../../contracts/visual_stimulus/asset-lifetime.md);

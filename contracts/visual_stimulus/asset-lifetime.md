@@ -90,14 +90,24 @@ in one file; its index records each image offset and its own byte count/digest.
 Read exactly that range and verify the digest before upload. Report completed
 unique images, batch position and shared repeated references through Setup progress.
 
-Create one unique bundle beside the asset root per Setup, with disk-capacity and
-bounded scratch admission. Windows-owned delete-on-close files remain open through
-prepared use. Close consumers before files and confirm directory removal at normal,
-failed or cancelled cleanup. A marker lock and exact registry/marker agreement
-protect live bundles. Supervisor startup and renderer-exit recovery remove only
-verified unlocked empty directories; unexpected content and failed closure remain
-reported failures. Originals and retained scientific evidence are outside this
-cleanup. No persistent pixel-bundle reuse across Setup. A `.cephvr-image-validation.json` index in the asset root retains successful validation facts keyed by current protected content digest, interpretation and validator/software identity. Invalid/stale entries are misses; writes are atomic and index I/O failure never substitutes for validation.
+Keep one persistent bundle per unique image in a visible `cephvr-bundles` folder
+inside the asset root, never as loose files in the asset folder itself, with
+disk-capacity and bounded scratch admission. Its key binds the protected source
+SHA-256, interpretation, each used projector's geometric calibration and display
+geometry, image fit/placement, algorithm/shader version and baking GPU name/driver.
+Acquire source protection and hash before computing the key. Reuse a matching bundle
+after verifying its manifest digest against the recomputed key and the prepared
+trial; every load still verifies its byte range digest. A mismatch, missing or
+unreadable entry means validate-and-rebake, never partial reuse. Publish atomically
+with the manifest last, mark files read-only and leave no valid-looking entry after a
+failed or cancelled bake. For a stale bundle, ask the operator once per stale bundle
+(with apply-to-all-remaining) whether to keep or delete it while the replacement
+bakes; delete only after the replacement is confirmed complete, only on that answer,
+and after closing its readers. Unanswered means keep; the question is dismissed at
+Start. Stop, failed Setup and shutdown never delete bundles. A read-only or full
+asset folder fails Setup clearly. Originals and retained scientific evidence are
+outside bundle management. Bundle files do not replace source protection or the
+manifest's source digests. A `.cephvr-image-validation.json` index in the asset root retains successful validation facts keyed by current protected content digest, interpretation and validator/software identity. Invalid/stale entries are misses; writes are atomic and index I/O failure never substitutes for validation.
 
 ## Legacy texture recipe preparation
 

@@ -14764,3 +14764,7 @@ renderer-sha-provider complete;20min/full-hour/combined-load/optics remain open 
 image-twenty-minute-test and single rig checklist. Current report/TODO reconciled;
 raw events, logs, scripts, source hashes and assessment: image-pipeline-native-fixed.
 Verification documentation: new evidence links/rig anchor and scoped whitespace checks pass.
+
+### 2026-10-29 - persistent-image-bundles: owner decision recorded [visual_stimulus] [controller] [gui] [shared]
+
+Owner revised V04 after reviewing the hash-fix pipeline: keep Fold bundles after a run, one per unique image, in a visible `cephvr-bundles` folder in the asset folder; reuse when the key matches, rebake when it does not or is missing, and ask once per stale bundle (apply-to-all option) whether to keep or delete the old one, shown during the bake and applied only after the replacement succeeds; unanswered keeps. Key includes source hash, interpretation, calibration/geometry, fit/placement, algorithm and baking GPU/driver. Recorded as V04 revision 50 and in the asset-lifetime contract (replacing the temporary-bundle and no-reuse rules); register updated. GUI folder listing is non-recursive and extension-filtered, so the subfolder is not picked up. Documentation only: no code, policy or rig change; E14 policy still says temporary bundles until implementation (`persistent-image-bundles`). Cache-hit Setup time, atomic publish and prompt behaviour are unmeasured/unimplemented.
