@@ -36,13 +36,15 @@ class PreviewRig(TankDiagram):
         self.visible_elements["subject"] = False
         self.setAccessibleName("Trial stimuli on configured rig screens")
         self.setToolTip("Drag to rotate · Double-click to reset view")
-        # Home view keeps the rig’s Left/Right identities on their familiar image sides.
-        self.azimuth = 25.0
+        # The inspection camera never changes screen-local stimulus coordinates.
+        self.azimuth = -35.0
+        self.elevation = 25.0
 
     def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
         super().mouseDoubleClickEvent(event)
         if event is not None and event.button() == Qt.MouseButton.LeftButton:
-            self.azimuth = 25.0
+            self.azimuth = -35.0
+            self.elevation = 25.0
             self.update()
 
     def invalidate_frames(self) -> None:
@@ -51,7 +53,7 @@ class PreviewRig(TankDiagram):
 
     def screen_planes(self) -> dict[str, list[Point3]]:
         return {
-            face: list(surface.physical_corners or surface.corners)
+            face: list(surface.corners)
             for face, surface in self.snapshot.surfaces.items()
             if surface.corners
         }

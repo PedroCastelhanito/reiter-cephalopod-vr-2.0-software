@@ -1,0 +1,81 @@
+........................FF........                                       [100%]
+================================== FAILURES ===================================
+_____ test_visible_layer_selector_and_opacity_preserve_prepared_placement _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E480DE7130>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001E4F1143640>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-541/test_visible_layer_selector_an0')
+
+    def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.stimulus_form import ValueEditor
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front",))
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Looming image", str(path), "Front")
+        app.processEvents()
+        row = composer.rows["Front"]
+        assert row.layer.count() == 2
+        assert row.layer.isVisible() and row.layer.isEnabled()
+        assert "Layer" in row.signature
+        row.layer.setCurrentIndex(0)
+        app.processEvents()
+>       assert row.stimulus.currentText() == "Texture"
+E       AssertionError: assert 'Texture drift' == 'Texture'
+E         
+E         - Texture
+E         + Texture drift
+
+tests\gui\test_dashboard.py:12303: AssertionError
+____ test_blank_layer_then_family_keeps_each_projector_layer_configuration ____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E4804C7D90>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001E4F1143640>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-541/test_blank_layer_then_family_k0')
+
+    def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.looming_size import LoomingSize
+        from cephvr.gui.protocol_groups import motion_numbers
+    
+        composer = window.protocol.editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        row = composer.rows["Front"]
+        before = composer.program
+        row.add.trigger()
+        assert row.layer.currentText() == "1"
+        assert row.stimulus.currentText() == "None"
+        assert composer.program is before and composer.picker.dialog is None
+        row.stimulus.setCurrentText("Texture")
+        parameters = row.parameters
+>       identity = next(iter(parameters.asset_forms))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\gui\test_dashboard.py:13356: StopIteration
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_visible_layer_selector_and_opacity_preserve_prepared_placement
+FAILED tests/gui/test_dashboard.py::test_blank_layer_then_family_keeps_each_projector_layer_configuration
+2 failed, 32 passed, 1009 deselected in 32.85s

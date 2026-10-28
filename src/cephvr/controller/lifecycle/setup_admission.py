@@ -431,7 +431,8 @@ class SetupAdmission:
             if loaded_settings is not None:
                 self.configuration_state.policies.CopyFrom(loaded_settings.policies)
                 self.limit_state.current = candidate_limits
-            attempt.setup_deadline_ns = now + self.limit_state.current.setup_ns
+            attempt.setup_interval_ns = self.limit_state.current.setup_ns
+            attempt.setup_deadline_ns = now + attempt.setup_interval_ns
             attempt.paired = any(
                 setting.backend_name == "synchronization" and setting.enabled
                 for setting in self.configuration_state.current.backends

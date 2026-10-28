@@ -16,8 +16,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 370
+**Status:** Accepted · **Revision:** 388
 
+- Protocol remembers one shared set of latest validated parameters per stimulus
+  type across projectors and normal application restarts through the GUI snapshot.
+  Explicit type selection restores those defaults only to the selected layer;
+  existing epochs remain unchanged. Rebind the target projector and epoch timing,
+  retaining fresh identity and explicit asset/feedback/layer references rather than
+  copying them from defaults. Sparse noise, Grating and Uniform clear the previous
+  asset filename and require no asset. Older snapshots without defaults remain valid;
+  invalid saved defaults fail validation before restoration.
 - Generate assets is a lazy main-GUI tab; standalone invocation opens the same
   offline editor in its own window. First opening receives an explicit asset root
   and optional validated geometry snapshot. The Design files card exposes only
@@ -26,11 +34,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the design, and cancellation preserves the draft and saved files. Previews stay
   in memory and create no files. Omit preview captions, the Cancel generation control and routine preview
   status messages; retain errors and automatic cancellation of obsolete work.
-  Tab changes preserve drafts and undo; main-window closure checks
+  Converted legacy recipes, including horizontal/vertical bars, must save to a new
+  filename; the source is never overwritten. Do not expose New, Undo/Redo, Export,
+  asset-root or calibration-loading actions in this editor.
+  Tab changes preserve drafts; main-window closure checks
   unsaved designs before the normal close sequence.
   The tab follows existing non-Dashboard runtime-phase gates. Textures/Arenas save
-  reusable recipes and static GLB bundles under V04/V18, without changing calibration,
-  starting projector outputs or modifying protocols. Both entry points share the
+  reusable recipe JSON; the headless arena exporter retains static GLB bundles
+  under V04/V18. Authoring does not change calibration,
+  start projector outputs or modify protocols. Both entry points share the
   editor, generation functions and theme. Asset recipes contain appearance and seed
   only; duration, speed, sequence count and projector assignment belong to Protocol.
   Procedural texture files define physical appearance and seed independently of
@@ -58,10 +70,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Protocol exposes Uniform, Image, Video, Sparse noise, Grating and Texture drift
   independently in each epoch's projector/layer row. None removes that layer.
   Uniform authors linear RGB without an asset. Sparse noise authors square size,
-  minimum center distance, activation probability, background, explicit seed,
-  pattern count and pattern duration directly in that row as a V04 `sparse_noise`
-  layer, without assets or an Apply step; other layers retain their timing. Its
-  preview generates the due pattern with V04's generator. Pre-generated PNG sparse
+  minimum center distance, activation probability, background and explicit seed
+  directly in that row as a V04 `sparse_noise` layer, without assets or an Apply step.
+  Seed and New seed sit together beside the stimulus-type selector, including narrow
+  layouts; appearance parameters remain below.
+  Omit Patterns and Pattern duration: each epoch occurrence holds one pattern for
+  its full duration, and group repetitions produce new deterministic patterns under
+  V04. Other layers retain their clocks; preview uses the same expanded settings.
+  Simple looming Start/End size spans the epoch duration; omit its separate Growth
+  duration and variation control. Custom size curves remain explicit animations.
+  Motion speed, fades and video playback offsets/end behavior retain their distinct
+  within-epoch meanings. Pre-generated PNG sparse
   sequences and their import are not supported under the
   [sparse-noise contract](../../contracts/visual_stimulus/sparse-noise.md).
 
@@ -119,8 +138,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   padding for larger instruments. Restore plot headings when images are hidden.
   Adapt rows and
   image/plot stacking to available space. Static projectors retain their plots.
-  Media exposes instruments for its available motion sources. Navigation uses
-  the single observer's arena map and motion instruments with projected output views.
+  All stimulus families retain live output previews, including Uniform, Image,
+  Video, Sparse noise, Texture drift, Grating and 3D navigation. Only Texture drift
+  and Grating contribute Monitor plots/instruments (including size lanes); other
+  families contribute no plots, including in mixed trials. Hide the Plots toggle
+  when the selected trial has no eligible sources. Navigation retains its projected
+  output view without an arena map or motion instruments.
   Restore camera video space when a camera preview is selected in any category;
   replace the old standalone stimulus
   composite tile with this stimulus area. Existing preview visibility, authority and
@@ -156,8 +179,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 
 - Projector window creation and recreation preserve the current desktop cursor
   position; disable automatic fullscreen cursor centering in the native window owner.
-  Physical projector outputs have no window icons or taskbar/switcher entries;
-  the main GUI retains its native application icon and taskbar entry.
+  Physical projector outputs retain normal named GLFW window icons and
+  taskbar/switcher entries; do not hide/show them to change shell styles.
+  The main GUI retains its native application icon and taskbar entry.
 
 - Tab and Shift+Tab move forward/backward through visible enabled GUI form controls,
   including persistent editors inside tables. Tables retain arrow-key selection;
@@ -333,7 +357,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   provides a selectable scrolling list: show × on the hovered row, or keep it visible
   on the selected row when no row is hovered, and show a +
   immediately below the last row, reachable by scrolling. Remove the separate
-  bottom Add/Delete toolbar. Deletion confirms the targeted trial, preserves saved
+  bottom Add/Delete toolbar. Trial tags show current one-based list positions on
+  creation, load and structural edits; retain saved draft names and source content.
+  Deletion confirms the targeted trial, preserves saved
   files and replaces the final deleted trial with a blank trial. Deleting the last
   scheduled trial clears the newly final trial's gap; retain edit authority
   and pending-draft checks. Omit Seed/Gap controls and the Selected trial section;
@@ -380,6 +406,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   add button flush to the content right edge and no extra reserved right gutter.
   Epoch entries and timeline duration labels use hh:mm:ss.mmm, always showing
   milliseconds and retaining existing finer fractional precision without rounding.
+  Epoch cards show the current one-based source position across the trial in listed
+  depth-first order, without expanding repetitions or shuffle. Structural edits
+  renumber saved epoch IDs as Epoch_1, Epoch_2, etc.; append _epoch when necessary
+  to avoid an imported node-namespace collision. Keep group identities/references
+  and stimulus content intact. Loading alone preserves imported IDs; Undo restores
+  the prior document and Redo restores its renumbered edit.
   Layer selectors use a narrow index-only column with descriptive tooltips. Subgroups are
   separately identified batches of flat source epochs, using V03 authoring metadata;
   equal labels do not merge batches. Clicking a batch header or any member selects
@@ -475,7 +507,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Keep canonical settings per instance/projector when switching layers. Empty slots
   are editor drafts, excluded from generated programs and runtime delivery.
   Image rows offer Resize, Source and Fold under V04; new Images
-  default to Resize. Disable position/movement controls for these fixed-screen fits.
+  default to Resize. Omit Image speed/direction controls from primary forms and
+  projector rows; disable position/movement controls for these fixed-screen fits.
   Saved legacy fits retain their appearance and movement until explicitly changed;
   show their legacy name as the dropdown placeholder without adding new choices.
   Numeric variation excludes Fit. Planning previews require configured native
@@ -495,10 +528,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
   Texture omits initial position/orientation controls and preserves imported pose values.
   Grating directly authors physical period, sharpness (sinusoidal through square),
-  linear colors, Orientation and Speed without an asset. Orientation is the rig
+  linear colors, Orientation and Speed without an asset. Its Motion source sits
+  beside the stimulus type; Color A sits directly above Color B with matching RGB
+  columns, including narrow layouts. Orientation is the rig
   direction normal to the bars, including at zero speed. Self/Linked uses V02:
   linked Grating rows select one independent Grating reference and use its pattern,
-  motion and spatial/temporal phase through Bottom-based unfolding. Hide follower
+  motion and phase through V02's full-screen local wave. All linked screens use the
+  reference's local bar angle, physical period and signed phase drift with shared
+  centre phase. The tank view is an external inspection view; rotation never
+  changes the stimulus. Hide follower
   pattern/motion controls while linked; retain its independent definition for unlinking.
   Uniform and Sparse noise omit unrelated motion/file controls. Existing asset-backed
   Grating loads and retains its versioned angle interpretation, Orientation/Speed/Asset
@@ -614,7 +652,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Retain geometry/corrections
   independently of projector enablement. Reopen the snapshot after changing settings;
   provide Play/Pause, scrubbing, previous/next epoch and playback speed. Reuse V07
-  boundary state/retention and canonical expansion with an explicit example seed;
+  boundary state/retention and canonical expansion with an explicit example seed.
+  Animated trial and motion previews use only the first100 expanded epoch occurrences,
+  stopping expansion at that prefix without rejecting longer trials or changing the
+  authored program and managed Setup limits;
   bind linked textures through the runtime motion resolver using the snapshot geometry
   at each boundary, with the same pivot validation and reproducible backward seeking;
   reject unresolved random durations. This preview sends no device commands, applies
@@ -632,7 +673,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Cache source paths/content keys and aggregate counts/durations by immutable program
   identity and scope in a bounded four-view cache. Selection does not expand repetitions
   or rebuild the trial; unchanged metadata flushes preserve program identity. Keep the
-  existing 2000-occurrence bound for explicit expanded/animated previews and source-list generation,
+  existing 2000-occurrence bound for explicit expanded-list previews and source-list generation,
   without applying it to the compact overview. Do not decode assets for timeline blocks. GUI JSON reads/saves use the existing shared
   16 MiB engineering default guard; managed Setup's configured limits remain
   authoritative. Local measurements do not establish Windows/full-workload capacity.
@@ -1230,7 +1271,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the form afterwards; it is never duplicated. A Timeline card holds the epoch timeline
   only. A compact full-width Previews toolbar below it places Video and Advanced
   master checkboxes beside their respective toggle buttons: Video contains only
-  cameras; Advanced provides independent Stimulus and Plots content toggles followed
+  cameras; Advanced provides independent Stimulus and eligible Plots content toggles followed
   by one toggle per configured available projector in Left, Front, Right, Bottom order.
   Projector selection filters both native imagery and plots, including vectors/rows in
   Combined and both parts of Per-projector pairs; no toggle is inferred from a plot name.
@@ -1319,9 +1360,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   calibrated unfolded plane and retained layer rotation; angular sources use the
   standard face display rotations. Tracking-form dials show a longitudinal/lateral mm/s vector: live Tracking
   drive commands, and authored position trajectories as planned velocity in the moving
-  layer's or arena's heading frame. Arena previews add a top-down virtual-world map of
-  the path so far and current pose beside their tracking-form dial; feedback-driven
-  textures pair their texture dial with the driving tracking dial. Never mix units on
+  layer's heading frame. Eligible feedback-driven textures pair their texture dial
+  with the driving tracking dial. Never mix units on
   one dial. A source whose width or height varies adds a planned size lane (deg or mm)
   aligned to the timeline. Refresh at5Hz. While running,
   advance planned time locally between reported elapsed-time updates; stop advancing

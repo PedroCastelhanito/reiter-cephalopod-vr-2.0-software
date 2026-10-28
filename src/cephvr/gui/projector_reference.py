@@ -185,6 +185,9 @@ class ProjectorReference(EditingSurface):
         self.narrow = self.width() < 900
         self.compact = self.width() < 650
         columns = self.visible_columns()
+        inline_grating = any(
+            isinstance(form, GratingAppearance) for form in self.parameters.forms
+        )
         # One grid owns both rows so their columns cannot drift independently.
         for layout in (self.grid, self.side_grid):
             while layout.count():
@@ -253,7 +256,7 @@ class ProjectorReference(EditingSurface):
         parameters = [
             column
             for column in columns
-            if column[0] and column[0] not in {"Layer", "Stimulus", "Asset"}
+            if column[0] and column[0] not in {"Layer", "Stimulus", "Asset", "Seed"}
         ]
         count = 2 if self.narrow else 4
         for (title, control), heading in zip(self.columns, self.headings, strict=True):
@@ -265,9 +268,39 @@ class ProjectorReference(EditingSurface):
                 control.hide()
                 continue
             heading.setText(title)
+            if inline_grating and title == "Asset":
+                heading.hide()
+                control.hide()
+                continue
             if control is self.stimulus:
                 row, col, span = top, first, 2 if self.narrow else 1
-            elif title == "Asset":
+            elif inline_grating and title == "Motion source":
+                row, col, span = (
+                    top,
+                    first + (2 if self.narrow else 1),
+                    2 if self.narrow else 1,
+                )
+                control.setMinimumWidth(0 if self.narrow else 246)
+                control.setMaximumWidth(16777215 if self.narrow else 246)
+            elif inline_grating and title == "Linked to":
+                row, col, span = top + 3, first, 4
+            elif inline_grating and title != "" and title != "Linked to":
+                positions = {
+                    "Spatial period (mm)": (0, 0),
+                    "Sharpness (0–1)": (0, 1),
+                    "Orientation (°)": (1, 0),
+                    "Speed (mm/s)": (1, 1),
+                    "Color A (linear RGB)": (2, 0) if self.narrow else (0, 2),
+                    "Color B (linear RGB)": (3, 0) if self.narrow else (1, 2),
+                }
+                batch, slot = positions[title]
+                unit = 2 if self.narrow else 1
+                row, col = top + 3 + 2 * batch, first + slot * unit
+                if self.narrow and batch >= 2:
+                    span = 4
+                else:
+                    span = 2 if self.narrow or slot == 2 else 1
+            elif title in ("Asset", "Seed"):
                 span = 2 if self.narrow and self.face else 3 if self.face else 4
                 span += int(self_asset)
                 row, col = top, action_col - span
@@ -293,7 +326,16 @@ class ProjectorReference(EditingSurface):
             heading.setVisible(bool(title))
             control.show()
         chain_tab_order(
-            control for _, control in columns if control is not self.caption
+            sorted(
+                (
+                    control
+                    for _, control in columns
+                    if control is not self.caption and not control.isHidden()
+                ),
+                key=lambda control: self.grid.getItemPosition(
+                    self.grid.indexOf(control)
+                )[:2],
+            )
         )
         empty = self.parameters.layer_index < 0
         self.actions_button.setEnabled(not empty)
@@ -325,7 +367,11 @@ class ProjectorReference(EditingSurface):
         )
         margins = self.parameters.advanced_layout.contentsMargins()
         asset = next(
-            (control for title, control in self.columns if title == "Asset"),
+            (
+                control
+                for title, control in self.columns
+                if title == "Asset" and not control.isHidden()
+            ),
             self.stimulus,
         )
         right = max(

@@ -768,6 +768,65 @@ async def test_setup_binding_preserves_optional_feedback_presence(tmp_path, atta
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("prior_revision", [0, 12])
+@pytest.mark.parametrize("retained_obligation", [False, True])
+async def test_unprepared_cleanup_uses_new_session_zero_catalogue(
+    tmp_path, prior_revision, retained_obligation
+):
+    recipe, state, clock, _, _, supervisor, ledger = await recipe_fixture(tmp_path)
+    identity = recipe.identity
+    state.resources.clear()
+    state.recipe_results.clear()
+    state.catalogue_revision = prior_revision
+    state.setup.plan.context.session_id = str(uuid4())
+    evidence, link = _cleanup_evidence(recipe, state, clock)
+    evidence.report.cleanup.cleanup_resources_revision = 25
+    evidence.report.cleanup.verified_monotonic_ns = clock()
+    state.setup = None
+    supervisor.reports.clear()
+    registry = ResourceObligationRegistry(
+        identity.process,
+        link.parent.work,
+        allowed_owners=frozenset(
+            {(identity.process.role, identity.process.generation)}
+        ),
+        max_resources=10,
+        max_bytes=10_000,
+    )
+    receipt = supervisor.receipt
+
+    async def validate_catalogue(method, request, *, deadline_ns):
+        assert deadline_ns == link.deadline_ns
+        if method == "ReportHeartbeat":
+            assert registry.accept_heartbeat(request) == 0
+        else:
+            assert method == "ReportLifecycle"
+            registry.verify_cleanup(request.cleanup, cleanup_command_fenced=True)
+        return await receipt(method, request, deadline_ns=deadline_ns)
+
+    supervisor.receipt = validate_catalogue
+    reports = Reports(identity, state, ledger, Peer(), supervisor, clock)
+    if retained_obligation:
+        state.resources.append(
+            pb.ResourceObligation(owner=identity.process, resource="recipe:unreleased")
+        )
+        with pytest.raises(ValueError, match="unprepared session retains"):
+            await reports.lifecycle(evidence)
+        assert not supervisor.reports
+        assert state.resources
+        return
+    await reports.lifecycle(evidence)
+    await reports.lifecycle(evidence)  # Exact replay retains the accepted revision.
+    assert [method for method, _, _ in supervisor.reports] == [
+        "ReportHeartbeat",
+        "ReportLifecycle",
+        "ReportLifecycle",
+    ]
+    assert evidence.report.cleanup.cleanup_resources_revision == 25
+    assert state.catalogue_revision == prior_revision
+
+
+@pytest.mark.asyncio
 async def test_recipe_setup_initializes_exact_empty_catalogue_before_obligations(
     tmp_path,
 ):
@@ -1214,7 +1273,8 @@ def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates(
         validate(identity, state, "UpdateDisplayCalibration", request)
 
 
-async def test_setup_progress_maps_worker_command_without_completing_it():
+@pytest.mark.parametrize("renewable", [False, True])
+async def test_setup_progress_maps_worker_command_without_completing_it(renewable):
     identity = Identity(
         *(
             pb.ProcessIdentity(role=role, generation=str(uuid4()))
@@ -1251,6 +1311,12 @@ async def test_setup_progress_maps_worker_command_without_completing_it():
         supervisor,
         Clock(),
     )
+    if renewable:
+        from cephvr.shared.deadlines import SetupInactivity
+
+        link = state.links[child.command_id]
+        link.setup_inactivity = SetupInactivity(100, 1_000_000_100)
+        link.deadline_ns = link.setup_inactivity.deadline_ns
     report = visual_stimulus.WorkerOperation(
         source=child.target,
         operation=pb.OperationState(
@@ -1258,17 +1324,31 @@ async def test_setup_progress_maps_worker_command_without_completing_it():
             command="SetupSession",
             work=child.target.work,
             progress="Decoding textures: 50/500",
+            progress_sequence=1,
         ),
     )
     await reports.operation(report)
     method, forwarded, deadline = controller.reports[-1]
-    assert method == "ReportLifecycle" and deadline == 1234
+    assert method == "ReportLifecycle"
+    assert deadline == (1_000_000_100 if renewable else 1234)
     assert forwarded.operation.source == identity.backend
     assert forwarded.operation.operation.context.command_id == parent.command_id
     assert forwarded.operation.operation.work == parent.work
     assert forwarded.operation.operation.progress == report.operation.progress
     assert not forwarded.operation.operation.complete
     assert not state.prepared and not supervisor.reports
+    if renewable:
+        report.operation.progress_sequence = 2
+        report.operation.progress = "Publishing prepared trial 1/1"
+        await reports.operation(report, ingress_ns=1_000_000_080)
+        assert link.deadline_ns == 1_000_000_180
+        await reports.operation(report, ingress_ns=1_000_000_150)
+        assert link.deadline_ns == 1_000_000_180
+        with pytest.raises(ValueError, match="inactivity cutoff"):
+            await reports.operation(report, ingress_ns=1_000_000_181)
+        state.interrupted = True
+        with pytest.raises(ValueError, match="live Setup"):
+            await reports.operation(report, ingress_ns=1_000_000_160)
     report.source.worker.generation = "foreign"
     with pytest.raises(ValueError, match="retained command"):
         await reports.operation(report)

@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 21
+_POLICY_VERSION = 34
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "949d34639265ec973c81688de09d6d4713a29c215a0970a698a17cfd988dde5f"
+_POLICY_SHA256 = "4eab29eb5424f0195f98f6bb7467f6dbd6c0ec9919e1c32d88e01eea7c34a273"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -68,7 +68,7 @@ _POLICY_KEYS = frozenset(
     runtime.prepared_heap
     projection.method projection.surfaces projection.observer_position_policy
     projection.geometric_correction projection.optional_correction_inputs
-    programs.authoring_model programs.scene_composition programs.storage_format
+    programs.authoring_model programs.scene_composition programs.linked_grating_field programs.storage_format
     programs.model_library programs.schema_source programs.validation_policy
     programs.execution_input programs.trial_plan_retention programs.coordinate_spaces
     programs.parameter_animation programs.animation_clock programs.duration_modes
@@ -76,10 +76,13 @@ _POLICY_KEYS = frozenset(
     programs.random_duration_repeats programs.epoch_state programs.absent_instance_state
     programs.trial_state programs.group_order_modes programs.group_order_default
     assets.source_stability assets.protection_failure assets.image_profiles
-    assets.video_profiles assets.arena_profile
+    assets.video_profiles assets.arena_profile assets.untagged_png_tiff_transfer
     sparse_noise.generation sparse_noise.lookahead_patterns sparse_noise.late_pattern
-    image_residency.loader_threads image_residency.upload_chunk_bytes
-    image_residency.upload_chunks_per_turn
+    image_residency.loader_threads image_residency.lookahead_epochs
+    image_residency.preparation_batch_images
+    image_residency.fold_storage image_residency.bundle_cleanup image_residency.upload_chunk_bytes
+    image_residency.upload_chunks_per_turn image_residency.upload_turn_ns
+    image_residency.gpu_storage image_residency.validation_index
     image_residency.readiness image_residency.late_image image_residency.evidence
     arena.source_policy arena.boundary_source arena.movement_modes
     arena.boundary_response arena.shading

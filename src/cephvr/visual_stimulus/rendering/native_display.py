@@ -1,7 +1,6 @@
 """GLFW window configuration, actual framebuffer checks and calibrated Idle values."""
 
 import ctypes
-import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -100,18 +99,6 @@ def configure_window(glfw: Any, output: Output) -> None:
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-
-
-def hide_output_shell_entry(glfw: Any, window: Any) -> None:
-    """Keep physical projector outputs out of the Windows taskbar and switcher."""
-    if sys.platform != "win32":
-        return
-    from cephvr.platform.windows.window_coordinates import blank_preview_caption
-
-    # Windows requires hiding a visible window before changing taskbar styles.
-    glfw.hide_window(window)
-    blank_preview_caption(glfw.get_win32_window(window), hide_from_taskbar=True)
-    glfw.show_window(window)
 
 
 def verify_framebuffer(

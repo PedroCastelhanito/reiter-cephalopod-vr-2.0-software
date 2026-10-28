@@ -1,0 +1,5 @@
+src\cephvr\visual_stimulus\rendering\upload.py:71: error: Argument 1 to "memoryview" has incompatible type "ndarray[Any, Any]"; expected "Buffer"  [arg-type]
+src\cephvr\visual_stimulus\rendering\upload.py:89: error: Argument 1 to "memoryview" has incompatible type "ndarray[Any, Any]"; expected "Buffer"  [arg-type]
+src\cephvr\visual_stimulus\rendering\upload.py:119: error: Argument 1 to "memoryview" has incompatible type "ndarray[tuple[Any, ...], dtype[Any]]"; expected "Buffer"  [arg-type]
+src\cephvr\visual_stimulus\resources\image_bundle.py:122: error: "BinaryIO" has no attribute "readinto"  [attr-defined]
+Found 4 errors in 2 files (checked 191 source files)

@@ -1,0 +1,136 @@
+Window: "CephVR2.0 — Dashboard", App: cephvr-python.exe.
+	0 window (settable, string) CephVR2.0 — Dashboard Secondary Actions: Raise ID: QApplication.ManagedDashboardWindow
+		13 title bar (settable, string) Value: CephVR2.0 — Dashboard
+			14 menu bar System ID: MenuBar
+				118 menu item System
+			16 button Minimize
+			17 button Maximize
+			18 button Close
+		19 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell
+			20 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Sidebar
+				21 text CEPHVR ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.QLabel
+				22 check box (settable, string) Dashboard ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				23 check box (settable, string) Protocol ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				24 check box (settable, string) Devices ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				25 check box (settable, string) Generate assets ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.Button
+				26 text VERSION 2.0 ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.QLabel
+				27 tree (settable, string) Dashboard navigation ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					28 tree item (selectable, settable, string) Configure ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					29 tree item (selectable, settable, string) Monitor ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+				30 tree (settable, string) Devices navigation ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					31 tree item (selectable, settable, string) Cameras ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					32 tree item (selectable, settable, string) Microcontroller ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					33 tree item (selectable, settable, string) Projectors ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+					34 tree item (selectable, settable, string) SpikeGLX ID: QApplication.ManagedDashboardWindow.Shell.Sidebar.DeviceRail
+			35 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page
+				36 pane (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget
+					653 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard
+						654 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget
+							655 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns
+								656 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea
+									657 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport
+										658 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget
+											659 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls
+												660 text < SYSTEM CONTROLS > ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.QLabel
+												661 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.QWidget
+													662 button (disabled, settable, string) Setup ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.QWidget.Button
+													663 button (disabled, settable, string) Stop ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.QWidget.Button
+												664 check box (settable, string) Cameras · Unavailable ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.StatusIndicator
+												665 check box (settable, string) Visual stimulus · Unavailable ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.SystemControls.StatusIndicator
+											666 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card
+												667 text < SESSION CONFIG > ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.QLabel
+												668 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard
+													669 text ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QLabel
+													670 text Session ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QLabel
+													671 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														672 text SUBJECT ID ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														673 edit (disabled, settable, string) SUBJECT ID Value: 0004 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLineEdit
+													674 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														675 text EXPERIMENT ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														676 edit (disabled, settable, string) EXPERIMENT Value: ephys-pilot ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLineEdit
+													677 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														678 text OUTPUT DIRECTORY ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														679 group (disabled, settable, string) OUTPUT DIRECTORY ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.DirectoryField
+															680 edit (disabled, settable, string) Value: C:/Users/ReiterU_PC/Desktop/tmp ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.DirectoryField.PathEdit
+															681 button (disabled, settable, string) Browse… ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.DirectoryField.Button
+												682 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard
+													683 text ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QLabel
+													684 text Subject ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QLabel
+													685 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														686 text SPECIES ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														687 combo box (disabled, settable, string) SPECIES Value: Sepia Pharaonis ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.SelectionBox
+													688 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														689 text SEX ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														690 combo box (disabled, settable, string) SEX Value: Not specified ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.SelectionBox
+													691 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														692 text AGE (dph) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														693 edit (disabled, settable, string) AGE (dph) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLineEdit
+													694 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														695 text SIZE (mm) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														696 edit (disabled, settable, string) SIZE (mm) Value: 5 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLineEdit
+													697 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget
+														698 text CONDITION ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLabel
+														699 edit (disabled, settable, string) CONDITION Value: Mantle+head-fixation ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.Card.EditingCard.QWidget.QLineEdit
+											700 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard
+												701 text < SAVING OPTIONS > ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.QLabel
+												702 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard
+													703 text ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													704 text Data ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													705 check box (disabled, settable, string) Save spikeglx ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QCheckBox
+													706 text Save spikeglx ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+												707 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard
+													708 text ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													709 text Videos ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													710 check box (disabled, settable, string) Save Visual stimulus video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QCheckBox
+													711 text Save Visual stimulus video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													712 check box (disabled, settable, string) Save Behavior cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QCheckBox
+													713 text Save Behavior cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+													714 check box (disabled, settable, string) Save Tracking cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QCheckBox
+													715 text Save Tracking cam video ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_viewport.QWidget.RecordingsCard.EditingCard.QLabel
+									716 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_vcontainer
+										717 scroll bar (settable, float) Value: 0 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.QScrollArea.qt_scrollarea_vcontainer.QScrollBar
+								718 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn
+									719 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card
+										720 text < HUD > ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.QLabel
+										721 edit Value: STATUS : Configuration TRIAL : 0/1 TRIAL TIME : — / — TOTAL TIME : 00:00:00 / 00:00:40 OUTPUT DIR : — ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.FittedConsole
+											722 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.FittedConsole.qt_scrollarea_viewport
+											723 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.FittedConsole.PromptGutter
+									724 custom (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card
+										725 text < LOG CONSOLE > ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.QLabel
+										726 edit Value: 11:05:32 [GUI] Linked Media motion is active in: Trial 1 Epoch_1 (stimulus_1 → stimulus_4), Trial 1 Epoch_1 (stimulus_2 → stimulus_4), Trial 1 Epoch_1 (stimulus_3 → stimulus_4). Saved programs from before links executed may drive motion now; review before running. 11:05:32 [CONTROLLER] Controller connected. 11:07:26 [CONTROLLER] Retained controller summary acknowledged. 11:08:16 [GUI] Loaded Protocol configuration: C:/Users/ReiterU_PC/Desktop/Alsu/protocols/texture-presentation-1hr_protocol.json 11:09:12 [BEH CAM] Preparing camera for session… [Done] 11:09:12 [TRK CAM] Preparing camera for session… [Done] 11:09:12 [SETUP] Reserving output folder… [Failed] 11:09:12 [CAMERAS] Preparing session resources… [Done] 11:09:12 [STIMULUS] Preparing session resources… [Done] 11:09:12 [SETUP] Registering backends… [Failed] 11:09:12 [SETUP] Preparing cameras… [Failed] 11:09:13 [MCU] Reading connection and configuration… [Done] 11:09:15 [SETUP] Preparing backends… [Failed] 11:09:15 [SETUP] Waiting for backends… [Failed] 11:09:15 [STIMULUS] Preparing stimulus resources [Done] 11:09:15 [STIMULUS] Trial 1/1 — Protecting and reading assets [Done] 11:09:15 [STIMULUS] Trial 1/1 — Decoding and validating textures: 10/10 [Done] 11:09:18 [STIMULUS] Trial 1/1 — Compiling stimulus schedule [Done] 11:09:26 [STIMULUS] Image validation complete: 10 unique, 0 reused [Done] 11:09:26 [STIMULUS] Preparing projector graphics [Done] 11:09:26 [STIMULUS] Decoding and uploading initial textures to projectors: 8/8 [Done] 11:09:31 [STIMULUS] Finalizing prepared stimulus memory [Done] 11:09:37 [SETUP] Resolving outputs… [Failed] 11:09:39 [SETUP] Cleaning up… [Done] ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole
+											727 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole.qt_scrollarea_viewport
+											728 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole.PromptGutter
+											729 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole.ColumnHeader
+											730 group (settable, string) ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole.qt_scrollarea_vcontainer
+												731 scroll bar (settable, float) Value: 27 ID: QApplication.ManagedDashboardWindow.Shell.Page.QStackedWidget.Dashboard.QWidget.ResponsiveColumns.StatusColumn.Card.LogConsole.qt_scrollarea_vcontainer.ConsoleLogScroll
+		114 menu bar (settable, string) ID: QApplication.ManagedDashboardWindow.QMenuBar
+			115 menu item (settable, string) Style ID: QApplication.ManagedDashboardWindow.QMenuBar.QAction
+			116 menu item (settable, string) Control ID: QApplication.ManagedDashboardWindow.QMenuBar.QAction
+		117 group (settable, string) ID: QApplication.ManagedDashboardWindow.CrtOverlay
+
+Document text: ```
+11:05:32  [GUI]        Linked Media motion is                        active in: Trial 1 Epoch_1                        (stimulus_1 → stimulus_4),                        Trial 1 Epoch_1                        (stimulus_2 → stimulus_4),                        Trial 1 Epoch_1                        (stimulus_3 → stimulus_4).                        Saved programs from before                        links executed may drive                        motion now; review before                        running.
+11:05:32  [CONTROLLER] Controller connected.
+11:07:26  [CONTROLLER] Retained controller                        summary acknowledged.
+11:08:16  [GUI]        Loaded Protocol                        configuration:                        C:/Users/ReiterU_PC/Desktop/Alsu/protocols/texture-presentation-1hr_protocol.json
+11:09:12  [BEH CAM]    Preparing camera for                        session… [Done]
+11:09:12  [TRK CAM]    Preparing camera for                        session… [Done]
+11:09:12  [SETUP]      Reserving output folder…                        [Failed]
+11:09:12  [CAMERAS]    Preparing session                        resources… [Done]
+11:09:12  [STIMULUS]   Preparing session                        resources… [Done]
+11:09:12  [SETUP]      Registering backends…                        [Failed]
+11:09:12  [SETUP]      Preparing cameras…                        [Failed]
+11:09:13  [MCU]        Reading connection and                        configuration… [Done]
+11:09:15  [SETUP]      Preparing backends…                        [Failed]
+11:09:15  [SETUP]      Waiting for backends…                        [Failed]
+11:09:15  [STIMULUS]   Preparing stimulus                        resources [Done]
+11:09:15  [STIMULUS]   Trial 1/1 — Protecting and                        reading assets [Done]
+11:09:15  [STIMULUS]   Trial 1/1 — Decoding and                        validating textures: 10/10                        [Done]
+11:09:18  [STIMULUS]   Trial 1/1 — Compiling                        stimulus schedule [Done]
+11:09:26  [STIMULUS]   Image validation complete:                        10 unique, 0 reused [Done]
+11:09:26  [STIMULUS]   Preparing projector                        graphics [Done]
+11:09:26  [STIMULUS]   Decoding and uploading                        initial textures to                        projectors: 8/8 [Done]
+11:09:31  [STIMULUS]   Finalizing prepared                        stimulus memory [Done]
+11:09:37  [SETUP]      Resolving outputs…                        [Failed]
+11:09:39  [SETUP]      Cleaning up… [Done]
+```

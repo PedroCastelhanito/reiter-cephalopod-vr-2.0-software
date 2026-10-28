@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 21
+policy_version = 34
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.
@@ -14,9 +14,10 @@ port = 50054
 # exceed any bound; tune explicitly before Setup, never grow during a session.
 max_document_bytes = 16_777_216
 max_expanded_epochs = 100_000
-max_prepared_plan_bytes = 8_388_608
-max_asset_cpu_bytes = 1_073_741_824
-max_asset_gpu_bytes = 1_073_741_824
+# Complete expanded schedules must leave envelope headroom below E08's 64 MiB RPC cap.
+max_prepared_plan_bytes = 50_000_000
+max_asset_cpu_bytes = 2_147_483_648
+max_asset_gpu_bytes = 4_294_967_296
 decoder_threads = 2
 codec_threads_per_context = 2
 codec_threads_total = 4

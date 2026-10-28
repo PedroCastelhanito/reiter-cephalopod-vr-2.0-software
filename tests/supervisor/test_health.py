@@ -447,3 +447,20 @@ async def test_confirmed_controller_without_first_heartbeat_times_out(
     assert runtime.shutdown_state.safety_task is not None
     await runtime.shutdown_state.safety_task
     assert outbound.interruptions
+
+
+def test_renderer_exit_attempts_owned_temporary_directory_recovery(monkeypatch):
+    from types import SimpleNamespace as NS
+
+    from cephvr.shared import temporary_bundle
+    from cephvr.supervisor.health import HealthMonitor
+
+    observed = []
+    monkeypatch.setattr(
+        temporary_bundle, "recover_temporary_bundles", lambda: ("held file remains",)
+    )
+    monitor = NS(shutdown=NS(shutdown_request=True), warn=observed.append)
+    state = wire.LaunchState()
+    state.plan.child.role = "visual_stimulus_renderer"
+    HealthMonitor.observe_backend_exit(monitor, state, 1)
+    assert observed == ["held file remains"]

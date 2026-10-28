@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-28",
+  "revision": "e4dd8f2694aa075380fe6711a884fe5894763c6f",
+  "tree": "Existing dirty tree preserved; source hashes identify implemented snapshot.",
+  "sources": {
+    "rendering/upload.py": "f8a4306ad7987a86acedd85fd25ec79f83fa68dab690ed5e436a6317cded9375",
+    "rendering/image_gpu.py": "1a1daef7cfd9cde103a111abe1d0ca6fb64b507c64e88b531316a04c16250ba0",
+    "rendering/image_pool.py": "b06fcebca12d6cd7cb58f938b5823cbf646b43f93bf60188cb10127bf4ac7b0d",
+    "rendering/image_bake.py": "952e8fa788c8acf339e8dcc5ec3a2fafcb33b9fc2b04649fa3625d0392673d8f",
+    "rendering/image_residency.py": "a59544dbc0ad1b357509479bd31c8a4696ddbd6d218434a5e040321a26059fe5",
+    "rendering/native.py": "682d5be34664f864339fd7fd3235c04bd588f24aab1f3e779773a9cb22ea4c80",
+    "resources/image_source.py": "b90a614c85b62183cf46cea89fad37ddf0a269b2ccad50be3061684787f6d0cf",
+    "resources/image_worker.py": "81a7451ac9d76b8e70029c596e221d838178780ce17bdb73a3958b4af3d9dc20",
+    "resources/image_bundle.py": "05c9c81aca96d58111be1fe797067d4081ab1f108a19a1496b62d1aaa9816584",
+    "resources/media.py": "dffc067b2022ace7f57c2ef9f5260b63ad8a5f879ca1ec1f796b5ed71eb4b9ec",
+    "resources/prepare.py": "297342b19baa0c99b472a8f80f92f01c06f2de5abe4fb4ce66222105212a8ff7",
+    "resources/session.py": "e252b73e0f5acc00f9e6ee6b6c12bba71a28b7a11fef38d6d6f8ddad315b9a8e",
+    "resources/image_interpretation.py": "a77770a7c4863eeacf581f264bcd5dc5152edd3266d14c6956d27f8bbce820be",
+    "resources/image_timing.py": "5da4b8d70292d9e28493209ff9494b8ae219d031b8dd395ec08b3297af35abf0",
+    "resources/progress.py": "97f32e18e0284e679e0cbce692786b298d34063c5992174d4a979de6f716a16e"
+  },
+  "commands": [
+    ".venv/Scripts/python.exe -m pytest tests/visual_stimulus -q -m \"not windows and not rig\" --basetemp <authorized-external-temp>/image-plan-complete",
+    ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py -q -k prepared_image_bundle --basetemp <authorized-external-temp>/image-plan-nativebundle",
+    ".venv/Scripts/python.exe -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+    ".venv/Scripts/python.exe -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+    ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/visual_stimulus",
+    ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "results": "836 passed,5 subtests,80 deselected;2 temporary-bundle checks passed; static checks pass. Earlier failures and interrupted attempts retained.",
+  "limits": "No managed native Setup/playback, index reuse, optics or combined-load acceptance. Phase C deferred pending native stage evidence. Benchmark: seeded synthetic4K,3 repetitions/median and warmed LUTs; tracemalloc is tracked allocation, not total native memory."
+}

@@ -1,0 +1,3 @@
+index, name, utilization.gpu [%], utilization.encoder [%], memory.used [MiB]
+0, NVIDIA GeForce RTX 5060 Ti, 10 %, 0 %, 756 MiB
+1, NVIDIA GeForce RTX 2080 Ti, 28 %, 23 %, 215 MiB

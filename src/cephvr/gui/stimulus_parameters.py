@@ -237,7 +237,9 @@ class StimulusParameters(QWidget):
         values = binding.values
         self.show_units(binding.setting)
         motion_values = binding.motion_values(projector)
-        primary = primary_parts(binding, motion_values, projector)
+        primary = primary_parts(
+            binding, motion_values, projector, self.duration_override or node.duration
+        )
         for form in primary.forms:
             form.changed.connect(self.mark_changed)
         self.forms.extend(primary.forms)

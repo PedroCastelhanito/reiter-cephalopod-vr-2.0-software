@@ -9,7 +9,7 @@ from cephvr.gui.arena_limits import boundary_document, geometry_description
 from cephvr.gui.batch_insertion import Insertion, insert_batch
 from cephvr.gui.group_editor import ExpandedPreview
 from cephvr.gui.planner_popups import PlannerPopups
-from cephvr.gui.program_editing import node_at
+from cephvr.gui.program_editing import node_at, renumber_epochs
 from cephvr.gui.protocol_batches import (
     flat_group,
     generated_batch,
@@ -53,7 +53,7 @@ class ProtocolEditor(PlannerControls):
         self.selected_paths: tuple[tuple[int, ...], ...] = ()
         self.delete_dialog: QMessageBox | None = None
         self.popups = PlannerPopups(self)
-        self.trials.addItem(self.drafts[0].name)
+        self.trials.addItem("Trial 1")
         self.trials.setCurrentRow(0)
         self.trials.currentRowChanged.connect(self.select_trial)
         self.add_button.clicked.connect(self.add_trial)
@@ -110,6 +110,7 @@ class ProtocolEditor(PlannerControls):
         scope: tuple[int, ...] | None = None,
         paths: tuple[tuple[int, ...], ...] | None = None,
     ) -> None:
+        program = renumber_epochs(program, self.program)
         if program != self.program:
             self.histories[self.index].push(self.snapshot())
             self.drafts[self.index].program = program
@@ -140,6 +141,7 @@ class ProtocolEditor(PlannerControls):
     ) -> None:
         if self.isEnabled():
             if self.subgroup.committing:
+                program = renumber_epochs(program, self.program)
                 if program != self.program:
                     self.histories[self.index].push(self.snapshot())
                     self.drafts[self.index].program = program
@@ -460,7 +462,7 @@ class ProtocolEditor(PlannerControls):
         dialog = QMessageBox(
             QMessageBox.Icon.Question,
             "Delete trial",
-            f'Delete "{draft.name}" from the planner? Saved files are kept.',
+            f'Delete Trial {target + 1} ("{draft.name}") from the planner? Saved files are kept.',
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
             self,
         )
@@ -498,7 +500,7 @@ class ProtocolEditor(PlannerControls):
             self.index = min(self.index, len(self.drafts) - 1)
             self.trials.blockSignals(True)
             self.trials.clear()
-            self.trials.addItems([d.name for d in self.drafts])
+            self.trials.addItems([f"Trial {i + 1}" for i in range(len(self.drafts))])
             self.trials.setCurrentRow(self.index)
             self.trials.blockSignals(False)
             self.scope, self.node_index = (), 0
@@ -544,7 +546,7 @@ class ProtocolEditor(PlannerControls):
         )
         self.drafts.append(TrialDraft(name, program))
         self.histories.append(EditHistory())
-        self.trials.addItem(name)
+        self.trials.addItem(f"Trial {len(self.drafts)}")
         self.trials.setCurrentRow(len(self.drafts) - 1)
 
     def add_group(self) -> None:

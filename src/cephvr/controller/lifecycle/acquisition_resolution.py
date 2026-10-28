@@ -141,7 +141,8 @@ class AcquisitionResolution:
                 attempt is None
                 or attempt.cancel_requested
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_SETTING_UP
-                or ingress_ns > attempt.setup_deadline_ns
+                or attempt.setup_timed_out
+                or ingress_ns > attempt.setup_cutoff("acquisition")
             ):
                 return rejected_receipt("STALE", "no live acquisition Setup resolution")
             backend = attempt.required.get("acquisition")
@@ -172,6 +173,9 @@ class AcquisitionResolution:
                         "CONFLICT", "changed acquisition resolution"
                     )
                 return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+            wait = attempt.setup_waits.get("acquisition")
+            if wait is not None:
+                wait.deadline_ns = ingress_ns + wait.interval_ns
             attempt.resolution_received = deepcopy(report)
             attempt.resolution_requested_revision = (
                 attempt.prepared.configuration_revision
@@ -412,7 +416,9 @@ class AcquisitionResolution:
                         for validator in self.validators.values()
                     )
                 ),
-                remaining_seconds(attempt.setup_deadline_ns, clock=self.clock),
+                remaining_seconds(
+                    attempt.setup_cutoff("acquisition"), clock=self.clock
+                ),
             )
             if any(not result.completed or not result.valid for result in results):
                 raise RuntimeError(
@@ -428,7 +434,7 @@ class AcquisitionResolution:
                     raise RuntimeError(
                         "configuration revision changed during acquisition readback"
                     )
-                if self.clock() > attempt.setup_deadline_ns:
+                if self.clock() > attempt.setup_cutoff("acquisition"):
                     raise RuntimeError(
                         "Setup deadline expired during acquisition readback"
                     )
@@ -457,9 +463,11 @@ class AcquisitionResolution:
                     confirmation.confirmed_pulses.CopyFrom(report.pulses)
             reply = await asyncio.wait_for(
                 attempt.required["acquisition"].confirm_configuration(
-                    confirmation, deadline_ns=attempt.setup_deadline_ns
+                    confirmation, deadline_ns=attempt.setup_cutoff("acquisition")
                 ),
-                remaining_seconds(attempt.setup_deadline_ns, clock=self.clock),
+                remaining_seconds(
+                    attempt.setup_cutoff("acquisition"), clock=self.clock
+                ),
             )
             if reply.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(
@@ -470,7 +478,7 @@ class AcquisitionResolution:
                     return
                 if (
                     self.configuration_state.revision != requested_revision
-                    or self.clock() > attempt.setup_deadline_ns
+                    or self.clock() > attempt.setup_cutoff("acquisition")
                 ):
                     raise RuntimeError(
                         "acquisition readback arrived after Setup or revision changed"

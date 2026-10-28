@@ -114,12 +114,18 @@ Cartesian speed follows that normal. Existing marked image-tile Grating remains
 asset-backed and uses its declared source interpretation.
 
 `SparseNoiseSettings` (`kind: "sparse_noise"`, instance family `sparse_noise`) holds
-`appearance`, positive `pattern_count` and exact positive `pattern_duration`, with
+`appearance`, `pattern_count` (default 1) and optional `pattern_duration`, with
 one physical-surface mapping and no asset. Compilation replaces width/height with
 the resolved grid extent; patterns are generated during playback under the
 [sparse-noise contract](sparse-noise.md).
 
-The layer selects `min(floor(max(0, epoch_local_ns)/duration_ns), count-1)`; the
+Absent/null `pattern_duration` requires count 1 and holds generator index zero for
+one full epoch occurrence. Expansion resolves seed `(source_seed + visit) % 2^64`,
+where visit counts occurrences of that source epoch/layer, including nested groups.
+The saved source remains unchanged. Preview and prepared playback share expansion.
+
+With an explicit legacy duration, the layer selects
+`min(floor(max(0, epoch_local_ns)/duration_ns), count-1)`; the
 authored epoch is not split, so other layers' animation/video/motion clocks stay unchanged.
 The sequence starts again at each epoch occurrence; excess patterns are truncated,
 and exhaustion holds the last. Background composites inactive alpha before layer
@@ -132,20 +138,40 @@ on a different physical surface in the same frame. Its reference owns appearance
 period, orientation, motion and phase; follower settings remain dormant independent
 values until unlinking. Chaining, cycles, feedback and competing follower motion fail.
 
-Use calibrated surface right/up/inward-normal bases. Unfold each surface around
-its plane intersection with Bottom by the shortest rotation of its inward normal
-to Bottom's, using Bottom's calibrated center/right/up as the common origin/basis.
-Evaluate the reference's mapped, rotated, translated centered grating coordinate at
-each follower point. Derive follower frequency, local orientation and phase from that
-affine coordinate; copy the reference waveform/color coefficients and use the same
-logical time. Reject opposite normals and singular/reflected stimulus mappings;
-output warp/flips remain independent. Bottom-edge phases agree for coincident physical
-edges. Constant spacing is preserved; arbitrary patterns can have wall/wall corner
-seams around the closed tank. No global 3D-field or projector frame-lock is implied.
+Use one infinite wave in screen-local physical coordinates, shared by the reference
+and every directly linked follower. Equal local coordinates on different screens
+have the same bar angle, physical period and phase. The signed phase drift comes
+from the reference at the exact same logical time; source rotation/period/color
+changes and sampled orientations propagate to all followers. Align phase at each
+screen centre. This full-screen local convention does not promise corner stitching
+or apparent parallelism from every external/subject camera angle.
 
-Resolve exact derived phase into existing follower state at epoch boundaries before
-unlink/reset handling (V07). Unlinked Gratings remain independent. These rules do not
-change the motion-only Texture drift links below.
+For reference map rows `m,n`, local layer angle `a`, frequency `f` and translation
+`x,y`, the physical gradient is
+`g=f*(cos(a)*m.xy+sin(a)*n.xy)`. Centre phase is
+`phase_x+f*(cos(a)*(m.z-x)+sin(a)*(n.z-y))`. Transform `g` through the inverse
+transpose of each target stimulus map to derive its layer frequency/angle; subtract
+the target map-offset contribution from centre phase. Set derived translation to
+zero and encode motion in phase. This exactly shares the physical local wave even
+with distinct positive-determinant scale/shear/offset stimulus maps. Keep validation
+of single-screen endpoints, independent reference, positive determinant maps and
+reference-owned motion. Reject chains/cycles and competing follower motion.
+
+Use the existing infinite texture coverage extension to enclose every usable
+physical corner at every angle, including after long elapsed translation. Bars
+stay straight and uniformly spaced across the entire usable surface. There is no
+perspective divide, projection origin, horizon mask, observer-dependent field or
+folded wall transform. Explicit output masks, geometric corrections and valid-area
+boundaries remain independently owned. No stimulus-driven uncovered regions are
+introduced. Native renderer and preview resolve through the same shared wave and
+ordinary frequency/rotation/phase/clip uniform evidence; perspective-only flag and
+numerator/denominator uniforms are removed.
+
+Resolve the follower's exact boundary phase into existing state before unlink/reset
+handling (V07). Unlinking restores independent pattern/motion settings under ordinary
+reset/assignment rules. Unlinked Gratings and motion-only Texture drift are unchanged.
+Saved repetition-rule bounds/seeds/draw order are unchanged: inclusive0..315 with
+precision45 yields the eight requested directions, each driving all linked screens.
 
 ## Reference-linked texture motion
 

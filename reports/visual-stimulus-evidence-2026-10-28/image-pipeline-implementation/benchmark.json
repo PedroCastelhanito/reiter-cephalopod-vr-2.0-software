@@ -1,0 +1,98 @@
+[
+  {
+    "dtype": "uint8",
+    "channels": 3,
+    "alpha": "none",
+    "transfer": "srgb",
+    "before": {
+      "median_ms": 331.6678002011031,
+      "peak_bytes": 497664656,
+      "bytes_per_pixel": 60.00007908950617
+    },
+    "after": {
+      "median_ms": 69.57269995473325,
+      "peak_bytes": 165952906,
+      "bytes_per_pixel": 20.00782527970679
+    }
+  },
+  {
+    "dtype": "uint8",
+    "channels": 4,
+    "alpha": "straight",
+    "transfer": "srgb",
+    "before": {
+      "median_ms": 393.2407000102103,
+      "peak_bytes": 497664632,
+      "bytes_per_pixel": 60.00007619598765
+    },
+    "after": {
+      "median_ms": 151.6067001502961,
+      "peak_bytes": 165952850,
+      "bytes_per_pixel": 20.00781852816358
+    }
+  },
+  {
+    "dtype": "uint16",
+    "channels": 3,
+    "alpha": "none",
+    "transfer": "srgb",
+    "before": {
+      "median_ms": 330.47030004672706,
+      "peak_bytes": 497664632,
+      "bytes_per_pixel": 60.00007619598765
+    },
+    "after": {
+      "median_ms": 68.61019995994866,
+      "peak_bytes": 165952906,
+      "bytes_per_pixel": 20.00782527970679
+    }
+  },
+  {
+    "dtype": "uint16",
+    "channels": 3,
+    "alpha": "none",
+    "transfer": "bt709",
+    "before": {
+      "median_ms": 329.2159999255091,
+      "peak_bytes": 497664632,
+      "bytes_per_pixel": 60.00007619598765
+    },
+    "after": {
+      "median_ms": 68.57429980300367,
+      "peak_bytes": 165952850,
+      "bytes_per_pixel": 20.00781852816358
+    }
+  },
+  {
+    "dtype": "uint8",
+    "channels": 3,
+    "alpha": "none",
+    "transfer": "linear",
+    "before": {
+      "median_ms": 88.92480004578829,
+      "peak_bytes": 265420985,
+      "bytes_per_pixel": 32.000022304205245
+    },
+    "after": {
+      "median_ms": 78.40540003962815,
+      "peak_bytes": 165952850,
+      "bytes_per_pixel": 20.00781852816358
+    }
+  },
+  {
+    "dtype": "uint16",
+    "channels": 4,
+    "alpha": "associated",
+    "transfer": "srgb",
+    "before": {
+      "median_ms": 506.152399815619,
+      "peak_bytes": 555726968,
+      "bytes_per_pixel": 67.00026138117283
+    },
+    "after": {
+      "median_ms": 502.428499981761,
+      "peak_bytes": 555726992,
+      "bytes_per_pixel": 67.00026427469136
+    }
+  }
+]

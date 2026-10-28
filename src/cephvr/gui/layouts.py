@@ -35,8 +35,19 @@ class CenterTabsInGap(QObject):
     ) -> None:
         super().__init__(tabs)
         self.tabs, self.preceding, self.titles = tabs, preceding, titles
-        self.origin = tabs.parentWidget()
-        assert self.origin is not None
+        origin = tabs.parentWidget()
+        assert origin is not None
+        self.origin = origin
+        layout = self.origin.layout()
+        assert isinstance(layout, QVBoxLayout)
+        index = layout.indexOf(tabs)
+        assert index >= 0
+        layout.removeWidget(tabs)
+        # Reserve the row, but give only this helper ownership of tab geometry.
+        self.slot = QWidget(self.origin)
+        self.slot.setFixedHeight(tabs.sizeHint().height())
+        layout.insertWidget(index, self.slot)
+        tabs.raise_()
         self.origin.installEventFilter(self)
         pages.installEventFilter(self)
         tabs.currentChanged.connect(lambda: QTimer.singleShot(0, self.center))
@@ -51,11 +62,20 @@ class CenterTabsInGap(QObject):
         return super().eventFilter(watched, event)
 
     def center(self) -> None:
+        height = self.tabs.sizeHint().height()
+        if self.slot.height() != height:
+            self.slot.setFixedHeight(height)
+            layout = self.origin.layout()
+            assert layout is not None
+            layout.activate()
         title = self.titles[self.tabs.currentIndex()]
         top = self.preceding.mapTo(self.origin, QPoint()).y() + self.preceding.height()
         bottom = title.mapTo(self.origin, QPoint()).y() + title.height() / 2
-        # Move only the tabs; retain Qt's card positions and any surplus spacing.
-        self.tabs.move(self.tabs.x(), round((top + bottom - self.tabs.height()) / 2))
+        # Retain Qt's card positions and any surplus spacing.
+        row = self.slot.geometry()
+        self.tabs.setGeometry(
+            row.x(), round((top + bottom - height) / 2), row.width(), height
+        )
 
 
 def advanced_grid() -> QGridLayout:

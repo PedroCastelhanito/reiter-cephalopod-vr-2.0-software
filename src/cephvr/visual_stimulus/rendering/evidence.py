@@ -14,6 +14,7 @@ from cephvr.visual_stimulus.rendering.types import InstanceSnapshot, UniformSnap
 
 # Per-mapping uniforms are written by the layer draw, not by uniform_values.
 _MAPPED_PREFIXES = (
+    "image_crop_origin_",
     "clip_vertices_",
     "image_target_pixels_",
     "image_fold_map_",

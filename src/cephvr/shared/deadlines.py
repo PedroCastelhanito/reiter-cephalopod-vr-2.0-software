@@ -1,13 +1,47 @@
-"""Original absolute host deadlines; retries and nested work cannot renew them."""
+"""Host deadlines and receipt-based Setup inactivity accounting."""
 
 from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Literal
 
 from cephvr.shared.clock import INT64_MAX, host_time_ns
+
+Deadline = int | Callable[[], int]
+
+
+def resolve_deadline(deadline: Deadline) -> int:
+    return deadline() if callable(deadline) else deadline
+
+
+@dataclass
+class SetupInactivity:
+    """One Setup operation's receipt-based inactivity, never a health waiver."""
+
+    interval_ns: int
+    deadline_ns: int
+    sequence: int = 0
+    message: str = ""
+    last_ingress_ns: int = 0
+
+    def advance(self, sequence: int, message: str, ingress_ns: int) -> bool:
+        if (
+            ingress_ns > self.deadline_ns
+            or ingress_ns < self.last_ingress_ns
+            or sequence <= self.sequence
+            or not message
+        ):
+            return False
+        self.sequence = sequence
+        if message == self.message:
+            return False
+        self.message = message
+        self.last_ingress_ns = ingress_ns
+        self.deadline_ns = ingress_ns + self.interval_ns
+        return True
 
 
 def duration_ns(value: int | float | Decimal, unit: Literal["s", "ms", "ns"]) -> int:
@@ -27,13 +61,15 @@ def duration_ns(value: int | float | Decimal, unit: Literal["s", "ms", "ns"]) ->
     return int(ns)
 
 
-def remaining_ns(deadline_ns: int, *, clock: Callable[[], int] = host_time_ns) -> int:
+def remaining_ns(
+    deadline_ns: Deadline, *, clock: Callable[[], int] = host_time_ns
+) -> int:
     """Return nonnegative time to a deadline in nanoseconds."""
-    return max(0, deadline_ns - clock())
+    return max(0, resolve_deadline(deadline_ns) - clock())
 
 
 def remaining_seconds(
-    deadline_ns: int, *, clock: Callable[[], int] = host_time_ns
+    deadline_ns: Deadline, *, clock: Callable[[], int] = host_time_ns
 ) -> float:
     """Return nonnegative time to a deadline in seconds."""
     return remaining_ns(deadline_ns, clock=clock) / 1_000_000_000

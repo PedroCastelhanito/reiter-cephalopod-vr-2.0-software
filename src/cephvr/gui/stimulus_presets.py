@@ -67,6 +67,11 @@ def add_stimulus(
     source["space"]["surfaces"] = [name.lower() for name in screens] or ["front"]
     seed = new_layer(preset, source, identity, subject_height_mm)
     source, family, profile, path = seed.setting, seed.family, seed.profile, seed.path
+    if preset == "Looming image" and node["duration"]["kind"] == "fixed":
+        for dimension in ("width", "height"):
+            source[dimension]["knots"][1]["time"] = deepcopy(
+                node["duration"]["duration"]
+            )
     scene = deepcopy(
         next(item for item in data["scenes"] if item["scene_id"] == node["scene_id"])
     )

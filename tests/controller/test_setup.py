@@ -676,3 +676,97 @@ async def test_cancel_fences_exact_cleanup_before_backend_dispatch(tmp_path, rec
     assert bool(calls) is (receipt == "exact")
     if receipt != "exact":
         assert attempt.registered_context == original
+
+
+@pytest.mark.parametrize("outcome", ["ready", "stall", "cancel"])
+async def test_setup_wait_follows_per_backend_inactivity(tmp_path, outcome):
+    from cephvr.shared.deadlines import SetupInactivity
+
+    context = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, context)
+    attempt = _attempt(runtime, tmp_path, {})
+    runtime.lifecycle.attempt = attempt
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+    now = [0]
+    runtime.evidence_waiter.clock = lambda: now[0]
+    interval = 1_000_000_000
+    attempt.setup_deadline_ns = interval
+    attempt.setup_waits["visual_stimulus"] = SetupInactivity(interval, interval)
+    if outcome == "stall":
+        attempt.setup_waits["acquisition"] = SetupInactivity(interval, interval)
+    complete = [False]
+    waiting = asyncio.create_task(
+        runtime.evidence_waiter.wait_evidence(lambda: complete[0], interval, attempt)
+    )
+    try:
+        await asyncio.sleep(0)
+        for index in range(1, 4):
+            now[0] = index * 400_000_000
+            assert attempt.setup_waits["visual_stimulus"].advance(
+                index, f"Images: {index}/3", now[0]
+            )
+            attempt.changed.set()
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+        if outcome == "stall":
+            with pytest.raises(TimeoutError, match="lifecycle evidence"):
+                await asyncio.wait_for(waiting, 1)
+            assert attempt.setup_timed_out
+            assert attempt.setup_waits["acquisition"].deadline_ns == interval
+        elif outcome == "cancel":
+            attempt.cancel_requested = True
+            attempt.changed.set()
+            with pytest.raises(RuntimeError, match="retired"):
+                await asyncio.wait_for(waiting, 1)
+        else:
+            assert not waiting.done()
+            complete[0] = True
+            attempt.changed.set()
+            await asyncio.wait_for(waiting, 1)
+    finally:
+        if not waiting.done():
+            waiting.cancel()
+            await asyncio.gather(waiting, return_exceptions=True)
+
+
+def test_setup_inactivity_starts_at_each_dispatch_and_retry_does_not_reset_it(tmp_path):
+    context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, context)
+    acquisition = cast(BackendPort, _RetainedPeer(context, svc.RetainedResult()))
+    visual = cast(
+        BackendPort,
+        _RetainedPeer(
+            pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
+            svc.RetainedResult(),
+        ),
+    )
+    attempt = _attempt(
+        runtime, tmp_path, {"acquisition": acquisition, "visual_stimulus": visual}
+    )
+    for name in attempt.required:
+        setting = attempt.prepared.configuration.backends.add(
+            backend_name=name, enabled=True
+        )
+        if name == "acquisition":
+            for role in ("behavioral", "tracking", "eye_tracking"):
+                getattr(setting.acquisition, role).enabled = False
+        else:
+            setting.visual_stimulus.save_visual_stimulus_data = False
+    attempt.setup_interval_ns = 100
+    attempt.setup_deadline_ns = 100
+    # No save selections or device use: this test concerns dispatch timing only.
+    policies = svc.SetupSessionRequest()
+    attempt.file_policies["visual_stimulus"] = policies.visual_stimulus_policies
+    attempt.file_policies["acquisition"] = policies.acquisition_policies
+    clock = [1_000]
+    runtime.preparation_context.clock = lambda: clock[0]
+    runtime.preparation_context.setup_request(attempt, acquisition, "acquisition-setup")
+    assert attempt.setup_cutoff("acquisition") == 1_100
+    assert "visual_stimulus" not in attempt.setup_waits
+    clock[0] = 1_080
+    runtime.preparation_context.setup_request(attempt, visual, "visual-setup")
+    assert attempt.setup_cutoff("visual_stimulus") == 1_180
+    runtime.preparation_context.setup_request(attempt, acquisition, "acquisition-setup")
+    assert attempt.setup_cutoff("acquisition") == 1_100

@@ -1,0 +1,45 @@
+{
+  "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe",
+  "results": [
+    {
+      "name": "managed_default",
+      "provider": "_hashlib",
+      "hash_ms": [
+        15.1269,
+        14.6962,
+        15.7502,
+        14.7907,
+        14.7138,
+        14.8406,
+        15.5493,
+        14.9386,
+        14.9217,
+        14.942,
+        15.5036,
+        15.2043
+      ],
+      "max_observer_pause_ms": 1.7949,
+      "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+    },
+    {
+      "name": "explicit_openssl",
+      "provider": "_hashlib",
+      "hash_ms": [
+        15.1549,
+        15.123,
+        15.3051,
+        14.9625,
+        15.048,
+        15.0261,
+        15.3232,
+        15.3132,
+        15.3263,
+        15.2529,
+        15.1806,
+        15.4904
+      ],
+      "max_observer_pause_ms": 1.7316,
+      "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+    }
+  ]
+}

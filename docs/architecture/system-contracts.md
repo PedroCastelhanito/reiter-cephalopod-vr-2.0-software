@@ -52,7 +52,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 <a id="e06"></a>
 ### E06 — Stop, interruption, timeout, and recovery
 
-**Status:** Accepted · **Revision:** 79
+**Status:** Accepted · **Revision:** 80
 
 **Operator commands**
 
@@ -178,6 +178,18 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 
 **Timeouts and late evidence**
 
+- Setup times out on inactivity, not total preparation duration. Start a separate
+  allowance for each required backend at its Setup dispatch; accept exact live
+  command/session/process/generation progress received by its inclusive cutoff
+  and renew only that backend's allowance from controller ingress time. Waiting
+  dependencies do not consume a backend's allowance before dispatch. Completed
+  milestones or advancing work counters qualify; repeated unchanged status,
+  duplicate reports and heartbeats alone do not. A busy backend cannot conceal
+  another backend's stall. Use the existing Setup allowance (default 180 s) as the
+  inactivity interval, without a total Setup cap. On a stall, use the existing
+  bounded recovery and failed-Setup cleanup; later progress cannot revive it.
+  Health loss, explicit errors and independently bounded device commands,
+  persistence, registration and cleanup retain their own failure guarantees.
 - Confirmed errors and process exits are classified/reported immediately. Ready,
   Finished or registration evidence missing at its initial deadline gets one state
   query (GetState/GetRetainedResult) of the frozen missing set within the one
@@ -197,7 +209,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 
 | Setting | Default | Owner |
 | --- | ---: | --- |
-| Setup initial | 180 s | `experiment_config.toml` |
+| Setup inactivity per dispatched backend | 180 s | `experiment_config.toml` |
 | Cancel Setup cleanup | 10 s | `experiment_config.toml` |
 | Per-trial Ready initial | 10 s | `experiment_config.toml` |
 | Finished and file closure initial | 30 s | `experiment_config.toml` |
@@ -218,7 +230,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 184
+**Status:** Accepted · **Revision:** 186
 
 - Stimulus preview placement may carry up to four unique logical projector targets
   with bounded desktop geometry; absent targets selects Combined. Reuse the existing
@@ -354,7 +366,7 @@ design; runtime monitoring remains unimplemented.
 - One controller event loop owns lifecycle state. Device/file work returns results
   asynchronously and cannot mutate lifecycle or block the loop. Ingress timestamps
   are kept for deadline decisions (E05).
-- Controller events are bounded to **1,024** and **64 MiB** serialized payload
+- Controller events are bounded to **1,024** and **256 MiB** serialized payload
   (configurable). When full, ordinary work is rejected but interruption stays
   available; losing essential evidence blocks unstarted execution or interrupts an
   active session. No scientific streams enter this queue; it is not a total-memory
@@ -446,9 +458,12 @@ design; runtime monitoring remains unimplemented.
   change. Reconnect warnings use the Snapshot's bounded retained incidents; there is
   no history RPC. See
   [current-state views](../../contracts/README.md#current-state-views-and-reconnect-warnings).
-- One maximum gRPC message size, `[rpc] max_message_bytes` (default **16 MiB**),
+- One maximum gRPC message size, `[rpc] max_message_bytes` (default **64 MiB**),
   applies everywhere; large prepared artifacts stay with their backend and control
   messages carry references ([message size](../../contracts/README.md#message-size)).
+  Controller event and central-metadata queues each budget at least four maximum
+  messages. These are serialized-payload ceilings, not preallocations or total RAM
+  guarantees; changing the shared transport ceiling requires a full application restart.
 - Control transport is versioned as `cephvr.control.v1`; Setup checks required
   compatibility, permitting compatible independently versioned components. Enum
   values are prefixed, required UNSPECIFIED=0 is reserved/rejected, and published
@@ -567,8 +582,11 @@ design; runtime monitoring remains unimplemented.
 - Setup operator feedback uses nonterminal operation progress, relayed by the
   owning coordinator with exact command, backend generation and session identity.
   The controller exposes only live, in-deadline Setup progress in participant
-  snapshots. Keep delivery bounded and optional; it cannot establish Ready,
-  complete an operation, extend a deadline or replace worker health evidence.
+  snapshots. Keep delivery bounded; E06's meaningful progress must reach the
+  receiving authority before its inactivity cutoff, including during long asset
+  validation, graphics preparation and prepared-artifact publication. Qualifying
+  updates renew only that backend's Setup inactivity allowance; they cannot
+  establish Ready, complete an operation or replace worker health evidence.
 - E03 governs GUI reconnect, explicit control acquisition and warning
   acknowledgement. There is no automatic GUI relaunch: after a crash the operator
   reopens the GUI from the normal launcher under the single-GUI guard while the
@@ -616,9 +634,13 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 216
+**Status:** Accepted · **Revision:** 221
 
-- Visual Stimulus policy version20 adds V22 selectable landmark/every-frame modes and combines the accepted file-owned projection limits
+- Visual Stimulus policy version34 declares V04's source-folder validation index, reusable Fold
+  texture/staging slots, deduplicated16-image batches, temporary bundles, fixed
+  two-epoch lookahead and paced image
+  upload batch and retains its linear fallback for untagged
+  PNG/TIFF images, retains V22 selectable landmark/every-frame modes and the accepted file-owned projection limits
   (V15/G01) with required scientific evidence and optional reduced review video
   using sequential timestamp-mapped frames and uncropped equal-cell recording with
   Bottom review rotation, no labels and no gutters for matching post-rotation sizes;

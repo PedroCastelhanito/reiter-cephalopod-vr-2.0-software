@@ -1,0 +1,26 @@
+[
+  {
+    "face": "front",
+    "max_error": 0.0,
+    "different_components": 0,
+    "components": 2097600
+  },
+  {
+    "face": "left",
+    "max_error": 0.0,
+    "different_components": 0,
+    "components": 2801600
+  },
+  {
+    "face": "right",
+    "max_error": 0.0,
+    "different_components": 0,
+    "components": 2849500
+  },
+  {
+    "face": "bottom",
+    "max_error": 0.0026960819959640503,
+    "different_components": 289671,
+    "components": 2575600
+  }
+]

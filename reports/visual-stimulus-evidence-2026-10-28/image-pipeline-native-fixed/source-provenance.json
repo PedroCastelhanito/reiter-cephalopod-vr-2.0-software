@@ -1,0 +1,22 @@
+{
+  "revision": "e4dd8f2694aa075380fe6711a884fe5894763c6f",
+  "dirty_tree": true,
+  "sha256": {
+    "src/cephvr/platform/windows/python_entry.py": "19c5dfbcbfebe486badb2c8b332f50622078ab1eb6617e7b0a5d3e1c2b4d4f49",
+    "src\\cephvr\\visual_stimulus\\resources\\image_bundle.py": "4fbb83f01654a3a07264d7d7841b09ee062301d4494b6132c3588f6cc1aae112",
+    "src\\cephvr\\visual_stimulus\\resources\\image_crops.py": "d82f2b431940ee8ff48dbc29e029bd779772979e47b8d1106f8841ef83c1b7cd",
+    "src\\cephvr\\visual_stimulus\\resources\\image_headers.py": "26ee3c46029360b2c97293588f9bf68ff64dde0b6385abdd5a8e6b76aae958a5",
+    "src\\cephvr\\visual_stimulus\\resources\\image_interpretation.py": "a77770a7c4863eeacf581f264bcd5dc5152edd3266d14c6956d27f8bbce820be",
+    "src\\cephvr\\visual_stimulus\\resources\\image_schedule.py": "f2d467c1aab7923552a684fd5fea334c1c5b753f5ffc510478de67d2e59f5e6d",
+    "src\\cephvr\\visual_stimulus\\resources\\image_source.py": "89ff921343150a344c365cc3017df9b9d808ddc3a302ee6c77ae5ec2d553ab77",
+    "src\\cephvr\\visual_stimulus\\resources\\image_timing.py": "77975ac09a55f13376ff1b017a52f0682f5aa60edc9a39c968e35a89d2ef076b",
+    "src\\cephvr\\visual_stimulus\\resources\\image_validation_index.py": "076364635ea218d18ca0b2f1e359f125ced8b0672ce4a88d87c084cd8777162d",
+    "src\\cephvr\\visual_stimulus\\resources\\image_worker.py": "81a7451ac9d76b8e70029c596e221d838178780ce17bdb73a3958b4af3d9dc20",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_bake.py": "952e8fa788c8acf339e8dcc5ec3a2fafcb33b9fc2b04649fa3625d0392673d8f",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_fit.py": "0af48a49d0277bfe8dc95cf10fafc2cf53448f26608e3efb5fc3e17a097974a7",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_fold.py": "0cc04d89c8198281f1d3c57bcedba9b4975580ffa0be833b4c8032e1f03f0b28",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_gpu.py": "1a1daef7cfd9cde103a111abe1d0ca6fb64b507c64e88b531316a04c16250ba0",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_pool.py": "b06fcebca12d6cd7cb58f938b5823cbf646b43f93bf60188cb10127bf4ac7b0d",
+    "src\\cephvr\\visual_stimulus\\rendering\\image_residency.py": "d288e573301e4a528747c4fcbd9f73f2fbaeee43939e32cf3f22c260d354a3d9"
+  }
+}

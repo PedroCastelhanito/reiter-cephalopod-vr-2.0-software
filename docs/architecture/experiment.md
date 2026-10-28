@@ -65,7 +65,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 <a id="e05"></a>
 ### E05 — Lifecycle and trial timing
 
-**Status:** Accepted · **Revision:** 100
+**Status:** Accepted · **Revision:** 102
 
 #### Lifecycle
 
@@ -261,10 +261,10 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   trial work and begins graceful output closure at that boundary. Slow reports or
   file closure cannot extend the recorded interval.
 - For normal trial end, the controller must receive valid Stopped evidence from
-  every required participant by `T + duration + 450 ms`. Missing evidence
+  every required participant by `T + duration + 1,050 ms`. Missing evidence
   interrupts the session while graceful cleanup continues. This allowance never
   extends trial activity; Finished retains its separate closure deadline.
-- For early interruption of an active trial, the same 450 ms Stopped allowance
+- For early interruption of an active trial, the same 1,050 ms Stopped allowance
   begins when the controller or supervisor issues the interruption, not when each
   backend receives it; delivery and reporting consume it. Missing evidence flags
   stopping as unconfirmed while graceful cleanup continues; this does not authorize
@@ -281,10 +281,13 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 - Applicable deadlines run independently on host-monotonic time; the earliest
   required failure controls. One state query may serve overlapping waits for the
   same component without resetting either deadline.
-- Setup, per-trial Ready and Finished each use one shared initial deadline across
-  all required participants. At expiry, freeze the missing set and query each once
-  (GetState/GetRetainedResult) in parallel under the one shared recovery budget.
-- Start clocks at controller-side phase/fan-out boundaries: SettingUp, Preparing,
+- Setup uses E06's per-participant inactivity allowance; meaningful preparation
+  updates renew only that participant's wait. There is no overall Setup duration
+  limit while required work progresses. Per-trial Ready and Finished retain one
+  shared initial deadline across all required participants. At expiry, freeze the
+  missing set and query each once (GetState/GetRetainedResult) in parallel under
+  the one shared recovery budget.
+- Start clocks at controller-side phase/fan-out boundaries: Setup work dispatch, Preparing,
   the normal trial end or original interruption issuance, recovery expiry, and the
   session-level supervisor-registration dispatch. Producer stop/closure reports
   never restart finalization deadlines. Transport and queue delay consume the

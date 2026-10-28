@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .image_crops import ImageCrop
 
 from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
@@ -16,10 +21,14 @@ from cephvr.visual_stimulus.resources.assets import PreparedAsset
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
 from cephvr.visual_stimulus.resources.media import Alpha, ImagePixels, Transfer
 
+from .image_timing import ImageTimings
+
 Check = Callable[[], None]
-LoadPixels = Callable[[Check], bytes]
+PixelBuffer = bytes | bytearray | memoryview
+LoadPixels = Callable[[Check], PixelBuffer]
 _CHUNK_BYTES = 1024 * 1024
-_IMAGE_CPU_BYTES_PER_PIXEL = 192
+_IMAGE_CPU_BYTES_PER_PIXEL = 128
+_RECIPE_CPU_BYTES_PER_PIXEL = 192
 _TEXTURE_GPU_BYTES_PER_PIXEL = 16
 
 
@@ -33,6 +42,9 @@ class ImageSource:
     load: LoadPixels
     output_ids: tuple[str, ...] | None = None
     field_recipe: Any = None
+    output_crops: tuple[ImageCrop, ...] = ()
+    timings: ImageTimings = field(default_factory=ImageTimings, compare=False)
+    finish_validation: Callable[[], None] | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,12 +69,16 @@ def validate_image_source(
     display: DisplayProfile | None = None,
     dependency_asset: Asset | None = None,
     dependency_source: PreparedAsset | None = None,
+    cached_info: ImageInfo | None = None,
+    defer_validation: bool = False,
+    validated: Callable[[ImageInfo], None] | None = None,
 ) -> tuple[ImageSource, ImageInfo]:
-    """Validate a protected image and return an evictable linear-RGBA loader.
+    """Inspect/validate a protected image and return an evictable linear-RGBA loader.
 
     The source handle stays externally owned. Validation reserves the complete
     decoder/conversion peak before reading; the returned byte string is the
-    bottom-up premultiplied float32 RGBA upload format.
+    bottom-up premultiplied float32 RGBA upload format. Deferred inspection must
+    complete full validation through load/finish_validation before Ready.
     """
     if not owner or output_count <= 0 or max_document_bytes <= 0:
         raise ValueError("image source owner and positive limits are required")
@@ -87,41 +103,46 @@ def validate_image_source(
     encoded_bytes = source.byte_count + (
         dependency_source.byte_count if dependency_source is not None else 0
     )
-    temporary_owner = f"{owner}:validation"
-    try:
-        pixels, recipe_pattern = _load_image_pixels(
-            asset,
-            source,
-            check=budget.check_cancelled_or_expired,
-            budget=budget,
-            owner=temporary_owner,
-            encoded_bytes=encoded_bytes,
-            max_document_bytes=max_document_bytes,
-            display=display,
-            dependency_asset=dependency_asset,
-            dependency_source=dependency_source,
-        )
-        validation_bytes = _linear_rgba_bytes(pixels)
-        info = ImageInfo(
-            pixels.width,
-            pixels.height,
-            pixels.dtype,
-            pixels.channel_order,
-            pixels.transfer,
-            pixels.alpha,
-            pixels.field_recipe,
-        )
-        _validate_linear_output(validation_bytes, info)
-        del validation_bytes
-        del pixels
-    finally:
-        budget.release(owner=temporary_owner)
+    recipe_pattern = None
+    if cached_info is not None and not is_recipe:
+        info = cached_info
+        budget.check_cancelled_or_expired()
+    else:
+        temporary_owner = f"{owner}:validation"
+        try:
+            pixels, recipe_pattern = _load_image_pixels(
+                asset,
+                source,
+                check=budget.check_cancelled_or_expired,
+                budget=budget,
+                owner=temporary_owner,
+                encoded_bytes=encoded_bytes,
+                max_document_bytes=max_document_bytes,
+                display=display,
+                dependency_asset=dependency_asset,
+                dependency_source=dependency_source,
+                metadata_only=defer_validation,
+            )
+            info = ImageInfo(
+                pixels.width,
+                pixels.height,
+                pixels.dtype,
+                pixels.channel_order,
+                pixels.transfer,
+                pixels.alpha,
+                pixels.field_recipe,
+            )
+            del pixels
+        finally:
+            budget.release(owner=temporary_owner)
     parse_bytes = 32 * source.byte_count if is_recipe else 0
     cpu_bytes = (
         2 * encoded_bytes
         + _read_buffer_overhead(encoded_bytes)
         + parse_bytes
-        + info.width * info.height * _IMAGE_CPU_BYTES_PER_PIXEL
+        + info.width
+        * info.height
+        * (_RECIPE_CPU_BYTES_PER_PIXEL if is_recipe else _IMAGE_CPU_BYTES_PER_PIXEL)
     )
     gpu_bytes = info.width * info.height * _TEXTURE_GPU_BYTES_PER_PIXEL * output_count
     key = _content_key(
@@ -133,7 +154,12 @@ def validate_image_source(
         recipe_pattern=recipe_pattern,
     )
 
-    def load(check: Check) -> bytes:
+    validation_done = cached_info is not None or not defer_validation
+    timings = ImageTimings()
+
+    def load(check: Check) -> PixelBuffer:
+        nonlocal validation_done
+        started = time.perf_counter_ns()
         loaded, _ = _load_image_pixels(
             asset,
             source,
@@ -146,9 +172,44 @@ def validate_image_source(
             dependency_asset=dependency_asset,
             dependency_source=dependency_source,
         )
+        if (
+            loaded.width,
+            loaded.height,
+            loaded.dtype,
+            loaded.channel_order,
+            loaded.transfer,
+            loaded.alpha,
+        ) != (
+            info.width,
+            info.height,
+            info.dtype,
+            info.channel_order,
+            info.transfer,
+            info.alpha,
+        ):
+            raise ValueError(
+                "decoded interpretation differs from prepared image metadata"
+            )
+        decoded = time.perf_counter_ns()
+        timings.record("source_decode", decoded - started)
         result = _linear_rgba_bytes(loaded)
+        timings.record("source_convert", time.perf_counter_ns() - decoded)
         _validate_linear_output(result, info)
+        if not validation_done:
+            if validated is not None:
+                validated(info)
+            validation_done = True
         return result
+
+    def finish_validation() -> None:
+        if validation_done:
+            return
+        temporary_owner = f"{owner}:final-validation"
+        budget.reserve(owner=temporary_owner, cpu_bytes=cpu_bytes, gpu_bytes=0)
+        try:
+            load(budget.check_cancelled_or_expired)
+        finally:
+            budget.release(owner=temporary_owner)
 
     return ImageSource(
         key,
@@ -158,6 +219,8 @@ def validate_image_source(
         gpu_bytes,
         load,
         field_recipe=info.field_recipe,
+        timings=timings,
+        finish_validation=finish_validation if defer_validation else None,
     ), info
 
 
@@ -227,6 +290,7 @@ def _load_image_pixels(
     display: DisplayProfile | None,
     dependency_asset: Asset | None,
     dependency_source: PreparedAsset | None,
+    metadata_only: bool = False,
 ) -> tuple[ImagePixels, str | None]:
     is_recipe = asset.profile in TEXTURE_RECIPE_PROFILES
     base_bytes = (
@@ -253,7 +317,12 @@ def _load_image_pixels(
                 None
                 if budget is None
                 else lambda width, height: _reserve_peak(
-                    budget, owner or "", base_bytes, width, height
+                    budget,
+                    owner or "",
+                    base_bytes,
+                    width,
+                    height,
+                    _RECIPE_CPU_BYTES_PER_PIXEL,
                 )
             ),
             max_document_bytes=max_document_bytes,
@@ -268,6 +337,7 @@ def _load_image_pixels(
         pixels = decode_image(
             asset,
             raw,
+            metadata_only=metadata_only,
             reserve=(
                 None
                 if budget is None
@@ -286,12 +356,13 @@ def _reserve_peak(
     base_bytes: int,
     width: int,
     height: int,
+    bytes_per_pixel: int = _IMAGE_CPU_BYTES_PER_PIXEL,
 ) -> None:
     if width <= 0 or height <= 0:
         raise ValueError("decoded image dimensions must be positive")
     budget.reserve(
         owner=owner,
-        cpu_bytes=base_bytes + width * height * _IMAGE_CPU_BYTES_PER_PIXEL,
+        cpu_bytes=base_bytes + width * height * bytes_per_pixel,
         gpu_bytes=0,
     )
 
@@ -472,6 +543,7 @@ def _surface_key(display: DisplayProfile | None) -> object:
     }
 
 
+@lru_cache(maxsize=4)
 def _package_version(package: str) -> str:
     try:
         return version(package)
@@ -479,13 +551,13 @@ def _package_version(package: str) -> str:
         return "unavailable"
 
 
-def _linear_rgba_bytes(pixels: ImagePixels) -> bytes:
+def _linear_rgba_bytes(pixels: ImagePixels) -> memoryview:
     from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
 
     return linear_rgba_bytes(pixels)
 
 
-def _validate_linear_output(raw: bytes, info: ImageInfo) -> None:
+def _validate_linear_output(raw: PixelBuffer, info: ImageInfo) -> None:
     expected = info.width * info.height * _TEXTURE_GPU_BYTES_PER_PIXEL
     if len(raw) != expected:
         raise ValueError("decoded image dimensions differ from its RGBA output")

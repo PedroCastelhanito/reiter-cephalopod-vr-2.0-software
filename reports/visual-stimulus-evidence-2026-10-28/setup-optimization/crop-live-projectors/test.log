@@ -1,0 +1,32 @@
+{"host_ns": 1182907069292200, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}]}}
+{"host_ns": 1182907078177000, "kind": "protocol", "value": {"path": "C:\\Users\\ReiterU_PC\\Desktop\\Alsu\\protocols\\texture-presentation-1hr_protocol.json", "sha256": "70551ac8c2b0d4d2b66d0b2ac43146be36eb9fe908efe7fccfe5ade74f06342b"}}
+{"host_ns": 1182909254001500, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}]}}
+{"host_ns": 1182909256156400, "kind": "apply", "value": {"command_id": "946fc14c-a2fc-4d65-80e9-df59eb65c32b", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1182911388032100, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Reserving output folder\u2026", "complete": false}]}}
+{"host_ns": 1182911390350500, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Registering backends\u2026", "complete": false}]}}
+{"host_ns": 1182911402123800, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Preparing backends\u2026", "complete": false}]}}
+{"host_ns": 1182911409081300, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": false}]}}
+{"host_ns": 1183280240379200, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}]}}
+{"host_ns": 1183280240977300, "kind": "setup", "value": {"command_id": "1eaaa03b-e043-4875-a0db-1701de10ef9d", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: 1 validation error for PreparedImageBundle\ncrops\n  Input should be a valid tuple [type=tuple_type, input_value=[{'output_id': 'calibrati...d': 'diagnostic_right'}], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/tuple_type"}}
+{"host_ns": 1183280251368100, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}, {"command": "CancelSetup", "progress": "Cleaning up\u2026", "complete": false}]}}
+{"host_ns": 1183283042195300, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": true, "operations": [{"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}, {"command": "CancelSetup", "progress": "interruption and cleanup confirmed", "complete": true}]}}
+{"host_ns": 1183283042880100, "kind": "cancel", "value": {"command_id": "613ada0d-955b-4446-a8c8-6f600260947a", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1183283047285400, "kind": "cleanup", "value": {"confirmed": true}}
+{"host_ns": 1183285344841800, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": true, "operations": [{"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}, {"command": "CancelSetup", "progress": "interruption and cleanup confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}]}}
+{"host_ns": 1183285345798300, "kind": "restore", "value": {"command_id": "703ab781-6efb-474d-b2b3-ecb8dba4f605", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_projectors.py", line 119, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_projectors.py", line 94, in main
+    assert setup.succeeded, setup
+           ^^^^^^^^^^^^^^^
+AssertionError: CommandOutcome(command_id='1eaaa03b-e043-4875-a0db-1701de10ef9d', complete=True, succeeded=False, needs_input=False, failure="SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: 1 validation error for PreparedImageBundle\ncrops\n  Input should be a valid tuple [type=tuple_type, input_value=[{'output_id': 'calibrati...d': 'diagnostic_right'}], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/tuple_type")

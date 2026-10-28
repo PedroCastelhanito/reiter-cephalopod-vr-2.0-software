@@ -9123,12 +9123,26 @@ def test_spikeglx_sources_preserve_maps_and_follow_enablement(window: DashboardW
 def test_projector_config_tabs_keep_column_width_and_table_drafts(
     window: DashboardWindow, app: QApplication, style: str, width: int
 ):
+    from PyQt6.QtCore import QEvent, QObject
+    from PyQt6.QtTest import QTest
+
+    from cephvr.gui.retro_instruments import TabMarkers
+
     window.appearance.select(style, persist=False)
     window.resize(width, 800)
     window.page_buttons[2].click()
     window.devices.tabs.setCurrentIndex(2)
     panel = window.devices.projectors
     widths = []
+    moves = []
+
+    class WatchMoves(QObject):
+        def eventFilter(self, watched, event):
+            if event.type() == QEvent.Type.Move:
+                moves.append(panel.setup_tabs.pos())
+            return False
+
+    watcher = WatchMoves(panel.setup_tabs)
     for index in (0, 1, 2, 0):
         panel.setup_tabs.setCurrentIndex(index)
         app.processEvents()
@@ -9158,6 +9172,18 @@ def test_projector_config_tabs_keep_column_width_and_table_drafts(
             panel.configuration.geometry(),
             panel.setup_pages.geometry(),
         )
+        # Hover must not let the layout move the centered bar back to its slot.
+        QTest.qWait(20)
+        moves.clear()
+        panel.setup_tabs.installEventFilter(watcher)
+        markers = panel.setup_tabs.findChild(TabMarkers)
+        assert markers is not None
+        for hovered in (0, 1, 2, -1):
+            markers.set_hover(hovered)
+            app.processEvents()
+            app.processEvents()
+        panel.setup_tabs.removeEventFilter(watcher)
+        assert not moves
     assert len(set(widths)) == 1
     assert not hasattr(panel.timing, "pacing")
     for face, value in (
@@ -10426,9 +10452,16 @@ def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
     editor.hierarchy.contents.block_actions.add.click()
     assert len(editor.program.sequence[0].body) == 2
     assert editor.node_index == 1
-    added = editor.program.sequence[0].body[1].epoch_id
+    from cephvr.gui.protocol_nodes import edit_epoch_metadata
+
+    editor.commit(edit_epoch_metadata(editor.program, (0, 1), "Epoch_2", "12"))
+    added = editor.program.sequence[0].body[1].duration
     editor.edit_epoch("earlier")
-    assert editor.program.sequence[0].body[0].epoch_id == added
+    assert editor.program.sequence[0].body[0].duration == added
+    assert [n.epoch_id for n in editor.program.sequence[0].body] == [
+        "Epoch_1",
+        "Epoch_2",
+    ]
     editor.edit_epoch("duplicate")
     assert len(editor.program.sequence[0].body) == 3
     assert len({node.epoch_id for node in editor.program.sequence[0].body}) == 3
@@ -10438,6 +10471,90 @@ def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
     before = editor.program
     editor.edit_epoch("remove")
     assert editor.program == before
+
+
+def test_epoch_card_uses_current_number_for_stale_identifier(app, monkeypatch):
+    from PyQt6.QtGui import QPainter
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_timeline import ProgramTimeline
+
+    program = blank_program()
+    program = program.model_copy(
+        update={
+            "sequence": (
+                program.sequence[0].model_copy(update={"epoch_id": "Epoch_2"}),
+            )
+        }
+    )
+    texts = []
+    draw_text = QPainter.drawText
+
+    def record_text(painter, *args):
+        texts.append(args[-1])
+        return draw_text(painter, *args)
+
+    monkeypatch.setattr(QPainter, "drawText", record_text)
+    timeline = ProgramTimeline()
+    timeline.resize(800, 100)
+    timeline.set_program(program)
+    timeline.grab()
+    assert "Epoch 1" in texts
+    assert "Epoch 2" not in texts
+    timeline.close()
+
+
+def test_epoch_numbers_follow_trial_order_and_saved_history(window, tmp_path):
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_groups import make_group
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    editor = window.protocol.editor
+    original, _ = make_group(review_program(), (), 0, 1, 4000, False)
+    editor.set_program(original)
+    assert editor.hierarchy.contents.epoch_numbers == {
+        "Baseline": 1,
+        "Flow": 2,
+        "Recovery": 3,
+    }
+    editor.edit_epoch("later")
+    moved = editor.program
+    assert [n.epoch_id for n in moved.sequence[0].body] == ["Epoch_1", "Epoch_2"]
+    assert moved.sequence[1].epoch_id == "Epoch_3"
+    assert moved.sequence[0].body[0].scene_id == original.sequence[0].body[1].scene_id
+    assert moved.sequence[0].repetitions == 4000
+    editor.undo()
+    assert editor.program == original
+    editor.undo(True)
+    assert editor.program == moved
+    path = tmp_path / "numbered.json"
+    window.protocol.save_program(str(path))
+    assert parse_program_json(path.read_text(), max_bytes=1_048_576) == moved
+    editor.edit_epoch("remove")
+    assert editor.program.sequence[0].body[0].epoch_id == "Epoch_1"
+    assert editor.program.sequence[1].epoch_id == "Epoch_2"
+
+
+def test_epoch_renumbering_preserves_imported_group_identity():
+    from cephvr.gui.program_editing import renumber_epochs, validate
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_groups import make_group
+    from cephvr.gui.protocol_nodes import edit_epoch
+
+    original, _ = make_group(review_program(), (), 0, 1, 2, False)
+    data = original.model_dump(mode="json")
+    data["sequence"][0]["group_id"] = "Epoch_1"
+    original = validate(data)
+    assert renumber_epochs(original, original) is original
+    changed, _ = edit_epoch(original, (0, 0), "later")
+    numbered = renumber_epochs(changed, original)
+    assert numbered.sequence[0].group_id == "Epoch_1"
+    assert [n.epoch_id for n in numbered.sequence[0].body] == [
+        "Epoch_1_epoch",
+        "Epoch_2",
+    ]
+    assert numbered.sequence[1].epoch_id == "Epoch_3"
+    validate(numbered.model_dump(mode="json"))
 
 
 def test_add_prepared_file_picker_does_not_create_placeholder_on_cancel(
@@ -10912,19 +11029,19 @@ def test_looming_primary_controls_and_custom_size_fidelity(
     size = next(f for f in parameters.forms if isinstance(f, LoomingSize))
     size.start.setText("2")
     size.end.setText("45")
-    size.duration.setText("12.125")
+    assert not hasattr(size, "duration")
     size.changed.emit()
     assert parameters.apply()
     node = editor.program.sequence[0].settings[0]
     assert node.width == node.height
     assert node.width.knots[0].value == 2
     assert node.width.knots[1].value == 45
-    assert node.width.knots[1].time.ns() == 12_125_000_000
+    assert node.width.knots[1].time.ns() == 60_000_000_000
     before = editor.program
     size.custom.setChecked(True)
     assert parameters.apply() and editor.program == before
     size.custom.setChecked(False)
-    size.duration.setText("0")
+    size.start.setText("0")
     size.changed.emit()
     assert not parameters.apply()
     assert editor.program == before
@@ -14048,7 +14165,7 @@ def test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames(
     app.processEvents()
     view = preview.rig_view
     assert view.rig == rig
-    assert view.azimuth == 25.0
+    assert view.azimuth == -35.0
     view.grab()
     assert view.face_labels["Left · Off"].x() < view.face_labels["Right · Off"].x()
     assert max(p[0] for p in view.screen_planes()["Left"]) < rig.subject[0]
@@ -16708,6 +16825,7 @@ async def test_gui_firmware_dispatch_pins_selected_sketch_or_image(tmp_path, suf
 
 
 def test_group_actions_preserve_contents_selection_and_history(window, tmp_path):
+    from cephvr.gui.program_editing import renumber_epochs
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
@@ -16718,10 +16836,11 @@ def test_group_actions_preserve_contents_selection_and_history(window, tmp_path)
     assert editor.path == (0, 0)
     editor.timeline.block_actions.add.click()
     assert len(editor.program.sequence) == 2 and editor.path == (1, 0)
-    assert editor.program.sequence[0] == original.sequence[0]
+    numbered_original = renumber_epochs(original, editor.program)
+    assert editor.program.sequence[0] == numbered_original.sequence[0]
     added = editor.snapshot()
     editor.remove_block(((editor.path[0],),))
-    assert editor.program.sequence == original.sequence
+    assert editor.program.sequence == numbered_original.sequence
     assert editor.path == (0, 0)
     editor.undo()
     assert editor.snapshot() == added
@@ -17203,6 +17322,7 @@ def test_grouped_timeline_large_repeat_and_visible_paint_are_bounded(
 
 
 def test_flat_group_initial_trials_and_legacy_imports(app):
+    from cephvr.gui.program_editing import renumber_epochs
     from cephvr.gui.protocol_document import review_program
     from cephvr.gui.protocol_groups import make_group
     from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
@@ -17239,7 +17359,9 @@ def test_flat_group_initial_trials_and_legacy_imports(app):
     editor.subgroup.generate()
     assert editor.program == nested
     editor.add_group()
-    assert editor.program.sequence[:-1] == nested.sequence
+    assert (
+        editor.program.sequence[:-1] == renumber_epochs(nested, editor.program).sequence
+    )
     window.close()
     window.deleteLater()
     app.processEvents()
@@ -17248,6 +17370,7 @@ def test_flat_group_initial_trials_and_legacy_imports(app):
 def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_path):
     from PyQt6.QtWidgets import QTabBar
 
+    from cephvr.gui.program_editing import renumber_epochs
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import review_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
@@ -17280,7 +17403,10 @@ def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_
     app.processEvents()
     assert not form.notice.text()
     assert editor.selected_paths == ((0, 3),)
-    assert editor.program.sequence[0].body[:3] == original.sequence[0].body
+    assert (
+        editor.program.sequence[0].body[:3]
+        == renumber_epochs(original, editor.program).sequence[0].body
+    )
     assert all(
         n.duration.duration.seconds == "12" for n in editor.program.sequence[0].body[3:]
     )
@@ -17430,7 +17556,7 @@ def test_unified_subgroup_duration_preserves_each_fade_and_batch_identity():
     from cephvr.gui.program_editing import validate
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import review_program
-    from cephvr.gui.stimulus_fades import envelope, fade_values, retime_fades
+    from cephvr.gui.stimulus_fades import envelope, fade_values, retime_epoch_settings
     from cephvr.gui.subgroup_operations import update_subgroup
     from cephvr.gui.subgroup_structure import edit_subgroup
     from cephvr.visual_stimulus.config.models.program_model import Epoch
@@ -17448,7 +17574,7 @@ def test_unified_subgroup_duration_preserves_each_fade_and_batch_identity():
     before = program.model_copy(update={"sequence": (program.sequence[0].body[0],)})
     edited = before.sequence[0].model_dump(mode="json")
     edited["duration"]["duration"]["seconds"] = "80"
-    retime_fades(edited["settings"], 60_000_000_000, 80_000_000_000)
+    retime_epoch_settings(edited["settings"], 60_000_000_000, 80_000_000_000)
     reference = before.model_copy(
         update={"sequence": (Epoch.model_validate_json(json.dumps(edited)),)}
     )
@@ -17878,7 +18004,7 @@ def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, 
     from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QPushButton
 
-    from cephvr.gui.program_editing import validate
+    from cephvr.gui.program_editing import renumber_epochs, validate
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import review_program
 
@@ -17934,7 +18060,8 @@ def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, 
     )
     before_delete = editor.program
     QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
-    assert editor.program.sequence == before_delete.sequence[1:]
+    expected = before_delete.model_copy(update={"sequence": before_delete.sequence[1:]})
+    assert editor.program == renumber_epochs(expected, before_delete)
     editor.undo()
     assert editor.program == before_delete
     # A bad draft must block deletion without changing document or selection.
@@ -17972,7 +18099,7 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
     open_protocol_group(editor)
     trials = editor.trials
     editor.drafts[editor.index].name = "Primate - Part 1 of 2 (10 minutes)"
-    trials.item(editor.index).setText(editor.drafts[editor.index].name)
+    assert trials.item(editor.index).text() == "Trial 1"
     window.resize(1280, 1100)
     app.processEvents()
     assert editor.trial_card.height() == editor.timeline_card.height()
@@ -18042,6 +18169,19 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app, style):
     remove.click()
     editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
     assert editor.drafts[editor.index] is selected and len(editor.drafts) == 2
+    assert [trials.item(i).text() for i in range(2)] == ["Trial 1", "Trial 2"]
+    editor.add_trial()
+    assert trials.item(2).text() == "Trial 3"
+    from cephvr.gui.protocol_snapshot import capture_protocol, restore_protocol
+
+    saved = capture_protocol(window.protocol)
+    restore_protocol(window.protocol, saved)
+    assert [trials.item(i).text() for i in range(3)] == [
+        "Trial 1",
+        "Trial 2",
+        "Trial 3",
+    ]
+    assert capture_protocol(window.protocol) == saved
     for _ in range(8):
         editor.add_trial()
     for width in (1280, 720):
@@ -22889,6 +23029,126 @@ def test_preview_controls_hide_when_unavailable_and_restore(app, gate):
 
 @pytest.mark.parametrize("ready", [False, True])
 @pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
+@pytest.mark.parametrize(
+    "family",
+    [
+        "Uniform",
+        "Image",
+        "Video",
+        "Sparse noise",
+        "Texture drift",
+        "Grating",
+        "3D arena",
+    ],
+)
+def test_stimulus_families_monitor_uses_live_preview(app, ready, mode, family):
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    workspace = PreviewWorkspace(None)
+    area = workspace.stimulus_area
+    area.set_projectors(("Left", "Front", "Right", "Bottom"))
+    program = blank_program().model_copy(
+        update={
+            "category": "navigation_3d"
+            if family == "3D arena"
+            else "media_presentation"
+        }
+    )
+    for face in () if family == "3D arena" else area.projectors:
+        program = add_stimulus(program, 0, family, (face,))
+    if family == "3D arena":
+        program = add_stimulus(program, 0, family, (), subject_height_mm=80)
+    workspace.timeline.set_program(program, "", family)
+    area.mode.setCurrentText(mode)
+    workspace.advanced_toggle.setChecked(True)
+    view = PreviewView("stimulus", "Visual stimulus", active=True, available=ready)
+    workspace.apply_views((view,), allowed=True)
+    requests = []
+    workspace.visibility_requested.connect(lambda *args: requests.append(args))
+    control = workspace.controls["stimulus"]
+    assert not control.isHidden() and control.isEnabled()
+    control.click()
+    if not ready:
+        assert requests == []
+        assert "stimulus" in workspace.waiting
+        workspace.apply_views((replace(view, available=True),), allowed=True)
+    assert requests == [("stimulus", True)]
+    workspace.apply_views((replace(view, available=True, visible=True),), allowed=True)
+    assert tuple(area.frames) == (
+        ("",)
+        if mode == "Combined" or family == "3D arena"
+        else ("Left", "Front", "Right", "Bottom")
+    )
+    assert all(not frame.isHidden() for frame in area.frames.values())
+    assert all(not cell.isHidden() for cell in area.cells)
+    has_plots = family in ("Texture drift", "Grating")
+    assert workspace.plots_toggle.isHidden() == (not has_plots)
+    assert bool(workspace.timeline.all_panels) == has_plots
+    if not has_plots:
+        assert workspace.timeline.motion_section.isHidden()
+        assert not workspace.timeline.dials and not workspace.timeline.maps
+        assert workspace.timeline.size_lane.isHidden()
+    else:
+        workspace.timeline.set_playback(0.5, running=False)
+        area.update_instruments()
+        assert (
+            not workspace.timeline.motion_section.isHidden()
+            if mode == "Combined"
+            else all(
+                not card.isHidden()
+                for card in workspace.timeline.projector_cards.values()
+            )
+        )
+    workspace.close()
+    workspace.deleteLater()
+    app.processEvents()
+
+
+def test_monitor_plots_filter_mixed_epochs_and_restore_toggle(app):
+    from cephvr.gui.previews import PreviewWorkspace
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    workspace = PreviewWorkspace(None)
+    workspace.stimulus_area.set_projectors(("Front",))
+    workspace.advanced_toggle.setChecked(True)
+    program = add_stimulus(blank_program(), 0, "Grating", ("Front",))
+    program = add_stimulus(program, 0, "Image", ("Front",))
+    epoch = program.sequence[0]
+    grating, image = epoch.settings
+    uniform = (
+        add_stimulus(blank_program(), 0, "Uniform", ("Front",)).sequence[0].settings[0]
+    )
+    second = epoch.model_copy(
+        update={"epoch_id": "uniform", "settings": (uniform, image)}
+    )
+    program = program.model_copy(update={"sequence": (epoch, second)})
+    timeline = workspace.timeline
+    timeline.set_program(program, "", "Mixed")
+    assert len(timeline.all_panels) == 1
+    assert timeline.all_panels[0].source.settings == (grating, None)
+    assert not workspace.plots_toggle.isHidden()
+    timeline.set_elapsed(timeline.epochs[0].end + 0.1)
+    assert not timeline.active_sources
+    assert timeline.motion_section.isHidden()
+    workspace.plots_toggle.click()
+    assert not workspace.plots_toggle.isChecked()
+    noise = add_stimulus(blank_program(), 0, "Sparse noise", ("Front",))
+    timeline.set_program(noise, "", "Noise")
+    assert workspace.plots_toggle.isHidden()
+    assert not timeline.all_panels
+    timeline.set_program(program, "", "Mixed")
+    assert not workspace.plots_toggle.isHidden()
+    assert not workspace.plots_toggle.isChecked()
+    workspace.close()
+    workspace.deleteLater()
+    app.processEvents()
+
+
+@pytest.mark.parametrize("ready", [False, True])
+@pytest.mark.parametrize("mode", ["Combined", "Per-projector"])
 def test_stimulus_preview_belongs_to_advanced_independently_of_video(app, ready, mode):
     from cephvr.gui.previews import PreviewWorkspace
     from cephvr.gui.protocol_document import blank_program
@@ -25523,7 +25783,12 @@ def test_presentation_rows_keep_layers_and_fades_with_motion(app, preset):
     assert any(isinstance(form, EpochMotion) for form in row.parameters.forms) == (
         preset != "Image"
     )
-    assert any("Direction" in caption for caption in captions) == (preset != "Video")
+    assert any("Direction" in caption for caption in captions) == (
+        preset == "Sine grating"
+    )
+    if preset == "Image":
+        assert "Fit" in captions
+        assert not any("speed" in caption.lower() for caption in captions)
     assert not composer.mode.isEnabled()
     row.parameters.fades.fade_in.setText("0.5")
     row.parameters.fades.mark_changed()
@@ -25669,8 +25934,7 @@ def test_category_preview_modes_keep_camera_space(app):
     assert area.mode.isHidden()
     assert tuple(area.frames) == ("",)
     assert workspace.preview_host.isVisible()
-    assert len(workspace.timeline.maps) == 1
-    assert workspace.timeline.maps[0].isVisibleTo(workspace)
+    assert not workspace.timeline.maps
     composer = EpochComposer()
     composer.program, composer.active_mode = arena, 1
     composer.set_screens(("Front",))
@@ -25724,7 +25988,7 @@ def test_stimulus_preview_reclaims_camera_space_and_fits_static_bottom(
     )
     program = program.model_copy(
         update={
-            "category": "texture_drift",
+            "category": "media_presentation",
             "sequence": (epoch.model_copy(update={"settings": tuple(settings)}),),
         }
     )

@@ -13,9 +13,13 @@ sparse sequences no longer load.
 
 Choose Media presentation → Sparse noise in a projector/layer row and set square size
 (mm), minimum center distance (mm), activation probability, background (linear),
-explicit seed, pattern count and duration (seconds) in the epoch editor. Edits apply
-directly to the program's `sparse_noise` layer (`appearance`, `pattern_count`,
-`pattern_duration`); there are no image assets, prepared bundle or Apply step.
+and explicit seed in the epoch editor. Epoch duration and group repetitions own
+timing and count. Edits apply
+directly to the program's `sparse_noise` layer. New GUI layers set `pattern_count=1`
+and `pattern_duration=null`: one pattern lasts the whole epoch; repetitions advance
+its deterministic seed under [V04](../../docs/architecture/visual_stimulus.md#v04).
+Legacy explicit count/duration sequences retain their playback until edited.
+There are no image assets, prepared bundle or Apply step.
 Compilation fixes the layer's width/height to the grid resolved from the active
 display, so geometry changes need no re-authoring.
 

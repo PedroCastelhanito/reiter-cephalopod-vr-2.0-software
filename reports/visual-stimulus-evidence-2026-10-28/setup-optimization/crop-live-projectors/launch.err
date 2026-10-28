@@ -1,0 +1,6 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: 1 validation error for PreparedImageBundle
+crops
+  Input should be a valid tuple [type=tuple_type, input_value=[{'output_id': 'calibrati...d': 'diagnostic_right'}], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.13/v/tuple_type
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

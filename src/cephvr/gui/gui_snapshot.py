@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
@@ -28,6 +29,7 @@ from cephvr.gui.protocol_snapshot import (
     validate_protocol,
 )
 from cephvr.gui.recordings import RecordingsCard
+from cephvr.gui.stimulus_memory import StimulusMemory
 from cephvr.gui.tracking import TrackingPage
 
 
@@ -72,6 +74,9 @@ class GuiSnapshot:
             "version": 1,
             "experiment": self.experiment.capture(),
             "protocol": protocol,
+            "stimulus_defaults": deepcopy(
+                pages.protocol.editor.subgroup.composer.stimulus_memory.entries
+            ),
             "microcontroller": pages.devices.microcontroller.snapshots.capture(),
             "projectors": {
                 "configuration": projectors.calibration_files.snapshot(),
@@ -93,7 +98,12 @@ class GuiSnapshot:
                 "projectors",
                 "spikeglx",
                 "tracking",
-            },
+            }
+            | (
+                {"stimulus_defaults"}
+                if isinstance(value, dict) and "stimulus_defaults" in value
+                else set()
+            ),
         )
         experiment = self.experiment.validate(data["experiment"])
         validate_protocol(data["protocol"])
@@ -126,11 +136,18 @@ class GuiSnapshot:
         for key, item in participation.items():
             boolean(item, key)
         result = dict(data)
+        if "stimulus_defaults" in data:
+            result["stimulus_defaults"] = StimulusMemory.validate(
+                data["stimulus_defaults"]
+            )
         result["tracking"] = self.pages.tracking.validate_snapshot(data["tracking"])
         return result
 
     def restore(self, data: JSON) -> None:
         pages = self.pages
+        pages.protocol.editor.subgroup.composer.stimulus_memory.entries = (
+            StimulusMemory.validate(data.get("stimulus_defaults", {}))
+        )
         self.experiment.restore(data["experiment"])
         restore_protocol(pages.protocol, data["protocol"])
         pages.protocol.notify_linked_media(data["protocol"])

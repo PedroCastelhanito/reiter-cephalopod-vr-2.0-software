@@ -1,5 +1,903 @@
 # Visual Stimulus status
 
+## Setup inactivity timeout — 2026-10-28
+
+[E06](../docs/architecture/system-contracts.md#e06)/
+[E08](../docs/architecture/system-contracts.md#e08) inactivity renewal now spans
+CPU validation, graphics uploads, serialization and prepared-artifact publication.
+Resource checks read the live cutoff; confirmed meaningful progress carries an
+increasing sequence through the coordinator to the controller. Publication has
+the current inactivity allowance rather than the remaining total Setup budget.
+Controller/renderer Ready, identity, health and cleanup checks remain authoritative.
+[Implementation, local tests and limitations](runtime.md#setup-inactivity-timeout--2026-10-28)
+include 1772 passing tests / 5 subtests. The historical 32 MB publication failure
+is addressed in code; native projector-only full-set publication/Ready now pass in312.52s, followed by
+confirmed cleanup. Stall isolation and combined acceptance remain in the
+[single rig checklist](rig-verification.md#setup-inactivity).
+
+## Image pipeline audit — 2026-10-28
+
+**Hash-provider repair verified on the native rig:** after confirmed shutdown/relaunch,
+repeated the same600-image stimulus configuration/trials, four projectors and90-second
+preview/recording/camera-off test. Cold Setup183.473s (previous214.223s;14.4% lower),
+warm139.932s (previous192.553s;27.3% lower). First cancel and final Abort/cleanup pass;
+original configuration restored exactly, no crop folders remain. Normal validation-index
+reader reports600/600 hits with fresh source hashes and matching current/tested validator.
+Tracked image/bootstrap source hashes stayed unchanged during this run. Individual runs
+establish observed improvements, not a statistical performance guarantee.
+[Assessment and stage data](visual-stimulus-evidence-2026-10-28/image-pipeline-native-fixed/assessment.json),
+[source provenance](visual-stimulus-evidence-2026-10-28/image-pipeline-native-fixed/source-provenance.json).
+
+90.937s playback:5,458 returned submissions/output, approximately60.01Hz,21,832 image
+selections and zero holds. **Zero gaps above50ms on all four outputs**, versus224–225
+before the fix. One gap above25ms/output remains, maximum30.998ms (before105.169ms).
+Native bundle hashing averages15.656ms, maximum17.345ms, versus77.037/95.505ms before.
+Maximum swap time falls from99.549ms to15.044ms; upload remains3.118ms, draw10.562ms,
+release0.032ms. Front finish has a27.562ms maximum; no per-frame correlation was retained
+to attribute the isolated31ms gap. This confirms removal of the recurring hash/GIL stalls
+within this workload, not elimination of every timing miss or proof of optical frame lock.
+
+The exact managed bootstrap now selects `_hashlib` by default: twelve41.3MB hashes take
+14.69–15.16ms with observer maximum1.670ms, versus prior75–77ms/78.691ms. Explicit
+OpenSSL and managed-default digests remain identical. [Benchmark](visual-stimulus-evidence-2026-10-28/image-pipeline-native-fixed/hash-probe.json).
+`renderer-sha-provider` is complete;20-minute/full-hour combined-load and optical
+acceptance remain in the [rig checklist](rig-verification.md#cropped-image-presentation).
+No runtime or policy edits were made in this verification task.
+
+**Pre-fix evidence retained for comparison:**
+
+**Native Setup and gap attribution:** owner-authorized600-image projector-only tests
+complete: first Setup214.223s, second192.553s, first CancelSetup and final Abort/cleanup
+successful; original protobuf configuration restored exactly and no temporary crop
+directories remain. Relative to historical312.52s Setup, cold preparation is31.5%
+faster; warm is10.1% faster than this cold run. These are individual observations,
+not a controlled distribution. Preview and recording were off; cameras/Tracking/
+synchronization were disabled temporarily and restored. The old index validator
+mismatched before cold completion; the tested validator generated600 entries and the
+second Setup reused that version. Fresh source hashing and key/fact lookup verify
+600/600 matches for the tested renderer identity. Concurrent implementation-review
+follow-ups changed source files during the test: current on-disk identity now differs
+and correctly invalidates those facts. No current-tree cache hit is claimed from the
+initial failed post-run lookup. [Native assessment/provenance](visual-stimulus-evidence-2026-10-28/image-pipeline-native/assessment.json).
+
+90.888s playback produced5,032 submissions/output and zero holds across20,128 image
+selections, but224–225 gaps above50ms/output, maximum105.169ms. The stage maxima are
+bundle read14.199ms, hash95.505ms, upload3.063ms, context activation0.441ms,
+staging write0.349ms, texture write2.293ms, completion fence0.843ms, ready poll0.483ms,
+draw12.316ms and result release0.053ms. Swap calls measure86–100ms peaks;
+finish peaks2.936–29.376ms. Thus small/paced uploads and buffer release do not account
+for the recurring long pause; expensive hashing occurs on every image load.
+
+**Reproduced mechanism:** the exact managed renderer executable/bootstrap selects
+`hashlib.sha256` from `_sha256`, while the ordinary venv selects `_hashlib`.
+A two-thread probe of the same41,297,200-byte payload reproduces75–77ms hashes and
+78.691ms observer stalls with the managed default. Explicit available OpenSSL hashing
+produces the identical digest in14.7–15.6ms and observer pauses at most1.823ms.
+The fallback holds the GIL across hashing, blocking the render thread's return to
+Python; swap timestamps can therefore include that wait rather than GPU/vblank work.
+225 bundle hashes and224–225 long gaps strongly corroborate this mechanism in playback.
+`python_entry.py` imports `python_runtime.py` (which imports hashlib) before registering
+base DLL directories; OpenSSL is importable afterward, but hashlib retains its early
+fallback. [Exact-bootstrap reproducer/results](visual-stimulus-evidence-2026-10-28/image-pipeline-native/hash-probe.json).
+
+**Provider repair (implemented, locally verified):**
+[`python_entry.py`](../src/cephvr/platform/windows/python_entry.py) now reloads `hashlib`
+after base DLL registration and refuses to start a managed module unless `sha256` comes
+from `_hashlib`. Every digest check is unchanged; V20 pacing is not amended. Through
+`cephvr-renderer.exe` the exact-bootstrap probe now reports `_hashlib`, 15.8ms maximum
+hashes and 1.79ms maximum observer pauses (was 75–77ms and 78.691ms). The native
+managed-entry test asserts the provider; it fails before the fix and passes after.
+[Evidence](visual-stimulus-evidence-2026-10-28/renderer-sha-provider/context.md).
+A patched native playback comparison is required before calling the gap fixed; residual VSync/optical
+skew remains separate. Phase C representation/fence changes are not established as
+necessary by these timings. Full20-minute/combined-load/optical acceptance remains open.
+
+**Integrity-check review (source review plus one local probe; no runtime change):**
+- *Provider repair path.* Blocking `_hashlib` import, then `importlib.reload(hashlib)`
+  after DLL registration, restores `_hashlib.openssl_sha256` in the repo venv (41.3MB in
+  20.9ms). [`python_entry.py`](../src/cephvr/platform/windows/python_entry.py) imports only
+  `python_runtime` (attribute-style `hashlib.sha256`) before `runpy`, so a reload before
+  `runpy` covers every renderer module. Implemented with a startup rejection of the
+  `_sha256` fallback (see provider repair above).
+- *Setup also pays the fallback.* Every cold image is hashed on protection, re-hashed
+  by full-file inspection (`_read_protected(..., verify_hash=True)`) and its baked
+  payload is hashed for the manifest on the GL owner. At the measured 76 versus 15ms per
+  41.3MB, the 600 bake digests alone are about 37s of the cold Setup; this is an
+  arithmetic estimate.
+- *Redundant inspection re-hash.* The protected handle is non-shareable (`FILE_SHARE_READ`
+  only; no write/delete) and is held from fingerprinting through validation. The
+  [asset-lifetime contract](../contracts/visual_stimulus/asset-lifetime.md) requires a rehash only
+  after the backing handle closes, so the inspection re-hash can be skipped while the
+  same live handle protects the source. Keep the protection-time digest and manifest.
+- *Keep the per-load bundle digest.* The same contract requires verifying each range
+  digest before upload. With OpenSSL it runs off-GIL on the loader. Folding hashing
+  into the `readinto` loop is a minor optional gain. Cheaper non-cryptographic checksums
+  are not recommended without a contract change.
+- *Validator identity churn.* `validator_identity()` hashes whole module sources, so
+  unrelated edits to `image_source.py`, `media.py`, `upload.py` or
+  `image_interpretation.py` invalidate all facts. That happened to the 600 native facts
+  after the review follow-ups. An explicit validator version would avoid this but risks
+  stale facts if it is not bumped; this is owner-choice dev-time churn, not a runtime
+  cost.
+- *No action.* Header/chunk walks, interpretation equality, per-MiB cancellation checks,
+  index parsing and completion polling (ready ≤0.483ms, activation ≤0.441ms measured)
+  are not significant.
+
+
+**Implemented from the owner-approved merged plan (Phases A/B):** exact cached
+float32 transfer tables now write a bottom-up upload buffer without the final bytes
+copy. Associated alpha retains the original formula. Ordinary validation no longer
+converts pixels solely to check output length. Native Setup inspects PNG/TIFF/JPEG
+metadata before compilation, then full decode/interpretation validation and conversion
+feed the Fold bake in one pass; every unconsumed deferred source is validated before
+initial residency/Ready. Cache facts publish only after successful full validation.
+Palette/transparency PNG inspection conservatively uses the decoder; those uncommon
+inputs can still decode twice. Recipes retain their existing generation path.
+No entire-image-set pixel retention or additional process is introduced.
+
+One admitted bundle buffer is reused through `readinto`; its reservation remains until
+bundle cleanup and the single loader's upload handoff controls reuse. Bundle loads
+therefore reserve no second per-load CPU payload; residency closes the loader before
+bundle cleanup. Digest checks remain mandatory. Small changes remove ordinary unchanged-settings copies and unused
+PNG payload copies, cache package versions and schedule totals, and separate ordinary
+image-validation keys from display geometry/output count. Recipe geometry remains keyed.
+Per-trial bounded summaries report bundle read/hash, ordinary-fit source
+decode/convert, result release, activation,
+staging/texture write, upload, completion fencing/polling, draw and per-output
+swap/finish totals/maxima/counts. Loader-thread records and render-thread
+reset/summary share one lock. Timing adds no wait or per-frame output file.
+
+[Local benchmark and exactness evidence](visual-stimulus-evidence-2026-10-28/image-pipeline-implementation/benchmark.json):
+4K RGB8 sRGB conversion median332→70ms, RGBA8 straight sRGB393→152ms,
+RGB16 sRGB330→69ms and BT.709329→69ms. Conversion peak tracked allocation drops
+from60 to20.01B/pixel for these cases. Associated RGBA16 remains about67B/pixel;
+its formula and performance are retained. Ordinary image admission is128B/pixel
+plus encoded buffers, leaving margin above measured conversion plus decoded samples;
+recipe admission remains192B/pixel. Tracemalloc is not a total-process or native-codec
+memory guarantee. The supplied original benchmark was also copied and rerun; its
+new-buffer versus candidate-bytes comparison has zero pixel differences.
+
+Validation: **836 passed / 5 subtests / 80 deselected** in the requested non-Windows,
+non-rig suite with authenticated loopback access; two isolated Windows temporary-bundle
+tests also pass (buffer identity reuse, corruption rejection, owned cleanup).
+72 exhaustive conversion cases compare uint32 views for every uint8/uint16 code,
+three transfers, six channel/alpha layouts and opaque override. Deferred-validation
+checks cover successful one-decode consumption and decoder failure without cache
+publication. Ruff check/format and Win32 mypy191 sources pass; boundaries799 modules,
+zero violations. Existing recipe/source, preparation and session size advisories were
+reviewed: they retain source lifetime and preparation orchestration; timing aggregation
+is a focused helper with no runtime back-reference. No new dependency.
+[Commands, provenance and limits](visual-stimulus-evidence-2026-10-28/image-pipeline-implementation/context.json).
+
+Two sandboxed suite attempts stalled at communication and were interrupted; loopback
+execution completed. Intermediate timing-fixture/missing-field/type errors were fixed;
+a script-induced UTF-8 mojibake in session progress/TODO was repaired and the full suite
+rerun. The stale reader-count expectation is corrected to six actual reads.
+Phase C remains measurement-gated: no R32F, GPU conversion, fence amortization or V20
+pacing change. Native600-image Setup/index reuse and stage profiling remain under the
+[rig checklist](rig-verification.md#cropped-image-presentation); no resolution of the
+111ms gaps or optical mismatch is claimed.
+
+**Original audit snapshot (before implementation):**
+
+Scope: current dirty-tree image Media path, including Fold and ordinary image fits;
+source tracing and focused local behavior checks only. Governing rules are
+[V04](../docs/architecture/visual_stimulus.md#v04),
+[V10](../docs/architecture/visual_stimulus.md#v10),
+[V20](../docs/architecture/visual_stimulus.md#v20),
+[E07](../docs/architecture/experiment.md#e07) and
+[ARCH-002](../architecture.md#arch-002). No runtime/policy/configuration changes.
+Source hashes, commands and validation limits are in
+[audit provenance](visual-stimulus-evidence-2026-10-28/image-pipeline-audit/context.json).
+
+Current path: protect/hash sources → unique validation/cache lookup → compile and
+resolve output footprints → decode/convert and GPU-bake Fold samples → temporary
+bundle → bounded CPU loader → paced GPU uploads/fences → image selection → render,
+per-output swaps and optional preview. Fold playback does not decode PNG/TIFF/JPEG;
+other fits reload/decode/convert on the existing background loader after eviction.
+The [existing native evidence](#high-resolution-presentation-options--2026-10-28)
+records 41,297,200 bytes per prepared four-output image and unresolved >50ms gaps.
+Those historical results are not fresh measurements of this audit's source snapshot.
+
+Prioritized opportunities (recommendations, not accepted new policy):
+
+1. **Combine validation, conversion and Fold preparation on cache misses.**
+   `resources/image_source.py:validate_image_source` decodes and converts the whole
+   image, then discards both arrays and RGBA bytes. Later
+   `resources/image_bundle.py:ImageBundle.prepare` calls `source.load`, repeating
+   read/decode/conversion before baking. A valid persistent index avoids the first
+   decode for ordinary images; a cold/missing/invalid index still duplicates it,
+   and recipe sources bypass that index. Prefer a bounded per-image preparation
+   operation that validates and consumes those same pixels for baking, admitting
+   metadata/coverage before Ready and publishing cache facts only after successful
+   validation. Do not retain every full image or introduce an unbounded handoff.
+   Compiler/footprint ordering makes this a focused preparation-interface change,
+   not simply deleting validation. Benefit is Setup latency/CPU, not a direct cure
+   for pauses during prepared Fold playback.
+
+2. **Reuse CPU payload storage and keep its reclamation off the GL path.**
+   The bundle loader performs `file.read(count)` plus SHA-256 for each load;
+   `ImageWorker` retains one result until all uploads are submitted.
+   `ImageResidency.service` clears that result and its local reference on the GL
+   owner, so the final large bytes release can occur there. At the recorded size,
+   each load allocates about 39.38 MiB; a 400ms stream carries about 98.46 MiB/s of
+   payload before hashing/staging/driver traffic. These are arithmetic estimates,
+   not measured memory bandwidth or pause attribution. Prefer bounded reusable
+   `bytearray`/`readinto` storage with explicit handoff/reuse after the final CPU
+   upload read; retain per-range digest checks and cancellation/cleanup guarantees.
+   A second slot should be added only if measured overlap warrants its extra
+   reservation. GPU slots are already pooled; they do not remove CPU allocation.
+
+3. **Measure the complete GL service/presentation cost before changing pacing.**
+   `ImageGpu.upload` limits four chunks and checks 2ms between calls, but context
+   activation/driver calls are non-preemptible. Completion/retirement fencing and
+   replanning sit outside that upload timer. `ImagePool.write` fences and flushes
+   every chunk; `ImageGpu.fence` adds full-image completion fences across allocating
+   contexts. `ModernGLPort.present` swaps outputs sequentially and calls
+   `context.finish()` on paced outputs. That drains outstanding work in that
+   context, potentially coupling background uploads to presentation. These are
+   profiling targets, not proof of the reported 111ms stalls. Measure read/hash,
+   result release, context activation, staging/write, fences, draw, swap and finish
+   separately with asset/epoch/output identity. Evaluate fence/flush amortization
+   only after tracing proves safe completion/retirement. Preserve V20's truthful
+   submission evidence; changing pacing or ownership needs its governing amendment.
+   Zero residency holds establishes neither smooth cadence nor simultaneous scanout.
+
+4. **Consider exact single-channel float32 samples for verified opaque grayscale.**
+   Four RGBA32F components dominate bundle, read/hash, staging and upload costs.
+   R32F with shader replication and alpha=1 would reduce that payload by 75%,
+   approximately 41.30 to 10.32 MB/image, while retaining float32 composition.
+   All required images and baked coverage/alpha must qualify, including transparent
+   edges; the prior 24-source sample does not establish all-600 eligibility.
+   Keep RGBA32F for general RGB/alpha assets. This is a new representation requiring
+   V04/contracts/policy/evidence integration and byte-equivalence checks, not an
+   authorized implementation choice. R8/half-float cannot be assumed equivalent to
+   already interpolated float32 Fold samples, particularly Bottom's fractional map.
+
+5. **Remove small repeated CPU work after the larger costs.**
+   `ImageResidency.select` copies Pydantic image settings every frame even when
+   requested==actual. Reuse unchanged settings and copy only for a hold; keep actual
+   image evidence/counting intact. Replanning also recomputes source-byte totals;
+   immutable schedule totals can be prepared once. Neither is established as the
+   dominant cost. `media._png_transfer` copies every chunk payload, including unused
+   IDAT data; slice only recognized metadata (or use views) while preserving complete
+   structural rejection. For plain images, `image_validation_key` includes display
+   geometry/output count although decoding validity is independent of them, causing
+   avoidable cache misses after display edits. Separate decode-validation identity
+   from geometry-dependent recipe/crop identity without weakening source hashes or
+   software-version invalidation. Memoizing package-version lookup within one
+   process is a minor Setup improvement, not a new caching subsystem.
+
+Optional preview composition is already gated to V01's 20Hz cadence and hidden
+viewers skip it. A later authorized native comparison with preview visible/hidden
+can isolate its cost; do not build another preview pipeline or drop required
+scientific evidence. Increasing queues, lookahead or VRAM alone is not recommended:
+the stopped pooled run already had zero holds and failed cadence. Persistent pixel
+bundles across Setup are outside the accepted disposable-bundle rule.
+
+Validation: focused resource/rendering selection finishes **61 passed, 1 failed,
+390 deselected**, [raw result](visual-stimulus-evidence-2026-10-28/image-pipeline-audit/tests-external-temp.txt).
+The failure at `test_resources.py:1015` expects five readers after six explicit reads
+(validation, two source reads, two loads, one cached-info loader call); this is a
+current test assertion inconsistency, not evidence that a validation-index hit itself
+reads pixels. Keep a small follow-up to reconcile that expectation. Two earlier temp
+fixture failures are retained in provenance; the final external writable temp path
+resolves them. No test assertions or runtime source were edited. Native stage
+profiling, index reuse, grayscale eligibility, optics, full endurance and combined
+load remain open in the [single rig checklist](rig-verification.md#cropped-image-presentation).
+
+## High-resolution presentation options — 2026-10-28
+
+**Owner observation after the stopped pool test:** projector images did not change
+at the same time and stimulus-sync pulses remained very inconsistent. The saved
+four image rules have identical seeds, streams, offsets, strides and initial assets;
+the source-selection path polls residency once before selecting all instances, but
+this is not proof of physical output agreement. V20 uses separate per-output swaps;
+transition skew versus sustained different images is not yet distinguished. No
+additional rig run was started. Source audit also identifies a remaining per-image
+41MB CPU allocation (`file.read`) and possible final-reference release on the GL
+thread, plus per-output context switches/fences and preview composition. These are
+profiling targets, not established causes. Both visible consistency and timing remain
+failed acceptance criteria, independently of zero residency holds.
+
+**Latest pool test:** owner requested Stop after approximately58s. Abort7420f0e8
+and restore6d6ea362 succeeded; cleanup confirmed, no temporary crop folder remains.
+Policy34 reused GPU slots and fenced/paced uploads, but recording-off playback still
+reported143 submission gaps above50ms per output (maximum110.918ms), despite zero
+holds across12,920 selections. This is an unresolved pacing failure; pooling alone
+has not fixed sync pauses and the1200s acceptance was not completed. The source-folder
+validation index contains600 entries; an initial channel-name mismatch in its reader
+was fixed, with native reuse still requiring verification. Owner also requested a
+whole-pipeline audit and combining decode/validation/crop generation; that combined
+stage remains to implement. [Stopped assessment](visual-stimulus-evidence-2026-10-28/setup-optimization/pool-endurance/stopped-assessment.json).
+
+**Current native finding:** the owner stopped the first20-minute attempt after
+observing only Left and random stimulus-sync pauses. Abortf239cfbf confirmed cleanup;
+restorea16f295d restored original settings.19,796 selections reported zero readiness
+holds, which does not prove correct projector pixels. Earlier isolated equivalence
+and happy-path four-output state checks therefore do not establish presentation
+acceptance. The trial GPU-resource scoping dropped `:crops` metadata, leaving the
+layer shader in full-source Fold mode for prepared cropped textures. A regression
+fails before the focused handoff repair and passes afterward;261 rendering and
+calibration cases pass (50 deselected). Native repaired retest is in progress with
+stimulus data enabled temporarily to measure the reported random sync pauses.
+[Failed run evidence](visual-stimulus-evidence-2026-10-28/setup-optimization/twenty-minute/after-abort.json),
+[repaired retest](visual-stimulus-evidence-2026-10-28/setup-optimization/twenty-minute-repaired/test.log).
+
+
+Owner selected temporary RGBA32F bundles for all four projectors with a small
+fixed buffer under [V04](../docs/architecture/visual_stimulus.md#v04)/
+[E14](../docs/architecture/system-contracts.md#e14), with batching introduced in
+policy31. Setup uses original Fold-shader sampling at the unchanged surface framebuffer grid, followed by integer sample
+fetch during playback. This resolves Bottom without rebasing its fractional
+texture coordinates. Composition, opacity and downstream calibration remain live.
+Source images must cover all consumed Fold areas; insufficient coverage fails Setup.
+
+[Original-shader comparison](visual-stimulus-evidence-2026-10-28/setup-optimization/batched-reference-equivalence.json)
+verifies all600 images and all four mappings byte-for-byte, including full RGBA32F
+surface coverage: zero different components,143.5s on RTX5060Ti. The reference
+fragment shader is extracted from HEAD, independent of the new branch. The saved
+display-profile digest matches the native test. This is one isolated GPU context,
+not optical acceptance. [Reproducer](visual-stimulus-evidence-2026-10-28/setup-optimization/verify_batched_reference.py).
+Prior equivalent run took159.6s; this is a single-run comparison, not a throughput guarantee.
+Prepared payload is41,297,200 bytes/image across all four outputs,23.08GiB for600.
+
+The owner-requested preparation batches contain at most16 unique content identities,
+one decoded source at a time. GPU source texture, shader, VAO and framebuffer are
+reused; direct read-into avoids the intermediate crop-byte and final immutable-byte
+copies. Each batch uses one indexed temporary file, with per-image range/digest
+validation:600 unique images need38 data files plus the manifest. Repeated epochs,
+asset aliases and trials share compatible content/interpretation identities.
+Declaration reason text remains per-asset provenance but does not split validation.
+Setup reports unique-image counts, batch position and shared repeated references.
+
+Bundles are sibling directories of the asset root, protected by Windows delete-on-close
+handles. Current plus two future epochs, required first-use/held anchors and pending
+fences bound residency independently of spare VRAM. One loader reads/verifies ready
+bytes; no playback PNG decode. Cleanup closes readers/files then removes the folder.
+Supervisor startup/renderer-exit recovery removes only verified unlocked empty
+folders; unrelated content blocks removal. Native tests cover active ownership,
+normal closure, abrupt child exit and unrelated-file refusal; power-loss acceptance
+remains outside this evidence.
+
+Six native batch/source-protection cases pass, including17 unique images across a
+batch boundary, repeated references across trials, offset reads, corruption and
+same-content/different-reason validation reuse.95 configuration/lifecycle cases and
+5 subtests pass; five-source Win32 mypy, scoped Ruff,14 schemas and backend boundaries
+pass. The broader resources/rendering/compiler/configuration suite passes395 cases
+and5 subtests, with49 platform/rig cases deselected.
+
+Before batching, native Setup119e1f1c reached Ready, StartSessionf359ecb2 ran the
+600-image saved protocol on four outputs for240s with fixed lookahead, Abortd03dee4d
+confirmed cleanup and restore66b65418 restored original settings. Folder/registry
+were absent;16 Running snapshots and no residency-hold warnings were retained.
+[Assessment](visual-stimulus-evidence-2026-10-28/setup-optimization/crop-playback/assessment.json).
+SaveOff dummy testing has no detailed frame history. Window capture hit Computer Use
+app-approval timeout, so no visual/optical inspection is claimed. Earlier native GPU
+catalogue reporting used the stale original Setup cutoff; the active command/live
+cutoff repair is covered by80 lifecycle cases and the subsequent successful Setup.
+Final policy31 batched Setupc7d1a481 reached Ready in312.52s, displayed batch/image
+counts and35,400 shared uses, and created38 data files plus one manifest.
+Startf7c347eb completed240s of native four-output playback; Abort87eddac5 confirmed
+cleanup in2.39s, with folder/registry absent. Original configuration equality was
+verified after restore643266bd. The initial restore was rejected because concurrent
+Grating work changed the shared policy to32; a graceful restart resolved that
+version mismatch. This is not a Grating acceptance result.
+[Final native assessment](visual-stimulus-evidence-2026-10-28/setup-optimization/crop-batch/assessment.json).
+Remaining acceptance: [full-hour, combined load and optics](rig-verification.md#cropped-image-presentation). Combined camera
+Setup has a separate [deadline concern](acquisition.md#setup-confirmation-deadline--2026-10-28).
+
+The earlier conversion optimization preserves every uint8/uint16 code, orientation
+and immutable source input.325 resource/rendering checks passed, plus12 strengthened
+code-value cases. Full600-image CPU preparation/compilation/serialization/parse
+took110.54s: image validation92.45s, source protection4.08s, compile6.74s,
+serialization1.72s, parse5.09s. Fresh native Setup0c335bf6 reached Ready under the
+unchanged180s bound. Operator started playback;97.22% of42292 selections held the
+previous texture. Authorized Abort084821d5 succeeded with cleanup confirmed.
+Prior4-chunk/turn upload budget cannot sustain four full3840x2000 float-RGBA
+copies every400ms.64-chunk candidate plus configuration/resource/render checks
+passes341 cases/5 subtests, but has no native playback acceptance. No Start was
+sent by this agent. GUI inspection found operator-started Running; no UI input
+was issued. No control restoration was needed before that operator Start.
+
+Benchmarks are in [options/results.json](visual-stimulus-evidence-2026-10-28/setup-optimization/options/results.json),
+with reproducible [script](visual-stimulus-evidence-2026-10-28/setup-optimization/options_benchmark.py).
+Actual retained calibration/Fold map yields source bounding rectangles with one
+texel filtering halo: Front(1029,0)-(1791,691), Left(0,0)-(1031,682),
+Right(1789,0)-(2816,697), Bottom(1043,694)-(1777,1754). These are source footprints,
+not assumed output resolutions or rescaled images:2,723,543 pixels total.
+
+RTX5060Ti, four independent invisible GL contexts, preallocated textures,
+five warmups plus30 timed completed uploads (finish on every context), byte-equal
+texture readbacks. No drawing/vsync/camera load or photodiode measurement.
+
+| Representation | MiB/change, four outputs | Median upload ms | p95 ms |
+| --- | ---: | ---: | ---: |
+| Full RGBA32F |468.750|21.43|23.08|
+| Cropped RGBA32F |41.558|2.36|2.69|
+| Cropped R32F |10.389|1.23|1.26|
+| Full R8 |29.297|2.19|2.87|
+| Cropped R8 |2.597|0.63|0.99|
+| Cropped R8 through PBO |2.597|1.52|2.07|
+
+PBO trial includes staging copy and completion, without overlap; this does not
+evaluate asynchronous ring overlap.24 evenly spaced source images were verified
+uint8 and channel-identical. Warm read/decode median55.51ms/p9576.35ms; grayscale
+crop packing1.80/2.07ms; reading a prepared2.60MiB crop bundle5.03/5.64ms.
+Not a cold-storage or all600-file statistical test. Initial two wrapper launches
+failed missing DLL initialization; process-local DLL directories fixed startup.
+WGL emitted a teardown warning after results/readback checks; no projector windows
+or application state were changed by the isolated benchmark.
+
+Recommendation, pending owner choice: hash-bound, calibration-specific lossless
+source crop bundles, small fixed schedule-driven CPU/GPU rings, reusable textures,
+explicit completion fences and per-image timing/identity evidence. Start with
+cropped RGBA32F for the smallest precision-preserving change, or cropped R32F for
+verified grayscale (45.1x less transfer than current). Retain float32 interpolation
+and calibration downstream; R8 remains a faster alternative requiring interpolation/
+normalization equivalence measurement. CPU crop conversion must preserve normalization,
+UV origin, pixel centres, border semantics and one-texel bilinear support; do not
+downsample or apply calibration twice. Moving/rotating/repeating/dynamically warped
+stimuli need a swept footprint or full source fallback, not a static crop guess.
+Cache identity includes source hash, encoding, mapping/calibration, crop algorithm
+and format version. Bounded lookahead is sized by measured tail latency, not spare
+VRAM; all600 resources still require validated identity/preparation under V04.
+Persistent cache reuse across Setup would need an explicit V04 amendment.
+
+References: [Psychtoolbox MakeTexture](https://psychtoolbox.org/docs/Screen-MakeTexture)
+supports monochrome and distinct integer/float precisions;
+[PreloadTextures](https://psychtoolbox.org/docs/Screen-PreloadTextures) checks VRAM
+residency; [PsychoPy timing](https://psychopy.org/general/timing/reducingFrameDrops.html)
+moves expensive generation/texture changes away from critical presentation;
+[PsychoPy rendering](https://psychopy.org/general/rendering.html) recommends reducing
+uploaded pixel counts; [Bonsai image sequences](https://bonsai-rx.org/docs/api/Bonsai.Shaders.LoadImageSequence.html)
+exposes texture formats and sequence loading;
+[Bonsai playback](https://github.com/bonsai-rx/bonsai/blob/main/Bonsai.Shaders/PlayTextureSequence.cs)
+separates texture sequences from timer-driven presentation;
+[Khronos PBO](https://wikis.khronos.org/opengl/Pixel_Buffer_Object) documents transfer
+staging. These tools were researched, not installed or benchmarked against CephVR.
+
+Before accepting an implementation: all600 images, pixel-equivalence through actual
+Fold/calibration and fractional sampling, paced four-projector playback with cameras,
+tail frame timing/holds, cold-cache IO and cancellation/cleanup. No full-workload
+or optical acceptance is inferred from isolated throughput.
+
+<a id="full-image-setup-publication-deadline--2026-10-28"></a>
+## Full-image Setup publication deadline — 2026-10-28
+
+Owner screenshot/log for Setup `927c71fd-b869-4a5c-90eb-da15114dc57d`
+shows600/600 image validations and8/8 initial uploads, followed by a
+32,147,883-byte ReportWorkerOperation receipt failure:4250.584ms elapsed,
+4241.152ms remaining budget. Worker preparation publishes the serialized prepared
+trial after graphics preparation using the original Setup deadline; coordinator
+receipt includes synchronous JSON parsing/model validation before acknowledgement.
+This is evidence of final publication exceeding the remaining Setup bound, not a
+PNG decode failure or demonstrated GPU exhaustion. Contribution of decoding,
+serialization, transport and receiver validation needs profiling; no causal split
+or repair is established. Renderer exit and refused interruption/cancel calls leave
+cleanup unconfirmed. No new device commands or replay attempted. Preserve V04/E08
+validation, original deadlines and truthful cleanup while investigating.
+
+## Linear metadata in selected stimuli folders — 2026-10-28
+
+`stimuli-png-linear-metadata`: owner narrowed Desktop/Alsu/media request to the two
+`stimuli` subfolders only. Added explicit linear gAMA1.0 and Rec709/D65 cHRM PNG
+metadata to1,200 generated images (600 ALDER,600 POPLAR). Source exemplars80,
+root copies20 and six source/document files remain unchanged by hash. Both
+generators match the previously reviewed source; all600 ALDER files also match
+retained original hashes. Source directories have moved under media, so separate
+sibling originals were not presumed still present. No existing colour declarations
+conflicted. This artifact operation uses[V04](../docs/architecture/visual_stimulus.md#v04)'s
+explicit-metadata precedence; it introduces no runtime policy or default.
+
+[Evidence/manifest](visual-stimulus-evidence-2026-10-28/stimuli-png-metadata/context.md):
+all1,200 after-hashes, PNG CRCs and linear metadata pass; every encoded IDAT chunk
+is unchanged, and removing the60 inserted bytes reconstructs each original full-file
+hash. Four decoded-array comparisons and actual protected-source/float-RGBA
+validations with colour_override=None pass. Atomic per-file updates reject concurrent
+edits; preflight/reversal manifest retained instead of duplicate12GB image copies.
+Initial missing-old-path preflight failed before mutation, then corrected to current
+source provenance. Whitespace passes. No runtime/source/dependency changes or broad
+suite needed for metadata-only artifact edits. No GUI/runtime Setup/optical test;
+existing imported copies outside these subfolders and protocol files were not edited.
+
+## Untagged images default to linear — 2026-10-28
+
+Owner instructed that images should be assumed linear. [V04rev44](../docs/architecture/visual_stimulus.md#v04)
+and [E14rev217](../docs/architecture/system-contracts.md#e14) now declare policy25's
+fixed linear/full-range Rec.709 D65 RGB fallback for untagged PNG/TIFF. Supported
+PNG transfer metadata and explicit overrides retain precedence; unresolved PNG
+chromaticity/ICC, unsupported gamma and TIFF declared transfer/primaries/ICC remain
+errors instead of receiving a fallback. JPEG/video and glTF colour rules retain
+their profiles. No operator option or global rewriting of asset declarations.
+Resolved interpretation already retains effective transfer/range/primaries.
+
+ARCH-002 review keeps this in the existing focused decoder, used by retained and
+deferred preparation; no new helper/module/dependency/state. glTF passes its own
+explicit texture override. Existing manifest/precision/upload owners remain.
+Policy/config versions25, allowed key inventory and loader digest align; contracts
+updated. No source-image/protocol file edits or live application changes here.
+
+Validation: resource/configuration154 tests and5 subtests pass, then four focused
+PNG metadata cases pass after adding chromaticity-only rejection coverage; controller
+configuration integration24 pass. New coverage checks8/16-bit PNG/TIFF pixel and
+linear-RGBA intensity preservation, PNG transfer/override precedence, unsupported
+gamma/chromaticity and TIFF ICC rejection. Actual metamer without its override
+decodes linear and produces the same float-RGBA SHA256 as its explicit-linear path.
+Scoped Ruff/format, two-source Win32 mypy,792-module boundaries/zero violations and
+whitespace pass. Initial run151 passed/three demo-fixture errors from repository-local
+output; rerun in writable external output resolves all three without weakening tests.
+One test patch context mismatch corrected after reread.
+[Dated command/scope evidence](visual-stimulus-evidence-2026-10-28/untagged-linear/context.md).
+Local implementation complete; full app restart required for policy25, with native
+Setup, combined workload and physical luminance acceptance unverified.
+
+## Image validation CPU capacity — 2026-10-28
+
+**Current600-image revision:** new owner Setup57873edf reports a different import
+ID/path and0/600 validation. The saved texture protocol was replaced with600
+untagged ALDER assets, so the earlier ten-asset overrides do not cover this revision.
+Verified all600 imported/original SHA256 matches and reused the accepted ALDER
+linear interpretation under V04rev43. Atomically applied600 per-asset declarations
+with backup/concurrent-edit guard; only those fields differ. All600 protected-source
+hash/decode/linear conversion/output validations pass in130.6s, peak reservation
+1,499,265,784bytes under2GiB, with reservations/handles released. PNG bytes unchanged.
+[Full-set evidence](visual-stimulus-evidence-2026-10-28/image-cpu-capacity/full-alder/context.md).
+No global default or new runtime/import behavior. Reload/Apply this saved600-image
+protocol after full restart for accepted500ms MCU/1050ms Stopped timings. No new
+native Setup, GPU allocation or playback acceptance for this600-image revision.
+
+`image-validation-cpu-capacity`: owner Setup2aeec5d1 fails CPU admission at
+1,494,464,310/1,073,741,824 bytes, GPU0/4,294,967,296. Supplied texture protocol
+references ten3840×2000 PNGs. Existing source/decoder/float-conversion accounting
+reserves192bytes/pixel plus protected encoded-read storage, sequentially per image;
+it does not retain all ten decoded images for validation. Standalone source
+validation reproduces the old rejection at1,494,407,186 bytes before the live
+session's additional reservations. Read-only GlobalMemoryStatusEx reports
+66,094,223,360 physical bytes total /42,027,282,432 available at inspection;
+neither is a full-load guarantee. These initial measurements concerned the earlier
+ten-image revision; the current saved protocol now imports600 ALDER images.
+
+[V04rev43](../docs/architecture/visual_stimulus.md#v04)/E14 set the existing CPU
+asset ceiling to2GiB, retaining GPU4GiB, all other limits,192bytes/pixel accounting,
+source precision, sequential scratch ownership and fail-closed admission. Engineering
+operator value only, no fixed policy change/version bump. ARCH-002 chooses the
+existing setting rather than decoder changes or relaxed accounting/dependencies.
+Owning loader checks both ceilings;15 configuration tests/5 subtests and whitespace
+pass. No runtime source edits or unrelated runtime/static suite needed.
+
+[Native source-validation evidence](visual-stimulus-evidence-2026-10-28/image-cpu-capacity/context.md)
+now passes all ten through protected hashing, decode, linear float-RGBA conversion
+and output validation under2GiB. Maximum source reservation1,494,414,146bytes;
+reservations released and protected handles closed. Earlier missing-colour failures
+remain in before-linear evidence. Generator/original hashes establish direct
+normalized grayscale export; the owner explicitly selected linear interpretation.
+V04 records the scoped choice, without a global untagged-media default or claim
+of physical luminance calibration.
+
+Initially updated only ten asset overrides in Desktop/Alsu/protocols/
+texture-presentation-1hr_protocol.json: linear/full-range/RGB/Rec709 D65/no chroma,
+with explicit owner/provenance reason. Backup and applied proposal retained in
+evidence. GUI envelope validates; semantic comparison proves no other fields
+changed. PNG bytes unchanged. Owner-requested native test now applies this exact
+file at controller revision3, with device settings and recording selections retained.
+GUI records loading the same protocol; all ten images validate, initial texture
+uploads8/8 and prepared-memory finalization complete. Setupa23f5a27 reaches Resolving
+outputs but fails on a new MCU PING206.031ms/199.983ms timeout, not image admission
+or colour validation. CancelSetupada0a3fc succeeds and snapshot confirms Configuration
+with cleanup_confirmed=true. GUI displays the corrected9,000-epoch texture protocol
+and regains control. No trial started by this test, automatic retry, deadline change,
+optical or combined-playback acceptance. [Native evidence](visual-stimulus-evidence-2026-10-28/image-cpu-capacity/native-setup/context.md).
+
+## Streamed configuration validation — 2026-10-28
+
+`mcu-setup-ping-latency`: actual supplied texture-protocol validation triggered
+a454ms cyclic-GC pause while retaining all expanded settings in the controller
+process. Semantic validation now obtains duration sources in a bounded ordered
+pass, then validates settings as a stream. The existing compiler still materializes
+its prepared plan; source ordering, random sampling, condition expansion, epoch
+limits, duration resolution and range/writer checks retain their owners under
+[V03/V08](../docs/architecture/visual_stimulus.md#v03)/[E07](../docs/architecture/experiment.md#e07).
+ARCH-002 review reuses the existing iterator rather than adding a process or GC
+policy; the cohesive compiler owner retains semantic validation despite its size
+advisory. Local witness delay falls481→33ms and texture validation3.84→1.87s.
+47 tests/5 subtests and scoped static checks pass; native serial attribution and
+Setup/Cancel remain open. [Runtime assessment](runtime.md#setup-watchdog-and-secondary-renderer-failure--2026-10-28),
+[dated evidence](runtime-evidence-2026-10-28/mcu-protocol/context.md).
+
+## Linked Grating orientation investigation — 2026-10-28
+
+**Current review request:** owner asks Grating linking to follow Texture drift,
+with multi-direction previews before implementation. Rendered
+[cardinal](visual-stimulus-evidence-2026-10-28/linked-grating-orientation/drift-link-cardinal-preview.gif)
+and [diagonal](visual-stimulus-evidence-2026-10-28/linked-grating-orientation/drift-link-diagonal-preview.gif)
+pages for all eight Bottom orientations,20mm/s and5mm period. They call existing
+production linked_rates with unit reference translation and saved calibrated geometry,
+then align each grating normal with mapped velocity. Actual planning tank raster and
+aspect-preserved flat/local-arrow views are shown. Full coverage and common temporal
+phase retained. This is a proposed motion mapping, not deployed local-copy policy33.
+Owner review, runtime/contract revision and optical validation remain pending; no
+Right-only flip or calibration change has been applied.
+
+**Open Right-only rig mismatch:** owner supplied IMG_1435.MOV and reports coherent
+Bottom/Left/Front with Right incoherent. Decoded273 frames/9.13s, inspected1s/6s
+frames and reviewed saved profile meshes. Full coverage is visible; no new origin
+defect identified. Left/Right local horizontal axes are opposite in the calibrated
+geometry, while policy33 deliberately copies the same local wave. A Right-only
+horizontal stimulus reflection is the proposed diagnostic, preserving vertical
+component, shared phase clock and physical period. This is a hypothesis, not an
+optically validated fix. The saved unflipped Right mesh is not proof of the exact
+configuration used for the recording. Approximate manually rectified carrier
+analysis has high Right residual/camera uncertainty; it does not establish a timing
+or speed reversal. Confirm with cardinal/diagonal drift and asymmetric orientation
+pattern before choosing a grating-only reflection versus global calibration Flip X.
+No production/configuration/device changes belong to this investigation.
+
+The owner approved the [flat four-panel candidate](visual-stimulus-evidence-2026-10-28/linked-grating-orientation/flat-four-projectors-candidate.gif)
+and explicitly requested all linked projectors, all random orientations0..315 in
+45-degree steps, no origin point and no stimulus-driven uncovered areas.
+[V02rev26](../docs/architecture/visual_stimulus.md#v02) and
+[G01rev388](../docs/architecture/gui.md#g01) now govern one infinite screen-local
+physical wave: common local bar angle, physical period, signed phase drift and
+centre phase. Reference/follower stimulus maps are compensated in physical units;
+configured masks/valid areas/corrections remain independent. Physical corner
+stitching and angular parallelism from arbitrary camera positions are not promised.
+
+Implemented in the shared preview/RenderEngine resolver, with full usable-screen
+coverage through the existing coverage extension. Removed the perspective divide,
+horizon mask, projection origin, geometry cache and perspective-only shader/evidence
+uniforms. Geometry is no longer passed into the shared field/retention operation.
+Unlinked Gratings and Texture drift retain their rules. ARCH-002 favours the much
+smaller pure affine helper and existing shader path, with no new dependency/state/
+process. RenderEngine remains a large assembly owner; this increment only removes
+geometry arguments from its existing snapshot/boundary calls. Existing behavior
+modules were extended; obsolete projection-specific constraints/tests were removed.
+Fixed policy33/digest and both TOMLs agree; saved bounds/seeds/draw ordering remain
+unchanged. Full restart/fresh Setup is required before trying the new implementation.
+
+Validation:492 configuration/compiler/resources/rendering/authoring tests and5
+subtests pass (70 deselected). A100-epoch seeded random rule samples every requested
+angle and checks identical local angle/phase and signed drift on all four screens.
+Eight-angle/four-reference/identity-and-sheared-map cases check common physical
+phase, translation, eye independence, long50-second periodicity and backward seek.
+The existing coverage extension encloses every physical screen corner in all64
+angle/reference/map cases.24 standalone native OpenGL cases (eight angles by three
+sharpnesses) verify waveform and alpha coverage across the entire framebuffer.
+16 evidence-contract cases pass with native permission. Scoped Ruff/13-file format,
+ten-source Win32 mypy,796-module boundaries/zero violations and whitespace pass.
+The first new diagonal GPU fixtures exceeded3e-6 from raster vertex snapping;
+aligned fixture vertices to the pixel grid to isolate waveform evaluation without
+loosening the assertion. No runtime-angle restriction was added.
+
+[Implemented four-panel motion](visual-stimulus-evidence-2026-10-28/linked-grating-orientation/flat-four-projectors-implemented.gif)
+uses actual PreviewPlan-resolved fields. Its static panel pixels match the approved
+candidate exactly;25-frame GIF decoded, quarter-speed playback. The actual runtime
+preview's nonconstant field, changed midpoint and exact one-period repeat checks
+pass. Saved protocol/calibration and devices were not changed. The prior policy32
+rig result was rejected for paired directions and partial coverage; those local
+passes were not rig acceptance. Physical validation of policy33 remains in the
+[single rig checklist](rig-verification.md#linked-grating-corner-phase).
+[Detailed dated evidence](visual-stimulus-evidence-2026-10-28/linked-grating-orientation/context.md).
+
+## Cleanup before Setup catalogue — 2026-10-28
+
+`stimulus-unprepared-catalogue`: owner diagnostics and the retained
+[emergency report](emergency-1173345912101600-52617fda-fcea-47bb-b697-b2a6042ae173.json)
+show renderer departure after `INVALID_CATALOGUE: first catalogue must be
+revision-zero empty`. Reproduction confirms cleanup before renderer Setup forwards
+the previous session's catalogue revision into a newly registered session. Revision0
+passes; retained revision12 reproduces the exact rejection. The reported serial
+watchdog overrun is a plausible initiating failure, not proven causal ordering.
+
+The existing cleanup owner now declares zero for an unprepared session without
+retained obligations, and uses zero in its aggregate Cleanup. Retained obligations
+reject explicitly. Native stopped/release proof, exact work/generation checks,
+original deadline, supervisor validation and immutable replay remain; neither raw
+worker evidence nor prior-session revision is rewritten. This implements existing
+[E08](../docs/architecture/system-contracts.md#e08)/[E06](../docs/architecture/system-contracts.md#e06).
+ARCH-002 review retains the cohesive lifecycle-validation/forwarding owner despite
+its size advisory; this focused branch needs no new module, state or dependency.
+
+[Evidence](visual-stimulus-evidence-2026-10-28/unprepared-catalogue/context.md):
+173 coordinator/lifecycle/supervisor registration cases pass, one Windows case
+excluded; scoped Ruff/format, Win32 mypy and792-module boundaries/zero violations
+pass. Sandbox asyncio stalled at socketpair creation; approved loopback-capable
+runs completed. No live app restart, native failed-Setup/retry or watchdog repair
+claimed. Follow the [rig check](rig-verification.md#unprepared-stimulus-cleanup).
+
+## Schedule and transport ceilings — 2026-10-28
+
+Owner revised the requested schedule ceiling to 50 decimal MB. Current defaults:
+`max_prepared_plan_bytes = 50_000_000`, shared RPC cap `67_108_864` bytes (64 MiB),
+controller event/central metadata queues `268_435_456` bytes each (256 MiB), GPU
+asset ceiling unchanged at4GiB. [V03rev15](../docs/architecture/visual_stimulus.md#v03)
+and [E08rev185](../docs/architecture/system-contracts.md#e08) govern; numbers live
+only in their owning operator TOMLs. Full application restart is required for the
+shared transport cap. No active-process settings were changed. ARCH-002 reuses
+existing limits and loader validation; no runtime code, dependency or policy changes.
+Updated the owning saved-history test's default substitution to preserve its
+1,024-byte rejection scenario, and made the existing read-only capacity probe read
+the current transport ceiling rather than hard-code the historical default.
+
+Validation on base revision `e4dd8f2694aa075380fe6711a884fe5894763c6f` plus current
+working tree: both owning loaders assert all four limits; the existing20-minute
+protocol compiles4,000 epochs/16,000 settings into15,158,567 bytes, with51,950,297
+bytes of transport headroom. This uses the probe's fixture identity/seed17 and saved
+display, not native Setup. Visual Stimulus configuration/compilation46 tests/5 subtests
+pass (`--basetemp=.tmp-schedule-final`). Three focused controller configuration tests
+(timing/budgets, Setup reload, bounded saved history) pass with21 deselected
+(`--basetemp=.tmp-controller-capacity-final`). Broader combined controller run stalled
+after12 progress dots and was interrupted without a summary; no full-suite pass.
+Initial direct-loader probe used an unsupported keyword; corrected to
+`include_configuration=False` and passes. Scoped test Ruff/format and whitespace pass.
+These are serialized-byte ceilings, not memory preallocations or throughput promises;
+large-message native publication, live Setup and full-load memory remain unverified
+under the [existing rig checklist](rig-verification.md).
+
+## Sparse prepared schedule capacity — 2026-10-28
+
+Historical initial repair; current owner-selected ceilings are recorded above.
+
+Owner's Setup screenshot rejects15,173,120 prepared JSON bytes against8,388,608;
+this is serialized CPU schedule size, not sparse pattern pixels or VRAM. The saved
+`sparse-noise_20mins_protocol.json` expands to4,000 epochs and16,000 complete layer
+settings. Under [V03rev14](../docs/architecture/visual_stimulus.md#v03)/E14, raised
+the explicit operator preparation ceiling to16,000,000 bytes, below E08's existing
+16MiB transport cap. No runtime limit growth, truncation, stimulus change or policy
+version change. ARCH-002 review chose the existing configurable bound over a new
+serialization format; no source/dependency/state-owner changes.
+
+[Read-only probe](visual-stimulus-evidence-2026-10-28/prepared-capacity/check.py),
+run from repository root with `PYTHONPATH=.` and `.venv/Scripts/python.exe`, uses the
+saved display and fixture identity/seed17, not the running Setup identity. Protocol
+SHA256 `134a0ad5960be2b5497548073c46c6e444205e89906e7e9403ed629e52872246`:
+old bound reproduces rejection at15,158,567 bytes; new bound passes with exact
+1,200,000,000,000ns duration and1,618,649 bytes remaining under the transport cap.
+This does not verify native publication, GPU allocation or presentation. Initial
+probe invocation lacked the test-helper import path; the next expected-rejection
+handler used the wrong exception type; both probe-only mistakes were corrected.
+Configuration/compiler pytest command (`tests/visual_stimulus/test_configuration.py
+tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+--basetemp=.tmp-prepared-capacity`) passes46 tests and5 subtests; whitespace passes.
+No managed-app/device action. Fresh Setup remains native acceptance under the
+[existing rig checklist](rig-verification.md).
+
+Live `nvidia-smi --query-gpu=name,memory.total,memory.used,memory.free --format=csv`
+reports RTX5060Ti16,311MiB total/417MiB used and RTX2080Ti11,264MiB total/26MiB used.
+These are a point-in-time reading, not full-load headroom. Owner subsequently selected
+4GiB: `max_asset_gpu_bytes = 4_294_967_296` now sets the admission ceiling under
+[V04rev40](../docs/architecture/visual_stimulus.md#v04)/E14. No preallocation,
+total-process VRAM guarantee or prepared-JSON-limit change is implied. ARCH-002:
+reuse the existing setting/loader, with no code, dependencies or policy changes.
+Owning loader confirms both ceilings; configuration suite15 tests/5 subtests and
+whitespace pass. Live allocation and combined-load acceptance remain unverified.
+
+GUI preview now consumes only the first100 canonical occurrences under
+[G01rev375](../docs/architecture/gui.md#g01). The shared expansion traversal is
+incremental; backend full-plan bounds/count checks remain enforced. Compiler and
+sparse seed checks pass; [current evidence and limitations](runtime.md#preview-first100-epochs--2026-10-28).
+
+## Epoch-owned sparse timing — 2026-10-28
+
+[V04rev38](../docs/architecture/visual_stimulus.md#v04) implements one new deterministic
+pattern per repeated epoch for new GUI layers. Shared expansion resolves occurrence
+seeds; one pattern remains resident for the whole resolved epoch. Preview and runtime
+use the existing generator and request stream. Explicit legacy timed sequences retain
+their behavior outside an epoch-editor commit. Canonical source/prepared schemas were
+regenerated; no worker, transport, pacing or resource-ownership changes were needed.
+Nested repetitions, seed wraparound, request timing, distinct cells, repeatability,
+legacy sequence behavior and invalid hidden counts have local coverage:162 resource/
+compiler cases and4 sparse lifecycle cases pass. Broad full-lifecycle execution was
+interrupted without a summary and is not a pass.
+[Commands/results and limits](runtime-evidence-2026-10-28/epoch-timing/context.md).
+Prior native 200-pattern sequence measurements below do not verify the new epoch-based
+schedule; native/optical/full-load checks remain [pending](rig-verification.md#sparse-noise-presentation).
+
+## Native rig validation — 2026-10-28
+
+Standalone rig CPU generation measurement (`sparse-noise-generation-timing`, V04):
+the saved successful 60-second trial's exact recipes/grids were passed to the existing
+`pattern_rgba`, with 10 warmups per screen and five interleaved passes of all 200
+indices (1,000 timed calls per screen). All 4,000 hashes match recorded trial evidence.
+Mean/median/p95/max milliseconds: Front (47×42) 0.812/0.800/0.845/1.610;
+Left (64×41) 1.074/1.061/1.117/1.892; Right (64×42) 1.104/1.087/1.151/1.982;
+Bottom (64×45) 1.179/1.162/1.230/2.080. Cells are 2 mm, spacing 4 mm,
+activation probability 0.6 and seed 20261028. Mean generation summed across four
+screens is 4.169 ms. These are Windows rig wall-clock CPU function timings under
+ambient load, excluding helper startup, IPC, hashing, row flipping, GPU upload,
+rendering and optical latency; they do not attribute the presentation gaps or close
+combined-load/prefill acceptance. No production/configuration change. Raw samples,
+source hashes, platform, revision and method: [results](visual-stimulus-evidence-2026-10-28/generation-timing/results.json);
+reproduce with `.venv/Scripts/python.exe reports/visual-stimulus-evidence-2026-10-28/generation-timing/measure.py`.
+
+Testing commit `e4dd8f2694aa075380fe6711a884fe5894763c6f` on Python 3.11.15,
+Windows, NVIDIA 617.14; standalone GL identifies the RTX 5060 Ti.
+Evidence: [dated rig tests](visual-stimulus-evidence-2026-10-28/rig-tests/).
+Under [V04](../docs/architecture/visual_stimulus.md#v04), the four-output
+2 mm/300 ms/200-pattern sparse test passes Setup but fails during PrepareTrial,
+before Running: `raw frame writes require a contiguous writable pinned buffer`.
+`SparseNoiseProcess.send` forwards immutable `encode_job` bytes to the native
+`OverlappedPipe.write`, which rejects read-only buffers. CREDIT uses the same
+path. This is an observed Windows integration defect, not a throughput result.
+The incident window expired; automatic application shutdown followed. The launcher
+receipt confirms all owned processes absent; all eleven saved settings files match
+their pre-test bytes. API restoration could not run after controller departure.
+
+Owner authorized repair: `SparseNoiseProcess.send` now supplies a writable memoryview
+backed by a bytearray to the existing synchronous native writer, preserving its deadline
+and pending-I/O ownership. ARCH-002 review: the focused 190-line helper needs no new
+abstraction, dependency or policy change. An owning lifecycle test sends JOB and two
+CREDIT messages through a real Windows pipe. Post-fix: 720 Visual Stimulus/native-pipe
+tests and three subtests pass; Ruff/format, Win32 mypy (184 files) and boundaries pass.
+The initial native-pipe regression attempt was sandbox-denied (WinError5); the native
+access run passes.
+
+The repaired 60-second four-output sparse trial completes with exact scheduled cutoff,
+confirmed cleanup and exact runtime/saved-settings restoration. All 200 patterns on
+each of four surfaces appear: 800 regenerated hashes match, 14,176 selections are
+`current`, none are residency/background holds. All 3,544 recorded frames fully decode
+and match encoder accounting, with zero capacity drops, duplicates or unresolved
+submissions. Live helper/encoder identities are retained; encoding selects GPU1
+(RTX2080Ti) and rendering uses RTX5060Ti. Start-command to scheduled T is1.407s
+(includes preparation/encoder/scheduling, not isolated helper-prefill timing).
+See [assessment](visual-stimulus-evidence-2026-10-28/rig-tests/sparse-fixed-run/assessment.json)
+and [decode/accounting](visual-stimulus-evidence-2026-10-28/rig-tests/sparse-encoding.json).
+
+The initial timing result remains unresolved: saved all-output VSync was preserved; evaluation median
+16.666ms, mean59.052Hz, maximum298.802ms at0.734s, and maximum166.708ms after the
+first second (37.665s). No optical flip or steady60Hz guarantee follows. The separate
+initial grating probe incorrectly extended an angular review fixture to all four
+planes: runtime rejected a ray behind the observer at5s; subsequent Stopped evidence
+was rejected and shutdown followed. Retain that harness limitation and cleanup failure
+as separate evidence, not a grating shader regression. Normal non-destructive startup
+recovery succeeded, preserving all scientific files. The corrected physical-coordinate
+comparison (5s blank, 20s four-screen10mm/37-degree grating drifting10mm/s, 35s blank)
+completes and restores configuration: 3,602 fully decoded/count-matching frames,
+zero recording drops/unresolved submissions, median16.651ms and maximum20.726ms
+evaluation gaps. This single comparison does not establish causation for sparse gaps.
+
+Focused gap investigation retained [stage traces and methods](visual-stimulus-evidence-2026-10-28/gap-diagnosis/context.md).
+The old startup intervals mostly span swap/completion waits; the later event spends
+152.93ms before its first swap. No generator starvation is recorded. A temporary
+buffered stage/GL/GC trace did not reproduce either large event:60s/3599 frames,
+800 matching hashes, no holds, max34.269ms, mean59.975Hz. Before Ready, helper prepare
+takes916.718ms including744.964ms prefill; max upload0.660ms, selection1.767ms,
+GC1.289ms, scene render9.803ms and swap23.521ms. These nested spans are not additive.
+No causal timing repair is established; shader warm-up or OS/driver scheduling are
+unverified hypotheses. Similar large startup gaps exist in historical blank scenes.
+
+After removing instrumentation and restarting normally, the corrected180s fixture
+completes with10,799 fully decoded/count-matching frames, all2,400 regenerated hashes
+matching,43,196 current selections, no holds/drops/duplicates/unresolved submissions.
+Evaluation median16.667ms, mean59.993Hz, maximum33.466ms; per-output return maximum
+33.758ms. All11 saved files and runtime configuration restore exactly. A first extended
+fixture accidentally retained a60s epoch; its exact-duration guard aborted and restored
+cleanly before the corrected run. The diagnostic collector initially requested metrics
+from an empty launcher stderr and reported missing metrics; recording-only collection
+passes. Five focused native sparse lifecycle tests, scoped Ruff/format and791-module
+boundaries pass. Temporary hooks are removed; the writable-buffer repair remains the
+only production sparse change. The167–299ms events remain unreproduced/unattributed,
+not fixed; optical and combined-load acceptance remain open.
+
+Sparse Abort after5s completes in238.443ms, returns to Configuration with cleanup
+confirmed, and leaves no helper/encoder process. Its303 frames fully decode and match
+accounting; all68 first-display hashes match, no holds, max evaluation gap20.789ms.
+The test harness incorrectly awaited an Ended snapshot after Abort had already reset
+to Configuration; it exits1 on that bounded wait, then its finally block restores the
+original runtime configuration exactly. The session journal, decoded evidence and
+authenticated snapshot establish interruption/closure independently of that harness
+exit. Final verification: Configuration, cleanup confirmed, no prompts, no helper or
+encoder, all eleven saved settings files unchanged. The managed app remains open.
+See [final verification](visual-stimulus-evidence-2026-10-28/rig-tests/final-verification.json).
+
+Windows checks: 1,012 Visual Stimulus/generation/supervisor tests and three subtests
+pass, including native GL; focused GUI checks: 32 pass and two fail on obsolete
+`Texture` labels (`Texture drift` is current), reproducing the recorded failures.
+42 contract tests, 14 schema checks and backend boundaries pass. The initial sandbox
+attempt timed out in asyncio socketpair creation; the successful run used native
+access. The later instrumented prefill measurement is bounded to this rig fixture;
+optical and combined camera/Tracking load remain unverified.
+
 ## Rendering and presentation review — 2026-10-28
 
 Source review of `rendering/engine.py`, `native.py`, `scene.py`, `upload.py` and the
@@ -50,12 +948,29 @@ path missing from renderer state; `runtime-general-epoch-assignments` remains de
 pending separate authorization. Legacy distinct Media/Drift schedules fail atomic
 migration with an explicit separate-import message; they are never silently combined.
 
-Source review also found a pre-existing declaration mismatch: the accepted
-`cephvr_grating_json_v1` profile is implemented/tested, but E14's fixed
-`assets.image_profiles` policy inventory still lists only the older image profiles.
-`grating-profile-policy-reconciliation` tracks the matching declaration/version/digest
-review. No current runtime failure was established and no policy values were changed
-in this increment.
+`grating-profile-policy-reconciliation` is complete (2026-10-28):
+[V04](../docs/architecture/visual_stimulus.md#v04) revision39 and
+[E14](../docs/architecture/system-contracts.md#e14) bind the already-supported
+`cephvr_grating_json_v1` image profile in policy22, matching both TOML versions
+and the loader digest. No rendering behavior or operator setting changed.
+The owning configuration regression compares the policy inventory with the Asset
+model and both published program/prepared-trial schemas, and loads the strict pair.
+ARCH-002 review: reuse the existing loader/digest and owning test module; no new
+abstraction, dependency or oversized production module extension.
+
+Validation on the uncommitted tree atop e4dd8f2694aa075380fe6711a884fe5894763c6f:
+configuration/compilation/shared-config tests pass55 plus5 subtests; grating resource
+tests pass9; controller installed-policy edit/Setup integration passes1 with loopback
+permission. Scoped Ruff/format, Win32 mypy,791-module boundaries (zero violations;
+unrelated size advisories retained) and whitespace pass. Commands use the repository
+Python: `-m pytest tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_compilation.py tests/shared/test_config.py -q -m "not windows and not rig"`,
+`-m pytest tests/visual_stimulus/test_resources.py -q -k grating -m "not windows and not rig"`,
+and `-m pytest tests/controller/test_configuration_transactions.py -q -k installed_visual_stimulus_policy --timeout=20`.
+Initial resource attempts hit the external-assets fixture requirement and sandbox temp
+allocation; a writable external visualization test directory passes. Initial controller
+attempt was interrupted; bounded retry timed out in asyncio socketpair creation;
+the permission-enabled retry passes. Initial formatting found CRLF introduced by editing;
+repository formatting restored. No app restart or physical/optical acceptance performed.
 
 ## Combined-tree verification — 2026-10-27
 
@@ -439,37 +1354,33 @@ these remain in the [rig checklist](rig-verification.md#sparse-noise-presentatio
 
 ## Projector shell icons - 2026-10-27
 
-Correction after the owner's live screenshot: the original shared helper also set
-WS_EX_DLGMODALFRAME on fullscreen outputs, introducing a non-client border.
-The retained incident `emergency-1104471759979700-28973466-a93b-47f4-b122-55fb4f33dec4.json`
-reports calibration_front at1274x714. Projector styling now omits that border while
-retaining TOOLWINDOW and clearing APPWINDOW; camera caption behavior is unchanged.
-A native Win32 popup regression checks the actual1280x720 client rectangle and shell
-style bits.166 rendering/platform tests pass including native cases (`pytest
- tests/platform/test_window_coordinates.py tests/visual_stimulus/test_rendering.py
- -q -m "not rig" --basetemp=.pytest-tmp-icons-border`); Ruff/format, Windows-target
-mypy and772-module boundaries pass. ARCH-002 review keeps the correction in the
-existing focused helper, with no new dependency or state. This supersedes the earlier
-mock-only geometry confidence. Managed projector retry and Explorer appearance remain
-unverified; the screenshot's interruption IDENTITY warning is a separate unresolved
-follow-up, not established as repaired by the geometry fix.
+Current correction (2026-10-28), `projector-window-visibility`: the owner reports
+partial hiding, blank taskbar thumbnails and lingering entries, and authorizes
+normal visible windows. [G01rev373](../docs/architecture/gui.md#g01) now keeps normal
+named GLFW output entries. Removed the hide/style/show sequence and its unused
+TOOLWINDOW option from the camera-caption helper. Output titles/icons are no longer
+cleared; creation, recreation and native destruction remain with the renderer.
+This removes the shell workaround; the screenshot alone does not establish whether
+the lingering entries represent live windows or stale Explorer thumbnails.
 
-`projector-shell-icons` implements [G01](../docs/architecture/gui.md#g01):
-physical output creation clears native window/class icons and removes APPWINDOW,
-adds TOOLWINDOW while hidden, then shows the same GLFW window. All output creation
-and recreation uses this path after cleanup ownership registration. Main GUI theme
-restores the native application-icon fallback instead of a transparent icon.
-ARCH-002 review reuses the focused Windows caption helper and native display module;
-no dependency or ownership change. Existing native.py/theme.py size warnings remain
-cohesive lifecycle/theme orchestration; no new responsibility is embedded there.
+ARCH-002 review: delete unused behavior, no new dependency/state/helper. Native.py
+remains cohesive lifecycle ownership (904 lines); this increment removes two lines.
+Existing tests cover visible recreation/cursor preservation, multi-output replacement,
+partial creation, release failures and retries; camera caption behavior is preserved.
+205 focused rendering/calibration/platform tests pass,48 Windows/rig cases deselected.
+Scoped Ruff/format, three-source Win32 mypy,791-module boundaries/zero violations and
+whitespace pass. No running-app restart or live Explorer/physical projector closure
+check was performed. Follow-up remains in the [rig checklist](rig-verification.md#projector-window-visibility).
 
-Validation:146 rendering/platform tests pass (16 native/rig deselected); three
-focused caption/theme cases pass. Ruff/format, Windows-target mypy (four sources)
-and boundary checks (772 modules, zero violations) pass. Initial temp-directory
-permission errors were resolved with a workspace basetemp; two GPU cleanup fixtures
-were updated to stub the new native boundary. An initial documentation write failed
-on default Windows encoding and was retried explicitly as UTF-8. No managed restart,
-physical output or visible Explorer taskbar acceptance was performed.
+Historical evidence: Oct27's earlier helper added WS_EX_DLGMODALFRAME to fullscreen
+outputs; incident `emergency-1104471759979700-28973466-a93b-47f4-b122-55fb4f33dec4.json`
+reported calibration_front1274x714. Removing that border while retaining TOOLWINDOW
+passed166 rendering/platform tests including the native1280x720 client/style case;
+Ruff/format/Win32 mypy and772-module boundaries passed. The earlier146-case local run
+and fixture-only31-case run did not verify Explorer appearance. Those results are
+historical: the current repair removes the entire projector styling path and its
+style-specific tests. The prior interruption IDENTITY warning remains a separate
+unverified follow-up under `projector-shell-retry`.
 
 ## Image Resize/Source — 2026-10-27
 
@@ -939,8 +1850,29 @@ notice and Save routes to Save as…; the arena scatter sampler uses a precomput
 exercised. GUI wiring (Oct28): protocol/program loads log one notice for linked Media epochs
 and report invalid-link errors readably; the sparse-noise import dialog and inline layer pass
 the enabled-projector surfaces as `active_surfaces` on each preparation (97 focused GUI cases
-pass; full suite not run). Open (TODO `stimulus-authoring-review-findings`): bars Save-as
-confirmation, follower position on unlink, unwired Generate-window actions.
+pass; full suite not run).
+
+Oct28 owner decisions implemented under [G01](../docs/architecture/gui.md#g01)
+revision376: converted legacy bars retain mandatory new-file protection; Generate
+keeps Open/Save as. Removed uncalled New, Undo/Redo/restore, Export, Cancel, root and
+calibration handlers with their unused history/export state. Preserved headless arena
+export, injected geometry, preview cancellation, stale-result filtering and unsaved
+close/Open prompts; preview error text now accurately offers saving. ARCH-002 caller
+review found no production callers; owning tests retain edit/save, selection/rebuild,
+workspace isolation and stale-result checks instead of exercising unreachable actions.
+No new dependencies. Existing legacy conversion test now covers both bar orientations,
+including rejection of the original path, byte preservation and successful new-file save.
+
+Validation: `QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/generate_stimulus -q -m "not windows and not rig" --basetemp=.pytest-tmp-authoring-actions --timeout=30`
+gives131 passes,6 deselected and1 failure: `test_parameter_pairs_keep_full_width_rgb[300]`
+measures188/200px instead of equal widths. Isolated selection `-k "parameter_pairs_keep_full_width_rgb or legacy_open"`
+gives5 passes and the same failure; it constructs the unchanged property form without
+AuthoringWindow. No baseline execution claimed; tracked under gui-suite-reconciliation,
+not repaired in this action cleanup. Scoped Ruff/check/format, two-source Win32 mypy,
+791-module boundaries/zero violations and whitespace pass. Source tree uncommitted
+atop e4dd8f2694aa075380fe6711a884fe5894763c6f; no app restart/native/optical acceptance.
+Remaining review findings: follower position on unlink (unverified), GL-only paths,
+and GUI suite reconciliation.
 
 ## Current runtime verification
 

@@ -1,0 +1,192 @@
+{
+  "gpu": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+  "rectangles": [
+    [
+      1029,
+      0,
+      1791,
+      691
+    ],
+    [
+      0,
+      0,
+      1031,
+      682
+    ],
+    [
+      1789,
+      0,
+      2816,
+      697
+    ],
+    [
+      1043,
+      694,
+      1777,
+      1754
+    ]
+  ],
+  "cpu": {
+    "png_read_decode": {
+      "median_ms": 55.50635000690818,
+      "p95_ms": 76.34553988464177,
+      "max_ms": 77.6511998847127,
+      "n": 24
+    },
+    "pack_crop_r8": {
+      "median_ms": 1.7984999576583505,
+      "p95_ms": 2.072809904348105,
+      "max_ms": 2.5659999810159206,
+      "n": 24
+    },
+    "prepared_crop_read": {
+      "median_ms": 5.027699866332114,
+      "p95_ms": 5.642169911880046,
+      "max_ms": 6.483200006186962,
+      "n": 24
+    }
+  },
+  "upload": {
+    "full_rgba32f": {
+      "bytes_per_change": 491520000,
+      "median_ms": 21.43030008301139,
+      "p95_ms": 23.075149999931455,
+      "max_ms": 24.30109982378781,
+      "n": 30
+    },
+    "crop_rgba32f": {
+      "bytes_per_change": 43576688,
+      "median_ms": 2.3633999517187476,
+      "p95_ms": 2.6941950665786862,
+      "max_ms": 2.8962998185306787,
+      "n": 30
+    },
+    "crop_r32f": {
+      "bytes_per_change": 10894172,
+      "median_ms": 1.2267499696463346,
+      "p95_ms": 1.2579200440086424,
+      "max_ms": 2.959399949759245,
+      "n": 30
+    },
+    "full_r8": {
+      "bytes_per_change": 30720000,
+      "median_ms": 2.1941500017419457,
+      "p95_ms": 2.865014865528792,
+      "max_ms": 3.0149000231176615,
+      "n": 30
+    },
+    "crop_r8": {
+      "bytes_per_change": 2723543,
+      "median_ms": 0.6276500644162297,
+      "p95_ms": 0.9884300758130847,
+      "max_ms": 2.4037000257521868,
+      "n": 30
+    },
+    "crop_r8_pbo": {
+      "bytes_per_change": 2723543,
+      "median_ms": 1.5204999363049865,
+      "p95_ms": 2.0653999759815633,
+      "max_ms": 2.2054000291973352,
+      "n": 30
+    }
+  },
+  "sources": [
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-nt_fq95n\\0001_1_metamer1.png",
+      "sha256": "d0f632d16f0160a5068e3f7162917e3c483b534c991df92f196f654f550c634f"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-t24w17xy\\0027_2_noise2.png",
+      "sha256": "5487d7de1f2d21df7e6c479aa42bf55ae63434d779de472b6c13061b24e82817"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-xf_bl9ez\\0053_4_metamer8.png",
+      "sha256": "3bb625766fe90d9262239f9ab8699116ca3e0aa5c649de1d858983c2481e557c"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-eaqx3r21\\0079_6_metamer4.png",
+      "sha256": "d8bd082846819404ca89c25655fe1dce4a543f083d837f7ab4a4b1598ac0f542"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-agfjdvlc\\0105_7_noise5.png",
+      "sha256": "d8ce2ced756e4eec98202a0f1285d8d6b34361daee2c44d2fae89cd084a0cc10"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-1o31c6ig\\0131_9_noise1.png",
+      "sha256": "9b6eed7f04f33b0d1f020001626987c8b1e390a84b99a77f456c2fff89d1afc8"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-kqyj4rhx\\0157_11_metamer7.png",
+      "sha256": "41503202a09b3b8b38c45b1f5ce3b0928b4cf1cb76534654c1c8861218f2804a"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-bq3bagov\\0183_13_metamer3.png",
+      "sha256": "f35310867a4690325487266b2ec5d9bc41230c15b1e93157b71563cb6625539a"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-fa3up0_5\\0209_14_noise4.png",
+      "sha256": "70f17bf0daa47b4bec2965fbb3169007558fd6e243aea85f17997d40acb119ae"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-3zv7jy2j\\0235_16_metamer10.png",
+      "sha256": "699f8830d23c8705e66979a18eac5b260564bed97de6d89fb7df60ff040d1c7c"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-asvvsd74\\0261_18_metamer6.png",
+      "sha256": "3e64e70c372d79658952477ddfe8a7dc09de6930d6d2077bff1036bb3984f4d7"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-7la777hq\\0287_20_metamer2.png",
+      "sha256": "544b91955dcafd46e94882914dd09aba5a18e0491c5047b0d57eb0abb1b0cbf0"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-s_tu7a33\\0313_21_noise3.png",
+      "sha256": "e8acefb24c5516fce2a39d7885e0b2f67512e878380c6b6dfea6563d5b301460"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-0fcynwl9\\0339_23_metamer9.png",
+      "sha256": "21a8bf0bb1483b8a14411d7d9bc0a96acd5ad4dd5c3977e46f7edd40b150e6ad"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-q1lcdnow\\0365_25_metamer5.png",
+      "sha256": "0b7eee92ed9fc1334d42078796dd514e27cb735c8b18c9022a46a8756759a21b"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-kz2y0_kz\\0391_27_metamer1.png",
+      "sha256": "656b4e89e7eda72bea0278bfeee69cd3851afcb84e800f3967e6bf7036bb18b1"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-j22jspk5\\0417_28_noise2.png",
+      "sha256": "35447fe59b44eac1e4ae5d011d8a2d7329877a049a7a61ce5ed3b96b6ef9e65b"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-auf8xn1a\\0443_30_metamer8.png",
+      "sha256": "56a90c5e1323e47c38a992b15e59ba200622c43b94d0dc1f53156c7b6176e470"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-14nmoy7a\\0469_32_metamer4.png",
+      "sha256": "5c5b42a3c6084519e5f24a17de6e8fd5af47e5ef9b5f5224b95d99b868402cd2"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-0boagkav\\0495_33_noise5.png",
+      "sha256": "0d8fd41d87efab1cf2171b3f69d85021f6330395a575672b97bf196c95cdaa93"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-b7vngmpe\\0521_35_noise1.png",
+      "sha256": "ab7ff58b9f0dc236e5d1e10af6975b7da91587f299cbd12931e67c05a63026ba"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-rorbqjhu\\0547_37_metamer7.png",
+      "sha256": "bca195eaadb6cdc80213fd9cf8fabaa71dd1aef231e5ac3199c6a14f9e80c743"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-2d6prxc8\\0573_39_metamer3.png",
+      "sha256": "0ec2a11735f8b512cbe2dda1b81f2a1f732ae43c05f81be89611ae4644ddf3d6"
+    },
+    {
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\Pedro\\media\\import-hdsq46mv\\0600_40_noise5.png",
+      "sha256": "98a8195771e7d971c71336f7737395d5783612f0aa8c15ffc79424f18e960cb7"
+    }
+  ],
+  "limits": "Warm-cache isolated four-context completed uploads with preallocated textures; no vsync, drawing, concurrent cameras, or optical timing. PBO measured without overlap. Only24 source images checked grayscale."
+}

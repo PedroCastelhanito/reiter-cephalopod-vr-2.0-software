@@ -1,0 +1,62 @@
+ConfirmConfiguration dad317bc-bae3-4d82-a2c7-be86b0910d8c failed: SETUP_DEADLINE: configuration confirmation missed its original deadline
+Setup cancellation ON-boundary cancellation is unconfirmed
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\coordinator\session.py", line 183, in _resolve_and_adopt
+    await asyncio.wait_for(session.resolution_confirmed.wait(), remaining)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\coordinator\session.py", line 382, in cancel
+    await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\microcontroller_client.py", line 221, in cancel_on_reservations
+    await self._call(wire.MICROCONTROLLER_IO_KIND_CANCEL_ON, deadline_ns)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\microcontroller_client.py", line 43, in _call
+    raise TimeoutError(
+TimeoutError: Microcontroller request deadline expired before transport
+Setup cancellation pulse stop remains unconfirmed
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 500, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\coordinator\session.py", line 183, in _resolve_and_adopt
+    await asyncio.wait_for(session.resolution_confirmed.wait(), remaining)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 502, in wait_for
+    raise exceptions.TimeoutError() from exc
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\coordinator\session.py", line 400, in cancel
+    evidence = await self.serial.off(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\microcontroller_client.py", line 194, in off
+    await self._call(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\microcontroller_client.py", line 43, in _call
+    raise TimeoutError(
+TimeoutError: Microcontroller request deadline expired before transport
+SetupSession 4136e181-a6b0-4a77-a3ee-d83b2821fc95 failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: 
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: Visual Stimulus preparation was cancelled
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

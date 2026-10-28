@@ -232,7 +232,7 @@ class StimulusPreviewArea(QWidget):
 
     def update_instruments(self) -> None:
         timeline = self.timeline
-        enabled = timeline.advanced and self.category.text() != "Media presentation"
+        enabled = timeline.advanced and bool(timeline.all_panels)
         timeline.motion_section.setVisible(
             enabled
             and bool(self.cells)

@@ -9,6 +9,7 @@ from typing import Protocol
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.deadlines import Deadline
 from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
@@ -90,7 +91,7 @@ class PreparationPort(Protocol):
         self,
         request: visual_stimulus.WorkerSetup,
         announce: Callable[[str, str | None], None],
-        deadline_ns: int,
+        deadline_ns: Deadline,
         *,
         announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
         | None = None,

@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-28",
+  "source_revision": "e4dd8f2694aa075380fe6711a884fe5894763c6f plus uncommitted crop implementation (policy30)",
+  "scope": "600-image saved protocol, all four outputs, visual-only dummy test; bounded playback, not full-hour/optical acceptance",
+  "setup_seconds": 325.5405755,
+  "start_to_abort_confirmed_seconds": 244.7032073,
+  "commands": {
+    "setup": {
+      "command_id": "119e1f1c-f7cf-41ed-859e-df5076f5b445",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "start": {
+      "command_id": "f359ecb2-63d6-48aa-8ba1-5f15d07a10d4",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "cancel": {
+      "command_id": "d03dee4d-f0e8-4674-8cc7-233e5fbfaeac",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "restore": {
+      "command_id": "66b65418-eeeb-4c8c-a1bb-fc26bd3fd497",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  },
+  "cleanup_confirmed": true,
+  "bundle_and_registry_absent": true,
+  "readiness_hold_warnings_in_launch_stderr": false,
+  "limitations": [
+    "No per-frame history in Save-Off dummy run; zero-warning is not quantified optical/timing proof.",
+    "Window inspection failed: Computer Use app approval timed out.",
+    "Camera integration blocked by separately recorded ConfirmConfiguration deadline concern."
+  ]
+}

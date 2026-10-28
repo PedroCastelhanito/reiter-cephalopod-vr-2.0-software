@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import sys
 from collections.abc import Awaitable, Callable
 from uuid import uuid4
@@ -282,6 +283,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="cephvr-visual-stimulus-worker")
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args()
+    for name in (
+        "cephvr.visual_stimulus.rendering.image_residency",
+        "cephvr.visual_stimulus.worker.timing",
+    ):
+        diagnostic_log = logging.getLogger(name)
+        diagnostic_log.addHandler(logging.StreamHandler())
+        diagnostic_log.setLevel(logging.INFO)
+        diagnostic_log.propagate = False
     bootstrap = decode(read_bootstrap(args.bootstrap_handle))
     asyncio.run(run(bootstrap))
 

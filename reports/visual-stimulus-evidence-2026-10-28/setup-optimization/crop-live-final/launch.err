@@ -1,0 +1,4 @@
+CephVR Visual Stimulus recovery: RuntimeError: ReportWorkerHeartbeat receipt failed: elapsed_ms=0.008, budget_ms=-145608.193, bytes=250605: ReportWorkerHeartbeat: original Visual Stimulus peer deadline expired
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 59620 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

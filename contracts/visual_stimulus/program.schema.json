@@ -2589,12 +2589,21 @@
           "$ref": "#/$defs/SparseNoiseAppearance"
         },
         "pattern_count": {
+          "default": 1,
           "exclusiveMinimum": 0,
           "title": "Pattern Count",
           "type": "integer"
         },
         "pattern_duration": {
-          "$ref": "#/$defs/Time"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Time"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2609,9 +2618,7 @@
         "assignments",
         "feedback",
         "kind",
-        "appearance",
-        "pattern_count",
-        "pattern_duration"
+        "appearance"
       ],
       "title": "SparseNoiseSettings",
       "type": "object"

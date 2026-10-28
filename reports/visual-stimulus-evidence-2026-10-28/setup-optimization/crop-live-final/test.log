@@ -1,0 +1,49 @@
+{"host_ns": 1183688462056000, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}]}}
+{"host_ns": 1183688469829500, "kind": "protocol", "value": {"path": "C:\\Users\\ReiterU_PC\\Desktop\\Alsu\\protocols\\texture-presentation-1hr_protocol.json", "sha256": "70551ac8c2b0d4d2b66d0b2ac43146be36eb9fe908efe7fccfe5ade74f06342b"}}
+{"host_ns": 1183690637944000, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}]}}
+{"host_ns": 1183690638812300, "kind": "apply", "value": {"command_id": "4654dc07-6da3-4b21-963c-c3c472e83ff2", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1183692764068000, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Reserving output folder\u2026", "complete": false}]}}
+{"host_ns": 1183692766079300, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Registering backends\u2026", "complete": false}]}}
+{"host_ns": 1183692778994700, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Preparing backends\u2026", "complete": false}]}}
+{"host_ns": 1183692785460000, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": false}]}}
+{"host_ns": 1184018392349600, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}]}}
+{"host_ns": 1184018392945100, "kind": "setup", "value": {"command_id": "d0885c19-2c9d-484a-9d7d-744d81fe727e", "complete": true, "succeeded": false, "needs_input": false, "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: ReportWorkerHeartbeat receipt failed: elapsed_ms=0.008, budget_ms=-145608.193, bytes=250605: ReportWorkerHeartbeat: original Visual Stimulus peer deadline expired"}}
+{"host_ns": 1184018403725700, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}, {"command": "CancelSetup", "progress": "Cleaning up\u2026", "complete": false}]}}
+{"host_ns": 1184028402331100, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "Setup", "progress": "Waiting for backends\u2026", "complete": true}, {"command": "CancelSetup", "progress": "cleanup evidence blocked", "complete": true}]}}
+{"host_ns": 1184028403174800, "kind": "cancel", "value": {"command_id": "6d6b6052-73c2-443d-89e6-af56c30688d6", "complete": true, "succeeded": false, "needs_input": false, "failure": "OPERATION_FAILED: cleanup could not be confirmed"}}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_final.py", line 94, in main
+    assert setup.succeeded, setup
+           ^^^^^^^^^^^^^^^
+AssertionError: CommandOutcome(command_id='d0885c19-2c9d-484a-9d7d-744d81fe727e', complete=True, succeeded=False, needs_input=False, failure='SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: ReportWorkerHeartbeat receipt failed: elapsed_ms=0.008, budget_ms=-145608.193, bytes=250605: ReportWorkerHeartbeat: original Visual Stimulus peer deadline expired')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_final.py", line 119, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_final.py", line 108, in main
+    await asyncio.wait_for(client._wait(lambda s:
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>

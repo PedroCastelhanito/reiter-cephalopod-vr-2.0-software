@@ -13,7 +13,7 @@ from cephvr.gui.program_editing import (
     validate,
 )
 from cephvr.gui.protocol_document import blank_program
-from cephvr.gui.stimulus_fades import retime_fades
+from cephvr.gui.stimulus_fades import retime_epoch_settings
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
     Fixed,
@@ -106,7 +106,7 @@ def edit_epoch_metadata(
     target = data_node(data, path)
     target["epoch_id"] = identity
     if isinstance(node.duration, Fixed):
-        retime_fades(
+        retime_epoch_settings(
             target["settings"],
             node.duration.duration.ns(),
             Time(seconds=duration.strip()).ns(),

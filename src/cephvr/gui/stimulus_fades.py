@@ -1,4 +1,4 @@
-"""Fade authoring as ordinary V05 opacity keyframes, without a second runtime state."""
+"""Epoch-relative fade and simple looming timing in canonical V05 keyframes."""
 
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation
@@ -69,8 +69,25 @@ def envelope(
     }
 
 
-def retime_fades(settings: list[dict[str, Any]], old_ns: int, new_ns: int) -> None:
+def retime_epoch_settings(
+    settings: list[dict[str, Any]], old_ns: int, new_ns: int
+) -> None:
     for setting in settings:
+        if setting["kind"] == "sparse_noise":
+            setting.update(pattern_count=1, pattern_duration=None)
+        width = setting.get("width", {})
+        knots = width.get("knots", [])
+        if (
+            setting["kind"] == "image"
+            and width == setting.get("height")
+            and width.get("kind") == "keyframes"
+            and width.get("interpolation") == "linear"
+            and len(knots) == 2
+            and Time.model_validate(knots[0]["time"]).ns() == 0
+        ):
+            width = deepcopy(width)
+            width["knots"][1]["time"] = {"seconds": seconds(new_ns)}
+            setting.update(width=width, height=deepcopy(width))
         if "opacity" not in setting:
             continue
         values = fade_values(setting["opacity"], old_ns)

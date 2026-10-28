@@ -1,5 +1,377 @@
 # Controller and supervisor status
 
+## Setup inactivity timeout — 2026-10-28
+
+`setup-inactivity-timeout` implements owner-accepted
+[E05](../docs/architecture/experiment.md#e05),
+[E06](../docs/architecture/system-contracts.md#e06),
+[E08](../docs/architecture/system-contracts.md#e08) and
+[V04](../docs/architecture/visual_stimulus.md#v04). Each backend's allowance starts
+at dispatch and renews only on exact, timely, meaningful progress. Other backends,
+heartbeats, duplicate dispatch, unchanged/old/late progress and retired work cannot
+renew it. Controller waits/handoffs and renderer CPU/graphics budgets use the live
+cutoff; prepared-artifact publication and final operation reporting no longer use
+the remainder of a total Setup duration. Independent health/device/persistence,
+per-trial, recovery and cleanup bounds remain. Experiment policy/config version 9
+binds this behavior to the existing 180 s inactivity setting; full application
+restart is required for running processes to use the changed code/contracts.
+
+ARCH-002: shared bounded receipt/sequence state and narrow deadline suppliers;
+coordinator relay extracted into a focused helper. No new dependency/process or
+whole-runtime back-reference. Existing large assembly/state/resource/driver owners
+retain their cohesive wiring/records/native ownership; size advisories and source
+provenance are assessed in the [dated validation context](runtime-evidence-2026-10-28/setup-inactivity/context.md).
+Existing owning test modules extended; no per-fix test modules.
+
+Validation: controller, Visual Stimulus, client, supervisor and shared invariant
+suites pass **1772 tests / 5 subtests**, with 4 skipped and 70 deselected. Ruff check,
+190-file affected-path format check, 304-source Win32 mypy, 796-module boundaries
+(zero violations), generated contracts and whitespace pass. Broader formatting
+still flags two concurrent files; see dated raw evidence. Earlier socket-permission,
+fixture, loader and UTF-8 edit failures were corrected and are recorded there.
+Local behavior/transport checks do not establish rig timing equivalence. Native projector-only600-image Setup/publication/Ready now pass beyond180s
+(312.52s), followed by240s playback and confirmed cleanup. Native GPU catalogue
+announcements were also repaired to use the active preparation command/live cutoff.
+[Native assessment](visual-stimulus-evidence-2026-10-28/setup-optimization/crop-batch/assessment.json).
+Stalled-backend isolation and combined camera acceptance remain in the
+[rig checklist](rig-verification.md#setup-inactivity).
+
+## Protocol file label encoding — 2026-10-28
+
+`protocol-file-label-encoding`: restored the original Unicode ellipses in
+protocol.py's Load/Save as labels under [G01](../docs/architecture/gui.md#g01).
+The trial-position-tags entry's encoding-correction claim missed these labels.
+Scan of 71 modified UTF-8 files found no remaining common mojibake/replacement
+markers; repository source/test/docs/contracts/config scan found only an unchanged
+Tracking digest-test string also present in HEAD. Reviewed non-ASCII text and diffs
+in protocol.py, protocol_editor.py and protocol_snapshot.py: no further damage.
+ARCH-002 review keeps this two-literal correction in its existing owner, without
+dependencies, new state or a file split for the existing 504-line size advisory.
+Validation: `.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q
+-k 'protocol_config_round_trip_retains_complete_schedule or
+protocol_program_validation_and_atomic_save or
+protocol_load_notifies_linked_media_once_and_names_invalid_links'
+-m 'not windows and not rig' --basetemp=.tmp-file-label-encoding`: 3 passed,
+1043 deselected. Scoped Ruff check/format and Win32 mypy on protocol.py pass;
+backend boundaries: 792 modules, zero violations. No application restart or native
+visual/file-dialog acceptance performed.
+
+## Trial position tags — 2026-10-28
+
+`trial-position-tags`: [G01rev381](../docs/architecture/gui.md#g01) labels Trials
+by their current one-based list position on creation, deletion, controller load
+and snapshot restore. Saved draft names, programs, histories and selection remain
+owned by the existing editor; deletion confirms both position and draft name.
+ARCH-002 review uses the existing population paths without dependencies or new
+state. Existing protocol.py/editor.py size advisories concern cohesive orchestration;
+this change only replaces label expressions. Extended owning row-action coverage
+checks deletion renumbering, append numbering and snapshot preservation in all
+three themes. Final offscreen command: `.venv/Scripts/python.exe -m pytest
+tests/gui/test_dashboard.py -q -k 'trial_row_actions_scroll_target_and_align_cards
+or managed_protocol_roundtrips_ordered_trials_seed_and_gap or
+empty_schedule_first_add_becomes_the_first_trial or expanded_close_and_trial_deletion'
+-m 'not windows and not rig' --basetemp=.tmp-trial-position-tags-verified`:
+7 passed,1039 deselected. Scoped Ruff check/format and Win32 mypy on protocol.py,
+protocol_editor.py and protocol_snapshot.py pass; boundaries check792 modules,
+zero violations; whitespace passes. Initial edit-script encoding failures were
+corrected. No live GUI restart, native visual inspection or rig acceptance.
+
+
+## Grating row layout — 2026-10-28
+
+`grating-row-layout`: [G01rev380](../docs/architecture/gui.md#g01) places Motion
+source beside Grating and stacks Color A/B with aligned RGB channels. Wide rows
+keep colors beside the other parameters; narrow rows give each color a full row.
+Linked rows retain the header selector and hide follower appearance/motion controls.
+Tab order follows grid positions. ARCH-002 review retains the existing cohesive
+projector-card layout owner (513 lines, size advisory); no new state, dependencies
+or runtime behavior. Existing owning authoring tests cover five widths, channel
+alignment, Self/Linked transitions, color round-trip and tab order: six pass.
+Eleven selected dashboard motion-source/presentation cases pass offscreen.
+Commands: `.venv/Scripts/python.exe -m pytest tests/gui/test_stimulus_authoring.py
+-q -k 'grating_row_controls or grating_colors_round_trip' -m 'not windows and not rig'`
+and the same command on `tests/gui/test_dashboard.py` with `-k
+'reference_motion_source_switches_controls_and_requires_target or
+presentation_rows_keep_layers_and_fades_with_motion'`; `QT_QPA_PLATFORM=offscreen`.
+Win32 mypy on projector_reference.py passes; boundaries check 792 modules with
+zero violations. Scoped Ruff check/format and `git diff --check` pass after correcting
+a test lambda lint finding and blank-line formatting. No running-app restart or
+native visual/rig inspection performed.
+
+## Setup watchdog and secondary renderer failure — 2026-10-28
+
+Owner selected500ms shared MCU acknowledgement timeout and1,050ms shared Stopped
+allowance. [A11rev55](../docs/architecture/acquisition.md#a11)/
+[E05rev101](../docs/architecture/experiment.md#e05) and the MCU contract now agree;
+50ms completion reserve, keepalive1s and communication watchdog3s remain. Owning
+loaders confirm500,000,000ns/1,050,000,000ns and exact2*ACK+margin compatibility.
+59 controller/acquisition configuration tests pass; scoped test Ruff/format and
+whitespace pass. Engineering settings only; fixed policies/version unchanged.
+ARCH-002 reuses existing settings/owners; no runtime code/dependency changes.
+Full application restart required for the retained serial owner; active process
+timings were not hot-swapped. No native retest or attribution of residual latency.
+
+**Latest native retest:** after corrected texture protocol Apply, one Setup reaches
+Resolving outputs (ten image validations and8/8 initial uploads done), then fails
+on PING206.031ms against199.983ms. Write47.503ms/read158.503ms; two reads151bytes,
+90 partial/61 late, longest80.071ms. Native timeout configuration31.941ms,
+write15.514ms, buffer queries31.468ms, reads126.969ms, all reported thread CPU0.
+Streamed validation removes the measured local GC defect but does not resolve all
+native serial latency. No contemporaneous trace attributes this recurrence to GC,
+GIL or driver waits. CancelSetup succeeds; Configuration/cleanup confirmed. GUI
+control restored, no Start or automatic retry. [Commands/snapshots/UI evidence](visual-stimulus-evidence-2026-10-28/image-cpu-capacity/native-setup/context.md).
+
+**Current protocol investigation:** supplied texture protocol exactly matches the
+live controller program. All three supplied files validate and declared assets
+exist. Actual offline configuration validation retains the full expanded settings
+graph and triggers a454.075ms generation2 GC pause, with480.973ms same-process
+witness delay, exceeding A11's200ms acknowledgement budget. Streaming semantic
+validation removes that measured pause: texture validation3837.543→1871.864ms,
+witness480.973→32.503ms, largest observed GC0.146ms. This establishes a host
+starvation mechanism, not concurrent attribution of the original serial failure or
+exclusion of driver delays. [Methods, hashes, raw results and limits](runtime-evidence-2026-10-28/mcu-protocol/context.md).
+47 compilation/configuration tests and5 subtests, scoped Ruff/format, Win32 mypy,
+792-module boundaries/zero violations and whitespace pass. Existing E07/A11
+validation and absolute deadlines remain authoritative; no retry, GC-policy or
+process change. ARCH-002 retains the cohesive expansion and semantic-check owners;
+compile.py's size advisory is reviewed, with no unrelated extraction/dependencies.
+The initial read-only snapshot confirmed Configuration/cleanup with retained failed
+Setup. The later native test above now verifies Apply and Cancel/cleanup but
+reproduces a PING deadline miss; the MCU latency task stays open for attribution.
+
+Second owner report (`cca6bf6f-65cb-4585-a0da-0c71968110f5`, Setup
+`4d1cc7e1-b2a0-4d05-8151-61cbeb17a207`) has no reported catalogue rejection.
+PING elapsed443.036ms against199.977ms: write stage93.485ms, reads349.528ms,
+two reads/150bytes,84 partial bytes retained before expiry and66 bytes returned
+late. Longest read302.250ms; no parsed unmatched/malformed replies. Native aggregates
+are timeout configuration78.420ms, write15.022ms, buffer queries15.973ms and
+reads333.521ms, all with reported thread CPU0.000ms. These account for442.936ms
+of elapsed time; the evidence cannot separate native driver waits, OS scheduling
+or Python GIL reacquisition, nor establish when the board transmitted its reply.
+
+Source review: `PySerialPort` opens with10ms read polls; per-request timeout changes
+only update the write budget, and `SerialChannel` refuses bytes returned after the
+absolute acknowledgement deadline. The installed PySerial Windows implementation
+performs buffer-status and overlapped read completion calls inside each read.
+Thus302ms is not an authored read timeout. Those serial aggregates alone do not
+identify the cause; the later protocol reproduction above establishes a separate
+measured validation/GC starvation mechanism. No transport/polling/priority/deadline
+change, blind retry, live serial access or runtime test was performed.
+The existing `mcu-setup-ping-latency` task remains unresolved. The screenshot's
+absence of catalogue errors does not independently prove full native cleanup.
+
+Owner diagnostics report serial timeout-configuration183.659ms and write22.778ms,
+both with zero reported thread CPU, ending after the acknowledgement deadline.
+This establishes latency, not its driver/load/firmware cause; the existing
+`mcu-setup-ping-latency` task remains open. No deadline relaxation or automatic retry
+was introduced. The secondary Visual Stimulus cleanup catalogue rejection is
+[reproduced and repaired locally](visual_stimulus.md#cleanup-before-setup-catalogue--2026-10-28).
+Connection refused, attempt retirement and renderer departure remain failure
+evidence, not confirmed cleanup. No live watchdog or Setup acceptance performed.
+
+## Image row controls — 2026-10-28
+
+`image-row-controls`: [G01rev379](../docs/architecture/gui.md#g01) removes Image
+speed/direction fields from projector rows and primary forms. Fit remains; shared
+batch-column choices now expose only Fit for ordinary Images. Legacy motion values
+and Looming size controls retain their existing read/render behavior. ARCH-002 review
+chose deletion in existing focused presentation helpers, with no dependencies or
+state-owner changes; no changed source file exceeds 500 lines. Existing boundary
+size advisories are outside this edit's responsibilities.
+
+Validation on the current dirty working tree: offscreen
+`.venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k
+'presentation_rows_keep_layers_and_fades_with_motion or image_fit or
+variations_use_stimulus_columns' -m 'not windows and not rig'` passes 11 cases
+with an explicit writable `--basetemp` outside the repository. Initial default TEMP
+attempt passed 10 cases with one fixture-directory permission error; corrected
+rerun passed all 11. Scoped Ruff check/format on stimulus_columns.py,
+reference_fields.py, stimulus_binding.py and test_dashboard.py pass; Win32 mypy
+on those three source files passes. Backend boundaries check 792 modules with
+zero violations; `git diff --check` passes. Running GUI was not restarted or
+visually inspected; no device/optical acceptance claimed.
+
+## Shared transport capacity — 2026-10-28
+
+Owner-selected schedule capacity now uses [E08rev185](../docs/architecture/system-contracts.md#e08)'s
+64MiB shared RPC ceiling and256MiB controller event/metadata queues, retaining
+four-message admission checks and existing operation counts. Loader checks and three
+focused controller configuration cases pass; full combined suite stalled and was
+interrupted, with no full-suite claim. Full application restart is required; live
+transport and memory acceptance remain unverified. [Current values, commands and
+evidence](visual_stimulus.md#schedule-and-transport-ceilings--2026-10-28).
+
+## Epoch label ambiguity — 2026-10-28
+
+`epoch-label-ambiguity`: implemented the owner's [G01rev378](../docs/architecture/gui.md#g01)
+revision. Cards use cached trial-order source numbers rather than stored names;
+structural editor commits renumber epoch IDs through the shared editing helper.
+Group identities/references, stimulus settings and repetition/shuffle rules remain
+intact. Unedited imports and Undo retain their original document representation.
+ARCH-002 review keeps numbering in the existing small editing helper and cached
+view; the oversized editor and painter gain only integration lines, retaining
+their transaction/presentation responsibilities. No new dependency or state owner.
+[Validation evidence](runtime-evidence-2026-10-28/epoch-numbering/context.md):
+39 selected editor cases pass, plus four focused cases after the final collision
+reservation refinement. Scoped Ruff/format, four-source Win32 mypy,792-module
+boundaries/zero violations and whitespace pass. Initial old-identity assertions
+were updated to the new requirement; fixture path failures were resolved with
+the writable external output root. Complete locally; no running-app restart,
+live-display inspection or hardware/optical acceptance claimed.
+
+## Preview first100 epochs — 2026-10-28
+
+`preview-first-100-epochs`: [G01rev375](../docs/architecture/gui.md#g01) limits
+animated trial and motion previews to the first100 canonical occurrences. Shared
+expansion now yields occurrences internally; the preview consumes a bounded prefix,
+while full backend expansion retains its pre-allocation count/rejection and exact
+count check. Ordering, lineage, repetition settings and sparse seeds share one
+implementation. Short trials retain their full preview; authored trials are unchanged.
+ARCH-002 review found cohesive small affected modules; no dependency, process or
+runtime back-reference was added. Existing boundary size advisories concern other
+modules. [Validation and limits](runtime-evidence-2026-10-28/preview-prefix/context.md):
+190 compiler/authoring/timeline cases and two retained-motion/duration cases pass.
+Three arena timeline failures also reproduce when forcing the prior full-expansion
+2000 cap; they remain under `gui-suite-reconciliation`. Scoped Ruff/format, Win32
+mypy and791-module boundaries pass. No app restart or native/optical acceptance.
+
+## Epoch-owned stimulus timing — 2026-10-28
+
+`stimulus-type-memory`: [G01rev377](../docs/architecture/gui.md#g01) now remembers
+one shared set per type across normal GUI save/restart. A focused defaults helper
+copies portable validated parameters on explicit type selection, preserving fresh
+identity, target projector, explicit file choice and input/layer references. Sparse
+noise and gratings remain asset-free. Later edits on another projector become the
+shared default; leaving an unchanged older layer does not overwrite them. Existing
+protocol epochs are not rewritten. The optional GUI-snapshot member preserves old
+snapshot compatibility and uses existing atomic save/readback, not another store.
+ARCH-002 review keeps defaults logic separate from composer/snapshot integration;
+no dependency or runtime back-reference was added. All53 authoring and11 selected
+GUI persistence tests pass offscreen. Scoped Ruff/format and three-source Win32
+mypy pass after fixing one missing TypeAdapter annotation;792-module boundary
+check reports zero violations, with existing size advisories outside these modules.
+[Commands and limits](runtime-evidence-2026-10-28/stimulus-memory/context.md).
+No running-app restart, hardware Setup or optical verification was performed.
+
+`generated-stimulus-stale-assets`: owner Setup screenshot and saved protocol confirm
+21 unused image/texture declarations remained after replacement with four sparse
+layers. Subgroup commit now calls the existing asset-pruning helper after finalizing
+variation rules/drafts. Shared references remain protected; G01/V04 behavior and backend
+required-asset validation are unchanged. Two regression cases reproduce before repair;
+eight subgroup/generated-stimulus cases pass after, plus scoped Ruff/format, Win32
+mypy, boundaries and whitespace. [Repaired protocol, original backup and evidence](runtime-evidence-2026-10-28/stale-assets/context.md).
+Desktop original and live app are untouched; Setup/cleanup were not rerun.
+
+`generated-stimulus-asset-gates`: verified Grating already takes the asset-free branch
+under G01/V04; no production change needed. Expanded the owning regression to Sparse
+noise, Grating and Uniform, both fresh and after Image on two projectors. All commit
+without assets; switching back to Image still requires a file.13 focused generated/
+grating authoring cases pass offscreen; test Ruff/format and whitespace pass. Native
+operation is not claimed. This is separate from the concurrent legacy grating-profile
+policy reconciliation.
+
+`sparse-seed-placement`: G01rev374 places Seed/New seed beside the stimulus-type
+selector using the existing header grid slot. Seed precedes appearance controls in
+Tab order; no new widgets or state owners. Three focused offscreen cases pass,
+including600/1000px row alignment, no overlap with the selector/Advanced button and
+New seed dirty-state behavior. Scoped Ruff/format, two-source Win32 mypy, boundaries
+and whitespace pass. Native appearance after restart remains unverified.
+
+Follow-up `sparse-noise-asset-gate`: reproduced the owner's asset-required error at
+EpochComposer.value after choosing Sparse noise, including Image → Sparse noise on
+two projector rows. The type-change handler incorrectly added generated noise to
+pending_assets. Added Sparse noise to the existing asset-free branch under G01/V04;
+no schema/architecture amendment or backend change. Both regression cases failed
+before and pass after; switching back to Image still blocks without an asset.
+All34 stimulus-authoring tests pass offscreen, plus scoped Ruff/format, Win32 mypy,
+791-module boundaries/zero violations and whitespace. ARCH-002: one existing branch
+change; no new state/dependency or affected-module size advisory. Native restart is
+unverified; prior timing tests did not exercise this final asset gate.
+
+`epoch-owned-stimulus-timing` implements the owner's [G01rev372](../docs/architecture/gui.md#g01):
+Sparse noise shows appearance/seed only; group repetition supplies new deterministic
+patterns and epoch duration supplies each pattern's hold. The epoch editor converts
+legacy hidden count/duration on commit, while direct legacy playback remains intact.
+Simple looming growth uses epoch duration across form, batch, metadata and subgroup
+edits; its separate Growth field and variation column are removed. Inspected Uniform,
+Image, Video, Grating, Texture drift and arena fields: no other duplicate epoch
+count/duration controls. Retained speed, fade, playback offset/end behavior and custom
+curves because they describe behavior within the epoch.
+
+ARCH-002 review reuses existing expansion and epoch-retiming operations with no new
+process, dependency or whole-runtime reference. The 506-line stimulus_parameters
+module only passes its existing duration to the focused looming form; the 925-line
+canonical program model retains its cohesive recursive schema, with a small sparse
+field/validation refinement. [Evidence and validation](runtime-evidence-2026-10-28/epoch-timing/context.md).
+Validation: 55 GUI cases, 162 resource/compiler cases and four sparse lifecycle cases
+pass; Ruff/418-file formatting,396-source Win32 mypy, schemas and boundaries pass.
+Broader GUI/full-lifecycle attempts were interrupted without summaries. An isolated
+existing type-switch test selects an unavailable Looming menu entry; HEAD source has
+the same menu inventory. This remains in GUI-suite reconciliation, not a timing repair.
+Native restart/projector timing remains in the [rig checklist](rig-verification.md#sparse-noise-presentation).
+
+## GUI history restore repair — 2026-10-28
+
+The screenshot's save block follows a reproducible protocol validation failure:
+four image settings in runtime_gui.json retained obsolete `sparse_noise: null`
+fields. Backed up the original and removed only those fields; all other bytes
+are preserved. Full offscreen GUI validation/restoration/recapture passes with
+matching fixture camera serials. [G01](../docs/architecture/gui.md#g01)'s overwrite
+protection remains intact; no runtime code or schema change was needed.
+The already-open process needs restart to clear its failed-restore flag; native
+restart and actual inventory acceptance remain unverified. Export current unsaved
+edits before closing without saving. [Method, backup and hashes](runtime-evidence-2026-10-28/gui-history-restore/context.md).
+
+## Projector tab hover — 2026-10-28
+
+Fixed `gui-tab-hover-jitter` under [G02](../docs/architecture/gui.md#g02): hover
+re-layout moved the manually centered Projectors bar up22px and back on every
+transition. The existing centering helper now exclusively owns tab geometry;
+a layout placeholder preserves row/card spacing. No backend or theme policy change.
+Eight focused offscreen cases pass across three themes/two widths, including
+intermediate movement detection and existing marker/color checks. Eight isolated
+native cases also pass, with an unexplained Windows0x8001010d diagnostic during
+fixture startup; no clean native startup or managed-app verification is claimed.
+Scoped Ruff/format/Win32 mypy and boundaries pass. Existing size advisories concern
+unchanged modules. [Evidence and commands](runtime-evidence-2026-10-28/tab-hover/context.md).
+The concurrent hover-test B023 noted below is now corrected and module lint passes.
+
+## Monitor stimulus previews — 2026-10-28
+
+The content/projector toggle groups now have16 logical pixels of horizontal
+separation (formerly6), retaining6px within each group. Existing width calculation
+uses that layout spacing, preserving narrow-window wrapping. Three toolbar tests
+across the existing themes pass; scoped Ruff/format, Win32 mypy and boundaries pass.
+This is a G01/G02 layout adjustment only; native appearance after restart is unverified.
+
+Under [G01/G02](../docs/architecture/gui.md#g01) and
+[V01](../docs/architecture/visual_stimulus.md#v01), sparse noise uses the existing
+renderer-owned live preview. Source review found no family-specific exclusion.
+Advanced → Stimulus selects it; Combined and Per-projector retain the same path.
+The supplied screenshot shows Configuration after interruption and unavailable
+Visual Stimulus; an inactive backend hides its selector. All seven stimulus families
+retain this existing live-output path without a separate generator or pixel transport.
+
+The owner's follow-up is implemented under G01rev371: only Texture drift and Grating
+contribute Monitor instruments/size lanes; Plots is hidden for trials without either.
+Mixed trials mask other families' epochs without changing imagery or timeline timing.
+The former category-label gate incorrectly hid eligible Media instruments; eligibility
+now follows filtered sources. Selector preferences survive trial/type changes.
+ARCH-002 review keeps filtering with motion data and reuses existing cards/signals;
+the large timeline/workspace modules receive only focused wiring, with no new dependency.
+
+69 focused preview/layout cases plus one mixed-epoch/toggle-transition case pass.
+Coverage includes all seven families, both preview modes (arena retains Combined),
+before/after Setup, deferred Show, projector filtering and plot visibility. Initial
+broader attempts hit sandbox temp allocation and a stale test's invalid `texture_drift`
+category; a workspace temp root and current Media fixture resolve those failures.
+An invalid hand-built Uniform test fixture was replaced with the actual authoring
+preset. Scoped Ruff/format, Win32 mypy (four sources), boundaries (791 modules, zero
+violations) and whitespace pass. Size advisories retain existing cohesion reviews.
+Offscreen Qt validates requests/layout only; native pixels and full-load preview
+remain under the [existing rig checklist](rig-verification.md#protocol-category-previews).
+No live application restart or device action.
+
 ## Combined-tree verification — 2026-10-27
 
 Both monitored implementation chats finished and their completion/rig follow-ups
@@ -212,7 +584,10 @@ physical GUI/projector acceptance remains pending there.
 `projector-shell-icons`: G01 restores the main GUI native icon fallback. Focused
 GUI theme check passes; projector changes and validation limits are in the
 [Visual Stimulus report](visual_stimulus.md#projector-shell-icons---2026-10-27).
-Running application was not restarted.
+Running application was not restarted. Oct28 G01rev373 removes projector shell
+hiding in favor of normal named output entries; the main GUI icon remains unchanged.
+205 focused renderer/platform tests and scoped static checks pass; live taskbar
+closure/recreation remains in the linked Visual Stimulus report.
 
 ## Image fitting controls — 2026-10-27
 

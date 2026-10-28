@@ -20,6 +20,7 @@ from cephvr.visual_stimulus.compiler.durations import (
 from cephvr.visual_stimulus.compiler.expansion import (
     ORDER_IMPLEMENTATION,
     expand_program,
+    iter_expanded_program,
 )
 from cephvr.visual_stimulus.compiler.transitions import compile_boundaries
 from cephvr.visual_stimulus.config.models.artifact_models import (
@@ -347,11 +348,16 @@ def validate_program_semantics(
     """Run reachable condition expansion and pure unit/writer/range validation."""
     if not re.fullmatch(r"(?:0|[1-9][0-9]*)", seed_decimal):
         raise ValueError("seed_decimal must be canonical nonnegative decimal text")
-    expanded = expand_program(
-        program, seed_decimal=seed_decimal, max_expanded_epochs=max_expanded_epochs
-    )
     duration_result = resolve_durations(
-        tuple(item.source.duration for item in expanded),
+        tuple(
+            item.source.duration
+            for item in iter_expanded_program(
+                program,
+                seed_decimal=seed_decimal,
+                max_expanded_epochs=max_expanded_epochs,
+                source_only=True,
+            )
+        ),
         _duration_plan(program),
         seed_decimal,
     )
@@ -363,7 +369,15 @@ def validate_program_semantics(
         for value in scene.background_linear_rgb
     )
     for index, (occurrence, duration_ns) in enumerate(
-        zip(expanded, duration_result.durations_ns, strict=True)
+        zip(
+            iter_expanded_program(
+                program,
+                seed_decimal=seed_decimal,
+                max_expanded_epochs=max_expanded_epochs,
+            ),
+            duration_result.durations_ns,
+            strict=True,
+        )
     ):
         _validate_writers(occurrence.settings, index)
         _check_ranges(occurrence.settings, index, duration_ns)

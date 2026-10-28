@@ -1,0 +1,74 @@
+settings_before {"config\\backends\\acquisition_config.toml": "aef7394e443069b358daf3b08ddfee1badfb3ae32878c1292fc4b56f6642949e", "config\\backends\\experiment_config.toml": "2b12d05977ae3ce3dca5a3855077d8c2304627b134fbf50a3350b3146c1bfc63", "config\\backends\\gui_config.toml": "cea55fdf6c0579003c7a7f5b11ff5281e8313bd32c4e9121dfbc7d00a6dce806", "config\\backends\\microcontroller_config.toml": "f2a831fcc46376dab9d45f7cb69b726e9027b4cda5d9c6336352c0c5bcbe6c62", "config\\backends\\supervisor_config.toml": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe", "config\\backends\\synchronization_config.toml": "e9ed2538635d5d746ade6c174d09b20374f184d5a1d03f26f2276883eded136e", "config\\backends\\tracking_config.toml": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c", "config\\backends\\visual_stimulus_config.toml": "729bad47eb4b215995f9f531405e62ca28e382bb2ce4e958e38c38211ebc9922", "config\\last_configuration.json": "a2e4974d6cf5f2b92aec7eec67e52b693aefc40ac280fab276ba5ff0da92770c", "config\\runtime_gui.json": "bc7567464fa1922c9d5540c8850e7759d62c331585b3f7794c5663bb98c3ded6", "config\\review_draft.json": "96632640d9d0b01550217cc592603e0fc8d1d4fd980dd4df4c09f10e91f05d82"}
+live_candidate_validation {"experiment": {"completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, "acquisition": {"completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "inactive"}, "synchronization": {"completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, "tracking": {"completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, "visual_stimulus": {"completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}}
+selected_cameras []
+command_attempt {"method": "UpdateConfiguration", "command_id": "30685ba3-ab57-4f8d-a690-08d52dd93d81"}
+command_result {"method": "UpdateConfiguration", "command_id": "30685ba3-ab57-4f8d-a690-08d52dd93d81", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "Setup", "command_id": "e974d38c-155c-4f33-a200-e4b5fb09e054"}
+command_result {"method": "Setup", "command_id": "e974d38c-155c-4f33-a200-e4b5fb09e054", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "StartSession", "command_id": "9efec67f-9288-4b34-ac6c-64c29ac09ae1"}
+command_result {"method": "StartSession", "command_id": "9efec67f-9288-4b34-ac6c-64c29ac09ae1", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+command_attempt {"method": "StopAfterTrial", "command_id": "a30ccfc8-614e-4f72-8b97-99e92e60eb17"}
+command_result {"method": "StopAfterTrial", "command_id": "a30ccfc8-614e-4f72-8b97-99e92e60eb17", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+restoration_failed {"error": "ClientError('State synchronization failed: <AioRpcError of RPC that terminated with:\\n\\tstatus = StatusCode.UNAVAILABLE\\n\\tdetails = \"Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n\\tdebug_error_string = \"UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\\r\\n -- 10054))\"\\n>')", "blind_file_restore": false}
+settings_unchanged {"config\\backends\\acquisition_config.toml": true, "config\\backends\\experiment_config.toml": true, "config\\backends\\gui_config.toml": true, "config\\backends\\microcontroller_config.toml": true, "config\\backends\\supervisor_config.toml": true, "config\\backends\\synchronization_config.toml": true, "config\\backends\\tracking_config.toml": true, "config\\backends\\visual_stimulus_config.toml": true, "config\\last_configuration.json": true, "config\\runtime_gui.json": true, "config\\review_draft.json": true}
+control_release {"failure": null}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 419, in run
+    terminal = await wait_state(
+               ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 196, in wait_state
+    state = await asyncio.wait_for(client._wait(predicate), wait_s)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 546, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 542, in main
+    asyncio.run(run(args))
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 456, in run
+    await restore()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 216, in restore
+    state = await wait_state(
+            ^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\rig-tests\native_grating.py", line 196, in wait_state
+    state = await asyncio.wait_for(client._wait(predicate), wait_s)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 142, in _wait
+    raise ClientError(f"State synchronization failed: {self._failure}")
+cephvr.client.session.ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+	debug_error_string = "UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.
+
+ -- 10054))"
+>

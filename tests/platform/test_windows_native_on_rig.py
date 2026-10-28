@@ -7,6 +7,7 @@ recording destinations, running CephVR processes, or a shared application job.
 from __future__ import annotations
 
 import ctypes
+import hashlib
 import json
 import multiprocessing
 import os
@@ -364,6 +365,7 @@ def test_managed_python_entry_preserves_identity_prefix_and_bootstrap(
         assert Path(observed["image"]).resolve() == runtime.resolve()
         assert Path(observed["prefix"]).resolve() == Path(sys.prefix).resolve()
         assert observed["marker"] == "inherited-bootstrap"
+        assert observed["sha256_provider"] == "_hashlib"
         assert observed["grpc"]
         assert (
             Path(observed["grpc_file"])
@@ -806,6 +808,7 @@ if __name__ == "__main__" and "--managed-runtime-probe" in sys.argv:
                 "marker": descriptor["marker"],
                 "grpc": grpc.__version__,
                 "grpc_file": grpc.__file__,
+                "sha256_provider": hashlib.sha256.__module__,
             }
         ),
         encoding="utf-8",

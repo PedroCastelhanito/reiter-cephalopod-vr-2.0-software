@@ -1,6 +1,7 @@
 """Source transfer/alpha interpretation and float32 texture upload on an active GL context."""
 
 from collections.abc import Callable
+from functools import lru_cache
 from typing import Any
 
 from cephvr.visual_stimulus.resources.media import ImagePixels
@@ -24,7 +25,55 @@ def upload_linear_image(
     return texture
 
 
-def linear_rgba_bytes(prepared_image: ImagePixels, *, opaque: bool = False) -> bytes:
+@lru_cache(maxsize=6)
+def _transfer_table(dtype: str, transfer: str) -> Any:
+    import numpy as np
+
+    maximum = np.iinfo(np.dtype(dtype)).max
+    values = np.arange(maximum + 1, dtype=np.float32) / float(maximum)
+    if transfer == "srgb":
+        values = np.where(
+            values <= 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4
+        )
+    elif transfer == "bt709":
+        values = np.where(
+            values < 0.081, values / 4.5, ((values + 0.099) / 1.099) ** (1 / 0.45)
+        )
+    values.flags.writeable = False
+    return values
+
+
+def linear_rgba_bytes(
+    prepared_image: ImagePixels, *, opaque: bool = False
+) -> memoryview:
+    import numpy as np
+
+    pixels = prepared_image.pixels
+    if prepared_image.alpha == "associated":
+        return _associated_rgba(prepared_image, opaque=opaque)
+    source = pixels[:, :, None] if pixels.ndim == 2 else pixels
+    source = source[::-1]
+    channels = source.shape[2]
+    rgba = np.empty((*source.shape[:2], 4), dtype=np.float32)
+    table = _transfer_table(str(pixels.dtype), prepared_image.transfer)
+    if channels <= 2:
+        rgba[:, :, 0] = table[source[:, :, 0]]
+        rgba[:, :, 1] = rgba[:, :, 0]
+        rgba[:, :, 2] = rgba[:, :, 0]
+    else:
+        for channel in range(3):
+            rgba[:, :, channel] = table[source[:, :, channel]]
+    if opaque or prepared_image.alpha == "none" or channels not in (2, 4):
+        rgba[:, :, 3] = 1
+    else:
+        rgba[:, :, 3] = _transfer_table(str(pixels.dtype), "linear")[source[:, :, -1]]
+        rgba[:, :, :3] *= rgba[:, :, 3:4]
+    return rgba.data.cast("B")
+
+
+def _associated_rgba(
+    prepared_image: ImagePixels, *, opaque: bool = False
+) -> memoryview:
     import numpy as np
 
     pixels = prepared_image.pixels
@@ -58,4 +107,4 @@ def linear_rgba_bytes(prepared_image: ImagePixels, *, opaque: bool = False) -> b
     rgb *= alpha
     rgba = np.concatenate((rgb, alpha), axis=2).astype(np.float32)
     rgba = np.ascontiguousarray(rgba[::-1])
-    return rgba.tobytes()
+    return rgba.data.cast("B")

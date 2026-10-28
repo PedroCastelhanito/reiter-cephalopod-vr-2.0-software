@@ -12,7 +12,7 @@ from cephvr.gui.program_editing import (
     validate,
 )
 from cephvr.gui.projector_layers import layers_for
-from cephvr.gui.stimulus_fades import retime_fades
+from cephvr.gui.stimulus_fades import retime_epoch_settings
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
@@ -109,7 +109,7 @@ def update_subgroup(
         and isinstance(before_epoch.duration, Fixed)
         and isinstance(after_epoch.duration, Fixed)
     ):
-        retime_fades(
+        retime_epoch_settings(
             list(old_settings.values()),
             before_epoch.duration.duration.ns(),
             after_epoch.duration.duration.ns(),
@@ -159,7 +159,7 @@ def update_subgroup(
                 and isinstance(original_duration, Fixed)
                 and isinstance(after_epoch.duration, Fixed)
             ):
-                retime_fades(
+                retime_epoch_settings(
                     current_settings,
                     original_duration.duration.ns(),
                     after_epoch.duration.duration.ns(),

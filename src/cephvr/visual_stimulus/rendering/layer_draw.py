@@ -46,6 +46,7 @@ def draw_layer(
     texture = None
     image_pixels = None
     fold = None
+    crop_origin = None
     field = None
     field_values: dict[str, tuple[float, float]] = {}
     if settings.kind == "texture" and settings.pattern.kind == "image_tile":
@@ -80,6 +81,14 @@ def draw_layer(
                 program["image_target_pixels"].value = image_pixels
                 if settings.fit == "fold":
                     fold = layers.fold_map(mapping_id)
+                    crop = gpu_resources.get(
+                        f"{artifact.identity.resource_generation}:{settings.asset_id}:crops",
+                        {},
+                    ).get(output_id)
+                    if crop is not None:
+                        mode = 12
+                        crop_origin = (float(crop.x), float(crop.y))
+                        program["image_crop_origin"].value = crop_origin
                     program["image_fold_map"].write(struct.pack("6f", *fold))
         asset_id = settings.asset_id
         if settings.kind == "video":
@@ -152,6 +161,8 @@ def draw_layer(
         mapped["image_target_pixels"] = image_pixels
     if fold is not None:
         mapped["image_fold_map"] = fold
+    if crop_origin is not None:
+        mapped["image_crop_origin"] = crop_origin
     result = []
     for name, words in mapped.items():
         layout = layers.layout(

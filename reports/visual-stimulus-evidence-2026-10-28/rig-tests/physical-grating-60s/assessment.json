@@ -1,0 +1,310 @@
+{
+  "record_counts": {
+    "header": 1,
+    "render_group": 3602,
+    "clipping": 14408,
+    "group_update": 7204,
+    "encoder_outcome": 1,
+    "completion": 1
+  },
+  "image_dispositions": {},
+  "patterns": {},
+  "hashes_checked": 0,
+  "hash_mismatches": [],
+  "evaluation": {
+    "count": 3602,
+    "median_ms": 16.6513,
+    "p95_ms": 17.9132,
+    "max_ms": 20.7255,
+    "mean_hz": 60.02525287892264
+  },
+  "returns": {
+    "calibration_bottom": {
+      "count": 3602,
+      "median_ms": 16.6615,
+      "p95_ms": 17.2973,
+      "max_ms": 19.6026,
+      "mean_hz": 60.021958602683476
+    },
+    "calibration_front": {
+      "count": 3602,
+      "median_ms": 16.6641,
+      "p95_ms": 16.8235,
+      "max_ms": 18.0566,
+      "mean_hz": 60.01603959907958
+    },
+    "calibration_left": {
+      "count": 3602,
+      "median_ms": 16.6659,
+      "p95_ms": 17.0113,
+      "max_ms": 18.3422,
+      "mean_hz": 60.018835647355566
+    },
+    "calibration_right": {
+      "count": 3602,
+      "median_ms": 16.6699,
+      "p95_ms": 17.1338,
+      "max_ms": 18.7987,
+      "mean_hz": 60.0205168827905
+    }
+  },
+  "final_records": [
+    {
+      "kind": "encoder_outcome",
+      "admitted_count": 3602,
+      "input_submitted_count": 3602,
+      "capacity_drop_count": 0,
+      "selected_real_count": 3602,
+      "same_slot_omission_count": 0,
+      "encoded_frame_count": 3602,
+      "duplicate_frame_count": 0,
+      "final_input_group_id": 3601,
+      "cutoff_host_ns": 1169691914766600,
+      "exit_code": 0,
+      "eof_sent": true,
+      "drain_confirmed": true
+    },
+    {
+      "kind": "completion",
+      "cutoff_host_ns": 1169691914766600,
+      "last_group_id": 3601,
+      "state_count": 3602,
+      "submission_attempt_count": 14408,
+      "capture_admission_count": 3602,
+      "capture_drop_count": 0,
+      "same_slot_omission_count": 0,
+      "unresolved_attempt_count": 0,
+      "outcome": "completed"
+    }
+  ],
+  "provenance": [
+    {
+      "role": "renderer",
+      "implementation": "cephvr.visual_stimulus.python-source-v1",
+      "version": "2.0.0.dev0",
+      "content_sha256": "117eb229d9401e7c5a91fd63db7d3211712aeee77fed6b08f68df40ed3acb7c6"
+    },
+    {
+      "role": "renderer",
+      "implementation": "Python",
+      "version": "3.11.15",
+      "content_sha256": null
+    },
+    {
+      "role": "os",
+      "implementation": "Windows",
+      "version": "10.0.26300",
+      "content_sha256": null
+    },
+    {
+      "role": "color_transform",
+      "implementation": "cephvr-linear-srgb-calibrated-output",
+      "version": "1",
+      "content_sha256": "117eb229d9401e7c5a91fd63db7d3211712aeee77fed6b08f68df40ed3acb7c6"
+    },
+    {
+      "role": "arena_importer",
+      "implementation": "cephvr.glb",
+      "version": "1",
+      "content_sha256": "117eb229d9401e7c5a91fd63db7d3211712aeee77fed6b08f68df40ed3acb7c6"
+    },
+    {
+      "role": "image_decoder",
+      "implementation": "cephvr1-compatible-raster",
+      "version": "1",
+      "content_sha256": "117eb229d9401e7c5a91fd63db7d3211712aeee77fed6b08f68df40ed3acb7c6"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._ARENA_FRAGMENT",
+      "version": "1",
+      "content_sha256": "048022ab33c076c2a55d6ef9d7ea390838ef3f5b3adca13091cff2eae2d98f40"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._ARENA_VERTEX",
+      "version": "1",
+      "content_sha256": "f68f60b9e19c6ab9c0037f267e2486b583c2e2ba182efc23dfe449c753897bcc"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._LAYER_FRAGMENT",
+      "version": "1",
+      "content_sha256": "917bed2d1f1991fa90e14b3827233c5a4955458c13cfce1c55462eb5b8a8f2c6"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._LAYER_VERTEX",
+      "version": "1",
+      "content_sha256": "f605f3b211bbff14a0b804f087327869bab4050d7db52d795b9d450923afb464"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._OUTPUT_FRAGMENT",
+      "version": "1",
+      "content_sha256": "0cafc9ebfb390e4c9f15544070034d06d0cd515c396aa7a792f4d74ef91bfddf"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._QUAD_VERTEX",
+      "version": "1",
+      "content_sha256": "d0dae8415353774da3d3da21837acf9571767c1eeb59670978d257efdb328095"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._WARP_FRAGMENT",
+      "version": "1",
+      "content_sha256": "50e07f022217fbaf2b1b16512902d7257cc5d38349847e44891639ec28914250"
+    },
+    {
+      "role": "shader",
+      "implementation": "cephvr.glsl._WARP_VERTEX",
+      "version": "1",
+      "content_sha256": "55a03b7063b4467ce0b04543f4a1dc99190f1e5336a8ffc26d628539e9bf2a9d"
+    },
+    {
+      "role": "renderer",
+      "implementation": "numpy",
+      "version": "2.4.4",
+      "content_sha256": null
+    },
+    {
+      "role": "renderer",
+      "implementation": "moderngl",
+      "version": "5.12.0",
+      "content_sha256": null
+    },
+    {
+      "role": "renderer",
+      "implementation": "glcontext",
+      "version": "3.0.0",
+      "content_sha256": null
+    },
+    {
+      "role": "renderer",
+      "implementation": "glfw",
+      "version": "2.10.0",
+      "content_sha256": null
+    },
+    {
+      "role": "renderer",
+      "implementation": "PyOpenGL",
+      "version": "3.1.10",
+      "content_sha256": null
+    },
+    {
+      "role": "image_decoder",
+      "implementation": "imagecodecs",
+      "version": "2025.3.30",
+      "content_sha256": null
+    },
+    {
+      "role": "image_decoder",
+      "implementation": "tifffile",
+      "version": "2025.5.10",
+      "content_sha256": null
+    },
+    {
+      "role": "image_decoder",
+      "implementation": "Pillow",
+      "version": "12.2.0",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "av",
+      "version": "16.1.0",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libavcodec",
+      "version": "62.11.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libavdevice",
+      "version": "62.1.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libavfilter",
+      "version": "11.4.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libavformat",
+      "version": "62.3.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libavutil",
+      "version": "60.8.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libswresample",
+      "version": "6.1.100",
+      "content_sha256": null
+    },
+    {
+      "role": "video_decoder",
+      "implementation": "libswscale",
+      "version": "9.1.100",
+      "content_sha256": null
+    },
+    {
+      "role": "gpu",
+      "implementation": "OpenGL output:calibration_front",
+      "version": "{\"GL_RENDERER\": \"NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2\", \"GL_VENDOR\": \"NVIDIA Corporation\"}",
+      "content_sha256": null
+    },
+    {
+      "role": "graphics_driver",
+      "implementation": "OpenGL output:calibration_front",
+      "version": "4.3.0 NVIDIA 617.14",
+      "content_sha256": null
+    },
+    {
+      "role": "gpu",
+      "implementation": "OpenGL output:calibration_left",
+      "version": "{\"GL_RENDERER\": \"NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2\", \"GL_VENDOR\": \"NVIDIA Corporation\"}",
+      "content_sha256": null
+    },
+    {
+      "role": "graphics_driver",
+      "implementation": "OpenGL output:calibration_left",
+      "version": "4.3.0 NVIDIA 617.14",
+      "content_sha256": null
+    },
+    {
+      "role": "gpu",
+      "implementation": "OpenGL output:calibration_right",
+      "version": "{\"GL_RENDERER\": \"NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2\", \"GL_VENDOR\": \"NVIDIA Corporation\"}",
+      "content_sha256": null
+    },
+    {
+      "role": "graphics_driver",
+      "implementation": "OpenGL output:calibration_right",
+      "version": "4.3.0 NVIDIA 617.14",
+      "content_sha256": null
+    },
+    {
+      "role": "gpu",
+      "implementation": "OpenGL output:calibration_bottom",
+      "version": "{\"GL_RENDERER\": \"NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2\", \"GL_VENDOR\": \"NVIDIA Corporation\"}",
+      "content_sha256": null
+    },
+    {
+      "role": "graphics_driver",
+      "implementation": "OpenGL output:calibration_bottom",
+      "version": "4.3.0 NVIDIA 617.14",
+      "content_sha256": null
+    }
+  ]
+}

@@ -88,8 +88,8 @@ def _sparse_noise(_: str, source: dict[str, Any], *args: Any) -> LayerSeed:
             active_probability=0.2,
             background_linear=0.5,
         ),
-        pattern_count=600,
-        pattern_duration={"seconds": "0.1"},
+        pattern_count=1,
+        pattern_duration=None,
         motion=deepcopy(HOLD_MOTION),
         opacity={"kind": "constant", "value": 1.0},
     )

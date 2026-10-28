@@ -12,7 +12,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
-from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.deadlines import SetupInactivity, remaining_seconds
 from cephvr.visual_stimulus.coordinator.commands import (
     bind_command,
     validate,
@@ -83,6 +83,11 @@ class VisualStimulusCoordinatorRuntime:
                     self.recovery_deadline_ns = None
                 self.state.setup = wire.SetupSessionRequest.FromString(
                     request.SerializeToString()
+                )
+                link.setup_inactivity = SetupInactivity(
+                    request.plan.policies.setup.initial_ns
+                    or max(1, deadline_ns - self.clock()),
+                    deadline_ns,
                 )
                 self.state.interrupted = False
                 self.state.cleanup = None
@@ -173,7 +178,7 @@ class VisualStimulusCoordinatorRuntime:
         elif method == "ReportWorkerOperation" and isinstance(
             request, visual_stimulus.WorkerOperation
         ):
-            await self.reports.operation(request)
+            await self.reports.operation(request, ingress_ns=ingress_ns)
             link = self.state.links.get(request.operation.context.command_id)
             if (
                 link is not None

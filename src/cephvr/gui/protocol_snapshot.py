@@ -186,7 +186,7 @@ def restore_protocol(page: ProtocolPage, data: JSON) -> None:
     editor.histories = [EditHistory() for _ in editor.drafts]
     editor.trials.blockSignals(True)
     editor.trials.clear()
-    editor.trials.addItems([draft.name for draft in editor.drafts])
+    editor.trials.addItems([f"Trial {i + 1}" for i in range(len(editor.drafts))])
     editor.index = max(0, data["selected_trial"])
     editor.node_index, editor.scope, editor.selected_paths = 0, (), ()
     editor.trials.setCurrentRow(editor.index)

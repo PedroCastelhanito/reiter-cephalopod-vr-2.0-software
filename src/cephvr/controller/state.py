@@ -19,6 +19,7 @@ from cephvr.controller.metadata.types import MetadataCompletion
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.preparation import PreparationHandoff
+from cephvr.shared.deadlines import SetupInactivity
 from cephvr.shared.incidents import IncidentTopology
 from cephvr.synchronization.v1 import spikeglx_pb2 as spikeglx_pb
 
@@ -407,6 +408,9 @@ class Attempt:
     changed: asyncio.Event = field(default_factory=asyncio.Event)
     cleanup: dict[str, pb.CleanupReport] = field(default_factory=dict)
     setup_deadline_ns: int = 0
+    setup_interval_ns: int = 0
+    setup_waits: dict[str, SetupInactivity] = field(default_factory=dict)
+    setup_timed_out: bool = False
     ready_deadline_ns: int = 0
     finished_deadline_ns: int = 0
     finalization_deadline_ns: int = 0
@@ -470,6 +474,19 @@ class Attempt:
     reservation_registered: bool = True
     closure: ClosureState = field(default_factory=ClosureState)
     trial_closure: TrialClosureState = field(default_factory=TrialClosureState)
+
+    def setup_cutoff(self, name: str | None = None) -> int:
+        if name is not None:
+            wait = self.setup_waits.get(name)
+            return wait.deadline_ns if wait is not None else self.setup_deadline_ns
+        return min(
+            (
+                wait.deadline_ns
+                for backend, wait in self.setup_waits.items()
+                if backend not in self.ready
+            ),
+            default=self.setup_deadline_ns,
+        )
 
     @property
     def reservation_unconfirmed(self) -> bool:

@@ -333,7 +333,7 @@ class ProtocolPage(QWidget):
         editor.selected_paths = ()
         editor.trials.blockSignals(True)
         editor.trials.clear()
-        editor.trials.addItems([draft.name for draft in drafts])
+        editor.trials.addItems([f"Trial {i + 1}" for i in range(len(drafts))])
         editor.trials.setCurrentRow(0)
         editor.trials.blockSignals(False)
         editor.render_selection()

@@ -1,0 +1,58 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 914 items / 80 deselected / 834 selected
+
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_invalid_saved_media_link_names_epoch_instance_and_predating_programs PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_marked_grating_rejects_square_kind_that_rendering_would_ignore PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_media_links_require_valid_references PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_media_motion_survives_compilation_and_legacy_category_loading PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_published_program_schema_accepts_legacy_category PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_saved_media_links_are_reported_and_valid_ones_kept PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::VideoTransitionTests::test_video_asset_variants_restart_after_absence_but_behavior_change_resumes PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::DurationResolutionTests::test_fixed_and_uniquely_constrained_cases PASSED [  0%]
+tests/visual_stimulus/test_compilation.py::DurationResolutionTests::test_large_stafford_workspace_is_reserved_before_allocation PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::DurationResolutionTests::test_rejects_infeasible_target_and_explicit_random_epoch PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::DurationResolutionTests::test_stafford_golden_and_repeatability PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_asset_repetition_rules_snapshot_choices_and_validate_every_candidate PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_batch_labels_round_trip_without_changing_expansion PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_compact_random_rules_are_reproducible_and_bounded_only_at_expansion PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_condition_values_are_substituted_at_setup PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_grating_rules_keep_drift_orientation_and_candidate_periods_consistent PASSED [  1%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_prepared_artifact_and_canonical_bytes PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_preview_prefix_preserves_shuffle_and_stops_before_remaining_visits PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_repeated_group_preserves_authored_identity_and_lineage PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_repetition_settings_follow_group_visit_and_validate_all_samples PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::ExpansionTests::test_semantic_validation_releases_occurrences_as_it_checks_them PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::test_linked_translation_unfolds_without_losing_speed_and_keeps_independent_tiles PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::test_linked_clockwise_rotation_uses_rig_distance_and_reverses PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::test_link_validation_rejects_competing_or_ambiguous_writers PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::test_link_binding_retains_each_phase_and_orientation_across_stop_and_relink PASSED [  2%]
+tests/visual_stimulus/test_compilation.py::test_compiled_links_execute_real_boundaries_with_retained_orientation PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_linked_spin_pivot_preflight_rejects_unknown_history_until_reset PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_nearly_parallel_linked_spin_has_no_residual_drift PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_arena_file_geometry_resolves_transforms_and_rejects_invalid_starts PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_arena_file_convex_geometry_requires_convex_finite_vertices PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_linked_rotation_depends_on_reference_screen_center_not_observer PASSED [  3%]
+tests/visual_stimulus/test_compilation.py::test_rig_random_directions_keep_legacy_local_rules_unchanged PASSED [  3%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_default_and_file_policy_values_are_typed PASSED [  3%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_display_validation_returns_exact_output_ids PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_policy_asset_profiles_match_model_and_published_schemas 
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_policy_asset_profiles_match_model_and_published_schemas PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_predictable_clipping_warns_without_rejecting_or_rewriting PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_presentation_category_accepts_executable_motion 
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_presentation_category_accepts_executable_motion PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_protocol_category_must_match_across_trials PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::test_per_output_pulses_validate_targets_bounds_and_vsync PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::test_output_subsets_preserve_rig_geometry_and_calibrated_mappings PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::test_photodiode_visibility_is_independent_of_pacing_and_disabled_target PASSED [  4%]
+tests/visual_stimulus/test_configuration.py::test_file_pacing_overlays_stable_output_and_checks_native_rate PASSED [  5%]
+tests/visual_stimulus/test_configuration.py::test_all_output_vsync_without_pacer_preserves_common_recording_rate PASSED [  5%]
+tests/visual_stimulus/test_configuration.py::test_free_run_keeps_nominal_recording_rate_and_disables_every_swap PASSED [  5%]
+tests/visual_stimulus/test_configuration.py::test_file_projection_overrides_saved_profile_and_reloads PASSED [  5%]
+tests/visual_stimulus/test_configuration.py::test_review_reduction_scales_capture_tiles_without_changing_display PASSED [  5%]
+tests/visual_stimulus/test_configuration.py::test_review_crops_use_calibration_and_fit_mixed_aspect_without_rotation PASSED [  5%]

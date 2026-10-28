@@ -29,6 +29,7 @@ uniform vec2 phase;
 uniform vec2 period;
 uniform vec2 image_target_pixels;
 uniform vec2 image_fold_map[3];
+uniform vec2 image_crop_origin;
 layout(std430, binding = 3) buffer DiagnosticFlags { uint diagnostic_flags[]; };
 // PHYSICAL_FIELD_DECLARATION
 void mark_alpha(float coverage, vec3 premultiplied_rgb) {
@@ -42,7 +43,7 @@ void mark_alpha(float coverage, vec3 premultiplied_rgb) {
 void main() {
     // PHYSICAL_FIELD_SAMPLE
     float signal = 0.0;
-    if (mode == 0 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8 || mode == 10) {
+    if (mode == 0 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8 || mode == 10 || mode == 12) {
         vec2 image_uv = uv;
         vec4 sample_value;
         if (mode == 7) {
@@ -74,7 +75,8 @@ void main() {
             }
             image_uv = vec2(pixel.x / size.x, 1.0 - pixel.y / size.y);
         }
-        if (mode != 7) sample_value = texture(image_tex, image_uv);
+        if (mode == 12) sample_value = texelFetch(image_tex, ivec2(gl_FragCoord.xy) - ivec2(image_crop_origin), 0);
+        else if (mode != 7) sample_value = texture(image_tex, image_uv);
         mark_alpha(sample_value.a, sample_value.rgb);
         if (mode == 10) {
             vec3 rgb = sample_value.rgb + mean_rgb * (1.0 - sample_value.a);

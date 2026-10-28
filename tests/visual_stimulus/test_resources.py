@@ -997,9 +997,22 @@ def test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closi
     )
     assert source.load(lambda: None) == expected
     assert source.load(lambda: None) == expected
-    assert source.cpu_bytes >= 2 * len(raw) + 4 * 3 * 192
+    assert source.cpu_bytes >= 2 * len(raw) + 4 * 3 * 128
+    reads = protected.readers
+    reused, reused_info = validate_image_source(
+        asset,
+        prepared,
+        budget=budget,
+        owner="test:cached",
+        output_count=3,
+        max_document_bytes=1000,
+        cached_info=info,
+    )
+    assert protected.readers == reads
+    assert reused_info == info and reused.key == source.key
+    assert reused.load(lambda: None) == expected
     assert source.gpu_bytes == 4 * 3 * 16 * 3
-    assert protected.readers == 5  # Validation, two source reads and two cache misses.
+    assert protected.readers == 6  # Validation, two source reads and three loads.
     assert not protected.closed
     assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
 
@@ -2558,34 +2571,152 @@ def test_review_gpu_budget_includes_both_targets_and_bounded_pool(
         review_capture_gpu_bytes(1280, 1000, 3, "unknown")
 
 
-def test_untagged_png_diagnostic_identifies_asset_and_override():
-    from PIL import Image
+@pytest.mark.parametrize("dtype", ["uint8", "uint16"])
+@pytest.mark.parametrize("channels", [0, 1, 3])
+@pytest.mark.parametrize("opaque", [False, True])
+def test_linear_opaque_upload_preserves_every_code_and_source(dtype, channels, opaque):
+    np = pytest.importorskip("numpy")
+    from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
 
+    maximum = np.iinfo(dtype).max
+    codes = np.arange(maximum + 1, dtype=dtype).reshape(-1, 16)
+    pixels = codes if channels == 0 else np.repeat(codes[..., None], channels, axis=2)
+    if channels == 3:
+        pixels[..., 1] = np.roll(codes, 1, axis=1)
+        pixels[..., 2] = np.roll(codes, 2, axis=0)
+    pixels = pixels[::-1, ::-1]  # Non-contiguous inputs must preserve orientation.
+    original = pixels.copy()
+    pixels.setflags(write=False)
+    source = pixels.astype(np.float32) / float(maximum)
+    expected = np.ones((*source.shape[:2], 4), dtype=np.float32)
+    expected[..., :3] = source[..., None] if channels == 0 else source
+    image = ImagePixels(
+        pixels.shape[1],
+        pixels.shape[0],
+        dtype,
+        channels or 1,
+        ("gray",) if channels < 3 else ("red", "green", "blue"),
+        pixels,
+        "linear",
+        "none",
+    )
+    assert linear_rgba_bytes(image, opaque=opaque) == expected[::-1].tobytes()
+    np.testing.assert_array_equal(pixels, original)
+
+
+@pytest.mark.parametrize("profile", ["png_uint_v1", "tiff_uint_v1"])
+@pytest.mark.parametrize("dtype", ["uint8", "uint16"])
+def test_untagged_images_default_to_linear_intensities(profile, dtype):
+    np = pytest.importorskip("numpy")
+    pixels = np.full((2, 3, 3), 128 if dtype == "uint8" else 32768, dtype=dtype)
     encoded = io.BytesIO()
-    Image.new("RGB", (2, 2)).save(encoded, format="PNG")
+    if profile == "png_uint_v1":
+        imagecodecs = pytest.importorskip("imagecodecs")
+        encoded.write(imagecodecs.png_encode(pixels))
+    else:
+        tifffile = pytest.importorskip("tifffile")
+        tifffile.imwrite(encoded, pixels, photometric="rgb")
     asset = Asset(
         asset_id="noise",
-        logical_path="textures/noise.png",
+        logical_path="textures/noise",
+        profile=profile,
+        color_override=None,
+    )
+    decoded = decode_image(asset, encoded.getvalue())
+    assert decoded.transfer == "linear"
+    np.testing.assert_array_equal(decoded.pixels, pixels)
+    from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
+
+    linear = np.frombuffer(linear_rgba_bytes(decoded), dtype="float32").reshape(2, 3, 4)
+    np.testing.assert_allclose(linear[..., :3], pixels / np.iinfo(pixels.dtype).max)
+    np.testing.assert_array_equal(linear[..., 3], 1)
+
+
+@pytest.mark.parametrize(
+    "metadata,expected",
+    [
+        ("srgb", "srgb"),
+        ("linear", "linear"),
+        ("unsupported", None),
+        ("primaries", None),
+    ],
+)
+def test_png_declared_transfer_still_precedes_linear_default(metadata, expected):
+    from PIL import Image, PngImagePlugin
+
+    info = PngImagePlugin.PngInfo()
+    if metadata == "srgb":
+        info.add(b"sRGB", b"\x00")
+    elif metadata == "primaries":
+        info.add(
+            b"cHRM",
+            struct.pack(">8I", 31270, 32900, 68000, 32000, 26500, 69000, 15000, 6000),
+        )
+    else:
+        info.add(b"gAMA", struct.pack(">I", 100000 if metadata == "linear" else 70000))
+    encoded = io.BytesIO()
+    Image.new("RGB", (2, 2), (128, 128, 128)).save(encoded, format="PNG", pnginfo=info)
+    asset = Asset(
+        asset_id="image",
+        logical_path="image.png",
         profile="png_uint_v1",
         color_override=None,
     )
-    with pytest.raises(MediaPreparationError) as error:
+    if expected is None:
+        with pytest.raises(
+            MediaPreparationError, match="gamma is outside|chromaticity metadata"
+        ):
+            decode_image(asset, encoded.getvalue())
+        return
+    assert decode_image(asset, encoded.getvalue()).transfer == expected
+    override = ColorOverride(
+        transfer="bt709",
+        primaries="rec709_d65",
+        range="full",
+        matrix="rgb",
+        chroma_location="none",
+        reason="explicit test choice",
+    )
+    assert (
+        decode_image(
+            asset.model_copy(update={"color_override": override}), encoded.getvalue()
+        ).transfer
+        == "bt709"
+    )
+
+
+def test_tiff_icc_metadata_is_not_replaced_by_linear_default():
+    np = pytest.importorskip("numpy")
+    tifffile = pytest.importorskip("tifffile")
+    encoded = io.BytesIO()
+    tifffile.imwrite(
+        encoded,
+        np.zeros((2, 2, 3), dtype="uint8"),
+        photometric="rgb",
+        extratags=[(34675, "B", 4, b"test", False)],
+    )
+    asset = Asset(
+        asset_id="image",
+        logical_path="image.tif",
+        profile="tiff_uint_v1",
+        color_override=None,
+    )
+    with pytest.raises(MediaPreparationError, match="ICC metadata"):
         decode_image(asset, encoded.getvalue())
-    assert "noise" in str(error.value) and "textures/noise.png" in str(error.value)
-    assert "color_override" in str(error.value) and "do not guess" in str(error.value)
 
 
-def test_setup_progress_throttles_counts_but_emits_stage_and_completion():
+@pytest.mark.parametrize("cadence", [1_000_000_000, 25_000_000])
+def test_setup_progress_throttles_counts_but_emits_stage_and_completion(cadence):
     from cephvr.visual_stimulus.resources.progress import SetupProgress
 
     now = [0]
     messages = []
-    progress = SetupProgress(messages.append, lambda: now[0])
+    progress = SetupProgress(messages.append, lambda: now[0], cadence_ns=cadence)
     progress.update("Decoding textures", 0, 100)
     for count in range(1, 99):
         progress.update("Decoding textures", count, 100)
     assert messages == ["Decoding textures: 0/100"]
-    now[0] = 1_000_000_000
+    now[0] = cadence
     progress.update("Decoding textures", 99, 100)
     progress.update("Decoding textures", 100, 100)
     progress.update("Decoding textures", 100, 100)
@@ -2943,6 +3074,75 @@ def test_generated_sparse_layers_compile_to_grid_extent_and_ordered_requests():
     assert pattern_texels(layers[0], 7) != texels
 
 
+@pytest.mark.parametrize("seed", [11, (1 << 64) - 1])
+def test_epoch_sparse_patterns_follow_nested_repetitions(seed):
+    from tests.visual_stimulus.support import make_prepared_trial
+
+    from cephvr.visual_stimulus.resources.sparse_noise_stream import (
+        pattern_texels,
+        requests,
+        trial_layers,
+    )
+
+    data = json.loads(sparse_layer_program(seconds="15"))
+    for setting in data["sequence"][0]["settings"]:
+        setting.pop("pattern_count")
+        setting.pop("pattern_duration")
+        setting["appearance"]["seed"] = seed
+
+    def group(identity, body):
+        return dict(
+            kind="group",
+            group_id=identity,
+            repetitions=2,
+            order="as_listed",
+            order_unit="child_blocks",
+            conditions=None,
+            body=body,
+        )
+
+    data["sequence"] = [group("outer", [group("inner", data["sequence"])])]
+    source = json.dumps(data)
+    plan = make_prepared_trial(source)
+    layers = trial_layers(plan)
+    assert len(plan.epochs) == 4 and len(layers) == 8
+    assert [e.start_ns for e in plan.epochs] == [
+        0,
+        15_000_000_000,
+        30_000_000_000,
+        45_000_000_000,
+    ]
+    assert [e.settings[0].appearance.seed for e in plan.epochs] == [
+        (seed + i) % (1 << 64) for i in range(4)
+    ]
+    assert all(
+        layer.shown == 1 and layer.pattern_duration_ns == 15_000_000_000
+        for layer in layers
+    )
+    assert [r.due_ns for r in requests(layers)] == [
+        i * 15_000_000_000 for i in range(4) for _ in range(2)
+    ]
+    assert len({pattern_texels(layer, 0) for layer in layers[::2]}) == 4
+    assert all(
+        s.pattern_at(14_999_999_999) == 0 for e in plan.epochs for s in e.settings
+    )
+    assert make_prepared_trial(source).epochs == plan.epochs
+    assert (
+        data["sequence"][0]["body"][0]["body"][0]["settings"][0]["appearance"]["seed"]
+        == seed
+    )
+
+
+def test_epoch_sparse_pattern_count_cannot_override_group_repetitions():
+    from tests.visual_stimulus.support import make_prepared_trial
+
+    data = json.loads(sparse_layer_program(count=2))
+    for setting in data["sequence"][0]["settings"]:
+        setting["pattern_duration"] = None
+    with pytest.raises(ValueError, match="one pattern per occurrence"):
+        make_prepared_trial(json.dumps(data))
+
+
 def test_sparse_layer_shows_only_patterns_inside_its_epoch_and_holds_the_last():
     from tests.visual_stimulus.support import make_prepared_trial
 
@@ -3054,3 +3254,202 @@ def test_sparse_helper_streams_credited_patterns_over_pipes_and_stops_on_eof():
     finally:
         if helper.poll() is None:
             helper.kill()
+
+
+@pytest.mark.windows
+@pytest.mark.parametrize("unique", [1, 17])
+def test_prepared_image_bundle_reads_ready_bytes_and_detects_damage(tmp_path, unique):
+    from cephvr.shared import temporary_bundle
+    from cephvr.visual_stimulus.resources.budget import BoundedBudget
+    from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
+    from cephvr.visual_stimulus.resources.image_crops import ImageCrop
+    from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    calls = []
+
+    def load(check):
+        check()
+        calls.append("decode")
+        return bytes(64)
+
+    crop = ImageCrop(
+        "out",
+        0,
+        0,
+        1,
+        1,
+        0,
+        (1, 1),
+        ((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)),
+        (0.0, 1.0, 1.0, 0.0, 0.0, -1.0),
+        "map",
+    )
+    source = ImageSource("key", 2, 2, 64, 16, load, output_crops=(crop,))
+    keys = ["key" if n == 0 else f"key{n}" for n in range(unique)]
+    sources = {key: replace(source, key=key) for key in keys}
+    aliases = {(trial, key): key for trial in ("trial", "other") for key in keys}
+    rows = tuple((("layer", key),) for key in keys) * 3
+    schedule = ImageSchedule(
+        sources,
+        aliases,
+        {"trial": "gen", "other": "gen2"},
+        {"trial": rows, "other": rows},
+        {(trial, "layer"): "key" for trial in ("trial", "other")},
+        {(trial, key): n for trial in ("trial", "other") for n, key in enumerate(keys)},
+    )
+    # Native owner test uses the isolated fixture runtime registry.
+    from unittest.mock import patch
+
+    with patch.object(
+        temporary_bundle, "default_runtime_root", lambda: tmp_path / "runtime"
+    ):
+        bundle = ImageBundle(tmp_path, lambda *args: None)
+    try:
+        progress = []
+        batches = []
+        budget = BoundedBudget(cpu_limit=1024, gpu_limit=1024)
+        result = bundle.prepare(
+            schedule,
+            lambda source, pixels, check: bytes([97 + keys.index(source.key)]) * 16,
+            budget,
+            lambda done, total: progress.append((done, total)),
+            finish_batch=lambda: batches.append(len(calls)),
+        )
+        assert calls == ["decode"] * unique
+        assert batches == ([1] if unique == 1 else [16, 17])
+        assert len(bundle.storage.files) == len(batches) + 1
+        assert budget.usage.cpu_bytes == 16
+        assert budget.usage.gpu_bytes == 0
+        assert progress == [(n, unique) for n in range(unique + 1)]
+        assert bundle.reused_references == unique * 5
+        assert f"batch {len(batches)}/{len(batches)}" in bundle.progress_stage(
+            unique, unique
+        )
+        for n in reversed(range(unique)):
+            assert result.sources[keys[n]].load(lambda: None) == bytes([97 + n]) * 16
+        from cephvr.visual_stimulus.config.models.artifact_models import (
+            PreparedImageBundle,
+        )
+
+        prepared = PreparedImageBundle(asset_id="asset", **bundle.manifest["key"])
+        assert prepared.crops[0].width == 1
+        assert result.sources["key"].load(lambda: None) == b"a" * 16
+        first_buffer = result.sources["key"].load(lambda: None)
+        assert result.sources["key"].load(lambda: None).obj is first_buffer.obj
+        assert first_buffer == b"a" * 16
+        assert calls == ["decode"] * unique
+        assert result.sources["key"].cpu_bytes == 0
+        file = bundle.storage.files[0]
+        file.seek(0)
+        file.write(b"b")
+        file.flush()
+        with pytest.raises(ValueError, match="content changed"):
+            result.sources["key"].load(lambda: None)
+    finally:
+        bundle.close()
+    assert not bundle.storage.directory.exists()
+
+
+def test_image_validation_index_reuses_only_matching_content_and_validator(
+    tmp_path, monkeypatch
+):
+    from cephvr.visual_stimulus.resources import image_validation_index as index
+    from cephvr.visual_stimulus.resources.image_source import ImageInfo
+
+    info = ImageInfo(12, 8, "uint8", ("red", "green", "blue"), "linear", "none")
+    monkeypatch.setattr(index, "validator_identity", lambda: "decoder-version-1")
+    cache = index.ImageValidationIndex(tmp_path)
+    assert cache.get("content-1-linear") is None
+    cache.put("content-1-linear", "stimuli/image.png", info)
+    cache.save()
+    loaded = index.ImageValidationIndex(tmp_path)
+    assert loaded.get("content-1-linear") == info
+    assert loaded.get("content-2-linear") is None
+    assert loaded.get("content-1-srgb") is None
+    monkeypatch.setattr(index, "validator_identity", lambda: "decoder-version-2")
+    assert index.ImageValidationIndex(tmp_path).get("content-1-linear") is None
+    (tmp_path / index.INDEX_NAME).write_text("incomplete JSON")
+    assert index.ImageValidationIndex(tmp_path).get("content-1-linear") is None
+    assert not list(tmp_path.glob(".cephvr-validation-*.tmp"))
+
+
+@pytest.mark.parametrize("profile", ["png_uint_v1", "tiff_uint_v1"])
+@pytest.mark.parametrize("decode_fails", [False, True])
+def test_combined_image_preparation_validates_once_before_ready(
+    profile, monkeypatch, decode_fails
+):
+    import hashlib
+
+    import imagecodecs
+    import numpy as np
+    import tifffile
+
+    from cephvr.visual_stimulus.resources import media
+    from cephvr.visual_stimulus.resources.assets import PreparedAsset
+    from cephvr.visual_stimulus.resources.image_source import validate_image_source
+
+    pixels = np.arange(36, dtype=np.uint8).reshape(3, 4, 3)
+    if profile == "png_uint_v1":
+        raw = imagecodecs.png_encode(pixels)
+    else:
+        stream = io.BytesIO()
+        tifffile.imwrite(stream, pixels, photometric="rgb")
+        raw = stream.getvalue()
+
+    class Source:
+        def independent_reader(self):
+            return io.BytesIO(raw)
+
+    asset = Asset(
+        asset_id="image", logical_path="image.png", profile=profile, color_override=None
+    )
+    prepared = PreparedAsset(
+        "image",
+        "image.png",
+        profile,
+        hashlib.sha256(raw).hexdigest(),
+        len(raw),
+        Source(),
+        None,
+    )
+    calls = []
+    decode = media.decode_image
+
+    def counted(*args, **kwargs):
+        calls.append(kwargs.get("metadata_only", False))
+        if decode_fails and not kwargs.get("metadata_only", False):
+            raise ValueError("corrupt pixel stream")
+        return decode(*args, **kwargs)
+
+    monkeypatch.setattr(media, "decode_image", counted)
+    published = []
+    budget = BoundedBudget(cpu_limit=100_000, gpu_limit=100_000)
+    source, info = validate_image_source(
+        asset,
+        prepared,
+        budget=budget,
+        owner="test",
+        output_count=1,
+        max_document_bytes=1000,
+        defer_validation=True,
+        validated=published.append,
+    )
+    assert calls == [True] and not published
+    assert (info.width, info.height) == (4, 3)
+    if decode_fails:
+        with pytest.raises(ValueError, match="corrupt pixel stream"):
+            source.finish_validation()
+        assert not published
+        assert budget.usage.cpu_bytes == 0
+        return
+    result = source.load(lambda: None)
+    assert len(result) == 4 * 3 * 16
+    assert published == [info] and calls == [True, False]
+    stages = source.timings.snapshot()
+    assert stages["source_decode"][0] == stages["source_convert"][0] == 1
+    source.timings.clear()
+    assert source.timings.snapshot() == {}
+    source.finish_validation()
+    assert calls == [True, False]
+    assert budget.usage.cpu_bytes == 0

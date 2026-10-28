@@ -730,7 +730,6 @@ def test_replacing_display_preserves_only_unreused_native_release_receipts(
         ],
     )
     monkeypatch.setattr(native_module, "configure_window", lambda *_args: None)
-    monkeypatch.setattr(native_module, "hide_output_shell_entry", lambda *_args: None)
     contexts = iter(
         _FakeContext(gl, item.output_id) for item in original.active_outputs
     )

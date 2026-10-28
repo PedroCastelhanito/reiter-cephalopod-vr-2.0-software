@@ -6,6 +6,7 @@ import json
 from hashlib import sha256
 from typing import TYPE_CHECKING
 
+from cephvr.visual_stimulus.config.media_profiles import TEXTURE_RECIPE_PROFILES
 from cephvr.visual_stimulus.config.models.artifact_models import Interpretation
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Asset
@@ -28,11 +29,17 @@ def image_validation_key(
     """Identify validation compatibility within this Setup without retaining pixels."""
     identity = {
         "source": (source.sha256, source.byte_count),
-        "interpretation": asset.model_dump(
-            mode="json", include={"profile", "color_override"}
-        ),
-        "geometry": display.geometry.model_dump(mode="json") if display else None,
-        "outputs": output_count,
+        "interpretation": {
+            "profile": asset.profile,
+            "color_override": asset.color_override.model_dump(
+                mode="json", exclude={"reason"}
+            )
+            if asset.color_override
+            else None,
+        },
+        "geometry": display.geometry.model_dump(mode="json")
+        if display and asset.profile in TEXTURE_RECIPE_PROFILES
+        else None,
         "dependency": (
             dependency_source.sha256,
             dependency_source.byte_count,

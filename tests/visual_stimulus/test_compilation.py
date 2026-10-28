@@ -279,9 +279,103 @@ class DurationResolutionTests(unittest.TestCase):
 
 
 class ExpansionTests(unittest.TestCase):
+    def test_semantic_validation_releases_occurrences_as_it_checks_them(self):
+        import weakref
+        from unittest.mock import patch
+
+        from cephvr.visual_stimulus.compiler import compile as compiler
+        from cephvr.visual_stimulus.compiler.expansion import iter_expanded_program
+        from cephvr.visual_stimulus.config.models.program_model import Group
+
+        original = self._program(json.loads(fixture_source()))
+        group = Group(
+            kind="group",
+            group_id="repeat",
+            repetitions=60,
+            order="shuffle_each_repetition",
+            order_unit="child_blocks",
+            conditions=None,
+            body=original.sequence,
+        )
+        program = original.model_copy(update={"sequence": (group,)})
+        expected = expand_program(program, seed_decimal="42", max_expanded_epochs=120)
+        self.assertEqual(
+            tuple(
+                iter_expanded_program(
+                    program, seed_decimal="42", max_expanded_epochs=120
+                )
+            ),
+            expected,
+        )
+        counts = {True: 0, False: 0}
+        references = []
+
+        def observe(*args, **kwargs):
+            source_only = kwargs.get("source_only", False)
+            for item in iter_expanded_program(*args, **kwargs):
+                counts[source_only] += 1
+                if source_only:
+                    self.assertFalse(item.settings)
+                else:
+                    references.append(weakref.ref(item))
+                    self.assertLessEqual(
+                        sum(ref() is not None for ref in references), 3
+                    )
+                yield item
+
+        with patch.object(compiler, "iter_expanded_program", side_effect=observe):
+            compiler.validate_program_semantics(
+                program, seed_decimal="42", max_expanded_epochs=120
+            )
+        self.assertEqual(counts, {True: 120, False: 120})
+
     def _program(self, payload: dict[str, object]):
         source = json.dumps(payload)
         return parse_program_json(source, max_bytes=1_000_000)
+
+    def test_preview_prefix_preserves_shuffle_and_stops_before_remaining_visits(self):
+        from cephvr.visual_stimulus.compiler import expansion
+        from cephvr.visual_stimulus.config.models.program_model import Group
+
+        original = self._program(json.loads(fixture_source()))
+        group = Group(
+            kind="group",
+            group_id="repeat",
+            repetitions=60,
+            order="shuffle_each_repetition",
+            order_unit="child_blocks",
+            conditions=None,
+            body=original.sequence,
+        )
+        program = original.model_copy(update={"sequence": (group,)})
+        expected = expand_program(program, seed_decimal="42", max_expanded_epochs=120)[
+            :100
+        ]
+        with patch.object(expansion, "_substitute", wraps=expansion._substitute) as sub:
+            self.assertEqual(
+                expansion.expand_program_prefix(
+                    program, seed_decimal="42", max_expanded_epochs=100
+                ),
+                expected,
+            )
+            calls = sub.call_count
+        long_program = program.model_copy(
+            update={"sequence": (group.model_copy(update={"repetitions": 4000}),)}
+        )
+        with patch.object(expansion, "_substitute", wraps=expansion._substitute) as sub:
+            self.assertEqual(
+                expansion.expand_program_prefix(
+                    long_program, seed_decimal="42", max_expanded_epochs=100
+                ),
+                expected,
+            )
+            self.assertEqual(sub.call_count, calls)
+        with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
+            expand_program(long_program, seed_decimal="42", max_expanded_epochs=100)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            expansion.expand_program_prefix(
+                program, seed_decimal="42", max_expanded_epochs=0
+            )
 
     def test_repeated_group_preserves_authored_identity_and_lineage(self) -> None:
         payload = json.loads(fixture_source())

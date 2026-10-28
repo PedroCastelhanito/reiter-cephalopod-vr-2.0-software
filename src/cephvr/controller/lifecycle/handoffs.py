@@ -105,6 +105,10 @@ class PreparationHandoffs:
                     attempt,
                 )
                 continue
+            if action == "visual_stimulus":
+                deadline_ns = attempt.setup_cutoff("visual_stimulus")
+            else:
+                deadline_ns = attempt.setup_cutoff()
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if action == "bind":
                 assert isinstance(request, tracking_svc.TrackingDataBinding)
@@ -145,7 +149,8 @@ class PreparationHandoffs:
                 or attempt.handoff is None
                 or attempt.cancel_requested
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_SETTING_UP
-                or ingress_ns > attempt.setup_deadline_ns
+                or attempt.setup_timed_out
+                or ingress_ns > attempt.setup_cutoff(report.source.backend.backend_name)
             ):
                 return rejected_receipt("STALE", "no matching live Setup handoff")
             if "acquisition" in attempt.required and not attempt.resolution_confirmed:
@@ -153,10 +158,19 @@ class PreparationHandoffs:
                     "ORDER",
                     "acquisition readback was not adopted before resource allocation",
                 )
+            previous = attempt.handoff.reports.get(report.source.backend.backend_name)
             try:
                 changed = attempt.handoff.accept(report)
             except (PreparationError, ValueError) as exc:
                 return rejected_receipt("EVIDENCE", str(exc))
             if changed:
+                wait = attempt.setup_waits.get(report.source.backend.backend_name)
+                meaningful = (
+                    previous is None
+                    or previous.tracking_input != report.tracking_input
+                    or previous.tracking != report.tracking
+                )
+                if wait is not None and meaningful:
+                    wait.deadline_ns = ingress_ns + wait.interval_ns
                 attempt.changed.set()
             return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)

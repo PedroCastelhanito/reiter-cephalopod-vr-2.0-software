@@ -216,7 +216,7 @@ def test_file_policies_resolve_exact_units_and_preserve_missing_margin(
 
     assert policies.contract_version == 1
     assert policies.serial_baud_rate == 115200
-    assert policies.serial_ack_timeout_ns == 200_000_000
+    assert policies.serial_ack_timeout_ns == 500_000_000
     assert policies.serial_stop_completion_margin_ns == 50_000_000
     behavioral = next(
         item

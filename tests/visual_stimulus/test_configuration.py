@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -106,7 +107,46 @@ class VisualStimulusConfigurationTests(unittest.TestCase):
         )
         self.assertEqual(trial.stimulus.program.program_json, authored)
 
+    def test_policy_asset_profiles_match_model_and_published_schemas(self) -> None:
+        import tomllib
+
+        from cephvr.visual_stimulus.config.models.program_model import Asset
+
+        load_file_policies(_ROOT)
+        policy = tomllib.loads(
+            (_ROOT / "contracts/policy/visual_stimulus_policy.toml").read_text()
+        )["assets"]
+        profiles = set(policy["image_profiles"] + policy["video_profiles"])
+        profiles.add(policy["arena_profile"])
+        self.assertEqual(
+            profiles, set(Asset.model_json_schema()["properties"]["profile"]["enum"])
+        )
+        for name in ("program", "prepared-trial"):
+            with self.subTest(schema=name):
+                schema = json.loads(
+                    (
+                        _ROOT / f"contracts/visual_stimulus/{name}.schema.json"
+                    ).read_text()
+                )
+                self.assertEqual(
+                    profiles,
+                    set(schema["$defs"]["Asset"]["properties"]["profile"]["enum"]),
+                )
+
     def test_default_and_file_policy_values_are_typed(self) -> None:
+        from cephvr.visual_stimulus.resources.image_bundle import (
+            PREPARATION_BATCH_IMAGES,
+        )
+
+        declaration = tomllib.loads(
+            (_ROOT / "contracts/policy/visual_stimulus_policy.toml").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            declaration["image_residency"]["preparation_batch_images"],
+            PREPARATION_BATCH_IMAGES,
+        )
         defaults = load_defaults(_ROOT)
         self.assertTrue(defaults.HasField("save_visual_stimulus_data"))
         self.assertTrue(defaults.save_visual_stimulus_data)

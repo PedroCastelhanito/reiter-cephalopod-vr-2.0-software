@@ -1,0 +1,151 @@
+[
+  {
+    "name": "gratings_protocol.json",
+    "validation_ms": 196.49420003406703,
+    "valid": true,
+    "witness_max_gap_ms": 32.0058,
+    "samples": 6,
+    "live_program_matches": false,
+    "gc_events": [
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0414
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0436
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0276
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0278
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0263
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0264
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0257
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0256
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0281
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0265
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0261
+      },
+      {
+        "generation": 1,
+        "elapsed_ms": 0.0872
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0269
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0262
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0285
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0287
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0282
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0278
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0281
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0293
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0308
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0304
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0301
+      },
+      {
+        "generation": 1,
+        "elapsed_ms": 0.032
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0304
+      }
+    ],
+    "issues": []
+  },
+  {
+    "name": "sparse-noise_20mins_protocol.json",
+    "validation_ms": 522.9177000001073,
+    "valid": true,
+    "witness_max_gap_ms": 32.0127,
+    "samples": 17,
+    "live_program_matches": false,
+    "gc_events": [
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0698
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.009
+      },
+      {
+        "generation": 0,
+        "elapsed_ms": 0.0088
+      }
+    ],
+    "issues": []
+  },
+  {
+    "name": "texture-presentation-1hr_protocol.json",
+    "validation_ms": 1871.8636000994593,
+    "valid": true,
+    "witness_max_gap_ms": 32.503,
+    "samples": 60,
+    "live_program_matches": true,
+    "gc_events": [
+      {
+        "generation": 0,
+        "elapsed_ms": 0.1455
+      }
+    ],
+    "issues": []
+  }
+]

@@ -822,3 +822,61 @@ async def test_session_capture_on_is_camera_only_and_gates_ready(fault):
         assert session.capture_started.is_set()
         assert session.capture_pulse_on.behavioral_selected
         assert not session.capture_pulse_on.trial_state_selected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "now,deadline,accepted",
+    [
+        (40, 50, True),
+        (40, 150, True),
+        (100, 150, True),
+        (51, 50, False),
+        (101, 150, False),
+    ],
+)
+async def test_setup_confirmation_enforces_both_deadlines_without_requiring_equality(
+    now, deadline, accepted
+):
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation="backend"
+    )
+    controller = control.ProcessIdentity(role="controller", generation="controller")
+    work = control.WorkContext(session=control.SessionContext(session_id="session"))
+    operation = control.OperationContext(command_id="setup")
+    session = SessionRecord(
+        work=work,
+        operation=operation,
+        configuration_revision=1,
+        requested_configuration_revision=1,
+        required_cameras=set(),
+        setup_deadline_ns=100,
+        resolved_report=wire.AcquisitionResolutionReport(),
+    )
+    owner = SimpleNamespace(
+        session_slot=SessionSlot(current=session),
+        identity=SimpleNamespace(backend=backend, controller=controller),
+        clock=lambda: now,
+        lock=asyncio.Lock(),
+        configuration=ConfigurationRecord(
+            settings=control.AcquisitionSettings(),
+            file_policies=runtime.AcquisitionFilePolicies(),
+        ),
+    )
+    request = wire.AcquisitionConfigurationConfirmation(
+        command=wire.BackendCommand(
+            command_id="confirm", issuer=controller, target=backend, work=work
+        ),
+        resolution_operation=operation,
+        requested_configuration_revision=1,
+        confirmed_configuration_revision=1,
+        confirmed=control.AcquisitionSettings(),
+    )
+    result = await SessionSetup.confirm_configuration(
+        owner, request, deadline_ns=deadline
+    )
+    assert (result.result == control.COMMAND_RESULT_ACCEPTED) == accepted
+    assert session.resolution_confirmed.is_set() == accepted
+    assert session.setup_deadline_ns == 100
+    if not accepted:
+        assert result.failure.code == "SETUP_DEADLINE"

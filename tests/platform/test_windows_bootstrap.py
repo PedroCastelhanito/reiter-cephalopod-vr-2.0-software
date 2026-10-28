@@ -51,3 +51,33 @@ async def test_bootstrap_writer_preserves_worker_exception(
     with pytest.raises(WindowsLaunchError, match="pipe closed") as error:
         await attempt.wait(host_time_ns() + 2_000_000_000)
     assert isinstance(error.value.__cause__, OSError)
+
+
+def test_managed_entry_rebinds_hashlib_fallback_to_openssl() -> None:
+    from types import SimpleNamespace
+
+    from cephvr.platform.windows.python_entry import accelerate_hashlib
+    from cephvr.platform.windows.python_runtime import PythonRuntimeError
+
+    def digest(module: str) -> object:
+        return SimpleNamespace(__module__=module)
+
+    fallback = SimpleNamespace(sha256=digest("_sha256"))
+    reloads: list[object] = []
+
+    def reload(module):
+        reloads.append(module)
+        module.sha256 = digest("_hashlib")
+        return module
+
+    accelerate_hashlib(fallback, reload)  # type: ignore[arg-type]
+    assert reloads == [fallback] and fallback.sha256.__module__ == "_hashlib"
+
+    accelerate_hashlib(fallback, reload)  # type: ignore[arg-type]
+    assert reloads == [fallback]
+
+    unavailable = SimpleNamespace(sha256=digest("_sha256"))
+    with pytest.raises(PythonRuntimeError, match="OpenSSL provider"):
+        accelerate_hashlib(unavailable, lambda module: module)  # type: ignore[arg-type]
+
+    accelerate_hashlib()

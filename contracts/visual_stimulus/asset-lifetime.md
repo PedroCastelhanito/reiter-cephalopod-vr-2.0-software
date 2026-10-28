@@ -57,8 +57,8 @@ Setup. Per-trial scene targets, videos and arenas retain their existing separate
 
 Share compatible image content/interpretation/recipe geometry and dependency identities.
 Read and decode protected sources; eviction never reopens a logical path. Keep at most
-one decoded upload handoff. GL uploads submit at most 1 MiB (or one wider scanline) per
-owner service turn, then use zero-wait completion polling. Pin the active/previous image
+one decoded upload handoff. GL uploads submit at most4 chunks of1 MiB (or one wider scanline per chunk) per
+owner service turn, starting no further chunk after2ms, then use zero-wait completion polling. Uniform prepared Fold layouts reuse Setup-allocated texture slots and two fenced staging buffers per output; no slot is overwritten before its retirement fence completes. Pool storage remains budgeted until final cleanup. Pin the active/previous image
 and pending GPU work; keep reservations until confirmed release. Driver allocation and
 submission latency are not a real-time guarantee and require rig measurements.
 
@@ -69,6 +69,35 @@ expired epochs. Read/decode/graphics failures remain failures. Save-On evidence 
 requested and actual identities/indices on every group; Save Off preserves only bounded
 diagnostic counters. Cleanup joins the loader before closing protected sources and
 retains unconfirmed GPU releases for retry.
+
+## Disposable Fold samples
+
+V04's `fold-samples-rgba32f-v1` preparation evaluates the original full-source Fold
+shader at the original surface framebuffer grid, including Bottom's fractional
+mapping. Store the covered rectangle as bottom-up RGBA32F and fetch by integer
+framebuffer position at playback. No second interpolation, colour conversion or
+calibration is applied to these stored samples. Other image fits retain their
+original source-loading path. Validate full source coverage before preparation.
+The prepared trial records asset identity, packed byte count/digest, per-output
+rectangle/offset, original target grid, clip corners and Fold map. Its existing
+manifest retains source fingerprints, interpretation and renderer provenance.
+
+Deduplicate by source content and effective interpretation across aliases, trials
+and repeated epochs. Compatible output mappings share the prepared samples; keep
+per-asset provenance even when pixels are shared. Batches contain at most16 unique
+images, with one decoded source at a time and reused GPU scratch. Pack each batch
+in one file; its index records each image offset and its own byte count/digest.
+Read exactly that range and verify the digest before upload. Report completed
+unique images, batch position and shared repeated references through Setup progress.
+
+Create one unique bundle beside the asset root per Setup, with disk-capacity and
+bounded scratch admission. Windows-owned delete-on-close files remain open through
+prepared use. Close consumers before files and confirm directory removal at normal,
+failed or cancelled cleanup. A marker lock and exact registry/marker agreement
+protect live bundles. Supervisor startup and renderer-exit recovery remove only
+verified unlocked empty directories; unexpected content and failed closure remain
+reported failures. Originals and retained scientific evidence are outside this
+cleanup. No persistent pixel-bundle reuse across Setup. A `.cephvr-image-validation.json` index in the asset root retains successful validation facts keyed by current protected content digest, interpretation and validator/software identity. Invalid/stale entries are misses; writes are atomic and index I/O failure never substitutes for validation.
 
 ## Legacy texture recipe preparation
 

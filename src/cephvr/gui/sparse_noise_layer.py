@@ -10,22 +10,21 @@ from cephvr.gui.components import button, label
 from cephvr.gui.notices import readable_error
 from cephvr.gui.stimulus_form import ValueEditor, title
 from cephvr.visual_stimulus.config.models.program_model import Settings
-from cephvr.visual_stimulus.config.models.sparse_noise import SparseNoisePatternRecipe
+from cephvr.visual_stimulus.config.models.sparse_noise_appearance import (
+    SparseNoiseAppearance,
+)
 
 # Form keys in display order; captions come from stimulus_form.TITLES (shared wording).
 CAPTIONS = {
     key: title(key)
     for key in (
+        "seed",
         "square_size_mm",
         "min_active_cell_distance_mm",
         "active_probability",
         "background_linear",
-        "seed",
-        "pattern_count",
-        "pattern_duration",
     )
 }
-APPEARANCE_KEYS = tuple(CAPTIONS)[:5]
 
 
 class SparseNoiseLayer(QWidget):
@@ -37,14 +36,8 @@ class SparseNoiseLayer(QWidget):
         super().__init__()
         assert setting.kind == "sparse_noise"
         appearance = setting.appearance.model_dump(mode="json")
-        count = setting.pattern_count
-        duration = setting.pattern_duration
-        schema = SparseNoisePatternRecipe.model_json_schema()
-        values = dict(
-            appearance,
-            pattern_count=count,
-            pattern_duration=duration.model_dump(mode="json"),
-        )
+        schema = SparseNoiseAppearance.model_json_schema()
+        values = appearance
         keys = tuple(CAPTIONS)
         self.form = ValueEditor(
             {
@@ -59,8 +52,7 @@ class SparseNoiseLayer(QWidget):
         self.new_seed.clicked.connect(self.randomize_seed)
         self.error = label("", wrap=True)
         self.summary = label(
-            "Patterns are generated during playback; the final pattern is held "
-            "until the epoch ends.",
+            "Each repetition shows a new seeded pattern for the full epoch duration.",
             wrap=True,
         )
         body = QVBoxLayout(self)
@@ -79,22 +71,13 @@ class SparseNoiseLayer(QWidget):
     def read(self) -> dict[str, Any]:
         """Setting fields for the layer. Raises ValueError."""
         values = self.form.read()
-        SparseNoisePatternRecipe.model_validate(
-            dict(
-                values,
-                format_version=2,
-                kind="sparse_noise",
-                surfaces=("front",),  # Placeholder: the real surface is compile-time.
-            )
+        appearance = SparseNoiseAppearance.model_validate(
+            dict(values, format_version=2, kind="sparse_noise")
         )
         return dict(
-            appearance=dict(
-                format_version=2,
-                kind="sparse_noise",
-                **{key: values[key] for key in APPEARANCE_KEYS},
-            ),
-            pattern_count=values["pattern_count"],
-            pattern_duration=values["pattern_duration"],
+            appearance=appearance.model_dump(mode="json"),
+            pattern_count=1,
+            pattern_duration=None,
         )
 
     def mark_changed(self) -> None:

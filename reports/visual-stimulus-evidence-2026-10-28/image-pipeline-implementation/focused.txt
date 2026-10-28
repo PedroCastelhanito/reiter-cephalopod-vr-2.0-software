@@ -1,0 +1,126 @@
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 63%]
+........................................................................ [ 79%]
+..................FFF................................................... [ 95%]
+.....................                                                    [100%]
+================================== FAILURES ===================================
+__ test_image_residency_reports_successful_and_late_selection_counts[0-INFO] __
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x0000016F6A050B90>
+holds = 0, level = 'INFO'
+
+    @pytest.mark.parametrize("holds,level", [(0, "INFO"), (3, "WARNING")])
+    def test_image_residency_reports_successful_and_late_selection_counts(
+        caplog, holds, level
+    ):
+        import logging
+        from types import SimpleNamespace
+    
+        from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
+    
+        owner = SimpleNamespace(_counts={"trial": (120, holds)})
+        with caplog.at_level(
+            logging.INFO, logger="cephvr.visual_stimulus.rendering.image_residency"
+        ):
+>           ImageResidency.finish(owner, "trial")
+
+tests\visual_stimulus\test_rendering.py:4954: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(_counts={'trial': (120, 0)}), trial = 'trial'
+
+    def finish(self, trial: str) -> None:
+        # Rebuild outside trial rendering, ready for any subsequent admission.
+        selections, holds = self._counts.get(trial, (0, 0))
+        logging.getLogger(__name__).log(
+            logging.WARNING if holds else logging.INFO,
+            "Texture residency trial=%s selections=%d readiness_holds=%d; "
+            "detailed indices require Save On; stages=%s gpu=%s loader=%s",
+            trial,
+            selections,
+            holds,
+>           self.timings.summary(),
+            ^^^^^^^^^^^^
+            getattr(self._gpu, "timings", self.timings).summary(),
+            self._loader_timings(),
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'timings'
+
+src\cephvr\visual_stimulus\rendering\image_residency.py:335: AttributeError
+_ test_image_residency_reports_successful_and_late_selection_counts[3-WARNING] _
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x0000016F68CD6F90>
+holds = 3, level = 'WARNING'
+
+    @pytest.mark.parametrize("holds,level", [(0, "INFO"), (3, "WARNING")])
+    def test_image_residency_reports_successful_and_late_selection_counts(
+        caplog, holds, level
+    ):
+        import logging
+        from types import SimpleNamespace
+    
+        from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
+    
+        owner = SimpleNamespace(_counts={"trial": (120, holds)})
+        with caplog.at_level(
+            logging.INFO, logger="cephvr.visual_stimulus.rendering.image_residency"
+        ):
+>           ImageResidency.finish(owner, "trial")
+
+tests\visual_stimulus\test_rendering.py:4954: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = namespace(_counts={'trial': (120, 3)}), trial = 'trial'
+
+    def finish(self, trial: str) -> None:
+        # Rebuild outside trial rendering, ready for any subsequent admission.
+        selections, holds = self._counts.get(trial, (0, 0))
+        logging.getLogger(__name__).log(
+            logging.WARNING if holds else logging.INFO,
+            "Texture residency trial=%s selections=%d readiness_holds=%d; "
+            "detailed indices require Save On; stages=%s gpu=%s loader=%s",
+            trial,
+            selections,
+            holds,
+>           self.timings.summary(),
+            ^^^^^^^^^^^^
+            getattr(self._gpu, "timings", self.timings).summary(),
+            self._loader_timings(),
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'timings'
+
+src\cephvr\visual_stimulus\rendering\image_residency.py:335: AttributeError
+________________ test_paced_upload_stops_after_elapsed_budget _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016F6A01B8D0>
+
+    def test_paced_upload_stops_after_elapsed_budget(monkeypatch):
+        from cephvr.visual_stimulus.rendering import image_gpu
+    
+        clock = iter((0, image_gpu.UPLOAD_TURN_NS))
+        monkeypatch.setattr(image_gpu.time, "perf_counter_ns", lambda: next(clock))
+        gpu = image_gpu.ImageGpu({})
+        calls = []
+        monkeypatch.setattr(gpu, "_upload_chunk", lambda *args: calls.append(1) and False)
+>       assert not gpu.upload(None, b"", [])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\visual_stimulus\test_rendering.py:4967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\visual_stimulus\rendering\image_gpu.py:58: in upload
+    self.timings.record("upload", time.perf_counter_ns() - started)
+                                  ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+>   monkeypatch.setattr(image_gpu.time, "perf_counter_ns", lambda: next(clock))
+                                                                   ^^^^^^^^^^^
+E   StopIteration
+
+tests\visual_stimulus\test_rendering.py:4963: StopIteration
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_rendering.py::test_image_residency_reports_successful_and_late_selection_counts[0-INFO]
+FAILED tests/visual_stimulus/test_rendering.py::test_image_residency_reports_successful_and_late_selection_counts[3-WARNING]
+FAILED tests/visual_stimulus/test_rendering.py::test_paced_upload_stops_after_elapsed_budget
+3 failed, 450 passed, 71 deselected in 4.19s

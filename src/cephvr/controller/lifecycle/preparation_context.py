@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 
 from google.protobuf.message import Message
 
@@ -10,6 +11,8 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.controller.planning import requested_output_identities
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import Attempt, ConfigurationState, SupervisorState
+from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import SetupInactivity
 
 
 def _copy_policy(attempt: Attempt, name: str, target: Message, message: str) -> None:
@@ -29,9 +32,11 @@ class PreparationContext:
         supervisor: SupervisorState,
         generation: str,
         supervisor_generation: str,
+        clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.configuration_state = configuration
         self.supervisor_state = supervisor
+        self.clock = clock
         self.generation = generation
         self.supervisor_generation = supervisor_generation
 
@@ -58,6 +63,13 @@ class PreparationContext:
                 request.settings.CopyFrom(setting)
                 break
         name = backend.context.backend_name
+        if attempt.setup_interval_ns:
+            attempt.setup_waits.setdefault(
+                name,
+                SetupInactivity(
+                    attempt.setup_interval_ns, self.clock() + attempt.setup_interval_ns
+                ),
+            )
         if name == "acquisition":
             _copy_policy(
                 attempt,

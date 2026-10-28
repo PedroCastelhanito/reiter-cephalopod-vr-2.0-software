@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 21
+policy_version = 34
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -20,6 +20,7 @@ optional_correction_inputs = ["static_mask", "static_overlap_weights"]
 [programs]
 authoring_model = "scenes_epochs_groups"
 scene_composition = "optional_single_arena_then_ordered_2d_layers"
+linked_grating_field = "full_screen_local_shared_affine_wave_v1"
 storage_format = "versioned_json"
 model_library = "pydantic_v2"
 schema_source = "generated_from_program_model"
@@ -40,9 +41,10 @@ group_order_modes = ["as_listed", "shuffle_each_repetition"]
 group_order_default = "as_listed"
 
 [assets]
+untagged_png_tiff_transfer = "linear"
 source_stability = "prepared_memory_or_protected_read_handles"
 protection_failure = "fail_preparation"
-image_profiles = ["png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1"]
+image_profiles = ["png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1", "cephvr_grating_json_v1"]
 video_profiles = ["mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"]
 arena_profile = "glb2_static_unlit_v1"
 
@@ -53,8 +55,15 @@ late_pattern = "previous_pattern_current_motion"
 
 [image_residency]
 loader_threads = 1
+lookahead_epochs = 2
+preparation_batch_images = 16
+fold_storage = "temporary_rgba32f_surface_samples_v1"
+bundle_cleanup = "delete_on_close_and_owned_directory_recovery"
 upload_chunk_bytes = 1048576
 upload_chunks_per_turn = 4
+upload_turn_ns = 2000000
+gpu_storage = "reusable_uniform_fold_texture_slots_and_fenced_staging"
+validation_index = "content_and_validator_bound_source_folder_index"
 readiness = "pin_first_use_per_instance"
 late_image = "previous_texture_current_motion"
 evidence = "requested_actual_indices_and_identity_repetition"

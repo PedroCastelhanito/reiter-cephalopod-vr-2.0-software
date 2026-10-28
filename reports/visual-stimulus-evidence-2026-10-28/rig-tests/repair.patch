@@ -1,0 +1,71 @@
+diff --git a/src/cephvr/visual_stimulus/worker/sparse_noise.py b/src/cephvr/visual_stimulus/worker/sparse_noise.py
+index e24d400b..3a4f3837 100644
+--- a/src/cephvr/visual_stimulus/worker/sparse_noise.py
++++ b/src/cephvr/visual_stimulus/worker/sparse_noise.py
+@@ -36,7 +36,8 @@ class SparseNoiseProcess(WindowsEncoderProcess):
+     _frames: deque[tuple[int, bytes, bytes]]
+ 
+     def send(self, data: bytes, *, deadline_ns: int) -> None:
+-        self.write(data, deadline_ns=deadline_ns)
++        # Native overlapped writes pin writable storage until completion.
++        self.write(memoryview(bytearray(data)), deadline_ns=deadline_ns)
+ 
+     def take(self) -> list[tuple[int, bytes, bytes]]:
+         with self._lock:
+diff --git a/tests/visual_stimulus/test_lifecycle.py b/tests/visual_stimulus/test_lifecycle.py
+index 7438fa1e..52ea4c55 100644
+--- a/tests/visual_stimulus/test_lifecycle.py
++++ b/tests/visual_stimulus/test_lifecycle.py
+@@ -2773,3 +2773,52 @@ def test_sparse_process_reader_splits_frames_and_rejects_truncation():
+     early = process([])
+     early._exit_code = 1
+     assert "exited early" in str(early.failure)
++
++
++@pytest.mark.windows
++def test_sparse_process_sends_job_and_credit_through_native_pipe():
++    import ctypes
++    import sys
++    import time
++
++    if sys.platform != "win32":
++        pytest.skip("native Windows pipe required")
++    from cephvr.platform.windows.byte_stream import (
++        OverlappedPipe,
++        PipeConstructionOwner,
++    )
++    from cephvr.platform.windows.byte_stream_native import native_api
++    from cephvr.visual_stimulus.resources.sparse_noise_wire import (
++        encode_credit,
++        encode_job,
++    )
++    from cephvr.visual_stimulus.worker.sparse_noise import SparseNoiseProcess
++
++    owner = PipeConstructionOwner()
++    deadline = time.perf_counter_ns() + 2_000_000_000
++    endpoint = None
++    try:
++        endpoint = OverlappedPipe.create_child_endpoint(
++            parent_writable=True, owner=owner, deadline_ns=deadline
++        )
++        process = object.__new__(SparseNoiseProcess)
++        process.input_pipe = endpoint.parent
++        for payload in (encode_job(()), encode_credit(100), encode_credit(200)):
++            process.send(payload, deadline_ns=deadline)
++            received = ctypes.create_string_buffer(len(payload))
++            transferred = ctypes.c_ulong()
++            assert native_api().ReadFile(
++                endpoint.child_handle,
++                received,
++                len(payload),
++                ctypes.byref(transferred),
++                None,
++            )
++            assert transferred.value == len(payload)
++            assert received.raw == payload
++    finally:
++        if endpoint is not None:
++            endpoint.close_child_copy()
++            endpoint.close_parent()
++        owner.retry_cleanup(deadline_ns=deadline)
++    assert not owner.cleanup_blocked

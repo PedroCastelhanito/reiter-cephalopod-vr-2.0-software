@@ -1,0 +1,127 @@
+{
+  "protocol_sha256": "6932c6b0cd92001282b8593872a4f8d1f7f6d54ba568f50d4a91ac9b3387649a",
+  "cpu_limit": 2147483648,
+  "gpu_limit": 4294967296,
+  "images": [
+    {
+      "path": "import-cpdk_b42/0001_1_metamer1.png",
+      "source_sha256": "d0f632d16f0160a5068e3f7162917e3c483b534c991df92f196f654f550c634f",
+      "encoded_bytes": 9922441,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494407186,
+      "subsequent_load_cpu_bytes": 1494407186,
+      "status": "validated",
+      "seconds": 0.2535868000704795
+    },
+    {
+      "path": "import-uyzxvbx9/0002_1_metamer2.png",
+      "source_sha256": "5ec280a3d06635d37437036134760638ac9b2e86fe2e9ea7e0c35bba024a7358",
+      "encoded_bytes": 9918769,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494399842,
+      "subsequent_load_cpu_bytes": 1494399842,
+      "status": "validated",
+      "seconds": 0.22010270017199218
+    },
+    {
+      "path": "import-i__rdmnl/0003_1_metamer3.png",
+      "source_sha256": "4a46680457bd03ebcb6182203d345eed60cb1ddeb78ebdcf454df81845cafbeb",
+      "encoded_bytes": 9922801,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494407906,
+      "subsequent_load_cpu_bytes": 1494407906,
+      "status": "validated",
+      "seconds": 0.22108109993860126
+    },
+    {
+      "path": "import-du6x1mdu/0004_1_metamer4.png",
+      "source_sha256": "337f1d1a78ce46abb7a79f75ffcfb6cd7536f46b3665aa56f9da597217318219",
+      "encoded_bytes": 9916014,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494394332,
+      "subsequent_load_cpu_bytes": 1494394332,
+      "status": "validated",
+      "seconds": 0.21682829991914332
+    },
+    {
+      "path": "import-jjeueg6s/0005_1_metamer5.png",
+      "source_sha256": "9bf5397269e2710f0155f613b4dff290efbcac11bfeed6aee2f08cbfb9d5afa8",
+      "encoded_bytes": 9923820,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494409944,
+      "subsequent_load_cpu_bytes": 1494409944,
+      "status": "validated",
+      "seconds": 0.22267479985021055
+    },
+    {
+      "path": "import-snt_mfxq/0006_1_metamer6.png",
+      "source_sha256": "4b28fa64379821f0b3062bd857fd155e491ee78cacd50e5f0292bb88c7e4058f",
+      "encoded_bytes": 9925921,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494414146,
+      "subsequent_load_cpu_bytes": 1494414146,
+      "status": "validated",
+      "seconds": 0.22413480002433062
+    },
+    {
+      "path": "import-2iqr4hu4/0007_1_metamer7.png",
+      "source_sha256": "c049b7250d452cc4e8ea53bb57157e9113505322fcf6adfe5a4daa1925614943",
+      "encoded_bytes": 9917747,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494397798,
+      "subsequent_load_cpu_bytes": 1494397798,
+      "status": "validated",
+      "seconds": 0.2206400998402387
+    },
+    {
+      "path": "import-4u4_xzqi/0008_1_metamer8.png",
+      "source_sha256": "68a63e2a3421fbb7cfaa2f7ed69145f0bd109c4b61dd7731786dbfb9b0a7b8ad",
+      "encoded_bytes": 9921154,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494404612,
+      "subsequent_load_cpu_bytes": 1494404612,
+      "status": "validated",
+      "seconds": 0.22018539998680353
+    },
+    {
+      "path": "import-q326kkzz/0009_1_metamer9.png",
+      "source_sha256": "3e6e9c2a4d1d741929c5846a6f4ef7914fb963f47583d98c04fa5d978753b256",
+      "encoded_bytes": 9912582,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494387468,
+      "subsequent_load_cpu_bytes": 1494387468,
+      "status": "validated",
+      "seconds": 0.21970320004038513
+    },
+    {
+      "path": "import-ljcyxm44/0010_1_metamer10.png",
+      "source_sha256": "3189557c4db137247980b09aea9178933b86ddffc0b07746ba7938c07d37d5d5",
+      "encoded_bytes": 9920866,
+      "width": 3840,
+      "height": 2000,
+      "dtype": "uint8",
+      "cpu_peak_reserved": 1494404036,
+      "subsequent_load_cpu_bytes": 1494404036,
+      "status": "validated",
+      "seconds": 0.2261896999552846
+    }
+  ]
+}

@@ -9,9 +9,8 @@ from cephvr.visual_stimulus.config.models.program_model import Grating, TextureS
 def grating_image(setting: TextureSettings, values: dict[str, float]) -> QImage:
     assert isinstance(setting.pattern, Grating)
     x = ((np.arange(512) + 0.5) / 512 - 0.5) * values["width"]
-    alpha = 0.5 + 0.5 * np.cos(
-        2 * np.pi * (values["frequency"] * x + values["phase_x"])
-    )
+    cycles = values["frequency"] * x + values["phase_x"]
+    alpha = 0.5 + 0.5 * np.cos(2 * np.pi * cycles)
     sharpness = setting.pattern.feature_sharpness
     edge = 0.5 * (1 - sharpness)
     if edge <= 0:
@@ -23,13 +22,13 @@ def grating_image(setting: TextureSettings, values: dict[str, float]) -> QImage:
     mean = np.asarray(setting.mean_linear_rgb, dtype=float)
     modulation = np.asarray(setting.modulation_linear_rgb, dtype=float)
     rgb = np.clip(
-        mean[None, :]
-        + values.get("contrast", 1) * signal[:, None] * modulation[None, :],
+        mean + values.get("contrast", 1) * signal[..., None] * modulation,
         0,
         1,
     )
     encoded = np.where(
         rgb <= 0.0031308, 12.92 * rgb, 1.055 * np.power(rgb, 1 / 2.4) - 0.055
     )
-    pixels = np.repeat(np.rint(encoded * 255).astype(np.uint8)[None, :, :], 4, axis=0)
+    pixels = np.rint(encoded * 255).astype(np.uint8)
+    pixels = np.repeat(pixels[None, :, :], 4, axis=0)
     return QImage(pixels.tobytes(), 512, 4, 512 * 3, QImage.Format.Format_RGB888).copy()

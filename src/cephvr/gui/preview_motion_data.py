@@ -1,10 +1,10 @@
 """Canonical planned motion and projector source grouping for dashboard previews."""
 
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import hypot
 
-from cephvr.visual_stimulus.compiler.expansion import expand_program
+from cephvr.visual_stimulus.compiler.expansion import expand_program_prefix
 from cephvr.visual_stimulus.config.models.program_model import (
     Constant,
     Fixed,
@@ -46,8 +46,8 @@ def motion_epochs(program: Program, seed: str) -> tuple[MotionEpoch, ...]:
             pending.extend(node.body)
     epochs = []
     elapsed_ns = 0
-    for occurrence in expand_program(
-        program, seed_decimal=seed or "0", max_expanded_epochs=2000
+    for occurrence in expand_program_prefix(
+        program, seed_decimal=seed or "0", max_expanded_epochs=100
     ):
         source = occurrence.source
         if not isinstance(source.duration, Fixed):
@@ -166,6 +166,21 @@ class MotionSource:
     unit: str
     reference: bool
     settings: tuple[Settings | None, ...]
+
+
+def plot_sources(sources: tuple[MotionSource, ...]) -> tuple[MotionSource, ...]:
+    """Only drift/grating epochs contribute instruments, including in mixed trials."""
+    result = []
+    for source in sources:
+        settings = tuple(
+            setting
+            if isinstance(setting, TextureSettings) and not setting.uniform
+            else None
+            for setting in source.settings
+        )
+        if any(settings):
+            result.append(replace(source, settings=settings))
+    return tuple(result)
 
 
 def motion_sources(epochs: tuple[MotionEpoch, ...]) -> tuple[MotionSource, ...]:

@@ -1,0 +1,303 @@
+EE.F....EEEEE.........E.......................................           [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[False] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[False]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[True] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[True]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_image_recipe_protects_and_fingerprints_its_relative_input[uint8] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_image_recipe_protects_and_fingerprints_its_relative_input[uint8]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_image_recipe_protects_and_fingerprints_its_relative_input[uint16] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_image_recipe_protects_and_fingerprints_its_relative_input[uint16]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_demo_image_recipes_preserve_authored_png_pixels[checkerboard] _
+
+fixturedef = <FixtureDef argname='demo_assets' scope='session' baseid='tests'>
+request = <SubRequest 'demo_assets' for <Function test_demo_image_recipes_preserve_authored_png_pixels[checkerboard]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001707FB1E190>, _basetemp=None, _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="session")
+    def demo_assets(tmp_path_factory: pytest.TempPathFactory) -> Path:
+>       output = tmp_path_factory.mktemp("demo-assets")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+tests\conftest.py:11: OSError
+_ ERROR at setup of test_demo_image_recipes_preserve_authored_png_pixels[noise] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001707FB1E190>, _basetemp=None, _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="session")
+    def demo_assets(tmp_path_factory: pytest.TempPathFactory) -> Path:
+>       output = tmp_path_factory.mktemp("demo-assets")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+tests\conftest.py:11: OSError
+_ ERROR at setup of test_demo_image_recipes_preserve_authored_png_pixels[sine_grating] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001707FB1E190>, _basetemp=None, _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="session")
+    def demo_assets(tmp_path_factory: pytest.TempPathFactory) -> Path:
+>       output = tmp_path_factory.mktemp("demo-assets")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+tests\conftest.py:11: OSError
+_ ERROR at setup of test_image_validation_index_reuses_only_matching_content_and_validator _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_image_validation_index_reuses_only_matching_content_and_validator>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{ba1a02e1-d379-498a-b49f-18a806a3e7dc}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+================================== FAILURES ===================================
+_ test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing _
+
+    def test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing():
+        import hashlib
+    
+        import numpy as np
+        import tifffile
+    
+        from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
+        from cephvr.visual_stimulus.resources.assets import PreparedAsset
+        from cephvr.visual_stimulus.resources.image_source import (
+            read_source_bytes,
+            validate_image_source,
+        )
+    
+        pixels = np.arange(36, dtype=np.uint16).reshape(3, 4, 3) * 1000
+        stream = io.BytesIO()
+        tifffile.imwrite(stream, pixels, photometric="rgb")
+        raw = stream.getvalue()
+        asset = Asset(
+            asset_id="still",
+            logical_path="still.tif",
+            profile="tiff_uint_v1",
+            color_override=ColorOverride(
+                transfer="linear",
+                primaries="rec709_d65",
+                range="full",
+                matrix="rgb",
+                chroma_location="none",
+                reason="residency test",
+            ),
+        )
+    
+        class Source:
+            closed = False
+    
+            def __init__(self):
+                self.readers = 0
+    
+            def independent_reader(self):
+                self.readers += 1
+                return io.BytesIO(raw)
+    
+            def close_after_consumers(self):
+                self.closed = True
+    
+        protected = Source()
+        prepared = PreparedAsset(
+            asset.asset_id,
+            asset.logical_path,
+            asset.profile,
+            hashlib.sha256(raw).hexdigest(),
+            len(raw),
+            protected,
+            None,
+        )
+        budget = BoundedBudget(cpu_limit=100_000, gpu_limit=100_000)
+        source, info = validate_image_source(
+            asset,
+            prepared,
+            budget=budget,
+            owner="test:still",
+            output_count=3,
+            max_document_bytes=1000,
+        )
+    
+        expected = linear_rgba_bytes(decode_image(asset, raw))
+        first_read = read_source_bytes(prepared, lambda: None)
+        second_read = read_source_bytes(prepared, lambda: None)
+        assert first_read == second_read == raw
+        assert hashlib.sha256(first_read).hexdigest() == prepared.sha256
+        assert (info.width, info.height, info.dtype, info.transfer, info.alpha) == (
+            4,
+            3,
+            "uint16",
+            "linear",
+            "none",
+        )
+        assert source.load(lambda: None) == expected
+        assert source.load(lambda: None) == expected
+        assert source.cpu_bytes >= 2 * len(raw) + 4 * 3 * 192
+        reads = protected.readers
+        reused, reused_info = validate_image_source(
+            asset,
+            prepared,
+            budget=budget,
+            owner="test:cached",
+            output_count=3,
+            max_document_bytes=1000,
+            cached_info=info,
+        )
+        assert protected.readers == reads
+        assert reused_info == info and reused.key == source.key
+        assert reused.load(lambda: None) == expected
+        assert source.gpu_bytes == 4 * 3 * 16 * 3
+>       assert protected.readers == 5  # Validation, two source reads and two cache misses.
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 6 == 5
+E        +  where 6 = <tests.visual_stimulus.test_resources.test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing.<locals>.Source object at 0x0000017003A6A950>.readers
+
+tests\visual_stimulus\test_resources.py:1015: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_resources.py::test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing
+ERROR tests/visual_stimulus/test_resources.py::test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[False]
+ERROR tests/visual_stimulus/test_resources.py::test_screen_image_preparation_rejects_only_consumed_nonlinear_profiles[True]
+ERROR tests/visual_stimulus/test_resources.py::test_image_recipe_protects_and_fingerprints_its_relative_input[uint8]
+ERROR tests/visual_stimulus/test_resources.py::test_image_recipe_protects_and_fingerprints_its_relative_input[uint16]
+ERROR tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[checkerboard]
+ERROR tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[noise]
+ERROR tests/visual_stimulus/test_resources.py::test_demo_image_recipes_preserve_authored_png_pixels[sine_grating]
+ERROR tests/visual_stimulus/test_resources.py::test_image_validation_index_reuses_only_matching_content_and_validator
+1 failed, 53 passed, 390 deselected, 8 errors in 1.19s

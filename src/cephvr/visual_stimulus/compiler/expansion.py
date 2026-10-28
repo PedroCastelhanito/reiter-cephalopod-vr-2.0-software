@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import random
+from collections.abc import Iterator
 from dataclasses import dataclass
+from itertools import islice
 from typing import Any
 
 from pydantic import BaseModel
@@ -17,6 +19,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     Ref,
     Settings,
+    SparseNoiseSettings,
 )
 from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
 
@@ -95,19 +98,63 @@ def expand_program(
     program: Program, *, seed_decimal: str, max_expanded_epochs: int
 ) -> tuple[ExpandedEpoch, ...]:
     """Expand group visits after checking multiplicative size bounds."""
+    return tuple(
+        iter_expanded_program(
+            program, seed_decimal=seed_decimal, max_expanded_epochs=max_expanded_epochs
+        )
+    )
+
+
+def iter_expanded_program(
+    program: Program,
+    *,
+    seed_decimal: str,
+    max_expanded_epochs: int,
+    source_only: bool = False,
+) -> Iterator[ExpandedEpoch]:
+    """Stream bounded visits; source_only omits settings for duration planning."""
     if type(max_expanded_epochs) is not int or max_expanded_epochs <= 0:
         raise ValueError("max_expanded_epochs must be positive")
     count = _count(program.sequence, max_expanded_epochs)
-    expanded: list[ExpandedEpoch] = []
+    observed = 0
+    for item in _iter_program(
+        program, seed_decimal=seed_decimal, source_only=source_only
+    ):
+        observed += 1
+        yield item
+    if observed != count:
+        raise RuntimeError(
+            "bounded expansion count disagrees with materialized occurrences"
+        )
+
+
+def expand_program_prefix(
+    program: Program, *, seed_decimal: str, max_expanded_epochs: int
+) -> tuple[ExpandedEpoch, ...]:
+    """Materialize only a canonical prefix for read-only planning previews."""
+    if type(max_expanded_epochs) is not int or max_expanded_epochs <= 0:
+        raise ValueError("max_expanded_epochs must be positive")
+    return tuple(
+        islice(_iter_program(program, seed_decimal=seed_decimal), max_expanded_epochs)
+    )
+
+
+def _iter_program(
+    program: Program, *, seed_decimal: str, source_only: bool = False
+) -> Iterator[ExpandedEpoch]:
+    sparse_visits: dict[tuple[str, str], int] = {}
 
     def visit(
         nodes: tuple[Node, ...],
         scope: dict[str, dict[str, object]],
         lineage: tuple[GroupVisit, ...],
         path: tuple[str, ...],
-    ) -> None:
+    ) -> Iterator[ExpandedEpoch]:
         for node in nodes:
             if isinstance(node, Epoch):
+                if source_only:
+                    yield ExpandedEpoch(node, (), lineage)
+                    continue
                 source_settings = (
                     node.repetition_settings[lineage[-1].repetition_index]
                     if node.repetition_settings
@@ -118,7 +165,28 @@ def expand_program(
                     settings = resolve_repetition(
                         settings, node.repetition_rules, lineage[-1].repetition_index
                     )
-                expanded.append(ExpandedEpoch(node, settings, lineage))
+                resolved = []
+                for block in settings:
+                    if (
+                        isinstance(block, SparseNoiseSettings)
+                        and block.pattern_duration is None
+                    ):
+                        key = (node.epoch_id, block.instance_id)
+                        ordinal = sparse_visits.get(key, 0)
+                        sparse_visits[key] = ordinal + 1
+                        block = block.model_copy(
+                            update={
+                                "appearance": block.appearance.model_copy(
+                                    update={
+                                        "seed": (block.appearance.seed + ordinal)
+                                        % (1 << 64)
+                                    }
+                                )
+                            }
+                        )
+                    resolved.append(block)
+                settings = tuple(resolved)
+                yield ExpandedEpoch(node, settings, lineage)
                 continue
             if node.order_unit == "condition_rows":
                 if node.conditions is None:
@@ -149,7 +217,7 @@ def expand_program(
                     next_path = path + (f"{node.group_id}[{repetition}]:{unit_id}",)
                     if node.order_unit == "condition_rows":
                         child_scope[node.group_id] = _row_values(node, unit_id)
-                        visit(
+                        yield from visit(
                             node.body, child_scope, lineage + (visit_record,), next_path
                         )
                     else:
@@ -163,13 +231,8 @@ def expand_program(
                             )
                             == unit_id
                         )
-                        visit(
+                        yield from visit(
                             (child,), child_scope, lineage + (visit_record,), next_path
                         )
 
-    visit(program.sequence, {}, (), ())
-    if len(expanded) != count:
-        raise RuntimeError(
-            "bounded expansion count disagrees with materialized occurrences"
-        )
-    return tuple(expanded)
+    yield from visit(program.sequence, {}, (), ())

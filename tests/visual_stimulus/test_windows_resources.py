@@ -129,7 +129,14 @@ def test_setup_batch_reuses_hash_and_validation_but_keeps_each_source_protected(
                 asset_id=f"image{index}",
                 logical_path=path.name,
                 profile="png_uint_v1",
-                color_override=None,
+                color_override=ColorOverride(
+                    transfer="srgb",
+                    primaries="rec709_d65",
+                    range="full",
+                    matrix="rgb",
+                    chroma_location="none",
+                    reason=f"source declaration {index}",
+                ),
             )
             if index == 5 and changed_interpretation:
                 asset = asset.model_copy(

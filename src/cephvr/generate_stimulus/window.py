@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.models.display_profile import Geometry
 
-from .arena import CompiledArena, arena_job, export_arena
+from .arena import CompiledArena, arena_job
 from .bake import TextureCache
 from .documents import load_design, save_design, save_suggestion
 from .errors import describe_error, error_items, status_line
@@ -35,7 +35,6 @@ from .texture_panel import texture_widgets
 from .texture_preview import texture_job
 from .textures import (
     is_pristine,
-    load_geometry,
     new_texture,
     validate_texture,
 )
@@ -59,13 +58,9 @@ class AuthoringWindow(AuthoringLayout):
         self.paths: list[Path | None] = [None, None]
         # Conversion notice while a document differs from its legacy source file.
         self.legacy: list[str | None] = [None, None]
-        self.history = [[copy.deepcopy(d)] for d in self.documents]
-        self.positions = [0, 0]
         self.jobs = Jobs()
         self.geometry_cache = GeometryCache()
         self.texture_cache = TextureCache()
-        self.exporting = False
-        self.export_serial: int | None = None
         self.selected_names = ["floor"]
         self.surface_editor: SurfaceEditor | None = None
         self.problems: list[tuple[str, str]] = []
@@ -110,19 +105,12 @@ class AuthoringWindow(AuthoringLayout):
         self.setWindowModified(self.documents != self.saved)
 
     def changed(self, index: int | None = None) -> None:
-        i = self.active() if index is None else index
-        current = copy.deepcopy(self.documents[i])
-        if current != self.history[i][self.positions[i]]:
-            self.history[i] = self.history[i][: self.positions[i] + 1] + [current]
-            self.history[i] = self.history[i][-100:]
-            self.positions[i] = len(self.history[i]) - 1
         self.refresh_modified()
         self.schedule()
 
     def schedule(self, *args: Any) -> None:
-        if not self.exporting:
-            self.jobs.cancel.set()
-            self.timer.start()
+        self.jobs.cancel.set()
+        self.timer.start()
 
     def submit(self, operation: Callable[[Callable[[], None]], Any]) -> int:
         serial = self.jobs.submit(operation)
@@ -208,21 +196,6 @@ class AuthoringWindow(AuthoringLayout):
         if self.active() == 1 and self.surface_editor is not None:
             self.surface_editor.select(name)
 
-    def undo(self) -> None:
-        self.restore(-1)
-
-    def redo(self) -> None:
-        self.restore(1)
-
-    def restore(self, step: int) -> None:
-        i = self.active()
-        position = self.positions[i] + step
-        if 0 <= position < len(self.history[i]):
-            self.positions[i] = position
-            self.documents[i] = copy.deepcopy(self.history[i][position])
-            self.refresh_modified()
-            self.rebuild()
-
     def preview(self) -> None:
         document = copy.deepcopy(self.documents[self.active()])
         root, geometry = self.root, self.display_geometry
@@ -252,15 +225,6 @@ class AuthoringWindow(AuthoringLayout):
                 serial, result, error = self.jobs.results.get_nowait()
             except Empty:
                 break
-            if serial == self.export_serial:
-                # A finished export is reported even if it was cancelled meanwhile.
-                self.export_serial = None
-                self.set_exporting(False)
-                if not error:
-                    self.status.showMessage(f"Exported {result}")
-                elif not self.jobs.cancel.is_set():
-                    self.show_problem(error)
-                continue
             if serial != self.jobs.serial or self.jobs.cancel.is_set():
                 continue
             if error:
@@ -274,7 +238,7 @@ class AuthoringWindow(AuthoringLayout):
             else:
                 self.image.set_pixels(result)
             if isinstance(result, CompiledArena) and self.viewport.error:
-                message = f"3D preview unavailable: {self.viewport.error}. Export remains available."
+                message = f"3D preview unavailable: {self.viewport.error}. Saving remains available."
                 self.status.showMessage(message)
             else:
                 self.status.clearMessage()
@@ -313,19 +277,6 @@ class AuthoringWindow(AuthoringLayout):
         choice = ask_unsaved(self, "Unsaved design", "This design has unsaved changes.")
         return self.save() if choice == "save" else choice == "discard"
 
-    def new(self) -> None:
-        if self.confirm_discard():
-            i = self.active()
-            self.documents[i] = (
-                new_texture() if i == 0 else ArenaDesign().model_dump(mode="json")
-            )
-            self.paths[i], self.legacy[i] = None, None
-            self.saved[i] = copy.deepcopy(self.documents[i])
-            self.history[i] = [copy.deepcopy(self.documents[i])]
-            self.positions[i] = 0
-            self.refresh_modified()
-            self.rebuild()
-
     def open(self) -> None:
         self.flush()
         filename, _ = QFileDialog.getOpenFileName(
@@ -348,8 +299,6 @@ class AuthoringWindow(AuthoringLayout):
             # A converted design never equals its file, so it stays modified.
             self.saved[i] = copy.deepcopy(data) if notice is None else {}
             self.paths[i], self.legacy[i] = path, notice
-            self.history[i] = [copy.deepcopy(data)]
-            self.positions[i] = 0
             self.tabs.setCurrentIndex(i)
             self.refresh_modified()
             self.rebuild()
@@ -394,65 +343,6 @@ class AuthoringWindow(AuthoringLayout):
             self.show_problem(text)
             QMessageBox.warning(self, "Cannot save design", text)
             return False
-
-    def set_exporting(self, exporting: bool) -> None:
-        self.exporting = exporting
-        self.properties.setEnabled(not exporting)
-        self.tabs.setEnabled(not exporting)
-        for action in self.file_actions:
-            action.setEnabled(not exporting)
-
-    def export(self) -> None:
-        if self.active() == 0:
-            self.save()
-            return
-        self.flush()
-        filename, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export new arena bundle directory",
-            str(self.root / "arena-bundle"),
-            "Bundle directory (*)",
-        )
-        if not filename:
-            return
-        try:
-            design = ArenaDesign.model_validate(self.documents[1])
-            root = self.root
-            destination = Path(filename)
-            self.timer.stop()
-            self.set_exporting(True)
-            self.export_serial = self.submit(
-                lambda check: export_arena(design, root, destination, check=check)
-            )
-            self.status.showMessage("Validating and exporting arena…")
-        except Exception as error:
-            self.set_exporting(False)
-            QMessageBox.warning(self, "Cannot export", describe_error(error))
-
-    def cancel_job(self) -> None:
-        self.jobs.cancel.set()
-        self.timer.stop()
-        self.set_exporting(False)
-        self.status.showMessage(
-            "Generation cancelled; already published exports are preserved"
-        )
-
-    def choose_root(self) -> None:
-        directory = QFileDialog.getExistingDirectory(self, "Asset root", str(self.root))
-        if directory:
-            self.root = Path(directory).resolve()
-            self.schedule()
-
-    def calibration(self) -> None:
-        filename, _ = QFileDialog.getOpenFileName(
-            self, "Load calibration geometry", str(self.root), "JSON (*.json)"
-        )
-        if filename:
-            try:
-                self.display_geometry = load_geometry(Path(filename))
-                self.schedule()
-            except Exception as error:
-                QMessageBox.warning(self, "Invalid calibration", str(error))
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
         if event is None:

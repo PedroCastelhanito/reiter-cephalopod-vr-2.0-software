@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import os
 
 from cephvr.platform.windows.bootstrap import read_bootstrap
@@ -25,6 +26,10 @@ def main() -> None:
     control_fd = msvcrt.open_osfhandle(args.launcher_control_handle, os.O_WRONLY)
     ack_fd = msvcrt.open_osfhandle(args.launcher_ack_handle, os.O_RDONLY)
     with SingleInstanceGuard("supervisor"):
+        from cephvr.shared.temporary_bundle import recover_temporary_bundles
+
+        for error in recover_temporary_bundles():
+            logging.getLogger(__name__).warning(error)
         asyncio.run(
             run_supervisor(
                 descriptor,

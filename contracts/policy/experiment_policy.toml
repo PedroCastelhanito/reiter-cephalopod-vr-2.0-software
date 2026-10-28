@@ -2,7 +2,7 @@
 # Source rules: Experiment controller defaults. See architecture.md: E05, E06, E07, E08, E14.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/experiment_config.toml. The loader rejects a version mismatch.
-policy_version = 8
+policy_version = 9
 
 # Shared physical GPU placement, owned by SYS-002; no ordinal is a stable identity.
 [gpu_placement]
@@ -51,6 +51,11 @@ unavailable_or_timeout = "reject_warn_preserve_current"
 invalid_values = "reject_with_field_issues_preserve_current"
 late_result = "never_commit_after_expiry_or_state_change"
 history = "single_current_configuration_no_rollback"
+
+[setup]
+timeout = "per_backend_meaningful_progress_inactivity"
+progress = "exact_live_identity_increasing_sequence"
+total_duration_cap = false
 
 [recovery]
 missed_deadline = "single_state_query_within_shared_recovery_budget"

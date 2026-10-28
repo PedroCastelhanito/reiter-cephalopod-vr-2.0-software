@@ -3,7 +3,7 @@
 from bisect import bisect_right
 from dataclasses import dataclass
 
-from cephvr.visual_stimulus.compiler.expansion import expand_program
+from cephvr.visual_stimulus.compiler.expansion import expand_program_prefix
 from cephvr.visual_stimulus.compiler.texture_links import validate_link_geometry
 from cephvr.visual_stimulus.compiler.transitions import compile_boundaries
 from cephvr.visual_stimulus.config.models.artifact_models import CompiledEpoch
@@ -29,7 +29,7 @@ class PreviewPlan:
         self.epochs = []
         elapsed = 0
         for i, occurrence in enumerate(
-            expand_program(program, seed_decimal="0", max_expanded_epochs=2000)
+            expand_program_prefix(program, seed_decimal="0", max_expanded_epochs=100)
         ):
             source = occurrence.source
             if not isinstance(source.duration, Fixed):
@@ -93,9 +93,7 @@ class PreviewPlan:
                     retain_shared_grating_phase,
                 )
 
-                retain_shared_grating_phase(
-                    self.states, self.geometry, boundary.time_ns
-                )
+                retain_shared_grating_phase(self.states, boundary.time_ns)
             for operation in boundary.operations:
                 setting = (
                     epoch.settings[operation.next_settings_index]
@@ -157,8 +155,6 @@ class PreviewPlan:
             if key in by_id
         )
 
-        if self.geometry is None:
-            return layers
         from cephvr.visual_stimulus.rendering.grating_field import (
             shared_grating_snapshots,
         )
@@ -175,7 +171,6 @@ class PreviewPlan:
                 )
                 for layer in layers
             ),
-            self.geometry,
         )
         return tuple(
             PreviewLayer(

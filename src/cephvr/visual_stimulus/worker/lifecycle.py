@@ -305,6 +305,10 @@ class LifecycleDriver:
         return self.display_owner.initialize(request, self.deadline_ns)
 
     def announce(self, key: str, path: str | None) -> None:
+        job = self.preparation_job
+        if job is not None and not self.state.interrupted:
+            self.announce_for(job.request.command, job.deadline_ns, key, path)
+            return
         self.announce_for(self.command, self.deadline_ns, key, path)
 
     def announce_for(
@@ -429,10 +433,19 @@ class LifecycleDriver:
             self.preparation,
             self.recording,
             self.reports,
-            lambda key, path: self.announce_for(command, deadline, key, path),
+            lambda key, path: self.announce_for(
+                command,
+                self.preparation_job.deadline_ns if self.preparation_job else deadline,
+                key,
+                path,
+            ),
             deadline,
             self.clock,
-            lambda resources: self.announce_batch_for(command, deadline, resources),
+            lambda resources: self.announce_batch_for(
+                command,
+                self.preparation_job.deadline_ns if self.preparation_job else deadline,
+                resources,
+            ),
         )
         return self.preparation_job.completion
 

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "gratings_protocol.json",
+    "sha256": "ded683d9a07cc298c027e06dca009835bd7fd8417479ddc1d255e7a1c54a129d",
+    "bytes": 37263,
+    "trials": 1,
+    "validation_ms": 3.5721000749617815,
+    "missing_assets": []
+  },
+  {
+    "name": "sparse-noise_20mins_protocol.json",
+    "sha256": "134a0ad5960be2b5497548073c46c6e444205e89906e7e9403ed629e52872246",
+    "bytes": 35739,
+    "trials": 1,
+    "validation_ms": 1.7967999447137117,
+    "missing_assets": []
+  },
+  {
+    "name": "texture-presentation-1hr_protocol.json",
+    "sha256": "b427927a72b40302b58130c23100ce07796c0eeea831d39e2c9ca223792a46a2",
+    "bytes": 38599,
+    "trials": 1,
+    "validation_ms": 1.910399878397584,
+    "missing_assets": []
+  }
+]

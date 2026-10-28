@@ -72,8 +72,9 @@ def test_loader_binds_exact_file_timing_and_budget(tmp_path: Path) -> None:
     assert loaded.supervisor_startup.port == 50052
     assert loaded.policies.start_lead_ns == 500_000_000
     assert loaded.policies.backend_release_offset_ns == 50_000_000
-    assert loaded.policies.stop_evidence_allowance_ns == 450_000_000
+    assert loaded.policies.stop_evidence_allowance_ns == 1_050_000_000
     serial = load_serial_policies(tmp_path)
+    assert serial.serial_ack_timeout_ns == 500_000_000
     assert (
         2 * serial.serial_ack_timeout_ns + serial.serial_stop_completion_margin_ns
         <= loaded.policies.stop_evidence_allowance_ns
@@ -305,7 +306,7 @@ def test_loader_rejects_removed_key_and_policy_mismatch(tmp_path: Path) -> None:
     _copy_pairs(tmp_path)
     policy = tmp_path / "contracts/policy/experiment_policy.toml"
     policy.write_text(
-        policy.read_text().replace("policy_version = 8", "policy_version = 9", 1)
+        policy.read_text().replace("policy_version = 9", "policy_version = 10", 1)
     )
     with pytest.raises(ConfigurationError, match="policy_version mismatch"):
         load_controller_configuration(tmp_path)
@@ -386,7 +387,7 @@ def test_saved_history_bound_uses_configured_message_limit(tmp_path: Path) -> No
     config = tmp_path / "config/backends/experiment_config.toml"
     config.write_text(
         config.read_text().replace(
-            "max_message_bytes = 16_777_216", "max_message_bytes = 1024"
+            "max_message_bytes = 67_108_864", "max_message_bytes = 1024"
         )
     )
     (tmp_path / "config/last_configuration.json").write_bytes(b" " * 1025)

@@ -50,7 +50,9 @@ image-library defaults cannot determine scientific coordinate signs.
 Retain source depth, channel/plane layout, row strides, alpha declaration and color
 metadata before conversion. ICC/transfer/primaries/range/matrix/chroma-location data
 must not be silently discarded or replaced with guessed values. Resolve interpretation
-through the common color contract; unsupported or ambiguous color data blocks Ready
+through the common color contract; untagged PNG/TIFF defaults to linear/full-range
+Rec.709 D65 RGB. Explicit overrides and supported PNG metadata take precedence.
+Unsupported declared or otherwise ambiguous color data blocks Ready
 until explicitly resolved. The [color pipeline](color-pipeline.md) binds the working interpretation and
 composition; [output precision](output-precision.md) binds explicit per-output RGB8/RGB10 selection.
 In particular, 16-bit input support is not a promise of 16-bit

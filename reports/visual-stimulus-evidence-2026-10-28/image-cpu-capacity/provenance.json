@@ -1,0 +1,67 @@
+{
+  "matched_originals": 10,
+  "sources": [
+    {
+      "name": "0001_1_metamer1.png",
+      "original_exists": true,
+      "original_sha256": "d0f632d16f0160a5068e3f7162917e3c483b534c991df92f196f654f550c634f",
+      "imported_sha256": "d0f632d16f0160a5068e3f7162917e3c483b534c991df92f196f654f550c634f"
+    },
+    {
+      "name": "0002_1_metamer2.png",
+      "original_exists": true,
+      "original_sha256": "5ec280a3d06635d37437036134760638ac9b2e86fe2e9ea7e0c35bba024a7358",
+      "imported_sha256": "5ec280a3d06635d37437036134760638ac9b2e86fe2e9ea7e0c35bba024a7358"
+    },
+    {
+      "name": "0003_1_metamer3.png",
+      "original_exists": true,
+      "original_sha256": "4a46680457bd03ebcb6182203d345eed60cb1ddeb78ebdcf454df81845cafbeb",
+      "imported_sha256": "4a46680457bd03ebcb6182203d345eed60cb1ddeb78ebdcf454df81845cafbeb"
+    },
+    {
+      "name": "0004_1_metamer4.png",
+      "original_exists": true,
+      "original_sha256": "337f1d1a78ce46abb7a79f75ffcfb6cd7536f46b3665aa56f9da597217318219",
+      "imported_sha256": "337f1d1a78ce46abb7a79f75ffcfb6cd7536f46b3665aa56f9da597217318219"
+    },
+    {
+      "name": "0005_1_metamer5.png",
+      "original_exists": true,
+      "original_sha256": "9bf5397269e2710f0155f613b4dff290efbcac11bfeed6aee2f08cbfb9d5afa8",
+      "imported_sha256": "9bf5397269e2710f0155f613b4dff290efbcac11bfeed6aee2f08cbfb9d5afa8"
+    },
+    {
+      "name": "0006_1_metamer6.png",
+      "original_exists": true,
+      "original_sha256": "4b28fa64379821f0b3062bd857fd155e491ee78cacd50e5f0292bb88c7e4058f",
+      "imported_sha256": "4b28fa64379821f0b3062bd857fd155e491ee78cacd50e5f0292bb88c7e4058f"
+    },
+    {
+      "name": "0007_1_metamer7.png",
+      "original_exists": true,
+      "original_sha256": "c049b7250d452cc4e8ea53bb57157e9113505322fcf6adfe5a4daa1925614943",
+      "imported_sha256": "c049b7250d452cc4e8ea53bb57157e9113505322fcf6adfe5a4daa1925614943"
+    },
+    {
+      "name": "0008_1_metamer8.png",
+      "original_exists": true,
+      "original_sha256": "68a63e2a3421fbb7cfaa2f7ed69145f0bd109c4b61dd7731786dbfb9b0a7b8ad",
+      "imported_sha256": "68a63e2a3421fbb7cfaa2f7ed69145f0bd109c4b61dd7731786dbfb9b0a7b8ad"
+    },
+    {
+      "name": "0009_1_metamer9.png",
+      "original_exists": true,
+      "original_sha256": "3e6e9c2a4d1d741929c5846a6f4ef7914fb963f47583d98c04fa5d978753b256",
+      "imported_sha256": "3e6e9c2a4d1d741929c5846a6f4ef7914fb963f47583d98c04fa5d978753b256"
+    },
+    {
+      "name": "0010_1_metamer10.png",
+      "original_exists": true,
+      "original_sha256": "3189557c4db137247980b09aea9178933b86ddffc0b07746ba7938c07d37d5d5",
+      "imported_sha256": "3189557c4db137247980b09aea9178933b86ddffc0b07746ba7938c07d37d5d5"
+    }
+  ],
+  "generator": "C:\\Users\\ReiterU_PC\\Desktop\\Alsu\\Cuttlebase_3840x2000_1to1_ALDER\\generation_code\\ps_3840x2000_task.m",
+  "generator_sha256": "9ae5458130158d1c8584b75ca23313b6d54ecb1aac0dafeb249668ad9345ec34"
+}

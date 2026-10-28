@@ -1,0 +1,18 @@
+{
+  "protocol_sha256": "70551ac8c2b0d4d2b66d0b2ac43146be36eb9fe908efe7fccfe5ade74f06342b",
+  "metrics": {
+    "source_seconds": 4.079207699978724,
+    "image_seconds": 92.45239360141568,
+    "compile_seconds": 0.0,
+    "sources_hashed": 600,
+    "fingerprints_reused": 0,
+    "images_validated": 600,
+    "validations_reused": 0
+  },
+  "compile_seconds": 6.741036800201982,
+  "serialization_seconds": 1.7238302999176085,
+  "parse_seconds": 5.088347299955785,
+  "total_seconds": 110.53683360014111,
+  "bytes": 32463250,
+  "epochs": 9000
+}

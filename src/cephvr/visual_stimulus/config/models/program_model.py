@@ -266,12 +266,17 @@ class SparseNoiseSettings(LayerBase):
 
     kind: Literal["sparse_noise"]
     appearance: SparseNoiseAppearance
-    pattern_count: PositiveInt
-    pattern_duration: Time
+    pattern_count: PositiveInt = 1
+    pattern_duration: Time | None = None
 
     @model_validator(mode="after")
     def sparse_layer(self) -> Self:
-        if not 0 < self.pattern_duration.ns() * self.pattern_count <= (1 << 63) - 1:
+        if self.pattern_duration is None:
+            if self.pattern_count != 1:
+                raise ValueError(
+                    "Epoch-timed sparse noise requires one pattern per occurrence"
+                )
+        elif not 0 < self.pattern_duration.ns() * self.pattern_count <= (1 << 63) - 1:
             raise ValueError("Sparse-noise pattern duration must be positive")
         if not isinstance(self.space, PhysicalSpace) or len(self.space.mappings) != 1:
             raise ValueError("Sparse noise requires one physical screen mapping")
@@ -279,6 +284,8 @@ class SparseNoiseSettings(LayerBase):
 
     def pattern_at(self, local_ns: int) -> int:
         """Pattern index at epoch-local time, holding the last pattern at exhaustion."""
+        if self.pattern_duration is None:
+            return 0
         return min(
             max(0, local_ns) // self.pattern_duration.ns(), self.pattern_count - 1
         )

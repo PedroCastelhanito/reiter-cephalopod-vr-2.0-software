@@ -151,6 +151,34 @@ def test_asset_catalogue_batch_uses_one_receipt_and_exact_identities():
     assert driver.state.catalogue_revision == revision + 1
 
 
+def test_native_catalogue_uses_live_setup_inactivity_deadline():
+    from concurrent.futures import Future
+
+    from cephvr.shared.deadlines import SetupInactivity
+    from cephvr.visual_stimulus.worker.preparation import PreparationJob
+
+    driver, clock, reports, _, _, command, _ = prepared_driver()
+    driver.state.ready = False
+    setup = visual_stimulus.WorkerSetup(command=command())
+    initial = clock() + 100
+    inactivity = SetupInactivity(100, initial)
+    clock.value += 80
+    assert inactivity.advance(1, "Prepared crop 1/2", clock())
+    clock.value += 80
+    assert inactivity.advance(2, "Prepared crop 2/2", clock())
+    driver.preparation_job = PreparationJob(setup, inactivity, Future(), Future())
+    driver.deadline_ns = initial
+    driver.command = command()  # A later preview command cannot own Setup resources.
+    reports.records.clear()
+
+    driver.announce("gpu:prepared-crops", None)
+
+    method, heartbeat, deadline = reports.records[-1]
+    assert method == "ReportWorkerHeartbeat"
+    assert heartbeat.work == setup.command.target.work
+    assert deadline == inactivity.deadline_ns > clock() > initial
+
+
 def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_path):
     from concurrent.futures import ThreadPoolExecutor
 
@@ -2411,7 +2439,7 @@ def test_prepared_heap_collects_new_cycles_and_releases_prepared_cycles():
 
 
 @pytest.mark.parametrize("failure", [None, "graphics", "cancelled", "deadline", "size"])
-def test_setup_publishes_only_final_graphics_provenance_under_original_deadline(
+def test_setup_publishes_only_final_graphics_provenance_under_inactivity_deadline(
     failure,
     tmp_path,
 ):
@@ -2461,14 +2489,15 @@ def test_setup_publishes_only_final_graphics_provenance_under_original_deadline(
 
     class Recording:
         def prepare_artifacts(self, artifacts, bound):
-            assert threading.get_ident() != owner and bound == deadline
+            assert threading.get_ident() != owner and bound >= deadline
             assert artifacts == (final,)
             recorded.extend(artifacts)
 
     class Report:
         def confirm(self, method, message, bound):
-            assert threading.get_ident() != owner and bound == deadline
-            reported.append(message)
+            assert threading.get_ident() != owner and bound >= deadline
+            if message.HasField("prepared_artifact"):
+                reported.append(message)
 
     preparer = Prepare()
     job = begin(
@@ -2551,6 +2580,8 @@ def test_preparation_job_reports_cpu_and_graphics_progress_with_setup_identity()
         def send(self, method, message, deadline_ns, *, required=True):
             messages.append((method, message, deadline_ns, required))
 
+        confirm = send
+
     class Preparer(Preparation):
         def prepare_trials(self, *args, progress=None, **kwargs):
             self.progress = progress
@@ -2578,13 +2609,21 @@ def test_preparation_job_reports_cpu_and_graphics_progress_with_setup_identity()
             preparation, cancelled=False, now_ns=time.perf_counter_ns()
         )
         assert len(job.result.result(timeout=1)) == 1
-        assert [item[1].operation.progress for item in messages] == [
+        assert [
+            item[1].operation.progress
+            for item in messages
+            if item[1].operation.progress
+        ] == [
             "Decoding textures: 1/1",
             "Uploading initial textures: 1/1",
+            "Serializing prepared trial 1/1",
+            "Prepared trials serialized; preparing recording artifacts",
+            "Publishing prepared trial 1/1",
+            "Published prepared trial 1/1",
         ]
         for method, report, bound, required in messages:
-            assert method == "ReportWorkerOperation" and not required
-            assert bound == deadline and report.source == request.command.target
+            assert method == "ReportWorkerOperation" and required
+            assert bound >= deadline and report.source == request.command.target
             assert report.operation.context.command_id == request.command.command_id
             assert report.operation.work == request.command.target.work
             assert not report.operation.complete
@@ -2773,3 +2812,179 @@ def test_sparse_process_reader_splits_frames_and_rejects_truncation():
     early = process([])
     early._exit_code = 1
     assert "exited early" in str(early.failure)
+
+
+@pytest.mark.windows
+def test_sparse_process_sends_job_and_credit_through_native_pipe():
+    import ctypes
+    import sys
+    import time
+
+    if sys.platform != "win32":
+        pytest.skip("native Windows pipe required")
+    from cephvr.platform.windows.byte_stream import (
+        OverlappedPipe,
+        PipeConstructionOwner,
+    )
+    from cephvr.platform.windows.byte_stream_native import native_api
+    from cephvr.visual_stimulus.resources.sparse_noise_wire import (
+        encode_credit,
+        encode_job,
+    )
+    from cephvr.visual_stimulus.worker.sparse_noise import SparseNoiseProcess
+
+    owner = PipeConstructionOwner()
+    deadline = time.perf_counter_ns() + 2_000_000_000
+    endpoint = None
+    try:
+        endpoint = OverlappedPipe.create_child_endpoint(
+            parent_writable=True, owner=owner, deadline_ns=deadline
+        )
+        process = object.__new__(SparseNoiseProcess)
+        process.input_pipe = endpoint.parent
+        for payload in (encode_job(()), encode_credit(100), encode_credit(200)):
+            process.send(payload, deadline_ns=deadline)
+            received = ctypes.create_string_buffer(len(payload))
+            transferred = ctypes.c_ulong()
+            assert native_api().ReadFile(
+                endpoint.child_handle,
+                received,
+                len(payload),
+                ctypes.byref(transferred),
+                None,
+            )
+            assert transferred.value == len(payload)
+            assert received.raw == payload
+    finally:
+        if endpoint is not None:
+            endpoint.close_child_copy()
+            endpoint.close_parent()
+        owner.retry_cleanup(deadline_ns=deadline)
+    assert not owner.cleanup_blocked
+
+
+def test_preparation_and_publication_keep_progressing_past_original_setup_cutoff():
+    from cephvr.shared.deadlines import remaining_ns
+    from cephvr.visual_stimulus.resources.budget import BoundedBudget
+    from cephvr.visual_stimulus.worker.preparation import begin
+
+    clock = Clock()
+    initial = clock() + 100
+    artifact = make_prepared_trial()
+    request = visual_stimulus.WorkerSetup()
+    request.command.command_id = str(uuid4())
+    request.session.policies.setup.initial_ns = 100
+    request.session.trials.add().context.trial_id = artifact.identity.trial_id
+    published, updates = [], []
+
+    class Preparer(Preparation):
+        def prepare_trials(self, request, announce, cutoff, *, progress=None, **kwargs):
+            self.progress = progress
+            self.budget = BoundedBudget(
+                cpu_limit=10, gpu_limit=10, deadline_ns=cutoff, clock_ns=clock
+            )
+            for index in range(2):
+                clock.value += 80
+                progress(f"Validated images: {index + 1}/2")
+                self.budget.check_cancelled_or_expired()
+                assert remaining_ns(cutoff, clock=clock) == 100
+            return (self.artifact,)
+
+        def prepare_graphics(self, artifacts):
+            for index in range(2):
+                clock.value += 80
+                self.progress(f"Uploaded textures: {index + 1}/2")
+                self.budget.check_cancelled_or_expired()
+            return artifacts
+
+    class Report:
+        def confirm(self, method, message, deadline_ns):
+            assert deadline_ns > clock()
+            if message.HasField("prepared_artifact"):
+                clock.value += 80
+                assert clock() < deadline_ns
+                published.append(message)
+            else:
+                updates.append(message.operation.progress_sequence)
+
+    preparer = Preparer(artifact)
+    job = begin(
+        request, preparer, Recorder(), Report(), lambda *_: None, initial, clock
+    )
+    try:
+        job.graphics_input.result(timeout=1)
+        job.service_graphics(preparer, cancelled=False, now_ns=clock())
+        records = job.result.result(timeout=1)
+        assert len(records) == len(published) == 1
+        assert clock() > initial
+        assert job.deadline_ns == clock() + 100
+        assert updates == list(range(1, len(updates) + 1))
+    finally:
+        job.thread.join(timeout=1)
+        assert not job.thread.is_alive()
+
+
+def test_preparation_without_work_progress_expires_before_publication():
+    from cephvr.visual_stimulus.worker.preparation import begin
+
+    clock = Clock()
+    artifact = make_prepared_trial()
+    request = visual_stimulus.WorkerSetup()
+    request.session.policies.setup.initial_ns = 100
+    request.session.trials.add().context.trial_id = artifact.identity.trial_id
+    reports = Reports()
+
+    class Preparer(Preparation):
+        def prepare_trials(self, *args, **kwargs):
+            clock.value += 101
+            return (self.artifact,)
+
+    job = begin(
+        request,
+        Preparer(artifact),
+        Recorder(),
+        reports,
+        lambda *_: None,
+        clock() + 100,
+        clock,
+    )
+    try:
+        job.graphics_input.result(timeout=1)
+        job.service_graphics(Preparer(artifact), cancelled=False, now_ns=clock())
+        with pytest.raises(TimeoutError, match="graphics preparation"):
+            job.result.result(timeout=1)
+        assert not any(
+            record[1].HasField("prepared_artifact") for record in reports.records
+        )
+    finally:
+        job.thread.join(timeout=1)
+        assert not job.thread.is_alive()
+
+
+def test_output_timing_retains_frame_gaps_with_recording_off(caplog):
+    import logging
+    from types import SimpleNamespace as NS
+
+    timing = OutputTiming()
+    for i, stamp in enumerate((100, 16_000_100, 46_000_100, 146_000_100)):
+        timing.observe(
+            "front",
+            NS(
+                evidence_submissions=(
+                    NS(
+                        output_id="front",
+                        attempt_index=i,
+                        phase="returned",
+                        return_host_ns=stamp,
+                    ),
+                ),
+                group=NS(epoch_index=0),
+                evidence_state=NS(media=()),
+            ),
+        )
+    with caplog.at_level(logging.INFO, logger="cephvr.visual_stimulus.worker.timing"):
+        report = timing.report("trial", "front", 4, {0})
+    assert report.returned_submissions == 4
+    assert timing.max_gap_ns == 100_000_000
+    assert timing.gaps_over_25ms == 2 and timing.gaps_over_50ms == 1
+    assert "max_gap_ms=100.000000" in caplog.text

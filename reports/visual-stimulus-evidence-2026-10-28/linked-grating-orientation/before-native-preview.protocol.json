@@ -1,0 +1,1068 @@
+{
+  "format": "cephvr-protocol-config",
+  "version": 1,
+  "mode": "Open-loop",
+  "asset_root": "C:/Users/ReiterU_PC/Desktop/Pedro/media",
+  "selected_trial": 0,
+  "trials": [
+    {
+      "name": "Trial 2",
+      "path": "",
+      "program": {
+        "format_version": 2,
+        "category": "media_presentation",
+        "assets": [
+          {
+            "asset_id": "variation_92ff4833e2b1184c153a11e3",
+            "logical_path": "import-cpdk_b42/0001_1_metamer1.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_89ae6389942f2c2ada3002e5",
+            "logical_path": "import-uyzxvbx9/0002_1_metamer2.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_e80b61bd1db8c3220767b323",
+            "logical_path": "import-i__rdmnl/0003_1_metamer3.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_aba97859b17cdd5d491847be",
+            "logical_path": "import-du6x1mdu/0004_1_metamer4.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_74bdede31ed0be8108b74e65",
+            "logical_path": "import-jjeueg6s/0005_1_metamer5.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_3319b0d8c7fa66bafebaa4b6",
+            "logical_path": "import-snt_mfxq/0006_1_metamer6.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_b388a50c8fd1850993c8ff89",
+            "logical_path": "import-2iqr4hu4/0007_1_metamer7.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_7e8dc174b33984cf98da884a",
+            "logical_path": "import-4u4_xzqi/0008_1_metamer8.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_8119b3f820c8a4076b48c5d3",
+            "logical_path": "import-q326kkzz/0009_1_metamer9.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          },
+          {
+            "asset_id": "variation_ac394ef3ec852c29e63e4154",
+            "logical_path": "import-ljcyxm44/0010_1_metamer10.png",
+            "color_override": null,
+            "profile": "png_uint_v1"
+          }
+        ],
+        "instances": [
+          {
+            "instance_id": "stimulus_1",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_2",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_3",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_4",
+            "family": "image"
+          }
+        ],
+        "scenes": [
+          {
+            "scene_id": "blank",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": []
+          },
+          {
+            "scene_id": "scene_stimulus_4",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_1",
+              "stimulus_2",
+              "stimulus_3",
+              "stimulus_4"
+            ]
+          }
+        ],
+        "input_channels": [],
+        "duration": {
+          "kind": "explicit_epochs"
+        },
+        "sequence": [
+          {
+            "kind": "group",
+            "group_id": "Textures",
+            "repetitions": 9000,
+            "order": "as_listed",
+            "order_unit": "child_blocks",
+            "conditions": null,
+            "body": [
+              {
+                "kind": "epoch",
+                "epoch_id": "Epoch_1",
+                "batch_label": "textures",
+                "batch_id": "batch_d04cd6d12f604cdba0d5aba071eb76a2",
+                "subgroup_draft": {
+                  "enabled": true,
+                  "rules": [
+                    {
+                      "rig_coordinates": true,
+                      "rig_angle_version": 2,
+                      "projector": "",
+                      "projectors": [
+                        "Front",
+                        "Left",
+                        "Right",
+                        "Bottom"
+                      ],
+                      "layer": 0,
+                      "parameter": "Asset",
+                      "method": 2,
+                      "values": "",
+                      "minimum": "0",
+                      "maximum": "100",
+                      "precision": "1",
+                      "shared": true,
+                      "seed": "235a9296e37e28d149e300cee51282be",
+                      "sample_key": [
+                        "Asset",
+                        "variation_92ff4833e2b1184c153a11e3",
+                        "variation_89ae6389942f2c2ada3002e5",
+                        "variation_e80b61bd1db8c3220767b323",
+                        "variation_aba97859b17cdd5d491847be",
+                        "variation_74bdede31ed0be8108b74e65",
+                        "variation_3319b0d8c7fa66bafebaa4b6",
+                        "variation_b388a50c8fd1850993c8ff89",
+                        "variation_7e8dc174b33984cf98da884a",
+                        "variation_8119b3f820c8a4076b48c5d3",
+                        "variation_ac394ef3ec852c29e63e4154",
+                        "('', ('Front', 'Left', 'Right', 'Bottom'), 0, True)"
+                      ],
+                      "samples": [],
+                      "folder": "C:/Users/ReiterU_PC/Desktop/Alsu/media/Cuttlebase_3840x2000_1to1_ALDER",
+                      "asset_ids": [
+                        "variation_92ff4833e2b1184c153a11e3",
+                        "variation_89ae6389942f2c2ada3002e5",
+                        "variation_e80b61bd1db8c3220767b323",
+                        "variation_aba97859b17cdd5d491847be",
+                        "variation_74bdede31ed0be8108b74e65",
+                        "variation_3319b0d8c7fa66bafebaa4b6",
+                        "variation_b388a50c8fd1850993c8ff89",
+                        "variation_7e8dc174b33984cf98da884a",
+                        "variation_8119b3f820c8a4076b48c5d3",
+                        "variation_ac394ef3ec852c29e63e4154"
+                      ],
+                      "grating_periods_mm": []
+                    }
+                  ]
+                },
+                "scene_id": "scene_stimulus_4",
+                "duration": {
+                  "kind": "fixed",
+                  "duration": {
+                    "seconds": "0.4"
+                  }
+                },
+                "settings": [
+                  {
+                    "instance_id": "stimulus_1",
+                    "space": {
+                      "kind": "visual_angle",
+                      "frame_id": "rig",
+                      "frame_to_rig_xyzw": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ],
+                      "surfaces": [
+                        "front"
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 17.0
+                        }
+                      },
+                      "y": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 0.0
+                        }
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "image",
+                    "asset_id": "variation_7e8dc174b33984cf98da884a",
+                    "sampling": "linear",
+                    "fit": "fold"
+                  },
+                  {
+                    "instance_id": "stimulus_2",
+                    "space": {
+                      "kind": "visual_angle",
+                      "frame_id": "rig",
+                      "frame_to_rig_xyzw": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ],
+                      "surfaces": [
+                        "left"
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 90.0
+                        }
+                      },
+                      "y": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 0.0
+                        }
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "image",
+                    "asset_id": "variation_7e8dc174b33984cf98da884a",
+                    "sampling": "linear",
+                    "fit": "fold"
+                  },
+                  {
+                    "instance_id": "stimulus_3",
+                    "space": {
+                      "kind": "visual_angle",
+                      "frame_id": "rig",
+                      "frame_to_rig_xyzw": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ],
+                      "surfaces": [
+                        "right"
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 16.0
+                        }
+                      },
+                      "y": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 0.0
+                        }
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "image",
+                    "asset_id": "variation_7e8dc174b33984cf98da884a",
+                    "sampling": "linear",
+                    "fit": "fold"
+                  },
+                  {
+                    "instance_id": "stimulus_4",
+                    "space": {
+                      "kind": "visual_angle",
+                      "frame_id": "rig",
+                      "frame_to_rig_xyzw": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ],
+                      "surfaces": [
+                        "bottom"
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 90.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 84.0
+                        }
+                      },
+                      "y": {
+                        "kind": "rate",
+                        "function": {
+                          "kind": "constant",
+                          "value": 0.0
+                        }
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "image",
+                    "asset_id": "variation_7e8dc174b33984cf98da884a",
+                    "sampling": "linear",
+                    "fit": "fold"
+                  }
+                ],
+                "repetition_rules": [
+                  {
+                    "kind": "uniform_asset_v1",
+                    "instance_id": "stimulus_1",
+                    "parameter": "Asset",
+                    "asset_ids": [
+                      "variation_92ff4833e2b1184c153a11e3",
+                      "variation_89ae6389942f2c2ada3002e5",
+                      "variation_e80b61bd1db8c3220767b323",
+                      "variation_aba97859b17cdd5d491847be",
+                      "variation_74bdede31ed0be8108b74e65",
+                      "variation_3319b0d8c7fa66bafebaa4b6",
+                      "variation_b388a50c8fd1850993c8ff89",
+                      "variation_7e8dc174b33984cf98da884a",
+                      "variation_8119b3f820c8a4076b48c5d3",
+                      "variation_ac394ef3ec852c29e63e4154"
+                    ],
+                    "grating_periods_mm": [],
+                    "seed": "235a9296e37e28d149e300cee51282be",
+                    "stream": "",
+                    "offset": 0,
+                    "stride": 1
+                  },
+                  {
+                    "kind": "uniform_asset_v1",
+                    "instance_id": "stimulus_2",
+                    "parameter": "Asset",
+                    "asset_ids": [
+                      "variation_92ff4833e2b1184c153a11e3",
+                      "variation_89ae6389942f2c2ada3002e5",
+                      "variation_e80b61bd1db8c3220767b323",
+                      "variation_aba97859b17cdd5d491847be",
+                      "variation_74bdede31ed0be8108b74e65",
+                      "variation_3319b0d8c7fa66bafebaa4b6",
+                      "variation_b388a50c8fd1850993c8ff89",
+                      "variation_7e8dc174b33984cf98da884a",
+                      "variation_8119b3f820c8a4076b48c5d3",
+                      "variation_ac394ef3ec852c29e63e4154"
+                    ],
+                    "grating_periods_mm": [],
+                    "seed": "235a9296e37e28d149e300cee51282be",
+                    "stream": "",
+                    "offset": 0,
+                    "stride": 1
+                  },
+                  {
+                    "kind": "uniform_asset_v1",
+                    "instance_id": "stimulus_3",
+                    "parameter": "Asset",
+                    "asset_ids": [
+                      "variation_92ff4833e2b1184c153a11e3",
+                      "variation_89ae6389942f2c2ada3002e5",
+                      "variation_e80b61bd1db8c3220767b323",
+                      "variation_aba97859b17cdd5d491847be",
+                      "variation_74bdede31ed0be8108b74e65",
+                      "variation_3319b0d8c7fa66bafebaa4b6",
+                      "variation_b388a50c8fd1850993c8ff89",
+                      "variation_7e8dc174b33984cf98da884a",
+                      "variation_8119b3f820c8a4076b48c5d3",
+                      "variation_ac394ef3ec852c29e63e4154"
+                    ],
+                    "grating_periods_mm": [],
+                    "seed": "235a9296e37e28d149e300cee51282be",
+                    "stream": "",
+                    "offset": 0,
+                    "stride": 1
+                  },
+                  {
+                    "kind": "uniform_asset_v1",
+                    "instance_id": "stimulus_4",
+                    "parameter": "Asset",
+                    "asset_ids": [
+                      "variation_92ff4833e2b1184c153a11e3",
+                      "variation_89ae6389942f2c2ada3002e5",
+                      "variation_e80b61bd1db8c3220767b323",
+                      "variation_aba97859b17cdd5d491847be",
+                      "variation_74bdede31ed0be8108b74e65",
+                      "variation_3319b0d8c7fa66bafebaa4b6",
+                      "variation_b388a50c8fd1850993c8ff89",
+                      "variation_7e8dc174b33984cf98da884a",
+                      "variation_8119b3f820c8a4076b48c5d3",
+                      "variation_ac394ef3ec852c29e63e4154"
+                    ],
+                    "grating_periods_mm": [],
+                    "seed": "235a9296e37e28d149e300cee51282be",
+                    "stream": "",
+                    "offset": 0,
+                    "stride": 1
+                  }
+                ],
+                "repetition_settings": []
+              }
+            ]
+          }
+        ]
+      },
+      "stimulus_seed_decimal": "",
+      "gap_after_seconds": "",
+      "arena_boundaries_json": "{\"format_version\":1,\"bindings\":[]}"
+    }
+  ],
+  "category_templates": {
+    "media_presentation": {
+      "trials": [
+        {
+          "name": "Trial 1",
+          "path": "",
+          "program": {
+            "format_version": 2,
+            "category": "media_presentation",
+            "assets": [
+              {
+                "asset_id": "asset_1",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_2",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_3",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_4",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_5",
+                "logical_path": "import-qf703icq/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_6",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_7",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_8",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_9",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              }
+            ],
+            "instances": [
+              {
+                "instance_id": "stimulus_1",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_2",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_3",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_4",
+                "family": "texture"
+              }
+            ],
+            "scenes": [
+              {
+                "scene_id": "blank",
+                "background_linear_rgb": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "arena_instance_id": null,
+                "layer_instance_ids": []
+              },
+              {
+                "scene_id": "scene_stimulus_4",
+                "background_linear_rgb": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "arena_instance_id": null,
+                "layer_instance_ids": [
+                  "stimulus_1",
+                  "stimulus_2",
+                  "stimulus_3",
+                  "stimulus_4"
+                ]
+              }
+            ],
+            "input_channels": [],
+            "duration": {
+              "kind": "explicit_epochs"
+            },
+            "sequence": [
+              {
+                "kind": "group",
+                "group_id": "Group_1",
+                "repetitions": 100,
+                "order": "as_listed",
+                "order_unit": "child_blocks",
+                "conditions": null,
+                "body": [
+                  {
+                    "kind": "epoch",
+                    "epoch_id": "Epoch_1",
+                    "batch_label": "",
+                    "batch_id": "batch_e74935deec4344d99615b794dde21dc7",
+                    "subgroup_draft": null,
+                    "scene_id": "scene_stimulus_4",
+                    "duration": {
+                      "kind": "fixed",
+                      "duration": {
+                        "seconds": "60"
+                      }
+                    },
+                    "settings": [
+                      {
+                        "instance_id": "stimulus_1",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "front",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "grating": false,
+                        "uniform": false,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_6",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_2",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "left",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "grating": false,
+                        "uniform": false,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_7",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_3",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "right",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "grating": false,
+                        "uniform": false,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_8",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_4",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "bottom",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "grating": false,
+                        "uniform": false,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_9",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      }
+                    ],
+                    "repetition_rules": [],
+                    "repetition_settings": []
+                  }
+                ]
+              }
+            ]
+          },
+          "stimulus_seed_decimal": "",
+          "gap_after_seconds": "",
+          "arena_boundaries_json": "{\"format_version\":1,\"bindings\":[]}"
+        }
+      ],
+      "selected_trial": 0
+    }
+  }
+}

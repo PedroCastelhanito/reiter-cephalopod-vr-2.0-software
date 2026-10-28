@@ -14,6 +14,12 @@ color matching. Authored numeric stimulus colors/intensities use this space; GUI
 color-picker sRGB values must be converted explicitly and shown with their units.
 Source image/video encodings are independent of authored numeric parameters.
 
+Untagged PNG/TIFF images use the fixed linear/full-range Rec.709 D65 RGB
+interpretation, with no chroma subsampling. They need no per-asset override.
+Explicit overrides and supported PNG transfer metadata take precedence; malformed
+or unsupported metadata still blocks preparation rather than falling back.
+JPEG/video and glTF base-color texture profile rules remain authoritative.
+
 Resolve source transfer function, primaries, matrix/range (for YCbCr), alpha and
 orientation at Setup. Initial direct interpretations are linear Rec.709, sRGB and
 BT.709 transfer with the same primaries. Use the inverse declared transfer, not one

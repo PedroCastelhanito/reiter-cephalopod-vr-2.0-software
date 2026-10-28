@@ -9,21 +9,23 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
+from cephvr.shared.deadlines import Deadline, resolve_deadline
 from cephvr.visual_stimulus.resources.budget import BoundedBudget
 from cephvr.visual_stimulus.resources.image_schedule import (
-    ImageLookahead,
     ImageSchedule,
     image_asset,
 )
-from cephvr.visual_stimulus.resources.image_source import ImageSource
+from cephvr.visual_stimulus.resources.image_source import ImageSource, PixelBuffer
 from cephvr.visual_stimulus.resources.image_worker import ImageWorker
 
 from .types import ImageSnapshot, InstanceSnapshot
 
+LOOKAHEAD_EPOCHS = 2
+
 
 class ImageGpuPort(Protocol):
     def upload(
-        self, source: ImageSource, pixels: bytes, textures: list[Any]
+        self, source: ImageSource, pixels: PixelBuffer, textures: list[Any]
     ) -> bool: ...
     def fence(self, textures: list[Any], fences: list[Any]) -> None: ...
     def ready(self, fences: list[Any]) -> bool: ...
@@ -52,6 +54,10 @@ class ImageResidency:
         progress: Callable[[int, int], None] | None = None,
     ) -> None:
         self.schedule, self.budget, self.clock_ns = schedule, budget, clock_ns
+        from cephvr.visual_stimulus.resources.image_timing import ImageTimings
+
+        self.timings = ImageTimings()
+        self._source_gpu_bytes = sum(s.gpu_bytes for s in schedule.sources.values())
         self.entries = {key: ResidentImage() for key in schedule.sources}
         self._bound: dict[tuple[str, str], str] = {}
         self._binding_counts: Counter[str] = Counter()
@@ -61,10 +67,6 @@ class ImageResidency:
         self._gpu: ImageGpuPort | None = None
         self._resources: dict[str, Any] | None = None
         self._demand: Iterable[str] = tuple(self._anchors)
-        self._lookahead: ImageLookahead | None = None
-        self._lookaheads = {
-            trial: schedule.lookahead(trial) for trial in schedule.epochs
-        }
         self._cursor: tuple[str, int] | None = None
         self._error: BaseException | None = None
         self._allocated: set[str] = set()
@@ -128,6 +130,9 @@ class ImageResidency:
         announce: Callable[[str, str | None], None],
     ) -> None:
         self._gpu, self._resources = gpu, resources
+        prepare_pool = getattr(gpu, "prepare_pool", None)
+        if prepare_pool is not None:
+            prepare_pool(self.schedule, self.budget, announce)
         # Ready seals obligations, but loading/evicting their allocations stays lazy.
         planned = tuple((self._owner(key), None) for key in self.entries)
         if self._announce_batch is not None:
@@ -138,6 +143,9 @@ class ImageResidency:
                 self._announced.add(key)
                 announce(key, path)
         for (trial, asset), key in self.schedule.aliases.items():
+            resources[f"{self.schedule.generations[trial]}:{asset}:crops"] = {
+                c.output_id: c for c in self.schedule.sources[key].output_crops
+            }
             resources[f"{self.schedule.generations[trial]}:{asset}"] = self.entries[
                 key
             ].textures
@@ -201,8 +209,12 @@ class ImageResidency:
                 raise
             finally:
                 if completed:
+                    started = time.perf_counter_ns()
                     self.worker.release_result()
                     result = None
+                    self.timings.record(
+                        "result_release", time.perf_counter_ns() - started
+                    )
         if self._error is not None:
             raise RuntimeError("protected image reload failed") from self._error
         if self._plan_dirty:
@@ -220,7 +232,11 @@ class ImageResidency:
             source = self.schedule.sources[key]
             try:
                 self.budget.reserve(
-                    owner=self._owner(key), cpu_bytes=0, gpu_bytes=source.gpu_bytes
+                    owner=self._owner(key),
+                    cpu_bytes=0,
+                    gpu_bytes=0
+                    if getattr(self._gpu, "pool", None) is not None
+                    else source.gpu_bytes,
                 )
                 if not self.worker.request(source, deadline_ns):
                     self.budget.release(owner=self._owner(key))
@@ -238,6 +254,8 @@ class ImageResidency:
         pinned = self._pinned()
         reserved = sum(self.schedule.sources[key].gpu_bytes for key in self._allocated)
         available = self.budget.gpu_limit - (self.budget.usage.gpu_bytes - reserved)
+        if getattr(self._gpu, "pool", None) is not None:
+            available = self._source_gpu_bytes
         desired = set(pinned)
         ordered_desired = sorted(pinned)
         desired_bytes = sum(self.schedule.sources[key].gpu_bytes for key in desired)
@@ -260,20 +278,22 @@ class ImageResidency:
         self._desired = desired
         self._plan_dirty = False
 
-    def prepare(self, deadline_ns: int) -> None:
+    def prepare(self, deadline_ns: Deadline) -> None:
         future = tuple(
             key
             for trial in self.schedule.epochs
-            for key in self.schedule.lookahead(trial)
+            for row in self.schedule.epochs[trial][: 1 + LOOKAHEAD_EPOCHS]
+            for _, asset in row
+            for key in (self.schedule.aliases[(trial, asset)],)
         )
         self._demand = tuple(dict.fromkeys((*sorted(self._anchors), *future)))
         self._plan_dirty = True
         while True:
             if self.budget.cancelled is not None and self.budget.cancelled.is_set():
                 raise InterruptedError("image residency Setup cancelled")
-            if self.clock_ns() >= deadline_ns:
-                raise TimeoutError("initial image residency missed Setup deadline")
-            self.service(deadline_ns)
+            if self.clock_ns() >= resolve_deadline(deadline_ns):
+                raise TimeoutError("initial image residency stopped making progress")
+            self.service(resolve_deadline(deadline_ns))
             if self._progress is not None:
                 self._progress(
                     sum(self.entries[key].state == "resident" for key in self._desired),
@@ -287,6 +307,12 @@ class ImageResidency:
             time.sleep(0.001)
 
     def begin(self, trial: str) -> None:
+        self.timings.clear()
+        gpu_timings = getattr(self._gpu, "timings", None)
+        if gpu_timings is not None:
+            gpu_timings.clear()
+        for source in self.schedule.sources.values():
+            source.timings.clear()
         self._cursor = None
         self._bound.clear()
         self._binding_counts.clear()
@@ -298,29 +324,46 @@ class ImageResidency:
 
     def finish(self, trial: str) -> None:
         # Rebuild outside trial rendering, ready for any subsequent admission.
-        self._lookaheads[trial] = self.schedule.lookahead(trial)
         selections, holds = self._counts.get(trial, (0, 0))
-        if holds:
-            logging.getLogger(__name__).warning(
-                "Texture residency trial=%s selections=%d readiness_holds=%d; "
-                "previous textures retained with current motion; detailed indices require Save On",
-                trial,
-                selections,
-                holds,
-            )
+        logging.getLogger(__name__).log(
+            logging.WARNING if holds else logging.INFO,
+            "Texture residency trial=%s selections=%d readiness_holds=%d; "
+            "detailed indices require Save On; stages=%s gpu=%s loader=%s",
+            trial,
+            selections,
+            holds,
+            self.timings.summary(),
+            getattr(self._gpu, "timings", self.timings).summary(),
+            self._loader_timings(),
+        )
+
+    def _loader_timings(self) -> object:
+        from cephvr.visual_stimulus.resources.image_timing import ImageTimings
+
+        totals = ImageTimings()
+        for source in self.schedule.sources.values():
+            for stage, (count, total, maximum) in source.timings.snapshot().items():
+                n, elapsed, peak = totals.stages.get(stage, (0, 0, 0))
+                totals.stages[stage] = n + count, elapsed + total, max(peak, maximum)
+        return totals.summary()
 
     def select(
         self, trial: str, epoch: int, snapshots: tuple[InstanceSnapshot, ...]
     ) -> tuple[InstanceSnapshot, ...]:
         if self._cursor != (trial, epoch):
             if self._cursor is None or self._cursor[0] != trial:
-                self._lookahead = self._lookaheads[trial]
                 self._bound.clear()
                 self._binding_counts.clear()
-            assert self._lookahead is not None
-            self._lookahead.advance(epoch)
             self._cursor = (trial, epoch)
-            self._demand = self._lookahead
+            self._demand = tuple(
+                dict.fromkeys(
+                    self.schedule.aliases[(trial, asset)]
+                    for row in self.schedule.epochs[trial][
+                        epoch : epoch + 1 + LOOKAHEAD_EPOCHS
+                    ]
+                    for _, asset in row
+                )
+            )
             self._plan_dirty = True
         self.service()
         selected = []
@@ -349,7 +392,9 @@ class ImageResidency:
             if self.entries[actual_key].state != "resident":
                 raise RuntimeError("prepared first/previous image is not resident")
             assert settings is not None
-            if settings.kind == "image":
+            if requested == actual:
+                pass
+            elif settings.kind == "image":
                 settings = settings.model_copy(update={"asset_id": actual})
             else:
                 assert settings.kind == "texture"
@@ -419,7 +464,19 @@ class ImageResidency:
                 self.released_keys.add(self._owner(key))
             except Exception as exc:
                 errors.append(f"{self._owner(key)}:{exc}")
+        if not errors:
+            close_pool = getattr(self._gpu, "close_pool", None)
+            if close_pool is not None:
+                try:
+                    owner = close_pool(self.budget)
+                    if owner is not None:
+                        self.released_keys.add(owner)
+                except Exception as exc:
+                    errors.append(f"image-pool:{exc}")
         if self._resources is not None:
             for trial, asset in self.schedule.aliases:
                 self._resources.pop(f"{self.schedule.generations[trial]}:{asset}", None)
+                self._resources.pop(
+                    f"{self.schedule.generations[trial]}:{asset}:crops", None
+                )
         return tuple(errors)

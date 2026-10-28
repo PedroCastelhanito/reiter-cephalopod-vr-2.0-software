@@ -67,6 +67,9 @@ _EXPERIMENT_POLICY_KEYS = frozenset(
         "configuration_validation.invalid_values",
         "configuration_validation.late_result",
         "configuration_validation.history",
+        "setup.timeout",
+        "setup.progress",
+        "setup.total_duration_cap",
         "recovery.missed_deadline",
         "incident_history.reconnect_warnings",
         "trial_command_delivery.max_transport_retries",
@@ -160,6 +163,9 @@ def load_control_files(root: Path) -> tuple[LoadedPair, LoadedPair]:
             "configuration_validation.invalid_values": "reject_with_field_issues_preserve_current",
             "configuration_validation.late_result": "never_commit_after_expiry_or_state_change",
             "configuration_validation.history": "single_current_configuration_no_rollback",
+            "setup.timeout": "per_backend_meaningful_progress_inactivity",
+            "setup.progress": "exact_live_identity_increasing_sequence",
+            "setup.total_duration_cap": False,
             "recovery.missed_deadline": (
                 "single_state_query_within_shared_recovery_budget"
             ),

@@ -243,11 +243,10 @@ class SetupExecution:
         if attempt.handoff is not None:
             await self.handoffs.complete_preparation_handoff(attempt, deadline)
         await self._action(command_id, "Waiting for backends…")
-        if await self.evidence_waiter.wait_lifecycle_with_recovery(
+        await self.evidence_waiter.wait_lifecycle_with_recovery(
             attempt, "setup_ready", frozenset(attempt.required), deadline
-        ):
-            deadline += self.limits.current.recovery_ns
-        return deadline, supervisor
+        )
+        return self.clock() + self.limits.current.setup_ns, supervisor
 
     async def _prepare_spikeglx(self, attempt: Attempt, deadline: int) -> None:
         """Prepare the paired SpikeGLX run and validate its readback identity."""
@@ -304,6 +303,7 @@ class SetupExecution:
 
     async def _setup_acquisition(self, attempt: Attempt, deadline: int) -> None:
         """Run acquisition Setup first and wait for its resolution evidence."""
+        deadline = self.clock() + self.limits.current.setup_ns
         acquisition = attempt.required.get("acquisition")
         if acquisition is not None:
             response = await asyncio.wait_for(
@@ -335,6 +335,7 @@ class SetupExecution:
             if name != "acquisition"
             and (name != "visual_stimulus" or not closed_loop_handoff)
         }
+        deadline = self.clock() + self.limits.current.setup_ns
         responses = await asyncio.wait_for(
             asyncio.gather(
                 *(

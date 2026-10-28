@@ -25,6 +25,7 @@ from cephvr.gui.preview_motion_data import (
     motion_epochs,
     motion_sources,
     planned_size,
+    plot_sources,
 )
 from cephvr.gui.preview_motion_dial import (
     MapSample,
@@ -275,7 +276,7 @@ class StimulusTimeline(QWidget):
             self.plan = InstrumentPlan(epochs, geometry)
         except (ValueError, TypeError, OverflowError) as error:
             self.epoch_timeline.message = str(error)
-        for index, source in enumerate(self.sources):
+        for index, source in enumerate(plot_sources(self.sources)):
             color = COLORS[index % len(COLORS)]
             self.all_panels.append(self.plan.panel(source, color, prepare=False))
         self.rebuild_instruments()

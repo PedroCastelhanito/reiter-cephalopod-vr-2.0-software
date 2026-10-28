@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLineEdit, QVBoxLayout, QWid
 
 from cephvr.gui.components import field
 from cephvr.gui.stimulus_form import ValueEditor
+from cephvr.visual_stimulus.config.models.program_model import Fixed
 
 
 class LoomingSize(QWidget):
@@ -20,6 +21,7 @@ class LoomingSize(QWidget):
         values: dict[str, Any],
         schema: dict[str, Any],
         definitions: dict[str, Any],
+        duration: object,
     ) -> None:
         super().__init__()
         self.original = {key: deepcopy(values[key]) for key in ("width", "height")}
@@ -47,7 +49,9 @@ class LoomingSize(QWidget):
         )
         self.start = QLineEdit(str(knots[0]["value"]) if supported else "")
         self.end = QLineEdit(str(knots[1]["value"]) if supported else "")
-        self.duration = QLineEdit(knots[1]["time"]["seconds"] if supported else "")
+        self.epoch_seconds = (
+            duration.duration.seconds if isinstance(duration, Fixed) else None
+        )
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.basic = QWidget()
@@ -56,7 +60,6 @@ class LoomingSize(QWidget):
         unit = "mm" if values["space"]["kind"] == "physical_surface" else "°"
         grid.addWidget(field(f"Start size ({unit})", self.start), 0, 0)
         grid.addWidget(field(f"End size ({unit})", self.end), 0, 1)
-        grid.addWidget(field("Growth duration (s)", self.duration), 1, 0, 1, 2)
         layout.addWidget(self.basic)
         self.extra = QWidget()
         details = QVBoxLayout(self.extra)
@@ -70,10 +73,8 @@ class LoomingSize(QWidget):
         details.addWidget(self.custom)
         details.addWidget(self.advanced)
         layout.addWidget(self.extra)
-        for control in (self.start, self.end, self.duration):
+        for control in (self.start, self.end):
             control.textEdited.connect(self.changed)
-        self.edited = False
-        self.changed.connect(lambda: setattr(self, "edited", True))
         self.arrange()
 
     def accept(self, values: dict[str, Any]) -> None:
@@ -104,8 +105,6 @@ class LoomingSize(QWidget):
         if supported:
             self.start.setText(str(knots[0]["value"]))
             self.end.setText(str(knots[1]["value"]))
-            self.duration.setText(knots[1]["time"]["seconds"])
-        self.edited = False
         self.arrange()
 
     def arrange(self) -> None:
@@ -113,19 +112,19 @@ class LoomingSize(QWidget):
         self.advanced.setVisible(self.custom.isChecked())
 
     def read(self) -> dict[str, Any]:
-        if self.custom.isChecked() or not self.edited:
+        if self.custom.isChecked() or self.epoch_seconds is None:
             return cast(dict[str, Any], self.advanced.read())
         start, end = float(self.start.text()), float(self.end.text())
         try:
-            seconds = Decimal(self.duration.text())
+            seconds = Decimal(self.epoch_seconds)
         except InvalidOperation as error:
-            raise ValueError("Growth duration must be a positive number") from error
+            raise ValueError("Epoch duration must be a positive number") from error
         if (
             not all(isfinite(v) and v > 0 for v in (start, end))
             or not seconds.is_finite()
             or seconds <= 0
         ):
-            raise ValueError("Sizes and growth duration must be finite and positive")
+            raise ValueError("Sizes and epoch duration must be finite and positive")
         curve = dict(
             kind="keyframes",
             interpolation="linear",

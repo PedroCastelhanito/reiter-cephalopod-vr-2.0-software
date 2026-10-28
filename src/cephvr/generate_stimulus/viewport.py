@@ -75,7 +75,7 @@ class ArenaViewport(QOpenGLWidget):
         except Exception as error:
             self.error = str(error)
             self.failed.emit(
-                f"3D preview unavailable: {error}. Saving and export remain available."
+                f"3D preview unavailable: {error}. Saving remains available."
             )
 
     def release(self) -> None:
@@ -278,7 +278,7 @@ class ArenaViewport(QOpenGLWidget):
                 vao.render()
         except Exception as error:
             self.error = str(error)
-            self.failed.emit(f"Preview failed: {error}; export remains available")
+            self.failed.emit(f"Preview failed: {error}; saving remains available")
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event is None:

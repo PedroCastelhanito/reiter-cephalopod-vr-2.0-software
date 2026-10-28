@@ -1,0 +1,55 @@
+{"host_ns": 1189626932884900, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}]}}
+{"host_ns": 1189626946555800, "kind": "protocol", "value": {"path": "C:\\Users\\ReiterU_PC\\Desktop\\Alsu\\protocols\\texture-presentation-1hr_protocol.json", "sha256": "70551ac8c2b0d4d2b66d0b2ac43146be36eb9fe908efe7fccfe5ade74f06342b"}}
+{"host_ns": 1189629042610300, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}]}}
+{"host_ns": 1189629044908400, "kind": "apply", "value": {"command_id": "12fa8999-366d-4a8c-b0d8-aa16d19f304f", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1189631132536700, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Reserving output folder\u2026", "complete": false}]}}
+{"host_ns": 1189631134819600, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Registering backends\u2026", "complete": false}]}}
+{"host_ns": 1189631146158200, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Preparing backends\u2026", "complete": false}]}}
+{"host_ns": 1189631155038100, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": false}]}}
+{"host_ns": 1189941575648900, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Resolving outputs\u2026", "complete": false}]}}
+{"host_ns": 1189943627370700, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Registering outputs\u2026", "complete": false}]}}
+{"host_ns": 1189943653826500, "kind": "state", "value": {"phase": "SESSION_PHASE_READY", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "UpdateConfiguration", "progress": "configuration revision committed", "complete": true}, {"command": "Setup", "progress": "Ready", "complete": true}]}}
+{"host_ns": 1189943654434400, "kind": "setup", "value": {"command_id": "c7d1a481-f9ca-47e7-ba4b-77004a7c5ef7", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1189943663795000, "kind": "state", "value": {"phase": "SESSION_PHASE_STARTING", "cleanup": false, "operations": [{"command": "Setup", "progress": "Ready", "complete": true}, {"command": "StartSession", "progress": "Freezing configuration\u2026", "complete": false}]}}
+{"host_ns": 1189943692907800, "kind": "state", "value": {"phase": "SESSION_PHASE_RUNNING", "cleanup": false, "operations": [{"command": "Setup", "progress": "Ready", "complete": true}, {"command": "StartSession", "progress": "dummy test session activated (recording off)", "complete": true}]}}
+{"host_ns": 1189943693444100, "kind": "start", "value": {"command_id": "f7c347eb-88bd-4b0e-95aa-7ad647340401", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1189944714343400, "kind": "playback", "value": {"second": 0, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1189964764016200, "kind": "playback", "value": {"second": 20, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1189984886697600, "kind": "playback", "value": {"second": 40, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190005016451300, "kind": "playback", "value": {"second": 60, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190025134094800, "kind": "playback", "value": {"second": 80, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190045233898100, "kind": "playback", "value": {"second": 100, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190065384432300, "kind": "playback", "value": {"second": 120, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190085517491200, "kind": "playback", "value": {"second": 140, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190105651892000, "kind": "playback", "value": {"second": 160, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190125783150900, "kind": "playback", "value": {"second": 180, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190145954132400, "kind": "playback", "value": {"second": 200, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190166123027900, "kind": "playback", "value": {"second": 220, "phase": "SESSION_PHASE_RUNNING"}}
+{"host_ns": 1190185250670300, "kind": "state", "value": {"phase": "SESSION_PHASE_FINALIZING", "cleanup": false, "operations": [{"command": "Setup", "progress": "Ready", "complete": true}, {"command": "StartSession", "progress": "dummy test session activated (recording off)", "complete": true}, {"command": "AbortNow", "progress": "Interrupting\u2026", "complete": false}]}}
+{"host_ns": 1190187636485600, "kind": "state", "value": {"phase": "SESSION_PHASE_CONFIGURATION", "cleanup": true, "operations": [{"command": "Setup", "progress": "Ready", "complete": true}, {"command": "StartSession", "progress": "dummy test session activated (recording off)", "complete": true}, {"command": "AbortNow", "progress": "interruption and cleanup confirmed", "complete": true}]}}
+{"host_ns": 1190187637135400, "kind": "cancel", "value": {"command_id": "87eddac5-2866-4587-b2c7-c4bbb0f2b611", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}}
+{"host_ns": 1190187640446600, "kind": "cleanup", "value": {"confirmed": true}}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_batch.py", line 120, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\visual-stimulus-evidence-2026-10-28\setup-optimization\test_crop_batch.py", line 113, in main
+    restored = await asyncio.wait_for(client.execute('UpdateConfiguration', rpc.UpdateConfigurationRequest(command=client.operator_command(), expected_revision=client.snapshot.configuration.revision, proposed=original)), 60)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 282, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: configuration validation failed: visual_stimulus: FILE_POLICY_UNAVAILABLE: Visual Stimulus policy_version must be 31

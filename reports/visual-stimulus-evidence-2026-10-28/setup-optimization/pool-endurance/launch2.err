@@ -1,0 +1,6 @@
+Texture residency trial=80d3119a-3d5a-4755-ad0a-cf74a9d77ae6 selections=12920 readiness_holds=0; detailed indices require Save On
+Presentation timing trial=80d3119a-3d5a-4755-ad0a-cf74a9d77ae6 output=calibration_front returned=3230 first_ns=1193801810249500 last_ns=1193860138946100 max_gap_ms=110.515000 gaps_over_25ms=145 gaps_over_50ms=143
+Presentation timing trial=80d3119a-3d5a-4755-ad0a-cf74a9d77ae6 output=calibration_left returned=3230 first_ns=1193801813394700 last_ns=1193860151478700 max_gap_ms=110.917800 gaps_over_25ms=143 gaps_over_50ms=143
+Presentation timing trial=80d3119a-3d5a-4755-ad0a-cf74a9d77ae6 output=calibration_right returned=3230 first_ns=1193801815950900 last_ns=1193860151850700 max_gap_ms=105.064000 gaps_over_25ms=143 gaps_over_50ms=143
+Presentation timing trial=80d3119a-3d5a-4755-ad0a-cf74a9d77ae6 output=calibration_bottom returned=3230 first_ns=1193801817845600 last_ns=1193860152232700 max_gap_ms=104.964300 gaps_over_25ms=143 gaps_over_50ms=143
+Operator confirmed runtime replacement; terminating application job.

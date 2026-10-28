@@ -88,7 +88,9 @@ class Binding:
         return result
 
 
-def primary_parts(b: Binding, motion_values: dict[str, Any], projector: str) -> Parts:
+def primary_parts(
+    b: Binding, motion_values: dict[str, Any], projector: str, duration: object
+) -> Parts:
     """Motion/playback, grating colours, uniform colour, arena and looming forms."""
     parts = Parts()
     values = b.values
@@ -155,7 +157,7 @@ def primary_parts(b: Binding, motion_values: dict[str, Any], projector: str) -> 
         parts.forms.append(movement)
         parts.primary.append(movement)
     if b.looming:
-        size = LoomingSize(values, b.schema, b.definitions)
+        size = LoomingSize(values, b.schema, b.definitions, duration)
         parts.forms.append(size)
         parts.primary.append(size)
         size.extra.hide()
@@ -221,7 +223,6 @@ def advanced_parts(
         parts.widgets.append(image)
         if not b.compact:
             parts.primary.append(labelled_field("Fit", image.fit))
-            parts.primary.append(image.motion.basic)
     parts.feedback = FeedbackMappings(
         b.setting,
         [channel.model_dump(mode="json") for channel in b.program.input_channels],

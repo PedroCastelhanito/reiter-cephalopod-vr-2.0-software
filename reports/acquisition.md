@@ -1,5 +1,34 @@
 # Acquisition status
 
+## Setup confirmation deadline — 2026-10-28
+
+The earlier combined crop-bundle test rejected ConfirmConfiguration with
+SETUP_DEADLINE. Source review found numerical deadline equality rejected a valid
+controller inactivity renewal. Under [E06](../docs/architecture/system-contracts.md#e06),
+confirmation now enforces the earlier of its incoming command deadline and the
+original acquisition Setup deadline, preserving identity/revision checks and the
+original internal preparation limit. This does not extend the camera/device deadline.
+
+36 owning preparation tests pass, including earlier/later command deadlines,
+exact-boundary acceptance and expiration of either bound. Win32 mypy and scoped
+Ruff pass. Native combined Setup/1,200-second saved-protocol retest is in progress;
+no camera capture or combined acceptance is claimed from these local checks.
+[Earlier failure](visual-stimulus-evidence-2026-10-28/setup-optimization/crop-live/test.log),
+[current evidence](visual-stimulus-evidence-2026-10-28/setup-optimization/twenty-minute/test.log),
+[remaining rig checks](rig-verification.md#mcu-validation-starvation).
+
+## Accepted MCU timing defaults — 2026-10-28
+
+Owner selected[A11rev55](../docs/architecture/acquisition.md#a11)'s500ms shared
+acknowledgement timeout, including PING, and[E05rev101](../docs/architecture/experiment.md#e05)'s
+1,050ms Stopped allowance. Existing50ms completion reserve remains, satisfying
+2*500+50=1050; earlier operation deadlines still win and trial activity cutoffs do
+not move.59 owning configuration cases and scoped test Ruff/format pass; owning
+loaders confirm values. Operator settings only, no fixed-policy version change.
+Full restart and native timing/fault acceptance remain unverified; see
+[runtime assessment](runtime.md#setup-watchdog-and-secondary-renderer-failure--2026-10-28)
+and the single[rig check](rig-verification.md#mcu-validation-starvation).
+
 ## Pre-Ready camera cleanup - 2026-10-27
 
 `pre-ready-camera-cleanup` repairs admission under [E05](../docs/architecture/experiment.md#e05),

@@ -1,0 +1,32 @@
+{
+  "tagged": 1200,
+  "unchanged_non_targets": 106,
+  "all_idat_unchanged": true,
+  "all_original_bytes_recoverable": true,
+  "samples": [
+    {
+      "path": "Cuttlebase_3840x2000_1to1_ALDER/stimuli/0001_1_metamer1.png",
+      "transfer": "linear",
+      "full_validation": true,
+      "pixel_equal": true
+    },
+    {
+      "path": "Cuttlebase_3840x2000_1to1_ALDER/stimuli/0600_40_noise5.png",
+      "transfer": "linear",
+      "full_validation": true,
+      "pixel_equal": true
+    },
+    {
+      "path": "Primate_3840x2000_1to1_POPLAR/stimuli/0001_0_metamer1.png",
+      "transfer": "linear",
+      "full_validation": true,
+      "pixel_equal": true
+    },
+    {
+      "path": "Primate_3840x2000_1to1_POPLAR/stimuli/0600_39_noise5.png",
+      "transfer": "linear",
+      "full_validation": true,
+      "pixel_equal": true
+    }
+  ]
+}

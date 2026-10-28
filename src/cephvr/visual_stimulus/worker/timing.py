@@ -1,5 +1,6 @@
 """Compact per-output software timing evidence, retained with saving disabled."""
 
+import logging
 from dataclasses import dataclass, field
 
 from cephvr.visual_stimulus.rendering.types import DiagnosticSnapshot, RenderUpdate
@@ -17,6 +18,11 @@ class OutputTiming:
     starving_instances: set[str] = field(default_factory=set)
     diagnostics_count: int = 0
     clipping_counts: dict[str, int] = field(default_factory=dict)
+    first_return_ns: int | None = None
+    last_return_ns: int | None = None
+    max_gap_ns: int = 0
+    gaps_over_25ms: int = 0
+    gaps_over_50ms: int = 0
 
     def diagnostic(self, record: DiagnosticSnapshot) -> None:
         if record.group_id != self.diagnostics_count:
@@ -39,6 +45,16 @@ class OutputTiming:
             self.submitted_epochs.add(update.group.epoch_index)
             if submission.phase == "returned":
                 self.returned += 1
+                returned = submission.return_host_ns
+                if returned is not None:
+                    if self.last_return_ns is not None:
+                        gap = returned - self.last_return_ns
+                        self.max_gap_ns = max(self.max_gap_ns, gap)
+                        self.gaps_over_25ms += int(gap > 25_000_000)
+                        self.gaps_over_50ms += int(gap > 50_000_000)
+                    if self.first_return_ns is None:
+                        self.first_return_ns = returned
+                    self.last_return_ns = returned
             elif submission.phase == "failed":
                 self.failed += 1
             else:
@@ -54,6 +70,18 @@ class OutputTiming:
     def report(
         self, trial_id: str, output_id: str, groups: int, elapsed_epochs: set[int]
     ) -> vp.TrialTimingSummary:
+        logging.getLogger(__name__).info(
+            "Presentation timing trial=%s output=%s returned=%d first_ns=%s last_ns=%s "
+            "max_gap_ms=%.6f gaps_over_25ms=%d gaps_over_50ms=%d",
+            trial_id,
+            output_id,
+            self.returned,
+            self.first_return_ns,
+            self.last_return_ns,
+            self.max_gap_ns / 1_000_000,
+            self.gaps_over_25ms,
+            self.gaps_over_50ms,
+        )
         return vp.TrialTimingSummary(
             trial_id=trial_id,
             output_id=output_id,

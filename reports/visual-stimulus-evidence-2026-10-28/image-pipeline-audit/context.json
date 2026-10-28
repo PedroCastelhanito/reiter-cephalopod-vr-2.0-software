@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-28",
+  "revision": "e4dd8f2694aa075380fe6711a884fe5894763c6f",
+  "tree": "Dirty working tree; source hashes identify audited bytes, not HEAD implementation. Existing user changes preserved.",
+  "method": "Source tracing, existing evidence review and focused local pytest; no new runtime profiling or device operations.",
+  "source_sha256": {
+    "resources/prepare.py": "d4b70bef3a555a8db6f903560b5c32a7d9be2841e38d0f518664ac88b1e099a8",
+    "resources/image_source.py": "3bf6c290a2259da493c07b71a782c2cac3329af66d8ed23802dcb2440efdc4d8",
+    "resources/image_bundle.py": "08538f2bc20c4056920df7dd0278c659c735e02442d162ddc4b78589b3c2fe75",
+    "resources/image_validation_index.py": "076364635ea218d18ca0b2f1e359f125ced8b0672ce4a88d87c084cd8777162d",
+    "resources/image_interpretation.py": "135ca791ddd40c433fe48e355466a262fab3c7df823b6db81824d64b1f2b3ac0",
+    "resources/media.py": "8532b37d877282e0e2e4959c11e16aee1062da3c68fef41b0081a2b4e0f91510",
+    "resources/image_worker.py": "9d768db088eb0f8f27826fbeb5e37f6e69904f2104256a2fd1da5a2c0dc71b2f",
+    "rendering/upload.py": "010ee2cf26ae926e30d3e2863ba6c2d2bbd2b12bf92f14e2291de2038e45be16",
+    "rendering/image_bake.py": "cc68e50bdc66d5f76a77d76d4828fedea3b4f2e90d64e5d2db64977e3d2980e4",
+    "rendering/image_residency.py": "c44300ffb56ed9cd6ba6a148634e4dfb17b58a34adb0b8baf6f4dadbe53a773f",
+    "rendering/image_gpu.py": "07a0ff63e7beb81b24794b7fd2354b3c5713316d7fb4baae8520834bc240e039",
+    "rendering/image_pool.py": "128e07a3201e7c196944ffc77cd8f3f42c5f93c6d6062303122d9c934f4af62d",
+    "rendering/native.py": "513c864ab46196e397d668f950db739f151826ae4cf46e14c227bdfe5afeef75"
+  },
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_rendering.py -q -m \"not windows and not rig\" -k \"image or crop or linear_rgba\" --basetemp <external writable visualization directory>/image-pipeline-audit-pytest",
+    "exit_code": 1,
+    "result": "61 passed, 1 failed, 390 deselected",
+    "failure": "test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing expects 5 readers after performing validation + two source reads + two source loads + one reused source load = 6. Observed assertion failure, no changed runtime behavior established.",
+    "attempts": "Initial default temp: 53 passed/1 failed/8 temp fixture errors. Workspace temp: 58 passed/1 failed/3 errors because demo generator requires external destination. Final external writable temp resolves fixture errors."
+  },
+  "limits": "No new native rendering, performance, optical synchronization, all-600 grayscale validation, index reuse, endurance or combined-load acceptance."
+}

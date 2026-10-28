@@ -1,0 +1,1097 @@
+{
+  "format": "cephvr-protocol-config",
+  "version": 1,
+  "mode": "Open-loop",
+  "asset_root": "C:/Users/ReiterU_PC/Desktop/Pedro/media",
+  "selected_trial": 0,
+  "trials": [
+    {
+      "name": "Trial 1",
+      "path": "",
+      "program": {
+        "format_version": 2,
+        "category": "media_presentation",
+        "assets": [],
+        "instances": [
+          {
+            "instance_id": "stimulus_1",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_2",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_3",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_4",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_5",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_6",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_7",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_8",
+            "family": "image"
+          },
+          {
+            "instance_id": "Instance_1",
+            "family": "image"
+          },
+          {
+            "instance_id": "Instance_2",
+            "family": "image"
+          },
+          {
+            "instance_id": "Instance_3",
+            "family": "image"
+          },
+          {
+            "instance_id": "Instance_4",
+            "family": "image"
+          },
+          {
+            "instance_id": "stimulus_9",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_10",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_11",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_12",
+            "family": "texture"
+          },
+          {
+            "instance_id": "stimulus_13",
+            "family": "sparse_noise"
+          },
+          {
+            "instance_id": "stimulus_14",
+            "family": "sparse_noise"
+          },
+          {
+            "instance_id": "stimulus_15",
+            "family": "sparse_noise"
+          },
+          {
+            "instance_id": "stimulus_16",
+            "family": "sparse_noise"
+          }
+        ],
+        "scenes": [
+          {
+            "scene_id": "blank",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": []
+          },
+          {
+            "scene_id": "scene_stimulus_4",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_1",
+              "stimulus_2",
+              "stimulus_3",
+              "stimulus_4"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_8",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_5",
+              "stimulus_6",
+              "stimulus_7",
+              "stimulus_8"
+            ]
+          },
+          {
+            "scene_id": "blank_1",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": []
+          },
+          {
+            "scene_id": "Scene_1",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "Instance_1",
+              "Instance_2",
+              "Instance_3",
+              "Instance_4"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_9",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_9",
+              "Instance_2",
+              "Instance_3",
+              "Instance_4"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_12",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_9",
+              "stimulus_10",
+              "stimulus_11",
+              "stimulus_12"
+            ]
+          },
+          {
+            "scene_id": "blank_2",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": []
+          },
+          {
+            "scene_id": "blank_3",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": []
+          },
+          {
+            "scene_id": "scene_stimulus_13",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_13"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_14",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_13",
+              "stimulus_14"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_15",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_13",
+              "stimulus_14",
+              "stimulus_15"
+            ]
+          },
+          {
+            "scene_id": "scene_stimulus_16",
+            "background_linear_rgb": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "arena_instance_id": null,
+            "layer_instance_ids": [
+              "stimulus_13",
+              "stimulus_14",
+              "stimulus_15",
+              "stimulus_16"
+            ]
+          }
+        ],
+        "input_channels": [],
+        "duration": {
+          "kind": "explicit_epochs"
+        },
+        "sequence": [
+          {
+            "kind": "group",
+            "group_id": "Sparse-noise",
+            "repetitions": 4000,
+            "order": "as_listed",
+            "order_unit": "child_blocks",
+            "conditions": null,
+            "body": [
+              {
+                "kind": "epoch",
+                "epoch_id": "Epoch_2",
+                "batch_label": "sparse-noise",
+                "batch_id": "batch_f0104240478b44ddb5f215d2bcd2e23b",
+                "subgroup_draft": null,
+                "scene_id": "scene_stimulus_16",
+                "duration": {
+                  "kind": "fixed",
+                  "duration": {
+                    "seconds": "0.3"
+                  }
+                },
+                "settings": [
+                  {
+                    "instance_id": "stimulus_13",
+                    "space": {
+                      "kind": "physical_surface",
+                      "frame_id": "rig",
+                      "mappings": [
+                        {
+                          "surface_id": "front",
+                          "matrix": [
+                            [
+                              1.0,
+                              0.0,
+                              0.0
+                            ],
+                            [
+                              0.0,
+                              1.0,
+                              0.0
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "hold"
+                      },
+                      "y": {
+                        "kind": "hold"
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "sparse_noise",
+                    "appearance": {
+                      "format_version": 2,
+                      "kind": "sparse_noise",
+                      "seed": 0,
+                      "square_size_mm": 2.0,
+                      "min_active_cell_distance_mm": 9.0,
+                      "active_probability": 1.0,
+                      "background_linear": 0.5
+                    },
+                    "pattern_count": 1,
+                    "pattern_duration": null
+                  },
+                  {
+                    "instance_id": "stimulus_14",
+                    "space": {
+                      "kind": "physical_surface",
+                      "frame_id": "rig",
+                      "mappings": [
+                        {
+                          "surface_id": "left",
+                          "matrix": [
+                            [
+                              1.0,
+                              0.0,
+                              0.0
+                            ],
+                            [
+                              0.0,
+                              1.0,
+                              0.0
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "hold"
+                      },
+                      "y": {
+                        "kind": "hold"
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "sparse_noise",
+                    "appearance": {
+                      "format_version": 2,
+                      "kind": "sparse_noise",
+                      "seed": 0,
+                      "square_size_mm": 2.0,
+                      "min_active_cell_distance_mm": 9.0,
+                      "active_probability": 1.0,
+                      "background_linear": 0.5
+                    },
+                    "pattern_count": 1,
+                    "pattern_duration": null
+                  },
+                  {
+                    "instance_id": "stimulus_15",
+                    "space": {
+                      "kind": "physical_surface",
+                      "frame_id": "rig",
+                      "mappings": [
+                        {
+                          "surface_id": "right",
+                          "matrix": [
+                            [
+                              1.0,
+                              0.0,
+                              0.0
+                            ],
+                            [
+                              0.0,
+                              1.0,
+                              0.0
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "hold"
+                      },
+                      "y": {
+                        "kind": "hold"
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "sparse_noise",
+                    "appearance": {
+                      "format_version": 2,
+                      "kind": "sparse_noise",
+                      "seed": 0,
+                      "square_size_mm": 2.0,
+                      "min_active_cell_distance_mm": 9.0,
+                      "active_probability": 1.0,
+                      "background_linear": 0.5
+                    },
+                    "pattern_count": 1,
+                    "pattern_duration": null
+                  },
+                  {
+                    "instance_id": "stimulus_16",
+                    "space": {
+                      "kind": "physical_surface",
+                      "frame_id": "rig",
+                      "mappings": [
+                        {
+                          "surface_id": "bottom",
+                          "matrix": [
+                            [
+                              1.0,
+                              0.0,
+                              0.0
+                            ],
+                            [
+                              0.0,
+                              1.0,
+                              0.0
+                            ]
+                          ]
+                        }
+                      ]
+                    },
+                    "initial": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "rotation_deg": 0.0
+                    },
+                    "width": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "height": {
+                      "kind": "constant",
+                      "value": 100.0
+                    },
+                    "opacity": {
+                      "kind": "constant",
+                      "value": 1.0
+                    },
+                    "motion": {
+                      "x": {
+                        "kind": "hold"
+                      },
+                      "y": {
+                        "kind": "hold"
+                      },
+                      "rotation": {
+                        "kind": "hold"
+                      }
+                    },
+                    "reset": false,
+                    "assignments": [],
+                    "feedback": [],
+                    "kind": "sparse_noise",
+                    "appearance": {
+                      "format_version": 2,
+                      "kind": "sparse_noise",
+                      "seed": 0,
+                      "square_size_mm": 2.0,
+                      "min_active_cell_distance_mm": 9.0,
+                      "active_probability": 1.0,
+                      "background_linear": 0.5
+                    },
+                    "pattern_count": 1,
+                    "pattern_duration": null
+                  }
+                ],
+                "repetition_rules": [],
+                "repetition_settings": []
+              }
+            ]
+          }
+        ]
+      },
+      "stimulus_seed_decimal": "",
+      "gap_after_seconds": "",
+      "arena_boundaries_json": "{\"format_version\":1,\"bindings\":[]}"
+    }
+  ],
+  "category_templates": {
+    "media_presentation": {
+      "trials": [
+        {
+          "name": "Trial 1",
+          "path": "",
+          "program": {
+            "format_version": 2,
+            "category": "media_presentation",
+            "assets": [
+              {
+                "asset_id": "asset_1",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_2",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_3",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_4",
+                "logical_path": "import-1cy0sy41/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_5",
+                "logical_path": "import-qf703icq/CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_6",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_7",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_8",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              },
+              {
+                "asset_id": "asset_9",
+                "logical_path": "CephVR_Fold_Test_Bottom_Below.png",
+                "color_override": null,
+                "profile": "png_uint_v1"
+              }
+            ],
+            "instances": [
+              {
+                "instance_id": "stimulus_1",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_2",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_3",
+                "family": "texture"
+              },
+              {
+                "instance_id": "stimulus_4",
+                "family": "texture"
+              }
+            ],
+            "scenes": [
+              {
+                "scene_id": "blank",
+                "background_linear_rgb": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "arena_instance_id": null,
+                "layer_instance_ids": []
+              },
+              {
+                "scene_id": "scene_stimulus_4",
+                "background_linear_rgb": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "arena_instance_id": null,
+                "layer_instance_ids": [
+                  "stimulus_1",
+                  "stimulus_2",
+                  "stimulus_3",
+                  "stimulus_4"
+                ]
+              }
+            ],
+            "input_channels": [],
+            "duration": {
+              "kind": "explicit_epochs"
+            },
+            "sequence": [
+              {
+                "kind": "group",
+                "group_id": "Group_1",
+                "repetitions": 100,
+                "order": "as_listed",
+                "order_unit": "child_blocks",
+                "conditions": null,
+                "body": [
+                  {
+                    "kind": "epoch",
+                    "epoch_id": "Epoch_1",
+                    "batch_label": "",
+                    "batch_id": "batch_e74935deec4344d99615b794dde21dc7",
+                    "subgroup_draft": null,
+                    "scene_id": "scene_stimulus_4",
+                    "duration": {
+                      "kind": "fixed",
+                      "duration": {
+                        "seconds": "60"
+                      }
+                    },
+                    "settings": [
+                      {
+                        "instance_id": "stimulus_1",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "front",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_6",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_2",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "left",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_7",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_3",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "right",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_8",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      },
+                      {
+                        "instance_id": "stimulus_4",
+                        "space": {
+                          "kind": "physical_surface",
+                          "frame_id": "rig",
+                          "mappings": [
+                            {
+                              "surface_id": "bottom",
+                              "matrix": [
+                                [
+                                  1.0,
+                                  0.0,
+                                  0.0
+                                ],
+                                [
+                                  0.0,
+                                  1.0,
+                                  0.0
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "initial": {
+                          "x": 0.0,
+                          "y": 0.0,
+                          "rotation_deg": 0.0
+                        },
+                        "width": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "height": {
+                          "kind": "constant",
+                          "value": 90.0
+                        },
+                        "opacity": {
+                          "kind": "constant",
+                          "value": 1.0
+                        },
+                        "motion": {
+                          "x": {
+                            "kind": "hold"
+                          },
+                          "y": {
+                            "kind": "hold"
+                          },
+                          "rotation": {
+                            "kind": "hold"
+                          }
+                        },
+                        "reset": false,
+                        "assignments": [],
+                        "feedback": [],
+                        "linked_to": null,
+                        "kind": "texture",
+                        "pattern": {
+                          "kind": "image_tile",
+                          "asset_id": "asset_9",
+                          "period_x": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "period_y": {
+                            "kind": "constant",
+                            "value": 20.0
+                          },
+                          "sampling": "linear"
+                        },
+                        "initial_phase_x_cycles": 0.0,
+                        "initial_phase_y_cycles": 0.0,
+                        "phase_x": {
+                          "kind": "hold"
+                        },
+                        "phase_y": {
+                          "kind": "hold"
+                        },
+                        "mean_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "modulation_linear_rgb": [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        "contrast": {
+                          "kind": "constant",
+                          "value": 1.0
+                        }
+                      }
+                    ],
+                    "repetition_rules": [],
+                    "repetition_settings": []
+                  }
+                ]
+              }
+            ]
+          },
+          "stimulus_seed_decimal": "",
+          "gap_after_seconds": "",
+          "arena_boundaries_json": "{\"format_version\":1,\"bindings\":[]}"
+        }
+      ],
+      "selected_trial": 0
+    }
+  }
+}

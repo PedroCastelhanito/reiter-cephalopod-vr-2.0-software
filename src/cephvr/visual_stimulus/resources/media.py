@@ -48,23 +48,25 @@ def _png_transfer(data: bytes) -> Literal["linear", "srgb", "bt709", ""]:
         raise MediaPreparationError("PNG signature is invalid")
     offset = 8
     transfer: Literal["linear", "srgb", "bt709", ""] = ""
+    chromaticities = False
     while offset + 12 <= len(data):
         length = int.from_bytes(data[offset : offset + 4], "big")
         kind = data[offset + 4 : offset + 8]
         end = offset + 12 + length
         if length > len(data) - offset - 12:
             raise MediaPreparationError("truncated PNG chunk")
-        payload = data[offset + 8 : offset + 8 + length]
         if kind == b"iCCP":
             raise MediaPreparationError(
                 "embedded ICC profiles require external correction or explicit override"
             )
         if kind == b"sRGB":
             transfer = "srgb"
+        elif kind == b"cHRM":
+            chromaticities = True
         elif kind == b"gAMA":
             if length != 4:
                 raise MediaPreparationError("invalid PNG gAMA chunk")
-            gamma = int.from_bytes(payload, "big")
+            gamma = int.from_bytes(data[offset + 8 : offset + 12], "big")
             if gamma == 100000:
                 transfer = "linear"
             elif gamma == 45455:
@@ -76,6 +78,10 @@ def _png_transfer(data: bytes) -> Literal["linear", "srgb", "bt709", ""]:
         if kind == b"IEND":
             break
         offset = end
+    if not transfer and chromaticities:
+        raise MediaPreparationError(
+            "PNG chromaticity metadata requires an explicit supported override"
+        )
     return transfer
 
 
@@ -84,6 +90,7 @@ def decode_image(
     data: bytes,
     *,
     reserve: Callable[[int, int, int, int], None] | None = None,
+    metadata_only: bool = False,
 ) -> ImagePixels:
     """Decode one supported PNG/TIFF/JPEG image without an RGB8 conversion path."""
     profile = asset.profile
@@ -127,6 +134,12 @@ def decode_image(
                 and page.tags["Orientation"].value != 1
             ):
                 raise MediaPreparationError("unsupported TIFF orientation")
+            if asset.color_override is None and any(
+                page.tags.get(tag) is not None for tag in (301, 318, 319, 34675)
+            ):
+                raise MediaPreparationError(
+                    "TIFF transfer/primaries/ICC metadata requires an explicit override"
+                )
             if reserve is not None:
                 reserve(
                     int(page.imagewidth),
@@ -134,7 +147,12 @@ def decode_image(
                     int(page.samplesperpixel),
                     int(dtype.itemsize) * 8,
                 )
-            pixels = page.asarray()
+            if metadata_only:
+                import numpy as np
+
+                pixels = np.broadcast_to(np.zeros((), dtype=dtype), page.shape)
+            else:
+                pixels = page.asarray()
             if pixels.ndim == 2:
                 channels = 1
             elif pixels.ndim == 3 and pixels.shape[-1] in (2, 3, 4):
@@ -177,7 +195,19 @@ def decode_image(
         if reserve is not None:
             reserve(*shape)
         try:
-            pixels = imagecodecs.imread(data)
+            if metadata_only and (
+                profile == "jpeg8_v1"
+                or (profile == "png_uint_v1" and data[25] != 3 and b"tRNS" not in data)
+            ):
+                import numpy as np
+
+                width, height, count, bits = shape
+                pixels = np.broadcast_to(
+                    np.zeros((), dtype=f"uint{bits}"),
+                    ((height, width) if count == 1 else (height, width, count)),
+                )
+            else:
+                pixels = imagecodecs.imread(data)
         except Exception as exc:
             raise MediaPreparationError(
                 f"{profile} decoder rejected the asset: {exc}"
@@ -214,6 +244,8 @@ def decode_image(
     transfer = _declared_transfer(asset)
     if not transfer and profile == "png_uint_v1":
         transfer = _png_transfer(data)
+    if not transfer and profile in {"png_uint_v1", "tiff_uint_v1"}:
+        transfer = "linear"
     if not transfer and profile == "jpeg8_v1":
         # Baseline JPEG without an ICC profile uses the explicit Rec.709 YCbCr
         # interpretation selected by the profile contract; decoder metadata below

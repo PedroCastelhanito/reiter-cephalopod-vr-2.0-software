@@ -42,13 +42,9 @@ def editor(tmp_path: Path, authoring_app):
     authoring_app.processEvents()
 
 
-def test_edit_undo_redo_and_save(editor, tmp_path, monkeypatch) -> None:
+def test_edit_and_save(editor, tmp_path, monkeypatch) -> None:
     spin = editor.properties.findChild(QDoubleSpinBox, "spatial_period_mm")
     spin.setValue(20)
-    assert editor.documents[0]["params"]["spatial_period_mm"] == 20
-    editor.undo()
-    assert editor.documents[0]["params"]["spatial_period_mm"] == 12
-    editor.redo()
     assert editor.documents[0]["params"]["spatial_period_mm"] == 20
     path = tmp_path / "texture.json"
     choose_save(monkeypatch, path)
@@ -89,7 +85,6 @@ def test_edits_after_save_update_current_document_preview_and_next_save(
     document = editor.documents[workspace]
     assert (document["params"] if workspace == 0 else document)[key] == 80
     assert editor.documents != editor.saved
-    assert editor.history[workspace][editor.positions[workspace]] == document
     if workspace == 0:
         editor.preview()
         editor.collect()
@@ -237,17 +232,12 @@ def test_multiple_surfaces_edit_only_changed_field(editor) -> None:
     assert target == {"relief": {"height_mm": 2, "seed": 99}}
 
 
-def test_stale_results_and_export_controls(editor) -> None:
+def test_stale_results_are_ignored(editor) -> None:
     editor.jobs.serial = 4
     editor.jobs.results.put((3, None, "obsolete error"))
     editor.status.showMessage("current")
     editor.collect()
     assert editor.status.currentMessage() == "current"
-    editor.set_exporting(True)
-    assert not editor.tabs.isEnabled()
-    assert not editor.properties.isEnabled()
-    editor.cancel_job()
-    assert editor.tabs.isEnabled()
 
 
 def test_embedded_editor_preserves_drafts_and_standalone_window(editor, tmp_path):
@@ -348,10 +338,6 @@ def test_shared_controls_and_responsive_columns_preserve_edits(editor):
     editor.columns.arrange(1000)
     assert editor.columns.mode == "wide"
     assert spin.value() == 24
-    editor.set_exporting(True)
-    assert all(not action.isEnabled() for action in editor.file_actions)
-    assert not editor.properties.isEnabled()
-    editor.cancel_job()
 
 
 def test_authoring_captions_follow_shared_theme(editor):
@@ -847,20 +833,18 @@ def test_texture_error_marks_named_parameters_and_dims_image(editor, monkeypatch
     assert {"blur_mm", "element_size_mm"} <= marked
 
 
-def test_undo_restores_modified_state_and_surface_selection(editor) -> None:
+def test_rebuild_preserves_modified_state_and_surface_selection(editor) -> None:
     editor.tabs.setCurrentIndex(1)
     editor.surfaces.clearSelection()
     editor.surfaces.item(2).setSelected(True)
     assert editor.selected_names == ["wall_n"]
     editor.properties.findChild(QDoubleSpinBox, "texture_scale_mm").setValue(60)
     assert editor.isWindowModified()
-    editor.undo()
-    assert not editor.isWindowModified()
+    editor.rebuild()
+    assert editor.isWindowModified()
     assert [
         i.data(Qt.ItemDataRole.UserRole) for i in editor.surfaces.selectedItems()
     ] == ["wall_n"]
-    editor.redo()
-    assert editor.isWindowModified()
 
 
 def test_pending_text_is_committed_by_save_close_and_tab_change(
@@ -894,7 +878,8 @@ def test_pending_text_is_committed_by_save_close_and_tab_change(
     spin.lineEdit().setText("0.25")
     editor.tabs.setCurrentIndex(1)
     assert editor.documents[0]["params"]["blur_mm"] == 0.25
-    assert len(editor.history[0]) > 1 and len(editor.history[1]) == 1
+    assert editor.documents[0] != editor.saved[0]
+    assert editor.documents[1] == editor.saved[1]
 
 
 def test_open_asks_after_the_chooser_and_only_for_the_replaced_design(
@@ -1011,17 +996,6 @@ def test_poll_runs_only_while_a_job_is_outstanding(editor) -> None:
     assert not editor.poll.isActive() and editor.jobs.closed.is_set()
 
 
-def test_cancelled_export_that_published_is_still_reported(editor) -> None:
-    editor.set_exporting(True)
-    editor.jobs.serial = editor.export_serial = 7
-    editor.cancel_job()
-    assert not editor.exporting
-    editor.jobs.results.put((7, "bundle/arena.glb", None))
-    editor.collect()
-    assert editor.status.currentMessage() == "Exported bundle/arena.glb"
-    assert editor.export_serial is None and not editor.exporting
-
-
 def test_preview_pixels_are_converted_once_and_scaled_smoothly(editor) -> None:
     import numpy as np
 
@@ -1136,8 +1110,11 @@ def test_surface_list_and_error_styles_are_themed(authoring_app, editor) -> None
         authoring_app.setStyleSheet(original)
 
 
+@pytest.mark.parametrize(
+    "pattern", ["noise_binary", "bars_horizontal", "bars_vertical"]
+)
 def test_legacy_open_is_modified_and_save_never_overwrites_the_source(
-    editor, tmp_path, monkeypatch
+    editor, tmp_path, monkeypatch, pattern
 ) -> None:
     import json
 
@@ -1145,7 +1122,11 @@ def test_legacy_open_is_modified_and_save_never_overwrites_the_source(
     from tests.generate_stimulus.test_authoring import LEGACY_NOISE
 
     source = tmp_path / "legacy.json"
-    source.write_text(json.dumps(LEGACY_NOISE))
+    recipe = copy.deepcopy(LEGACY_NOISE)
+    if pattern != "noise_binary":
+        recipe["pattern"] = pattern
+        recipe["params"] = {"line_width_mm": 5, "line_spacing_mm": 8}
+    source.write_text(json.dumps(recipe))
     original = source.read_bytes()
     monkeypatch.setattr(
         QFileDialog, "getOpenFileName", lambda *a, **k: (str(source), "")

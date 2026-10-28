@@ -229,6 +229,11 @@ class VisualStimulusWorkerRuntime:
         self.ledger.complete_executor(
             command.command_id, outcome.SerializeToString(), self.clock()
         )
+        if isinstance(request, visual_stimulus.WorkerSetup):
+            # The receiver still gates this result against its live inactivity cutoff.
+            deadline_ns = max(
+                deadline_ns, self.clock() + request.session.policies.setup.initial_ns
+            )
         if (
             command.command_id in self.supervisor_command_ids
             or self.clock() >= deadline_ns

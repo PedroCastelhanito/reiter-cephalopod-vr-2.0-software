@@ -15,7 +15,8 @@ from cephvr.gui.projector_layers import reorder_projector_layer
 from cephvr.gui.projector_reference import ProjectorReference
 from cephvr.gui.protocol_document import blank_program
 from cephvr.gui.reference_draft import reference_mode, replace_reference
-from cephvr.gui.stimulus_fades import retime_fades
+from cephvr.gui.stimulus_fades import retime_epoch_settings
+from cephvr.gui.stimulus_memory import StimulusMemory
 from cephvr.gui.stimulus_presets import add_file_stimulus, remove_stimulus
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
@@ -27,6 +28,7 @@ class EpochComposer(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.program = blank_program()
+        self.stimulus_memory = StimulusMemory()
         self.screens: tuple[str, ...] = ()
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
@@ -164,6 +166,11 @@ class EpochComposer(QWidget):
         self.program = program
         epoch = program.sequence[0]
         assert isinstance(epoch, Epoch)
+        if source.parameters.layer_index >= 0:
+            self.stimulus_memory.remember(
+                epoch.settings[source.parameters.layer_index],
+                self.reference_duration_ns,
+            )
         paths = source.parameters.asset_forms.values()
         if source.parameters.asset_forms and all(
             field.text().strip() for field in paths
@@ -185,11 +192,13 @@ class EpochComposer(QWidget):
             duration = self.duration_value()
             epoch = self.program.sequence[0]
             assert isinstance(epoch, Epoch)
-            if self.reference_duration_ns != duration.duration.ns():
-                settings = [s.model_dump(mode="json") for s in epoch.settings]
-                retime_fades(
-                    settings, self.reference_duration_ns, duration.duration.ns()
-                )
+            settings = [s.model_dump(mode="json") for s in epoch.settings]
+            retime_epoch_settings(
+                settings, self.reference_duration_ns, duration.duration.ns()
+            )
+            if self.reference_duration_ns != duration.duration.ns() or settings != [
+                s.model_dump(mode="json") for s in epoch.settings
+            ]:
                 changed = Epoch.model_validate_json(
                     json.dumps(
                         {
@@ -274,12 +283,19 @@ class EpochComposer(QWidget):
             assert isinstance(epoch, Epoch)
             old = row.parameters.layer_index
             old_id = epoch.settings[old].instance_id if old >= 0 else ""
-            self.program, selected = replace_reference(
+            if old >= 0:
+                self.stimulus_memory.remember(
+                    epoch.settings[old], self.reference_duration_ns, overwrite=False
+                )
+            candidate, selected = replace_reference(
                 original,
                 old,
                 kind,
                 face,
                 subject_height_mm=self.arena_start_height(kind),
+            )
+            self.program = self.stimulus_memory.apply(
+                candidate, selected, kind, face, self.duration_value().duration.ns()
             )
             if selected >= 0:
                 epoch = self.program.sequence[0]
@@ -303,7 +319,7 @@ class EpochComposer(QWidget):
                         scene["layer_instance_ids"][position] = identity
                 self.program = validate(data)
             self.pending_assets.discard(old_id)
-            if selected >= 0 and kind not in ("Uniform", "Grating"):
+            if selected >= 0 and kind not in ("Uniform", "Grating", "Sparse noise"):
                 epoch = self.program.sequence[0]
                 assert isinstance(epoch, Epoch)
                 self.pending_assets.add(epoch.settings[selected].instance_id)

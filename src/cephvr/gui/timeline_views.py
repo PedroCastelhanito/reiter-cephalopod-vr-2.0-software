@@ -3,7 +3,7 @@
 from collections import OrderedDict
 from dataclasses import dataclass
 
-from cephvr.gui.program_editing import nodes_at
+from cephvr.gui.program_editing import epoch_numbers, nodes_at
 from cephvr.gui.protocol_document import duration
 from cephvr.gui.timeline_details import stimulus_key
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Node, Program
@@ -28,6 +28,7 @@ class TimelineView:
     counts: tuple[int, ...]
     durations: tuple[float | None, ...]
     batch_runs: tuple[tuple[int, int, str] | None, ...]
+    epoch_numbers: dict[str, int]
 
 
 class TimelineViews:
@@ -73,6 +74,7 @@ class TimelineViews:
             tuple(epoch_count(n) for n in nodes),
             tuple(duration(n) for n in nodes),
             tuple(runs),
+            epoch_numbers(program),
         )
         self.entries[identity] = view
         if len(self.entries) > 4:

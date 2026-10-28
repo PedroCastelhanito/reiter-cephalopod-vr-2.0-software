@@ -270,15 +270,13 @@ class SessionSetup:
             return _rejected(
                 request.command.command_id, "STALE_SETUP", "no live Setup adoption"
             )
-        if (
-            self.clock() > (session.setup_deadline_ns or 0)
-            or session.setup_deadline_ns is None
-            or deadline_ns != session.setup_deadline_ns
+        if session.setup_deadline_ns is None or self.clock() > min(
+            deadline_ns, session.setup_deadline_ns
         ):
             return _rejected(
                 request.command.command_id,
                 "SETUP_DEADLINE",
-                "configuration confirmation missed its original deadline",
+                "configuration confirmation missed its command or Setup deadline",
             )
         if (
             request.command.target != self.identity.backend
@@ -329,7 +327,7 @@ class SessionSetup:
                 self.session_slot.current is not session
                 or session.setup_cancelled
                 or session.interrupted
-                or self.clock() > (session.setup_deadline_ns or 0)
+                or self.clock() > min(deadline_ns, session.setup_deadline_ns or 0)
             ):
                 return _rejected(
                     request.command.command_id,

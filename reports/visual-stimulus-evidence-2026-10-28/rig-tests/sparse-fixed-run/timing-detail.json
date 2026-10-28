@@ -1,0 +1,47 @@
+{
+  "largest_gaps": [
+    {
+      "at_seconds": 0.7340804,
+      "gap_ms": 298.8018,
+      "group_id": 5
+    },
+    {
+      "at_seconds": 0.3667383,
+      "gap_ms": 232.9888,
+      "group_id": 3
+    },
+    {
+      "at_seconds": 37.6654289,
+      "gap_ms": 166.7084,
+      "group_id": 2202
+    },
+    {
+      "at_seconds": 0.9053043,
+      "gap_ms": 118.365,
+      "group_id": 7
+    },
+    {
+      "at_seconds": 0.117894,
+      "gap_ms": 116.9097,
+      "group_id": 1
+    },
+    {
+      "at_seconds": 0.4352786,
+      "gap_ms": 68.5403,
+      "group_id": 4
+    },
+    {
+      "at_seconds": 0.7869393,
+      "gap_ms": 52.8589,
+      "group_id": 6
+    },
+    {
+      "at_seconds": 0.9604932,
+      "gap_ms": 37.4966,
+      "group_id": 9
+    }
+  ],
+  "post_first_second": {
+    "max_ms": 166.7084
+  }
+}

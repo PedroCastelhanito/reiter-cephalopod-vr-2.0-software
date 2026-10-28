@@ -196,8 +196,10 @@ async def test_late_camera_completion_reconciles_blocker_without_reviving_succes
     assert runtime.projections.devices.behavioral.preview_running
 
 
+@pytest.mark.parametrize("inactivity", [False, True])
 async def test_ready_recovery_queries_frozen_missing_peer_once_without_accepting_ungated_push(
     tmp_path: Path,
+    inactivity: bool,
 ) -> None:
     context = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
     runtime = _runtime(tmp_path, context)
@@ -208,6 +210,13 @@ async def test_ready_recovery_queries_frozen_missing_peer_once_without_accepting
     command_id = _id()
     attempt.setup_operations["acquisition"] = command_id
     attempt.setup_deadline_ns = runtime.clock() - 1_000_000
+    if inactivity:
+        from cephvr.shared.deadlines import SetupInactivity
+
+        attempt.setup_waits["acquisition"] = SetupInactivity(
+            100_000_000, attempt.setup_deadline_ns
+        )
+        attempt.setup_deadline_ns -= runtime.limits.recovery_ns
     ready = pb.ReadyReport(configuration_revision=1, required_checks_passed=True)
     ready.context.backend.CopyFrom(context)
     ready.context.work.session.CopyFrom(attempt.context)

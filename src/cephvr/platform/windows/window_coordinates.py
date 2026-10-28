@@ -126,7 +126,7 @@ def preview_window_handle(title: str) -> int:
     return int(handle)
 
 
-def blank_preview_caption(handle: int, *, hide_from_taskbar: bool = False) -> None:
+def blank_preview_caption(handle: int) -> None:
     """Clear caption text/icon while retaining native move/resize/close controls."""
     api = ctypes.WinDLL("user32", use_last_error=True)
     api.SetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPCWSTR]
@@ -153,12 +153,8 @@ def blank_preview_caption(handle: int, *, hide_from_taskbar: bool = False) -> No
     if not api.SetWindowTextW(handle, ""):
         raise ctypes.WinError(ctypes.get_last_error())
     style = api.GetWindowLongW(handle, -20)
-    if hide_from_taskbar:
-        # WS_EX_TOOLWINDOW excludes outputs from the shell; APPWINDOW overrides it.
-        style = (style | 0x00000080) & ~0x00040000
-    else:
-        # A dialog frame suppresses caption icons, but adds borders to fullscreen.
-        style |= 0x00000001
+    # A dialog frame suppresses caption icons on camera previews.
+    style |= 0x00000001
     ctypes.set_last_error(0)
     if not api.SetWindowLongW(handle, -20, style) and ctypes.get_last_error():
         raise ctypes.WinError(ctypes.get_last_error())

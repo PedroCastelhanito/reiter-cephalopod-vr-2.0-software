@@ -8,7 +8,7 @@ Run `.venv/Scripts/python.exe -m cephvr.generate_stimulus --asset-root PATH`,
 optionally with `--geometry PATH` containing a saved rig calibration, a calibration's
 `geometry` object or a canonical Geometry document. The main GUI's **Generate assets**
 tab embeds the same editor, initialized once with the Assets root and current
-validated geometry snapshot. Switching tabs preserves drafts and undo history;
+validated geometry snapshot. Switching tabs preserves drafts;
 closing the GUI prompts before discarding unsaved designs. Runtime-phase navigation
 restrictions apply as for other non-Dashboard pages. Standalone invocation opens its
 own window. Neither entry point starts controller, device, recorder or projector services.
@@ -166,10 +166,11 @@ Design dependencies remain relative to the chosen asset root.
 Resource ceilings reuse the Visual Stimulus file policies. Generation is independent
 of Qt/OpenGL. The GUI runs one cancellable CPU job with one replaceable pending job,
 rejects stale results and retains only the current per-surface geometry cache.
-Saving/exporting remains available if the authoring viewport cannot initialize.
+Saving remains available if the authoring viewport cannot initialize; headless arena
+export is independent of the editor.
 Runtime Setup independently admits assets and preserves V13 protected resources.
 
-Opening a legacy raster `texture_design` converts it to a physical field with a notice
+Opening a legacy raster `texture_design`, including horizontal/vertical bars, converts it to a physical field with a notice
 listing the dropped fields and the rendering change; the document stays modified, Save
 routes to Save as… with a `.converted.json` default, and the source is never overwritten.
 This module does not add dynamic lighting or animation,

@@ -1,0 +1,5 @@
+3ch none srgb: current 64 ms, LUT 84 ms, maxabs 0.00e+00, out 127 MiB
+4ch straight srgb: current 149 ms, LUT 178 ms, maxabs 0.00e+00, out 127 MiB
+3ch none linear: current 69 ms, LUT 84 ms, maxabs 0.00e+00, out 127 MiB
+PNG decode 4K RGB8 noise (24 MiB): 13 ms
+sha256 of it: 9 ms

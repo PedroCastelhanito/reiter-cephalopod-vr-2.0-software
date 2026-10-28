@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
+from cephvr.shared.deadlines import Deadline, resolve_deadline
 from cephvr.visual_stimulus.compiler import CompileContext, compile_trial
 from cephvr.visual_stimulus.config.models.artifact_models import (
     PreparedTrial,
@@ -65,6 +66,7 @@ from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus_messages
 
 if TYPE_CHECKING:
     from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
+    from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
     from cephvr.visual_stimulus.resources.image_source import ImageInfo, ImageSource
 
 
@@ -113,7 +115,7 @@ class NativePreparation:
         self._cpu_limit = 0
         self._gpu_limit = 0
         self._budget: BoundedBudget | None = None
-        self._deadline_ns: int | None = None
+        self._deadline_ns: Deadline | None = None
         self.engine = RendererEngine(
             port, clock_ns=clock_ns, resource_provider=self.resources_for
         )
@@ -124,6 +126,9 @@ class NativePreparation:
         self.video_playback: VideoPlayback | None = None
         self.video_session: VideoSession | None = None
         self.image_residency: ImageResidency | None = None
+        self._image_bundle: ImageBundle | None = None
+        self._image_bundle_parent: Path | None = None
+        self._bundle_announce: Callable[[str, str | None], None] | None = None
         self._prepared_heap = PreparedHeap()
         self._progress = SetupProgress(None, clock_ns)
 
@@ -283,17 +288,17 @@ class NativePreparation:
         install(calibration)
         return self.engine.initialize_display(display)
 
-    def _check(self, deadline_ns: int) -> None:
+    def _check(self, deadline_ns: Deadline) -> None:
         if self.cancelled is not None and self.cancelled.is_set():
             raise InterruptedError("Visual Stimulus Setup was cancelled")
-        if self.clock_ns() >= deadline_ns:
-            raise TimeoutError("Visual Stimulus Setup deadline expired")
+        if self.clock_ns() >= resolve_deadline(deadline_ns):
+            raise TimeoutError("Visual Stimulus Setup inactivity expired")
 
     def prepare_trials(
         self,
         request: visual_stimulus_messages.WorkerSetup,
         announce: Callable[[str, str | None], None],
-        deadline_ns: int,
+        deadline_ns: Deadline,
         *,
         announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
         | None = None,
@@ -305,7 +310,14 @@ class NativePreparation:
             )
         self._check(deadline_ns)
         self._deadline_ns = deadline_ns
-        self._progress = SetupProgress(progress, self.clock_ns)
+        interval = request.session.policies.setup.initial_ns
+        self._progress = SetupProgress(
+            progress,
+            self.clock_ns,
+            cadence_ns=max(1, min(1_000_000_000, interval // 4))
+            if interval
+            else 1_000_000_000,
+        )
         self._progress.update("Preparing stimulus resources")
         if not request.HasField("session") or not request.session.HasField(
             "configuration"
@@ -348,6 +360,7 @@ class NativePreparation:
         if not configuration.HasField("asset_root") or not configuration.asset_root:
             raise ValueError("Visual Stimulus Setup requires the adopted asset_root")
         assets_root = Path(configuration.asset_root)
+        self._image_bundle_parent = assets_root.resolve(strict=True).parent
         saving = (
             request.settings.HasField("save_visual_stimulus_data")
             and request.settings.save_visual_stimulus_data
@@ -433,6 +446,7 @@ class NativePreparation:
                     source_factory=self.source_factory,
                     codec_threads=limits.codec_threads_per_context,
                     defer_images=True,
+                    combine_image_validation=True,
                     validated_images=validated_images,
                     component_provenance=components,
                     image_progress=image_progress,
@@ -577,7 +591,7 @@ class NativePreparation:
                 self.video_session.register_trial(artifact, bundle)
                 artifacts.append(artifact)
             self._progress.update(
-                f"Image validation complete: {metrics.images_validated} unique, "
+                f"Image metadata prepared: {metrics.images_validated + metrics.images_inspected} unique, "
                 f"{metrics.validations_reused} reused"
             )
             if any(bundle.image_sources for bundle in self._bundles.values()):
@@ -591,6 +605,7 @@ class NativePreparation:
                 schedule = ImageSchedule.build(
                     tuple(artifacts), self._bundles, self._budget
                 )
+                self._bundle_announce = self._registered_announce(announce, "")
                 self.image_residency = ImageResidency(
                     schedule,
                     self._budget,
@@ -606,7 +621,7 @@ class NativePreparation:
             if self.video_playback is not None:
                 self.video_playback.start(
                     announce=self._registered_announce(announce, ""),
-                    deadline_ns=deadline_ns,
+                    deadline_ns=resolve_deadline(deadline_ns),
                 )
             return tuple(artifacts)
         except BaseException:
@@ -615,7 +630,7 @@ class NativePreparation:
             raise
         finally:
             logging.getLogger(__name__).info(
-                "Setup preparation metrics: %s", asdict(metrics)
+                "Setup CPU metadata/validation phase metrics: %s", asdict(metrics)
             )
             self._budget.release(owner="visual_stimulus:source-fingerprints")
 
@@ -711,13 +726,62 @@ class NativePreparation:
             prepared.append(artifact)
         artifacts = tuple(prepared)
         if self.image_residency is not None:
+            if any(
+                source.output_crops
+                for source in self.image_residency.schedule.sources.values()
+            ):
+                from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
+
+                assert (
+                    self._image_bundle_parent is not None and self._budget is not None
+                )
+                assert self._bundle_announce is not None
+                self._image_bundle = ImageBundle(
+                    self._image_bundle_parent, self._bundle_announce
+                )
+                image_bundle = self._image_bundle
+                prepare_bundle = getattr(self.port, "prepare_image_bundle", None)
+                if prepare_bundle is None:
+                    raise RuntimeError("render port lacks Fold sample preparation")
+                self.image_residency.schedule = prepare_bundle(
+                    self._image_bundle,
+                    self.image_residency.schedule,
+                    self._budget,
+                    lambda done, total: self._progress.update(
+                        image_bundle.progress_stage(done, total), done, total
+                    ),
+                )
+                from cephvr.visual_stimulus.config.models.artifact_models import (
+                    PreparedImageBundle,
+                )
+
+                schedule = self.image_residency.schedule
+                artifacts = tuple(
+                    artifact.model_copy(
+                        update={
+                            "image_bundles": tuple(
+                                PreparedImageBundle(
+                                    asset_id=asset, **self._image_bundle.manifest[key]
+                                )
+                                for (trial, asset), key in schedule.aliases.items()
+                                if trial == artifact.identity.trial_id
+                                and key in self._image_bundle.manifest
+                            )
+                        }
+                    )
+                    for artifact in artifacts
+                )
+            for source in self.image_residency.schedule.sources.values():
+                self._check(self._deadline_ns)
+                if source.finish_validation is not None:
+                    source.finish_validation()
             install_images = getattr(self.port, "install_image_residency", None)
             if install_images is None:
                 raise RuntimeError("render port lacks bounded image residency")
             install_images(self.image_residency, self._deadline_ns)
-        for artifact in artifacts:
+        for index, artifact in enumerate(artifacts, 1):
             self._check(self._deadline_ns)
-            self._progress.update("Preparing trial graphics")
+            self._progress.update(f"Preparing trial graphics {index}/{len(artifacts)}")
             self.engine.prepare_trial(
                 artifact, self.resources_for(artifact.identity.trial_id)
             )
@@ -753,6 +817,14 @@ class NativePreparation:
                 self.video_playback = None
             else:
                 decoder_closed = False
+        if decoder_closed:
+            if self._image_bundle is not None:
+                try:
+                    self._image_bundle.close()
+                    self._image_bundle = None
+                except Exception as exc:
+                    outstanding.append(f"image-bundle:{exc}")
+                    decoder_closed = False
         if decoder_closed:
             for source, label in reversed(self._protected_sources):
                 try:

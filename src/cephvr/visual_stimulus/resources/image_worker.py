@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING
 from .budget import BoundedBudget
 
 if TYPE_CHECKING:
-    from .image_source import ImageSource
+    from .image_source import ImageSource, PixelBuffer
 
 
 @dataclass(frozen=True, slots=True)
 class ImageResult:
     key: str
-    pixels: bytes | None
+    pixels: PixelBuffer | None
     error: BaseException | None
 
 
@@ -73,7 +73,7 @@ class ImageWorker:
             self._condition.notify()
 
     def _run(self) -> None:
-        pixels: bytes | None = None
+        pixels: PixelBuffer | None = None
         while True:
             with self._condition:
                 self._condition.wait_for(

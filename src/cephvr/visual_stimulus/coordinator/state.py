@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.deadlines import SetupInactivity
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
@@ -45,6 +46,7 @@ class CommandLink:
     output_ids: frozenset[str] = frozenset()
     adjustment_sequence: int = 0
     cleanup_finalization_scopes: frozenset[str] | None = None
+    setup_inactivity: SetupInactivity | None = None
 
 
 @dataclass

@@ -8,7 +8,7 @@ policy_version = 5
 # Configurable before Setup; baud must match the firmware connection.
 baud_rate = 115200
 # Earlier applicable trial deadlines always win; this cannot extend reporting cutoffs.
-ack_timeout_ms = 200
+ack_timeout_ms = 500
 # Budget within the shared stop-report allowance, not another timeout or delay.
 # Includes camera stop/drain and command/report delivery; verify on the rig.
 stop_completion_margin_ms = 50

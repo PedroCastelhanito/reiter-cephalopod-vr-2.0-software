@@ -1008,7 +1008,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 54
+**Status:** Accepted · **Revision:** 55
 
 **Board and firmware**
 
@@ -1102,7 +1102,7 @@ hardware information and later implementation; no new deferral is implied.
   keeping the original deadline; they are not fresh health evidence. ERR uses
   symbolic uppercase underscore codes plus structured context, explained by host
   clients.
-- Defaults: **115200 baud**, **200 ms acknowledgement timeout**, configurable before
+- Defaults: **115200 baud**, **500 ms acknowledgement timeout**, configurable before
   Setup. One outstanding request at a time, PING included. Earlier operation/trial
   deadlines win. OK follows application (including any authorized restart) and
   resulting state, not early acceptance. MCU state proves neither frame receipt nor
@@ -1136,7 +1136,7 @@ hardware information and later implementation; no new deferral is implied.
   deadlines, overlap requests or disable the watchdog to resolve a conflict.
 - Validate the entire Abort stop path at preparation: one outstanding request, OFF,
   camera stopping/drain and report delivery must fit the original shared allowance.
-  Within the default 450 ms stop-report allowance, after two 200 ms command budgets,
+  Within the default 1,050 ms stop-report allowance, after two 500 ms command budgets,
   the remaining **50 ms** is reserved for
   camera completion/reporting; an allocation, not a sleep or measured guarantee.
   Reject incompatible settings rather than extend the shared deadline. Rig timing

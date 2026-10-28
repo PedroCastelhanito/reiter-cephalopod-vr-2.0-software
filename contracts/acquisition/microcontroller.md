@@ -268,8 +268,8 @@ positive int64 nanoseconds; the firmware communication watchdog must additionall
 resolve to a positive uint32 number of milliseconds. Keepalive is shorter than
 that communication timeout. No loader owns a second timing definition.
 
-`microcontroller.ack_timeout_ms` defaults to 200; the owning experiment
-`stop_report_timeout_ms` defaults to 450. `microcontroller.stop_completion_margin_ms`
+`microcontroller.ack_timeout_ms` defaults to 500; the owning experiment
+`stop_report_timeout_ms` defaults to 1050. `microcontroller.stop_completion_margin_ms`
 defaults to 50 and reserves camera stopping/drain plus end-to-end report delivery;
 it is not an extra timeout or sleep. Before Ready require
 `2 * ack_timeout_ms + stop_completion_margin_ms <= stop_report_timeout_ms`.

@@ -684,6 +684,8 @@ message OperationState {
   optional bool succeeded = 5;
   string progress = 6;
   Failure failure = 7;
+  // Increasing completed-work update within one Setup command; duplicates do not renew.
+  uint64 progress_sequence = 8;
 }
 message SessionState {
   SessionPhase phase = 1;

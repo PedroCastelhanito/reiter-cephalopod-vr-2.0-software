@@ -133,21 +133,7 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             (("Orientation (°)", grating.orientation), ("Speed (mm/s)", grating.speed))
         )
     elif image is not None:
-        result.extend(
-            (
-                ("Fit", image.fit),
-                ("Move speed", image.motion.speed),
-                ("Direction", image.motion.direction),
-            )
-        )
-        for image_control in (
-            image.motion.speed,
-            image.motion.direction,
-            image.motion.angular,
-        ):
-            image_control.setEnabled(not image.motion.custom.isChecked())
-        image.motion.custom.toggled.connect(image.update_controls)
-        image.update_controls()
+        result.append(("Fit", image.fit))
     elif arena is not None:
         if editor.tracking_available:
             result.extend(arena.cells)
@@ -157,7 +143,6 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             (
                 (f"Start ({unit})", looming.start),
                 (f"End ({unit})", looming.end),
-                ("Growth (s)", looming.duration),
             )
         )
         for _, control in result[1:]:

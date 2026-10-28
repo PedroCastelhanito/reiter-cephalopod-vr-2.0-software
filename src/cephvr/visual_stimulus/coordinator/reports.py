@@ -191,33 +191,25 @@ class Reports:
         )
         state.worker_ingress_ns = ingress_ns
 
-    async def operation(self, report: visual_stimulus.WorkerOperation) -> None:
+    async def operation(
+        self, report: visual_stimulus.WorkerOperation, *, ingress_ns: int | None = None
+    ) -> None:
         link = self.state.links.get(report.operation.context.command_id)
         if link is None or report.source != link.child.target:
             raise ValueError("worker operation does not match a retained command")
+        received = self.clock() if ingress_ns is None else ingress_ns
+        if link.setup_inactivity is not None and received > link.deadline_ns:
+            raise ValueError("Setup report after inactivity cutoff")
         if not report.operation.complete and report.operation.progress:
-            if (
-                link.method != "SetupSession"
-                or report.operation.command != "SetupSession"
-                or report.operation.work != link.child.target.work
-                or self.state.interrupted
-                or self.state.sealed
-                or len(report.operation.progress.encode("utf-8")) > 2048
-            ):
-                raise ValueError("progress outside live Setup")
-            progress = pb.OperationState.FromString(
-                report.operation.SerializeToString()
-            )
-            progress.context.command_id = link.parent.command_id
-            progress.work.CopyFrom(link.parent.work)
-            await self.controller.receipt(
-                "ReportLifecycle",
-                pb.LifecycleReport(
-                    operation=pb.BackendOperationReport(
-                        source=self.identity.backend, operation=progress
-                    )
-                ),
-                deadline_ns=link.deadline_ns,
+            from .setup_progress import relay_setup_progress
+
+            await relay_setup_progress(
+                link,
+                report.operation,
+                live=not self.state.interrupted and not self.state.sealed,
+                ingress_ns=received,
+                backend=self.identity.backend,
+                controller=self.controller,
             )
         if report.HasField("prepared_artifact"):
             setup = self.state.setup
@@ -441,6 +433,11 @@ class Reports:
             payload.operation.command_id = link.parent.command_id
             payload.cleanup_resources_revision = self.state.catalogue_revision
             if self.state.setup is None and work.WhichOneof("work") == "session":
+                if self.state.resources:
+                    raise ValueError("unprepared session retains native obligations")
+                # This session never adopted resources; prior revisions belong
+                # to the retired session, not its new supervisor catalogue.
+                payload.cleanup_resources_revision = 0
                 await self.supervisor.receipt(
                     "ReportHeartbeat",
                     pb.HeartbeatReport(
@@ -448,8 +445,7 @@ class Reports:
                         work=work,
                         sent_monotonic_ns=self.clock(),
                         session_phase=pb.SESSION_PHASE_CONFIGURATION,
-                        cleanup_resources_revision=self.state.catalogue_revision,
-                        cleanup_resources=self.state.resources,
+                        cleanup_resources_revision=0,
                     ),
                     deadline_ns=link.deadline_ns,
                 )

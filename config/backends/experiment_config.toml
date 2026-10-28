@@ -6,7 +6,7 @@
 # Shared health lives in supervisor_config.toml; this file owns central metadata bounds.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/experiment_policy.toml; versions must match.
-policy_version = 8
+policy_version = 9
 
 [assets]
 # E07: asset_root is the configurable base directory for relative media references.
@@ -21,7 +21,7 @@ port = 50051
 # E08: one gRPC max message size for every CephVR client/server, read at startup
 # (restart to change). Pending event/metadata byte budgets must each fit at least
 # four maximum messages; counts and required-evidence admission still apply.
-max_message_bytes = 16_777_216
+max_message_bytes = 67_108_864
 
 [control]
 # Control is released on WatchState stream loss; GUI reconnect claims unheld control
@@ -44,7 +44,7 @@ command_record_retention_after_finalization_s = 300
 # E08: reject new ordinary commands on overload; preserve interruption handling.
 # Essential evidence that cannot be admitted blocks/interrupts execution.
 max_pending_events = 1_024
-max_pending_payload_bytes = 67_108_864
+max_pending_payload_bytes = 268_435_456
 
 [timeouts]
 # E06: one shared recovery budget. When any initial deadline below expires, freeze
@@ -53,6 +53,8 @@ max_pending_payload_bytes = 67_108_864
 recovery_s = 10
 
 [timeouts.setup]
+# E05/E06: inactivity per dispatched backend; meaningful progress renews only its wait.
+# No total preparation cap. Health, device commands and cleanup retain their bounds.
 initial_s = 180
 
 [timeouts.setup_cancel]
@@ -124,14 +126,14 @@ start_lateness_tolerance_ms = 250
 # this allowance after the normal end or issuance of an early interruption.
 # Delivery time counts; missing evidence flags stopping as unconfirmed while cleanup
 # continues. This allowance never extends recording; closure has its own timeout.
-stop_report_timeout_ms = 450
+stop_report_timeout_ms = 1050
 
 [metadata]
 # Accepted-but-not-yet-synchronized work, including the active write, is bounded
 # by both operation count and total serialized payload size. Admission fails at
 # whichever limit would be exceeded first; entries are never dropped or replaced.
 max_pending_operations = 256
-max_pending_bytes = 67_108_864
+max_pending_bytes = 268_435_456
 # Total queue + write/append + flush + sync time for each required metadata operation.
 # Expiry leaves persistence unconfirmed: no uncertain-write retry or writer takeover.
 completion_timeout_s = 5

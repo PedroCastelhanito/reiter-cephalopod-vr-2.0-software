@@ -165,6 +165,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         supervisor=i.supervisor_state,
         generation=i.generation,
         supervisor_generation=i.supervisor_generation,
+        clock=i.clock,
     )
     publisher = SnapshotPublisher(
         generation=i.generation,

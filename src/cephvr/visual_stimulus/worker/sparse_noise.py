@@ -36,7 +36,8 @@ class SparseNoiseProcess(WindowsEncoderProcess):
     _frames: deque[tuple[int, bytes, bytes]]
 
     def send(self, data: bytes, *, deadline_ns: int) -> None:
-        self.write(data, deadline_ns=deadline_ns)
+        # Native overlapped writes pin writable storage until completion.
+        self.write(memoryview(bytearray(data)), deadline_ns=deadline_ns)
 
     def take(self) -> list[tuple[int, bytes, bytes]]:
         with self._lock:

@@ -247,6 +247,18 @@ class PreviewCanvas(QWidget):
 
     def draw_layer(self, painter: QPainter, rect: QRectF, layer: PreviewLayer) -> None:
         setting, values = layer.setting, layer.values
+        inline_grating = (
+            setting.kind == "texture"
+            and setting.grating
+            and setting.pattern.kind != "image_tile"
+        )
+        if inline_grating:
+            # Sample the visible field, not an ever-growing translated raster.
+            angle = radians(values["rotation"])
+            phase = values["phase_x"] - values["frequency"] * (
+                values["x"] * cos(angle) + values["y"] * sin(angle)
+            )
+            values = dict(values, x=0.0, y=0.0, phase_x=phase % 1.0)
         surface = self.rig_geometry.surfaces.get(self.face)
         if surface and surface.corners:
             snapshot = covering_texture(
@@ -264,11 +276,6 @@ class PreviewCanvas(QWidget):
         if setting.kind == "arena":
             return
         uniform = setting.kind == "texture" and setting.uniform
-        inline_grating = (
-            setting.kind == "texture"
-            and setting.grating
-            and setting.pattern.kind != "image_tile"
-        )
         if uniform or inline_grating:
             asset = ""
         elif setting.kind == "texture":

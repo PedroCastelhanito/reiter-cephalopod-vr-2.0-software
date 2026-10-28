@@ -1,0 +1,21 @@
+{
+  "original_runtime_configuration_restored": true,
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION",
+    "cleanup_confirmed": true
+  },
+  "saved_settings_unchanged": {
+    "config\\backends\\acquisition_config.toml": true,
+    "config\\backends\\experiment_config.toml": true,
+    "config\\backends\\gui_config.toml": true,
+    "config\\backends\\microcontroller_config.toml": true,
+    "config\\backends\\supervisor_config.toml": true,
+    "config\\backends\\synchronization_config.toml": true,
+    "config\\backends\\tracking_config.toml": true,
+    "config\\backends\\visual_stimulus_config.toml": true,
+    "config\\last_configuration.json": true,
+    "config\\runtime_gui.json": true,
+    "config\\review_draft.json": true
+  },
+  "helper_encoder_absence": "abort-process-closure.json"
+}

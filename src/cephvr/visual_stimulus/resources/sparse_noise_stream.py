@@ -16,6 +16,7 @@ from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import (
     Constant,
     SparseNoiseSettings,
+    Time,
 )
 from cephvr.visual_stimulus.config.models.sparse_noise import SparseNoisePatternRecipe
 
@@ -51,13 +52,14 @@ class PatternRequest:
 
 
 def layer_recipe(settings: SparseNoiseSettings) -> SparseNoisePatternRecipe:
+    """Generator input; its duration is unused for epoch-held index-zero patterns."""
     surface = settings.space.mappings[0].surface_id  # type: ignore[union-attr]
     return SparseNoisePatternRecipe.model_validate(
         {
             **settings.appearance.model_dump(),
             "surfaces": (surface,),
             "pattern_count": settings.pattern_count,
-            "pattern_duration": settings.pattern_duration,
+            "pattern_duration": settings.pattern_duration or Time(seconds="1"),
         }
     )
 
@@ -83,8 +85,10 @@ def trial_layers(artifact: PreparedTrial) -> tuple[SparseLayer, ...]:
                 continue
             recipe = layer_recipe(settings)
             (grid,) = resolve_grids(recipe, artifact.display, max_cells=MAX_GRID_CELLS)
-            duration = settings.pattern_duration.ns()
             span = epoch.end_ns - epoch.start_ns
+            duration = (
+                settings.pattern_duration.ns() if settings.pattern_duration else span
+            )
             layers.append(
                 SparseLayer(
                     index,

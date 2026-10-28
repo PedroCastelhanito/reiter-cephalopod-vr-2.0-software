@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Any, cast
 
 from cephvr.visual_stimulus.config.models.program_model import (
+    Epoch,
     Group,
     Node,
     Program,
@@ -32,6 +33,51 @@ def nodes_at(program: Program, scope: tuple[int, ...] = ()) -> tuple[Node, ...]:
 def node_at(program: Program, path: NodePath) -> Node:
     indexes = path_tuple(path)
     return nodes_at(program, indexes[:-1])[indexes[-1]]
+
+
+def epoch_numbers(program: Program) -> dict[str, int]:
+    """Number source epochs in trial order, without expanding repetitions."""
+    numbers: dict[str, int] = {}
+
+    def visit(nodes: tuple[Node, ...]) -> None:
+        for node in nodes:
+            if isinstance(node, Epoch):
+                numbers[node.epoch_id] = len(numbers) + 1
+            else:
+                visit(node.body)
+
+    visit(program.sequence)
+    return numbers
+
+
+def renumber_epochs(program: Program, previous: Program) -> Program:
+    """Update identities after structural edits; leave untouched imports intact."""
+    numbers = epoch_numbers(program)
+    if numbers == epoch_numbers(previous):
+        return program
+    data = program.model_dump(mode="json")
+    group_ids: set[str] = set()
+
+    def reserve_groups(nodes: tuple[Node, ...]) -> None:
+        for node in nodes:
+            if isinstance(node, Group):
+                group_ids.add(node.group_id)
+                reserve_groups(node.body)
+
+    def visit(nodes: list[dict[str, Any]]) -> None:
+        for node in nodes:
+            if node["kind"] == "epoch":
+                identity = f"Epoch_{numbers[node['epoch_id']]}"
+                # Imported group names share the node-identity namespace.
+                while identity in group_ids:
+                    identity += "_epoch"
+                node["epoch_id"] = identity
+            else:
+                visit(node["body"])
+
+    reserve_groups(program.sequence)
+    visit(data["sequence"])
+    return validate(data)
 
 
 def data_nodes(

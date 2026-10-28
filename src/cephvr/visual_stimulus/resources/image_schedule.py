@@ -10,6 +10,7 @@ from cephvr.visual_stimulus.config.models.program_model import Settings
 
 from .assets import PreparedResourceBundle
 from .budget import PreparationBudget
+from .image_crops import ImageCrop
 from .image_source import ImageSource
 
 
@@ -72,6 +73,11 @@ class ImageSchedule:
         first: dict[tuple[str, str], str] = {}
         indices: dict[tuple[str, str], int] = {}
         used_outputs: dict[str, set[str]] = {}
+        crop_bounds: dict[str, dict[str, ImageCrop]] = {}
+        crop_disabled: set[tuple[str, str]] = set()
+        from .image_crops import fold_crop
+
+        footprint_cache = {}
         for artifact in artifacts:
             trial = artifact.identity.trial_id
             generations[trial] = artifact.identity.resource_generation
@@ -97,6 +103,26 @@ class ImageSchedule:
                         else set(setting.space.surfaces)
                     )
                     key = aliases[(trial, selected_asset)]
+                    for mapping in artifact.display.active_mappings:
+                        if mapping.surface_id not in surfaces:
+                            continue
+                        output = mapping.output_id
+                        cache_key = (trial, key, mapping.mapping_id)
+                        eligible = setting.kind == "image" and setting.fit == "fold"
+                        if eligible and cache_key not in footprint_cache:
+                            footprint_cache[cache_key] = fold_crop(
+                                artifact, mapping.mapping_id, sources[key]
+                            )
+                        rectangle = footprint_cache[cache_key] if eligible else None
+                        if rectangle is None:
+                            crop_disabled.add((key, output))
+                        else:
+                            bounds = crop_bounds.setdefault(key, {})
+                            if output in bounds and bounds[output] != rectangle:
+                                raise ValueError(
+                                    "shared Fold image requires identical prepared mapping"
+                                )
+                            bounds[output] = rectangle
                     used_outputs.setdefault(key, set()).update(
                         mapping.output_id
                         for mapping in artifact.display.active_mappings
@@ -111,6 +137,18 @@ class ImageSchedule:
                 output_ids=tuple(sorted(outputs)),
                 gpu_bytes=source.width * source.height * 16 * len(outputs),
             )
+            if outputs and all(
+                (key, output) not in crop_disabled for output in outputs
+            ):
+                crops = []
+                offset = 0
+                for output in sorted(outputs):
+                    crop = replace(crop_bounds[key][output], offset=offset)
+                    crops.append(crop)
+                    offset += crop.width * crop.height * 16
+                sources[key] = replace(
+                    sources[key], output_crops=tuple(crops), gpu_bytes=offset
+                )
         return cls(sources, aliases, generations, epochs, first, indices)
 
     @property

@@ -148,7 +148,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 26
 
 - A protocol declares Media presentation or 3D navigation consistently across trials.
   Media permits Uniform, Image, Video, Sparse noise, Grating and Texture drift per
@@ -194,17 +194,20 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Resolve linear direction through a common unfolded Bottom plane using calibrated
   surface axes, preserving physical speed around corners. Output corrections and
   enablement never change that geometry. Links do not promise seamless imagery.
-- Linked inline Gratings instead sample their independent reference's common pattern
-  and spatial/temporal phase at the same logical time. Unfold calibrated surface planes
-  around their intersection with Bottom into Bottom-centered physical coordinates;
-  the reference owns period, colors, sharpness, orientation and retained motion/phase.
-  Preserve physical spacing; arbitrary directions need not match at every wall/wall
-  corner of the closed tank. No phase sharing applies to unlinked Gratings or Texture
-  drift. Require single-screen physical endpoints, one independent Grating reference,
-  an invertible orientation-preserving mapping, and normals not opposite Bottom;
-  reject chains/cycles, incompatible references and competing follower motion. Output
-  warp/reflection stays separate. Software field agreement is not optical seam or
-  projector frame-lock acceptance.
+- Linked inline Gratings share one infinite screen-local physical wave: identical
+  local bar angle, physical period, signed phase drift and centre phase on every
+  linked screen. The independent reference owns appearance, Orientation and Speed;
+  derive its local physical gradient and compensate each follower's positive-
+  determinant stimulus map. Cover the entire usable screen with straight, uniformly
+  spaced bars, preserving configured masks/corrections; no perspective origin,
+  horizon clipping, folding or subject/camera-dependent remapping. Common centre
+  phase does not promise seamless physical corner joins. Preview and renderer use
+  the same resolved affine wave and existing uniform evidence. Reject reflected/
+  singular stimulus maps, chains/cycles and competing follower motion. Unlinked
+  Gratings and Texture drift retain their independent rules.
+  Output warp/reflection stays separate; software phase agreement is not optical
+  alignment or projector frame lock. The field definition lives in the
+  [motion contract](../../contracts/visual_stimulus/stimulus-schema.md#reference-shared-grating-pattern-and-phase).
 - G01 rig-direction authoring encodes constant whole-layer translation in the
   existing mapped X/Y fields, independent of texture rotation; legacy phase drift
   remains supported. Linked references accept either translation or phase drift,
@@ -245,7 +248,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v03"></a>
 ### V03 — Versioned JSON stimulus-program files
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 15
 
 - Optional source category persists with the canonical program and prepared source;
   missing category means unclassified legacy content, preserved without conversion.
@@ -277,6 +280,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   authoring-model validation in the rendering loop; later file edits cannot alter it.
   Immutable prepared data and mutable per-instance live state are owned separately
   under V07.
+- Bound the complete serialized artifact with E14's operator preparation ceiling,
+  leaving room for its envelope under E08's shared message cap. Reject oversized
+  plans before Ready; never truncate epochs or resize limits during Setup. The
+  owner-selected default is 50 decimal MB, within E08's 64 MiB transport ceiling;
+  capacity and presentation timing remain subject to E15 verification.
 - One PreparedTrial artifact, including its manifest, is the compiler result and
   control payload; runtime indexes and timeline views derive from it. No parallel
   schedule grammar or duplicate manifest return. V02's complete settings and named
@@ -295,7 +303,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 37
+**Status:** Accepted · **Revision:** 49
+
+- Asset admission uses E14's operator ceilings: CPU defaults to 2 GiB to admit
+  bounded validation/conversion of the supplied 3840×2000 images; GPU retains the
+  owner-selected 4 GiB default. These are neither preallocations nor total-process
+  RAM/VRAM guarantees;
+  rendering, previews and tracking retain their separate allocations and SYS-002
+  placement. Setup must reject workloads exceeding the ceiling; combined-load
+  capacity remains subject to E15 rig verification.
 
 - G01's directly authored Grating uses the existing physical procedural texture
   pipeline with positive constant period, sharpness from sinusoidal to square,
@@ -304,14 +320,21 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   retains it. V02 owns reference-shared pattern/phase. Existing asset-backed Grating
   retains its versioned interpretation: ignore intrinsic recipe angle without rewriting
   source bytes, preserve period/colors/sharpness, and use the epoch Orientation.
+  E14 policy version22 declares this accepted `cephvr_grating_json_v1` image
+  profile alongside legacy texture recipes; the loader and asset schemas agree.
   Uniform uses a stationary zero-contrast procedural layer with linear mean RGB,
   covering its selected projector without an external file.
 - Sparse noise is a `sparse_noise` layer holding its validated appearance/seed,
-  pattern count and pattern duration; it has no image assets, prepared bundle or Apply
-  step. Compilation resolves the centered complete-cell grid on the layer's one active
+  with no image assets, prepared bundle or Apply step. G01 authors one pattern per
+  epoch occurrence, held for its full duration; group repetitions produce new
+  deterministic patterns. Expansion adds the zero-based visit count for each source
+  epoch/layer to its saved seed modulo 2^64, retaining resolved seeds in the plan;
+  each occurrence samples generator index zero. Preview uses this same expansion.
+  Compilation resolves the centered complete-cell grid on the layer's one active
   screen and fixes the layer extent to it; an inactive or too-small screen fails Setup.
-  The layer shows floor(epoch-local-time / pattern-duration), holds the last pattern at
-  exhaustion and restarts at each epoch occurrence; other layers keep their clocks.
+  Legacy explicit pattern count/duration remains readable with its original timed
+  sequence, final-pattern hold and restart behavior until committed through G01's epoch editor.
+  Other layers keep their clocks.
   Each trial with sparse layers gets one contained generator helper owned by the
   rendering worker, launched at PrepareTrial like its FFmpeg children (stdin/stdout
   pipes, stdin-EOF stop, exact-exit cleanup; obligations declared at Setup). It
@@ -347,6 +370,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Validate actual content/features, preserve supported source precision and reject
   unsupported profiles explicitly; no silent conversion or discarded required
   appearance.
+  Untagged PNG/TIFF images default to linear, full-range Rec.709 D65 RGB, preserving
+  numerical intensities without requiring per-asset overrides. Explicit overrides
+  and supported PNG transfer metadata take precedence; unsupported or malformed
+  metadata still rejects preparation. JPEG/video and glTF texture interpretations
+  retain their profile rules. E14 policy version25 declares this fixed fallback;
+  linear working values do not establish calibrated physical luminance.
 - The offline `generate_stimulus` editor authors texture and sparse-noise recipes using
   the same bounded generators as preparation. Assets contain appearance/seed only;
   Protocol owns presentation timing, motion, sequence count and screen assignment.
@@ -423,8 +452,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   V11. GPU/resource ownership and presentation evidence must be explicit. Runtime
   performance and timing need full-workload rig evidence under SYS-002/E15.
 - Still images use bounded CPU/GPU residency owned by the renderer's resource
-  subsystem. Setup decodes every required unique image under E07 using bounded
-  scratch memory, retains validation/identity facts and prepares initial content;
+  subsystem. Setup validates required unique images under E07 using bounded scratch memory. A
+  source-folder index reuses successful image-validation facts only for matching
+  protected content SHA-256, interpretation and validator/software identity; changed,
+  missing or invalid entries require validation. Source protection and current hashes
+  remain mandatory. The index contains no pixels or handles and is atomically
+  replaced; unavailable index storage falls back to ordinary validation. Setup retains
+  validation/identity facts and prepares initial content;
   it need not retain every decoded image. Within one Setup,
   reuse a streamed source fingerprint only while an earlier write/delete-excluding
   Windows handle remains live and a newly acquired handle verifies the same file
@@ -440,16 +474,23 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   consume it, taking the union across prepared trials and matching GPU accounting.
   Fence uploads and retirement only in contexts holding that image's texture;
   unallocated contexts have no image work to drain.
-  Retain all unique images when budgets permit, otherwise prefetch from protected
-  sources ahead of the resolved schedule and evict only resources no active consumer
-  needs. Include source snapshots, decode/conversion/upload working memory and
+  Retain the current epoch and two following epochs, plus required first-use/held
+  anchors and in-flight work. Spare memory does not increase this fixed lookahead.
+  Evict only resources no active consumer needs. Include source snapshots, decode/conversion/upload working memory and
   resident pixels in admission. Validation/protection/budget failure blocks Ready
   under existing Setup deadlines. One background loader prepares linear pixels;
   the GL owner submits bounded batches of upload chunks per render turn and polls
-  completion without waiting. Fixed batch/chunk limits live in the E14 policy;
+  completion without waiting. Compatible uniform Fold layouts use Setup-preallocated
+  reusable texture slots sized for fixed lookahead, first/held anchors and retirement,
+  with two fenced one-MiB staging buffers per output. Keep pool allocations charged
+  until final cleanup; recycle a slot only after its consumer fences complete. Other
+  layouts retain bounded residency. Policy34 submits at most four one-MiB chunks per
+  turn and starts no further chunk after two milliseconds; a driver call itself is
+  not preemptible. Actual latency and combined-load throughput require rig validation.
+  Fixed batch/chunk limits live in the E14 policy;
   prefetch must have headroom above the scheduled image demand without changing
   source precision, epoch clocks or per-instance late-image evidence.
-  After graphics preparation, collect Setup garbage within the original deadline
+  After graphics preparation, collect Setup garbage within E06's live inactivity allowance
   and freeze the renderer's prepared Python object graph until cleanup, preventing
   recurring whole-graph cyclic-GC pauses during playback. Preserve normal collection
   of newly allocated objects and the existing GC enablement state. The preparation
@@ -467,6 +508,23 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   stable indices, with explicit holds and repeated identities. Source/decode/GL errors
   remain failures, not readiness misses. E13 controls detailed-history retention;
   Required per-group scientific history remains with review video off under E13/V28.
+- Fixed-screen Fold images require source coverage of every used projector. Setup
+  prepares exact original-shader samples on each surface framebuffer grid into
+  cropped RGBA32F files, retaining original fractional Bottom sampling. Playback
+  fetches prepared samples by integer framebuffer coordinates before the unchanged
+  composition, calibration and output stages. Other image fits retain protected
+  source loading. Bundle identity includes source interpretation, mapping/grid,
+  algorithm and pixel digest in the prepared trial; no cross-Setup cache reuse.
+  Prepare unique content/interpretation identities once across repeated assets, epochs
+  and trials. Process at most16 unique images per batch, one decoded source at a
+  time, reusing GPU scratch and packing each batch into one indexed temporary file.
+  Report completed unique images, batch progress and reused references during Setup.
+  Temporary bundles live beside the asset root, with bounded preparation scratch
+  and disk-capacity admission. Release readers before deleting on Stop, failed or
+  cancelled Setup and shutdown. Windows delete-on-close removes files on process
+  exit; supervisor exit observation/startup recovers only verified unlocked empty
+  bundle directories. Cleanup failures retain ownership; originals and scientific
+  records are never removed by bundle cleanup.
 - **Contracts:** [media profiles](../../contracts/visual_stimulus/media-profiles.md);
   [color pipeline](../../contracts/visual_stimulus/color-pipeline.md);
   [asset lifetime contract](../../contracts/visual_stimulus/asset-lifetime.md);
@@ -776,7 +834,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v13"></a>
 ### V13 — Trial replay from program and actual render evidence
 
-**Status:** Accepted · **Revision:** 14
+**Status:** Accepted · **Revision:** 15
 
 - Analysis software owns offline reconstruction and lossless export. The experiment
   backend records immutable program/resolved-plan information, matching asset
@@ -798,7 +856,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   referenced by retained runs. Per-run manifests retain paths, sizes and hashes;
   replay rejects missing/mismatched content. V04's source protection covers
   preparation/execution; a Setup digest alone neither establishes immutability nor
-  preserves originals after release.
+  preserves originals after release. V04 temporary derived sample bundles are
+  disposable rendering inputs, not an external-source archive; retain their
+  algorithm, grid/mapping and content digest in the prepared recipe after deletion.
 - Retain exact installed renderer-source and compiled-shader-source identities,
   relevant decode/color software versions and each output context's GPU/driver
   observations. Finalize these facts before hashing, publishing or preparing the
@@ -808,7 +868,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   without original-output pixel fingerprints (sampled included). No per-frame pixel
   hashing or verification-only GPU readback. Reconstructed output is validated at
   input/state level only; V04's sparse-noise pattern hashes cover generated cell
-  inputs, not output pixels.
+  inputs, not output pixels. V04 prepared Fold sample digests similarly identify
+  reusable pre-composition inputs; they do not add per-frame output fingerprints.
 - Replay reads the complete evidence lines that exist (V28). Without the trial's
   closing record, label output "partial, up to render group N"; never present it as
   complete-trial replay or synthesize missing state. Full-trial replay requires a

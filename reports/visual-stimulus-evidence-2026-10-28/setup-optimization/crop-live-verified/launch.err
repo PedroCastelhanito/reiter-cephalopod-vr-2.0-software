@@ -1,0 +1,3 @@
+CephVR launcher controller channel lost: eof
+CephVR acquisition shutdown: CONTROLLER_PROCESS_LOST: registered controller process exited; acquisition is stopping
+CephVR launcher supervisor channel lost: eof

@@ -203,6 +203,27 @@ def tile_layout(
     return tiles
 
 
+class PreparedImageCrop(Model):
+    output_id: OutputId
+    mapping_id: Name
+    x: U32
+    y: U32
+    width: Annotated[int, Field(gt=0)]
+    height: Annotated[int, Field(gt=0)]
+    offset: U64
+    target: tuple[Annotated[int, Field(gt=0)], Annotated[int, Field(gt=0)]]
+    corners: tuple[tuple[float, float], ...]
+    fold: tuple[float, ...]
+
+
+class PreparedImageBundle(Model):
+    asset_id: Name
+    format: Literal["fold-samples-rgba32f-v1"] = "fold-samples-rgba32f-v1"
+    sha256: Digest
+    byte_count: U64
+    crops: tuple[PreparedImageCrop, ...]
+
+
 class PreparedTrial(Model):
     format_version: Version2
     identity: Identity
@@ -225,6 +246,7 @@ class PreparedTrial(Model):
     preview_layout: ReviewLayout | None = None
     geometric_calibration: tuple[GeometricProfile, ...] = ()
     photometric_calibration: tuple[PhotometricProfile, ...] = ()
+    image_bundles: tuple[PreparedImageBundle, ...] = ()
 
     @property
     def resolved_duration_ns(self) -> int:

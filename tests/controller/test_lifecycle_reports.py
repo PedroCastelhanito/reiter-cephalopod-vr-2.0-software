@@ -139,12 +139,23 @@ async def test_setup_failure_accepts_only_its_exact_backend_operation(
     ).result == pb.COMMAND_RESULT_REJECTED
 
 
-async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
+@pytest.mark.parametrize("renewable", [False, True])
+async def test_setup_ready_keeps_live_deadline_and_exact_duplicate_rule(
     tmp_path: Path,
+    renewable: bool,
 ) -> None:
     fixture = _fixture(tmp_path)
     reports, attempt, backend = fixture.reports, fixture.attempt, fixture.backend
     attempt.prepared.configuration_revision = reports.configuration.revision
+    cutoff = 100
+    if renewable:
+        from cephvr.shared.deadlines import SetupInactivity
+
+        wait = SetupInactivity(100, 100)
+        assert wait.advance(1, "Images: 1/1", 80)
+        attempt.setup_waits["visual_stimulus"] = wait
+        cutoff = 180
+
     context = pb.ReportContext(
         backend=backend,
         work=pb.WorkContext(session=attempt.context),
@@ -157,23 +168,23 @@ async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
             required_checks_passed=True,
         )
     )
-    late = await reports.receive(report, 101)
+    late = await reports.receive(report, cutoff + 1)
     assert late.result == pb.COMMAND_RESULT_REJECTED
     assert late.failure.code == "EVIDENCE"
     assert not attempt.ready
     assert fixture.publications[0] == 0
-    accepted = await reports.receive(report, 100)
+    accepted = await reports.receive(report, cutoff)
     assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
     assert fixture.publications[0] == 1
     changed = pb.LifecycleReport()
     changed.CopyFrom(report)
     changed.ready.asset_filenames.append("new-file.ext")
-    rejected = await reports.receive(changed, 100)
+    rejected = await reports.receive(changed, cutoff)
     assert rejected.failure.code == "CONFLICT"
     assert fixture.publications[0] == 1
     attempt.cancel_requested = True
-    assert (await reports.receive(report, 100)).result == pb.COMMAND_RESULT_ACCEPTED
-    rejected = await reports.receive(changed, 100)
+    assert (await reports.receive(report, cutoff)).result == pb.COMMAND_RESULT_ACCEPTED
+    rejected = await reports.receive(changed, cutoff)
     assert rejected.failure.code == "CONFLICT"
     assert attempt.ready == {"visual_stimulus": report.ready}
     assert fixture.publications[0] == 1
@@ -909,3 +920,75 @@ async def test_interrupted_started_retains_only_exact_on_time_activity(
             await fixture.reports.receive(report, ingress)
         ).result == pb.COMMAND_RESULT_REJECTED
         assert attempt.started[fixture.backend.backend_name] == started
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        "duplicate",
+        "older",
+        "unchanged",
+        "late",
+        "generation",
+        "command",
+        "cancelled",
+        "recovery",
+    ],
+)
+async def test_setup_inactivity_renews_only_exact_new_timely_progress(
+    tmp_path, invalid
+):
+    from cephvr.shared.deadlines import SetupInactivity
+
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    attempt.setup_waits["visual_stimulus"] = SetupInactivity(100, 100)
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(
+            source=fixture.backend,
+            operation=pb.OperationState(
+                context=pb.OperationContext(command_id="setup"),
+                command="SetupSession",
+                work=pb.WorkContext(session=attempt.context),
+                progress="Validated images: 1/3",
+                progress_sequence=1,
+            ),
+        )
+    )
+    assert (
+        await fixture.reports.receive(report, 80)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert attempt.setup_cutoff("visual_stimulus") == 180
+    assert attempt.changed.is_set()
+    attempt.changed.clear()
+    # Valid work continues beyond the former total duration cutoff.
+    report.operation.operation.progress_sequence = 2
+    report.operation.operation.progress = "Validated images: 2/3"
+    assert (
+        await fixture.reports.receive(report, 160)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert attempt.setup_cutoff("visual_stimulus") == 260
+    attempt.changed.clear()
+    ingress = 220
+    operation = report.operation.operation
+    operation.progress_sequence = 3
+    operation.progress = "Validated images: 3/3"
+    if invalid == "duplicate":
+        operation.progress_sequence = 2
+    elif invalid == "older":
+        operation.progress_sequence = 1
+    elif invalid == "unchanged":
+        operation.progress = "Validated images: 2/3"
+    elif invalid == "late":
+        ingress = 261
+    elif invalid == "generation":
+        report.operation.source.backend_generation = _id()
+    elif invalid == "command":
+        operation.context.command_id = _id()
+    elif invalid == "cancelled":
+        attempt.cancel_requested = True
+    elif invalid == "recovery":
+        attempt.recovering_evidence = "setup_ready"
+    await fixture.reports.receive(report, ingress)
+    assert attempt.setup_cutoff("visual_stimulus") == 260
+    assert not attempt.changed.is_set()

@@ -44,8 +44,6 @@ TITLES = {
     "square_size_mm": "Square size (mm)",
     "min_active_cell_distance_mm": "Min active cell distance (mm)",
     "background_linear": "Background (linear)",
-    "pattern_count": "Patterns",
-    "pattern_duration": "Pattern duration (s)",
 }
 
 

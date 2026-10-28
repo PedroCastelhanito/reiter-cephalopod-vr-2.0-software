@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QWidget
 from cephvr.gui.batch_create import BatchCreate
 from cephvr.gui.epoch_selection import SelectionComposer
 from cephvr.gui.notices import passive_validation
-from cephvr.gui.program_editing import data_node, node_at, validate
+from cephvr.gui.program_editing import data_node, drop_unused_assets, node_at, validate
 from cephvr.gui.protocol_batches import generated_batch
 from cephvr.gui.subgroup_operations import update_subgroup
 from cephvr.gui.subgroup_repetitions import rebuild_repetitions
@@ -262,6 +262,9 @@ class SubgroupEditor(BatchCreate):
                     )
                 program = validate(data)
             program = rebuild_repetitions(program, paths[0][:-1])
+            data = program.model_dump(mode="json")
+            drop_unused_assets(data, {asset.asset_id for asset in program.assets})
+            program = validate(data)
         except (ValueError, TypeError, IndexError, OSError) as error:
             self.notice.warn(error)
             return

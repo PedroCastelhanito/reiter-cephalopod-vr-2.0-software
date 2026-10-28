@@ -102,7 +102,7 @@ class PreviewWorkspace(QWidget):
         self.advanced_row = QWidget()
         self.advanced_choices = QGridLayout(self.advanced_row)
         self.advanced_choices.setContentsMargins(0, 0, 0, 0)
-        self.advanced_choices.setHorizontalSpacing(6)
+        self.advanced_choices.setHorizontalSpacing(16)
         self.advanced_choices.setVerticalSpacing(6)
         self.advanced_controls = QWidget(self.advanced_row)
         self.advanced_control_row = QHBoxLayout(self.advanced_controls)
@@ -131,6 +131,7 @@ class PreviewWorkspace(QWidget):
         # Keep status above the resizable stream/plot sections.
         self.timeline = StimulusTimeline()
         self.timeline.cards_changed.connect(self.rebuild_projector_controls)
+        self.timeline.cards_changed.connect(self.refresh_plot_controls)
         self.timeline.plots.removeWidget(self.timeline.motion_section)
         self.stimulus_area = StimulusPreviewArea(self.timeline)
         self.stimulus_area.projectors_changed.connect(self.rebuild_projector_controls)
@@ -274,7 +275,7 @@ class PreviewWorkspace(QWidget):
 
     def set_advanced_visible(self, visible: bool, *, persist: bool = True) -> None:
         self.timeline.set_advanced(visible and self.plots_toggle.isChecked())
-        self.plots_toggle.setVisible(visible)
+        self.refresh_plot_controls()
         self.details.setVisible(True)
         self.stimulus_area.rebuild()
         for control in self.projector_controls.values():
@@ -297,6 +298,12 @@ class PreviewWorkspace(QWidget):
     def set_plots_visible(self, visible: bool) -> None:
         self.timeline.set_advanced(visible and self.advanced_toggle.isChecked())
         self.stimulus_area.update_instruments()
+        self.reflow_toolbar()
+
+    def refresh_plot_controls(self) -> None:
+        self.plots_toggle.setVisible(
+            self.advanced_toggle.isChecked() and bool(self.timeline.all_panels)
+        )
         self.reflow_toolbar()
 
     def set_video_visible(self, visible: bool, *, close_viewers: bool = True) -> None:

@@ -1,0 +1,232 @@
+{
+  "date": "2026-10-28",
+  "setup": [
+    {
+      "attempt": 1,
+      "seconds": 183.4730318998918,
+      "result": {
+        "command_id": "e76f0c20-7c20-49b2-91fc-58f1b8fb5a0c",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "attempt": 2,
+      "seconds": 139.9321651000064,
+      "result": {
+        "command_id": "0344a8a9-0281-4171-875a-e3cfef110c2a",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    }
+  ],
+  "duration": {
+    "elapsed_seconds": 90.9368356
+  },
+  "stages": {
+    "render": {
+      "draw": {
+        "count": 5458,
+        "total_ms": 4763.4946,
+        "max_ms": 10.5615
+      },
+      "swap:calibration_front": {
+        "count": 5458,
+        "total_ms": 74894.4482,
+        "max_ms": 15.044
+      },
+      "finish:calibration_front": {
+        "count": 5458,
+        "total_ms": 1502.2131,
+        "max_ms": 27.5624
+      },
+      "swap:calibration_left": {
+        "count": 5458,
+        "total_ms": 1475.0495,
+        "max_ms": 0.7311
+      },
+      "finish:calibration_left": {
+        "count": 5458,
+        "total_ms": 244.7629,
+        "max_ms": 2.2136
+      },
+      "swap:calibration_right": {
+        "count": 5458,
+        "total_ms": 958.3541,
+        "max_ms": 1.8401
+      },
+      "finish:calibration_right": {
+        "count": 5458,
+        "total_ms": 155.7011,
+        "max_ms": 2.0068
+      },
+      "swap:calibration_bottom": {
+        "count": 5458,
+        "total_ms": 805.51,
+        "max_ms": 0.7415
+      },
+      "finish:calibration_bottom": {
+        "count": 5458,
+        "total_ms": 653.1026,
+        "max_ms": 1.6085
+      },
+      "result_release": {
+        "count": 224,
+        "total_ms": 3.4495,
+        "max_ms": 0.0322
+      }
+    },
+    "gpu": {
+      "activation": {
+        "count": 10568,
+        "total_ms": 137.0932,
+        "max_ms": 0.3649
+      },
+      "staging_write": {
+        "count": 9434,
+        "total_ms": 508.4906,
+        "max_ms": 0.2344
+      },
+      "texture_write": {
+        "count": 9434,
+        "total_ms": 283.9958,
+        "max_ms": 0.2072
+      },
+      "upload": {
+        "count": 2741,
+        "total_ms": 1344.7788,
+        "max_ms": 3.1178
+      },
+      "fence": {
+        "count": 448,
+        "total_ms": 116.0367,
+        "max_ms": 1.3386
+      },
+      "ready": {
+        "count": 448,
+        "total_ms": 65.8,
+        "max_ms": 0.8049
+      }
+    },
+    "loader": {
+      "bundle_read": {
+        "count": 225,
+        "total_ms": 1258.9352,
+        "max_ms": 14.8711
+      },
+      "bundle_hash": {
+        "count": 225,
+        "total_ms": 3522.5993,
+        "max_ms": 17.3452
+      }
+    }
+  },
+  "presentation": [
+    {
+      "trial": "d7ba9455-b9d9-47ce-b50c-81109f438271",
+      "output": "calibration_front",
+      "returned": "5458",
+      "first_ns": "1198145379819600",
+      "last_ns": "1198236314098400",
+      "max_gap_ms": "30.803800",
+      "gaps_over_25ms": "1",
+      "gaps_over_50ms": "0",
+      "mean_submissions_per_second": 60.0103731179534
+    },
+    {
+      "trial": "d7ba9455-b9d9-47ce-b50c-81109f438271",
+      "output": "calibration_left",
+      "returned": "5458",
+      "first_ns": "1198145382141100",
+      "last_ns": "1198236314510700",
+      "max_gap_ms": "30.951700",
+      "gaps_over_25ms": "1",
+      "gaps_over_50ms": "0",
+      "mean_submissions_per_second": 60.01163308516707
+    },
+    {
+      "trial": "d7ba9455-b9d9-47ce-b50c-81109f438271",
+      "output": "calibration_right",
+      "returned": "5458",
+      "first_ns": "1198145384249600",
+      "last_ns": "1198236314772000",
+      "max_gap_ms": "30.997600",
+      "gaps_over_25ms": "1",
+      "gaps_over_50ms": "0",
+      "mean_submissions_per_second": 60.012852186143384
+    },
+    {
+      "trial": "d7ba9455-b9d9-47ce-b50c-81109f438271",
+      "output": "calibration_bottom",
+      "returned": "5458",
+      "first_ns": "1198145385955600",
+      "last_ns": "1198236315047300",
+      "max_gap_ms": "30.978600",
+      "gaps_over_25ms": "1",
+      "gaps_over_50ms": "0",
+      "mean_submissions_per_second": 60.01379644266259
+    }
+  ],
+  "cleanup_confirmed": true,
+  "configuration_restored": true,
+  "stimulus_and_trials_match_prior_test": true,
+  "changed_source_during_run": [],
+  "remaining_crop_directories": [],
+  "hash_probe": {
+    "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe",
+    "results": [
+      {
+        "name": "managed_default",
+        "provider": "_hashlib",
+        "hash_ms": [
+          14.7661,
+          14.9519,
+          14.8018,
+          14.6895,
+          14.7108,
+          14.7127,
+          14.7871,
+          14.7427,
+          14.6905,
+          14.7255,
+          14.7134,
+          15.1615
+        ],
+        "max_observer_pause_ms": 1.6701,
+        "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+      },
+      {
+        "name": "explicit_openssl",
+        "provider": "_hashlib",
+        "hash_ms": [
+          14.9124,
+          14.9076,
+          15.4754,
+          14.9157,
+          15.5191,
+          14.9896,
+          15.4035,
+          15.5891,
+          14.9123,
+          15.2348,
+          14.9827,
+          14.912
+        ],
+        "max_observer_pause_ms": 1.8823,
+        "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+      }
+    ]
+  },
+  "limits": "Two Setups and90-second projector-only playback. No camera/recording/preview load,20-minute/full-hour endurance or optical simultaneity acceptance.",
+  "cache": {
+    "tested_renderer_validator": "8f4bbd4f94b29fdd142cd33335ee1d8949e0cc8dfd7547a95a0793dd2f1c5886",
+    "current_disk_validator": "8f4bbd4f94b29fdd142cd33335ee1d8949e0cc8dfd7547a95a0793dd2f1c5886",
+    "scope": "Normal index reader with current validator and independently recomputed source hashes",
+    "hits": 600,
+    "count": 600
+  }
+}

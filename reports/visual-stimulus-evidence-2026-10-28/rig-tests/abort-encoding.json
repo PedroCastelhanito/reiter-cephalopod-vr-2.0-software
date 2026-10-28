@@ -1,0 +1,482 @@
+{
+  "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\visual-stimulus-evidence-2026-10-28\\rig-tests\\sparse-abort\\recordings",
+  "videos": {
+    "20261028_sparse_noise_oct28\\RIGCHECK-092735\\protocol-data\\RIGCHECK_092738_stimulus.mp4": {
+      "size_bytes": 1337349,
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40020",
+            "width": 1280,
+            "height": 720,
+            "coded_width": 1280,
+            "coded_height": 720,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "16:9",
+            "pix_fmt": "yuvj444p",
+            "level": 32,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 77568,
+            "duration": "5.050000",
+            "bit_rate": "2114099",
+            "bits_per_raw_sample": "8",
+            "nb_read_frames": "303",
+            "extradata_size": 62,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "reports\\visual-stimulus-evidence-2026-10-28\\rig-tests\\sparse-abort\\recordings\\20261028_sparse_noise_oct28\\RIGCHECK-092735\\protocol-data\\RIGCHECK_092738_stimulus.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "5.050000",
+          "size": "1337349",
+          "bit_rate": "2118572",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "iso5",
+            "minor_version": "512",
+            "compatible_brands": "iso5iso6mp41",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "ffprobe_error": "",
+      "decode_exit": 0,
+      "decode_error": ""
+    }
+  },
+  "frame_logs": {
+    "20261028_sparse_noise_oct28\\RIGCHECK-092735\\protocol-data\\RIGCHECK_092738_stimulus_frames.jsonl": {
+      "record_types": {
+        "header": 1,
+        "render_group": 303,
+        "clipping": 1212,
+        "group_update": 606,
+        "encoder_outcome": 1,
+        "completion": 1
+      },
+      "received_frames": 0,
+      "invalid_images": 0,
+      "source_dropped_flags": 0,
+      "source_dispositions": {},
+      "video_dispositions": {},
+      "render_groups": 303,
+      "initial_capture_dispositions": {
+        "admitted": 303
+      },
+      "first_source_ns": 1169703155107500,
+      "last_source_ns": 1169708157055000,
+      "final_records": {
+        "encoder_outcome": {
+          "kind": "encoder_outcome",
+          "admitted_count": 303,
+          "input_submitted_count": 303,
+          "capacity_drop_count": 0,
+          "selected_real_count": 303,
+          "same_slot_omission_count": 0,
+          "encoded_frame_count": 303,
+          "duplicate_frame_count": 0,
+          "final_input_group_id": 302,
+          "cutoff_host_ns": 1169708176576700,
+          "exit_code": 0,
+          "eof_sent": true,
+          "drain_confirmed": true
+        },
+        "completion": {
+          "kind": "completion",
+          "cutoff_host_ns": 1169708176576700,
+          "last_group_id": 302,
+          "state_count": 303,
+          "submission_attempt_count": 1212,
+          "capture_admission_count": 303,
+          "capture_drop_count": 0,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      },
+      "completion_present": true
+    }
+  },
+  "recording_metrics": [
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "45d41217-8725-419e-af1c-19c387d99b15",
+      "session_id": "77b22f6e-bc8e-4def-abfe-dad9a68b1b49",
+      "trial_id": "454eabdf-896b-467c-8955-f3dbde378352",
+      "configuration_revision": 2,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 3544,
+            "total": 1972088300,
+            "max": 15090000
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 3544,
+            "total": 9218344800,
+            "max": 68999100
+          },
+          "queue_wait": {
+            "count": 3544,
+            "total": 2609908300,
+            "max": 51347700
+          },
+          "normalization": {
+            "count": 3544,
+            "total": 2195200,
+            "max": 23700
+          },
+          "pipe_write": {
+            "count": 3544,
+            "total": 7656275300,
+            "max": 32694300
+          },
+          "frame_input": {
+            "count": 3544,
+            "total": 7656275300,
+            "max": 32694300
+          },
+          "slot_hold": {
+            "count": 3544,
+            "total": 19576011500,
+            "max": 153084000
+          }
+        },
+        "worst_stage_samples": {
+          "readback_poll_ready": {
+            "group_id": 2,
+            "start_monotonic_ns": 1169555940570800,
+            "end_monotonic_ns": 1169555955660800,
+            "elapsed_ns": 15090000
+          },
+          "capture_ready": {
+            "group_id": 2200,
+            "start_monotonic_ns": 1169593070892100,
+            "end_monotonic_ns": 1169593139891200,
+            "elapsed_ns": 68999100
+          },
+          "queue_wait": {
+            "group_id": 2200,
+            "start_monotonic_ns": 1169593139891200,
+            "end_monotonic_ns": 1169593191238900,
+            "elapsed_ns": 51347700
+          },
+          "pipe_write": {
+            "group_id": 2200,
+            "start_monotonic_ns": 1169593191256900,
+            "end_monotonic_ns": 1169593223951200,
+            "video_frame_index": 2200,
+            "elapsed_ns": 32694300
+          },
+          "frame_input": {
+            "group_id": 2200,
+            "video_frame_index": 2200,
+            "start_monotonic_ns": 1169593191256900,
+            "write_attempts": 1,
+            "zero_progress_writes": 0,
+            "end_monotonic_ns": 1169593223951200,
+            "elapsed_ns": 32694300
+          },
+          "slot_hold": {
+            "group_id": 2200,
+            "start_monotonic_ns": 1169593070892100,
+            "end_monotonic_ns": 1169593223976100,
+            "elapsed_ns": 153084000
+          },
+          "normalization": {
+            "group_id": 3414,
+            "video_frame_index": 3414,
+            "start_monotonic_ns": 1169613442171700,
+            "end_monotonic_ns": 1169613442195400,
+            "elapsed_ns": 23700
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 2,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 0,
+        "submitted_bytes": 13064601600,
+        "cancelled_captures": 0
+      }
+    },
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "45d41217-8725-419e-af1c-19c387d99b15",
+      "session_id": "731246bf-d371-493e-bb73-6c57174fc083",
+      "trial_id": "5d000a83-387e-4aac-aa35-339d3533a4df",
+      "configuration_revision": 4,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 3602,
+            "total": 2061809800,
+            "max": 1533600
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 3602,
+            "total": 9223152200,
+            "max": 18453300
+          },
+          "queue_wait": {
+            "count": 3602,
+            "total": 2180353900,
+            "max": 115245800
+          },
+          "normalization": {
+            "count": 3602,
+            "total": 2561000,
+            "max": 58900
+          },
+          "pipe_write": {
+            "count": 3621,
+            "total": 4636279600,
+            "max": 3690000
+          },
+          "frame_input": {
+            "count": 3602,
+            "total": 4756753000,
+            "max": 115839200
+          },
+          "slot_hold": {
+            "count": 3602,
+            "total": 16269850500,
+            "max": 122710500
+          }
+        },
+        "worst_stage_samples": {
+          "frame_input": {
+            "group_id": 2,
+            "video_frame_index": 2,
+            "start_monotonic_ns": 1169631955437900,
+            "write_attempts": 19,
+            "zero_progress_writes": 18,
+            "end_monotonic_ns": 1169632071277100,
+            "elapsed_ns": 115839200
+          },
+          "slot_hold": {
+            "group_id": 2,
+            "start_monotonic_ns": 1169631948588400,
+            "end_monotonic_ns": 1169632071298900,
+            "elapsed_ns": 122710500
+          },
+          "queue_wait": {
+            "group_id": 3,
+            "start_monotonic_ns": 1169631956475200,
+            "end_monotonic_ns": 1169632071721000,
+            "elapsed_ns": 115245800
+          },
+          "pipe_write": {
+            "group_id": 218,
+            "start_monotonic_ns": 1169635543511200,
+            "end_monotonic_ns": 1169635547201200,
+            "video_frame_index": 218,
+            "elapsed_ns": 3690000
+          },
+          "readback_poll_ready": {
+            "group_id": 883,
+            "start_monotonic_ns": 1169646625049900,
+            "end_monotonic_ns": 1169646626583500,
+            "elapsed_ns": 1533600
+          },
+          "normalization": {
+            "group_id": 3159,
+            "video_frame_index": 3159,
+            "start_monotonic_ns": 1169684558169800,
+            "end_monotonic_ns": 1169684558228700,
+            "elapsed_ns": 58900
+          },
+          "capture_ready": {
+            "group_id": 3601,
+            "start_monotonic_ns": 1169691922441200,
+            "end_monotonic_ns": 1169691940894500,
+            "elapsed_ns": 18453300
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 8,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 19,
+        "submitted_bytes": 13278412800,
+        "cancelled_captures": 0
+      }
+    },
+    {
+      "event": "recording_metrics",
+      "outcome": "recording_closed",
+      "process_role": "visual_stimulus_renderer",
+      "process_generation": "45d41217-8725-419e-af1c-19c387d99b15",
+      "session_id": "62f310eb-89ac-432e-b534-456144351d9a",
+      "trial_id": "217449f8-a415-4d6f-9532-9e5d4d58eeb7",
+      "configuration_revision": 6,
+      "metrics": {
+        "stages_ns": {
+          "readback_poll_ready": {
+            "count": 303,
+            "total": 201919800,
+            "max": 1459000
+          },
+          "readback_poll_pending": {
+            "count": 0,
+            "total": 0,
+            "max": 0
+          },
+          "capture_ready": {
+            "count": 303,
+            "total": 992069700,
+            "max": 51496000
+          },
+          "queue_wait": {
+            "count": 303,
+            "total": 826252900,
+            "max": 120460300
+          },
+          "normalization": {
+            "count": 303,
+            "total": 242400,
+            "max": 3700
+          },
+          "pipe_write": {
+            "count": 329,
+            "total": 441359900,
+            "max": 2084400
+          },
+          "frame_input": {
+            "count": 303,
+            "total": 564287400,
+            "max": 124726500
+          },
+          "slot_hold": {
+            "count": 303,
+            "total": 2392753600,
+            "max": 127687800
+          }
+        },
+        "worst_stage_samples": {
+          "frame_input": {
+            "group_id": 2,
+            "video_frame_index": 2,
+            "start_monotonic_ns": 1169703196448200,
+            "write_attempts": 27,
+            "zero_progress_writes": 26,
+            "end_monotonic_ns": 1169703321174700,
+            "elapsed_ns": 124726500
+          },
+          "slot_hold": {
+            "group_id": 2,
+            "start_monotonic_ns": 1169703193510300,
+            "end_monotonic_ns": 1169703321198100,
+            "elapsed_ns": 127687800
+          },
+          "queue_wait": {
+            "group_id": 3,
+            "start_monotonic_ns": 1169703201273600,
+            "end_monotonic_ns": 1169703321733900,
+            "elapsed_ns": 120460300
+          },
+          "readback_poll_ready": {
+            "group_id": 143,
+            "start_monotonic_ns": 1169705527237200,
+            "end_monotonic_ns": 1169705528696200,
+            "elapsed_ns": 1459000
+          },
+          "pipe_write": {
+            "group_id": 155,
+            "start_monotonic_ns": 1169705727551400,
+            "end_monotonic_ns": 1169705729635800,
+            "video_frame_index": 155,
+            "elapsed_ns": 2084400
+          },
+          "normalization": {
+            "group_id": 185,
+            "video_frame_index": 185,
+            "start_monotonic_ns": 1169706226595500,
+            "end_monotonic_ns": 1169706226599200,
+            "elapsed_ns": 3700
+          },
+          "capture_ready": {
+            "group_id": 302,
+            "start_monotonic_ns": 1169708174783400,
+            "end_monotonic_ns": 1169708226279400,
+            "elapsed_ns": 51496000
+          }
+        },
+        "unfinished_frame_input": null,
+        "peak_capture_slots": 9,
+        "active_capture_slots": 0,
+        "queued_captures": 0,
+        "zero_progress_writes": 26,
+        "submitted_bytes": 1116979200,
+        "cancelled_captures": 0
+      }
+    }
+  ],
+  "errors": []
+}

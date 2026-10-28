@@ -370,7 +370,6 @@ class RendererEngine:
                 live.advance(boundary_host_ns)
             retain_shared_grating_phase(
                 self._state.instances,
-                self._prepared.artifact.display.geometry,
                 boundary_host_ns,
             )
             next_epoch = (
@@ -479,9 +478,7 @@ class RendererEngine:
                     media_selection=media_selection,
                 )
             )
-        return scene, shared_grating_snapshots(
-            tuple(snapshots), self._prepared.artifact.display.geometry
-        )
+        return scene, shared_grating_snapshots(tuple(snapshots))
 
     def _release_video_leases(self) -> None:
         for lease in self._video_leases:

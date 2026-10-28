@@ -1,0 +1,118 @@
+{
+  "threshold_ns": 500000,
+  "note": "Instrumented wall durations >=0.5ms except all GC callbacks. Nested spans overlap; Windows thread CPU clock is coarse. No optical measurement.",
+  "stages": {
+    "Context.finish": {
+      "retained_count": 44,
+      "max_ms": 9.9495
+    },
+    "LifecycleDriver.advance": {
+      "retained_count": 3603,
+      "max_ms": 34.2308
+    },
+    "ModernGLPort.capture_review_composite": {
+      "retained_count": 3562,
+      "max_ms": 4.3666
+    },
+    "ModernGLPort.poll_review_capture": {
+      "retained_count": 1961,
+      "max_ms": 1.7243
+    },
+    "ModernGLPort.present": {
+      "retained_count": 3599,
+      "max_ms": 26.5875
+    },
+    "ModernGLPort.render": {
+      "retained_count": 3599,
+      "max_ms": 9.8025
+    },
+    "ModernGLPort.select_sparse_noise": {
+      "retained_count": 194,
+      "max_ms": 1.7661
+    },
+    "ModernGLPort.service_display": {
+      "retained_count": 645,
+      "max_ms": 3.1913
+    },
+    "ModernGLSceneRenderer._apply_output": {
+      "retained_count": 3,
+      "max_ms": 0.8293
+    },
+    "ModernGLSceneRenderer._draw_scene_layers": {
+      "retained_count": 3,
+      "max_ms": 0.7022
+    },
+    "ModernGLSceneRenderer.render_group": {
+      "retained_count": 3599,
+      "max_ms": 9.7924
+    },
+    "NativeRecording.before_render": {
+      "retained_count": 2942,
+      "max_ms": 1.7554
+    },
+    "NativeRecording.rendered": {
+      "retained_count": 3582,
+      "max_ms": 4.4435
+    },
+    "NativeSparseNoise.finish": {
+      "retained_count": 1,
+      "max_ms": 22.1165
+    },
+    "NativeSparseNoise.prepare": {
+      "retained_count": 1,
+      "max_ms": 916.7184
+    },
+    "RendererEngine.render_tick": {
+      "retained_count": 3599,
+      "max_ms": 29.7742
+    },
+    "SparseNoiseProcess.send": {
+      "retained_count": 82,
+      "max_ms": 0.9361
+    },
+    "SparseNoiseRing._grant": {
+      "retained_count": 93,
+      "max_ms": 0.9608
+    },
+    "SparseNoiseRing._upload": {
+      "retained_count": 18,
+      "max_ms": 0.6597
+    },
+    "SparseNoiseRing.prefill": {
+      "retained_count": 1,
+      "max_ms": 744.964
+    },
+    "SparseNoiseRing.select": {
+      "retained_count": 194,
+      "max_ms": 1.7605
+    },
+    "SparseNoiseRing.service": {
+      "retained_count": 107,
+      "max_ms": 1.5242
+    },
+    "VertexArray.render": {
+      "retained_count": 1,
+      "max_ms": 0.7017
+    },
+    "gc0": {
+      "retained_count": 496,
+      "max_ms": 1.2724
+    },
+    "gc1": {
+      "retained_count": 45,
+      "max_ms": 1.2881
+    },
+    "glfw.make_context_current": {
+      "retained_count": 176,
+      "max_ms": 1.4187
+    },
+    "glfw.poll_events": {
+      "retained_count": 616,
+      "max_ms": 3.1588
+    },
+    "glfw.swap_buffers": {
+      "retained_count": 4881,
+      "max_ms": 23.5209
+    }
+  }
+}

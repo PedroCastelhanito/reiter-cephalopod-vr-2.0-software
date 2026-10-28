@@ -62,6 +62,7 @@ def prepare_resources(
     codec_threads: int = 1,
     path_overrides: Mapping[str, Path] | None = None,
     defer_images: bool = False,
+    combine_image_validation: bool = False,
     component_provenance: tuple[ComponentProvenance, ...] | None = None,
     validated_images: dict[str, tuple[ImageSource, ImageInfo]] | None = None,
     image_progress: Callable[[int, int], None] | None = None,
@@ -77,6 +78,9 @@ def prepare_resources(
         raise ValueError("video and GLB preparation limits must be positive")
     factory = source_factory or ProtectedWindowsSource
     validation_cache = {} if validated_images is None else validated_images
+    from .image_validation_index import ImageValidationIndex
+
+    validation_index = ImageValidationIndex(assets_root) if defer_images else None
     new_validation_keys: list[str] = []
     source_set = prepare_assets(
         program,
@@ -283,6 +287,29 @@ def prepare_resources(
                     dependency_source=dependency_source,
                 )
                 if validation_key not in validation_cache:
+                    cached_info = (
+                        validation_index.get(validation_key)
+                        if validation_index is not None
+                        and authored.profile not in TEXTURE_RECIPE_PROFILES
+                        else None
+                    )
+                    deferred = (
+                        combine_image_validation
+                        and authored.profile
+                        in ("png_uint_v1", "tiff_uint_v1", "jpeg8_v1")
+                        and cached_info is None
+                    )
+
+                    def publish(
+                        info: ImageInfo,
+                        key: str = validation_key,
+                        path: str = authored.logical_path,
+                    ) -> None:
+                        if validation_index is not None:
+                            validation_index.put(key, path, info)
+                        if metrics is not None:
+                            metrics.images_validated += 1
+
                     validation_started = time.perf_counter()
                     validation_cache[validation_key] = validate_image_source(
                         authored,
@@ -294,13 +321,31 @@ def prepare_resources(
                         display=display,
                         dependency_asset=dependency_asset,
                         dependency_source=dependency_source,
+                        cached_info=cached_info,
+                        defer_validation=deferred,
+                        validated=publish,
                     )
+                    if (
+                        validation_index is not None
+                        and authored.profile not in TEXTURE_RECIPE_PROFILES
+                        and not deferred
+                    ):
+                        validation_index.put(
+                            validation_key,
+                            authored.logical_path,
+                            validation_cache[validation_key][1],
+                        )
                     new_validation_keys.append(validation_key)
                     if metrics is not None:
                         metrics.image_seconds += (
                             time.perf_counter() - validation_started
                         )
-                        metrics.images_validated += 1
+                        if deferred:
+                            metrics.images_inspected += 1
+                        elif cached_info is None:
+                            metrics.images_validated += 1
+                        else:
+                            metrics.validations_reused += 1
                 elif metrics is not None:
                     metrics.validations_reused += 1
                 image_source, info = validation_cache[validation_key]
@@ -531,6 +576,22 @@ def prepare_resources(
         from cephvr.visual_stimulus.resources.uniforms import validate_image_layouts
 
         validate_image_layouts(layouts, display, prepared_content)
+        if validation_index is not None:
+            validation_index.save()
+        if combine_image_validation and validation_index is not None:
+            from dataclasses import replace
+
+            for asset_id, image_entry in tuple(image_sources.items()):
+                if image_entry.finish_validation is not None:
+
+                    def finish(source: ImageSource = image_entry) -> None:
+                        assert source.finish_validation is not None
+                        source.finish_validation()
+                        validation_index.save()
+
+                    image_sources[asset_id] = replace(
+                        image_entry, finish_validation=finish
+                    )
         return PreparedResourceBundle(
             source_set,
             manifest,

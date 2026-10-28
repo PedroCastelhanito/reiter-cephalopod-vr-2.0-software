@@ -1,0 +1,25 @@
+Full protected decode/conversion/output validation: 25/600; elapsed 5.4s
+Full protected decode/conversion/output validation: 50/600; elapsed 11.0s
+Full protected decode/conversion/output validation: 75/600; elapsed 16.4s
+Full protected decode/conversion/output validation: 100/600; elapsed 21.7s
+Full protected decode/conversion/output validation: 125/600; elapsed 27.1s
+Full protected decode/conversion/output validation: 150/600; elapsed 32.6s
+Full protected decode/conversion/output validation: 175/600; elapsed 38.2s
+Full protected decode/conversion/output validation: 200/600; elapsed 43.3s
+Full protected decode/conversion/output validation: 225/600; elapsed 48.7s
+Full protected decode/conversion/output validation: 250/600; elapsed 53.9s
+Full protected decode/conversion/output validation: 275/600; elapsed 59.2s
+Full protected decode/conversion/output validation: 300/600; elapsed 64.8s
+Full protected decode/conversion/output validation: 325/600; elapsed 70.3s
+Full protected decode/conversion/output validation: 350/600; elapsed 75.9s
+Full protected decode/conversion/output validation: 375/600; elapsed 81.1s
+Full protected decode/conversion/output validation: 400/600; elapsed 86.5s
+Full protected decode/conversion/output validation: 425/600; elapsed 92.0s
+Full protected decode/conversion/output validation: 450/600; elapsed 97.5s
+Full protected decode/conversion/output validation: 475/600; elapsed 103.1s
+Full protected decode/conversion/output validation: 500/600; elapsed 108.5s
+Full protected decode/conversion/output validation: 525/600; elapsed 114.3s
+Full protected decode/conversion/output validation: 550/600; elapsed 119.7s
+Full protected decode/conversion/output validation: 575/600; elapsed 125.4s
+Full protected decode/conversion/output validation: 600/600; elapsed 130.6s
+All600 source validations pass; maximum source reservation 1499265784

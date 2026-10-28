@@ -387,3 +387,16 @@ def test_preview_pacing_matches_declared_policy():
     root = Path(__file__).resolve().parents[2]
     policy = tomllib.loads((root / "contracts/policy/gui_policy.toml").read_text())
     assert PreviewPacer().period_ns * policy["preview"]["max_display_hz"] == 1e9
+
+
+def test_setup_inactivity_and_dynamic_resource_deadline():
+    from cephvr.shared.deadlines import SetupInactivity
+
+    wait = SetupInactivity(100, 100)
+    assert wait.advance(1, "Images: 1/3", 100)  # Inclusive ingress cutoff.
+    assert wait.deadline_ns == 200
+    assert remaining_seconds(lambda: wait.deadline_ns, clock=lambda: 150) == 50 / 1e9
+    assert not wait.advance(1, "Images: 2/3", 150)
+    assert not wait.advance(2, "Images: 1/3", 150)
+    assert not wait.advance(3, "Images: 3/3", 201)
+    assert wait.deadline_ns == 200

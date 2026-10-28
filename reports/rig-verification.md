@@ -1,5 +1,87 @@
 # Rig verification — outstanding checks
 
+<a id="setup-inactivity"></a>
+- [ ] [controller] [shared] [visual_stimulus] Native600-image healthy Setup now passes
+  beyond180s (312.52s), including publication/Ready and truthful cleanup. Remaining:
+  in authorized fault tests stall one dispatched backend while another progresses;
+  only its own updates may renew its allowance, with bounded recovery/cleanup.
+  Preserve independent heartbeat, device-command and persistence limits.
+  [Native assessment](visual-stimulus-evidence-2026-10-28/setup-optimization/crop-batch/assessment.json).
+  Combined camera confirmation has a separate [deadline concern](acquisition.md#setup-confirmation-deadline--2026-10-28).
+
+<a id="cropped-image-presentation"></a>
+  Accelerated-provider repair verified:600-image cold/warm Setup183.5/139.9s,
+  600 cache hits and90.9s projector-only playback/cleanup/restoration pass;~60Hz,
+  zero holds/zero>50ms gaps (was224–225/output). One31ms gap/output remains.
+  Continue20min/full-hour/combined-load and optical acceptance; short run closes
+  the recurring hash-stall regression only.
+  [Attribution](visual_stimulus.md#image-pipeline-audit--2026-10-28).
+- [ ] [visual_stimulus] [acquisition] Complete the full-hour600-image protocol under
+  combined camera/MCU load after the confirmation-deadline concern is resolved;
+  verify physical projection/optical timing and full-workload evidence. Current
+  local600-image/four-mapping pixel equality is exact; native projector-only240s
+  playback with16-image batches, two-epoch lookahead and Stop cleanup passes.
+  38 data files/35,400 shared uses and deletion are verified. Window capture lacked
+  app approval; no visual/optical acceptance or per-frame timing claimed.
+  [Current assessment](visual_stimulus.md#high-resolution-presentation-options--2026-10-28).
+
+<a id="linked-grating-corner-phase"></a>
+- [ ] [gui] [visual_stimulus] After full restart/fresh Setup with current policy33, use the
+  saved Grating protocol to verify the approved full-screen local pattern on every
+  linked projector: same local bar angle, physical period and signed phase drift,
+  no origin point, horizon or stimulus-driven uncovered areas. Check all eight
+  random orientations0..315 in45-degree steps, full usable-screen corners, long
+  elapsed drift, reference/subset choices and unlink transitions. Phase is shared
+  at screen centres; physical corner stitching is not promised. Policy32 rig result
+  was rejected for direction pairs and partial coverage; it is not acceptance.
+  Preserve measured screen geometry, saved flips and optical timing limitations.
+  [Current local implementation/evidence](visual_stimulus.md#linked-grating-orientation-investigation--2026-10-28).
+
+<a id="image-cpu-capacity"></a>
+- [ ] [visual_stimulus] Reload the updated saved texture-presentation protocol,
+  Apply and perform fresh Setup with CPU2GiB/GPU4GiB. Verify all ten ALDER images
+  accept the owner-selected linear overrides, graphics/resource admission and
+  truthful Cleanup. Preserve original timing, PNG bytes and physical luminance
+  acceptance limits. [Source validation and backup](visual_stimulus.md#image-validation-cpu-capacity--2026-10-28).
+  Oct28 native Apply succeeds:10/10 validation,8/8 initial uploads and memory
+  finalization complete, then MCU PING206.031ms fails overall Setup at output
+  resolution. CancelSetup/Configuration cleanup confirmed. Final Ready remains
+  pending MCU latency repair; do not repeat completed image validation independently.
+  Latest saved revision imports600 ALDER images; all600 now have verified linear
+  overrides and pass source validation under2GiB. After full restart for500ms MCU/
+  1050ms Stopped defaults, load/apply this600-image revision for integrated Setup;
+  Native600-image projector-only Setup/240s playback/cleanup now pass; integrated
+  camera/MCU acceptance remains open above.
+
+<a id="mcu-validation-starvation"></a>
+- [ ] [controller] [visual_stimulus] [acquisition] After full normal restart with
+  streamed semantic validation, use the supplied texture-presentation protocol for
+  bounded Setup/Cancel and verify accepted500ms MCU acknowledgements/1,050ms
+  Stopped allowance, camera preparation,
+  truthful cleanup and retained failure evidence. Capture concurrent GC/serial
+  timing if delays recur; no automatic retries or deadline relaxation. Preserve
+  user configuration and do not start the full trial for this check.
+  Oct28 one native attempt after streamed validation still fails PING206.031ms/
+  199.983ms; CancelSetup confirms cleanup. Driver/scheduling attribution remains
+  open; [retained native evidence](visual-stimulus-evidence-2026-10-28/image-cpu-capacity/native-setup/context.md).
+  [Local reproduction/repair](runtime.md#setup-watchdog-and-secondary-renderer-failure--2026-10-28).
+
+<a id="unprepared-stimulus-cleanup"></a>
+- [ ] [visual_stimulus] [acquisition] After normal relaunch, verify camera Setup
+  failure before Visual Stimulus Setup after a completed prior session: accepted
+  new-session revision-zero empty catalogue and truthful Cleanup, no secondary
+  renderer exit, then corrected configuration permits fresh Setup. Preserve MCU
+  deadlines; serial latency resolution is separate. [Local repair](visual_stimulus.md#cleanup-before-setup-catalogue--2026-10-28).
+
+<a id="projector-window-visibility"></a>
+- [ ] [gui] [visual_stimulus] After full application relaunch, verify all assigned
+  projector outputs have named taskbar/switcher entries and correct fullscreen
+  geometry. Close/reopen calibration with changed output size to exercise recreation;
+  use full application shutdown and confirm all output windows and shell entries
+  disappear. Dashboard-only closure leaves the backend running under E08. Preserve
+  any recurring interruption IDENTITY evidence separately. See the
+  [assessment](visual_stimulus.md#projector-shell-icons---2026-10-27).
+
 <a id="photodiode-mode-selector"></a>
 - [ ] [gui] [visual_stimulus] After normal relaunch verify Devices/Projectors/Sync
   Photodiode mode save/load and placement with actual assigned outputs. Measure
@@ -41,11 +123,20 @@
   [review follow-up](visual_stimulus.md#stimulus-authoring-review-follow-up--2026-10-27).
 
 <a id="sparse-noise-presentation"></a>
+- Oct28 bounded native evidence: repaired writable-buffer helper launch; four-output
+  60s/200-pattern-per-screen run completes, all800 hashes match, no residency holds,
+  full video decode/count agreement and exact configuration restoration;5s Abort closes
+  helper/encoder and303 recorded frames with exact restoration. Median cadence
+  16.666ms but max298.802ms (166.708ms after1s). Follow-up traced60s and clean180s
+  do not reproduce these gaps (max34.269/33.466ms); clean180s checks2400 hashes and
+  10,799 decoded frames, no holds/drops. Instrumented prefill744.964ms before Ready.
+  Original gap attribution and optical/long-sequence/combined-load acceptance remain
+  open. See [current assessment](visual_stimulus.md#native-rig-validation--2026-10-28).
 - [ ] [gui] [visual_stimulus] After normal relaunch, add Sparse noise layers on each
   enabled projector, edit parameters inline (no Apply), use New seed, save and reopen
   the protocol, and confirm the preview pattern changes with the seed. Offscreen GUI
   checks pass; native GUI is not implied.
-- [ ] [visual_stimulus] [supervisor] Run a trial with four 300 ms sparse layers at the
+- [ ] [visual_stimulus] [supervisor] Run a 300 ms epoch with four sparse layers repeated 200 times at the
   owner's grid (2 mm squares) and check: the `visual_stimulus_sparse_noise` helper is
   planned, contained, confirmed and resumed per trial; PrepareTrial reaches Ready with
   the 100-pattern window inside its deadline (record helper startup and prefill time);

@@ -1,0 +1,8 @@
+{
+  "stopped_by_owner": true,
+  "cleanup_confirmed": true,
+  "configuration_restored": true,
+  "remaining_crop_folders": [],
+  "twenty_minute_acceptance": false,
+  "finding": "Recording-off pooled/paced run still has 143 gaps >50ms per output, max110.9178ms; zero residency holds."
+}

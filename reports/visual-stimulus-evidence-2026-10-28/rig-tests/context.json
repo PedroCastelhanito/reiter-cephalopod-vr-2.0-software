@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "e4dd8f2694aa075380fe6711a884fe5894763c6f",
+  "python": "3.11.15",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "repair": "repair.patch; only production change is writable memoryview for sparse helper command writes",
+  "commands": [
+    "python -m pytest tests/visual_stimulus tests/generate_stimulus tests/supervisor -q -m \"not rig\" --timeout=60 --junitxml=pytest-native.xml",
+    "python -m pytest tests/gui/test_stimulus_authoring.py tests/gui/test_dashboard.py -q -k \"sparse or noise or preset or layer or media_family or grating\" --timeout=60 --junitxml=gui.xml",
+    "python -m pytest tests/visual_stimulus tests/platform/test_byte_stream.py -q --timeout=60 --junitxml=pytest-fixed.xml",
+    "python -m unittest discover -s contracts/visual_stimulus/tests -p test_*.py",
+    "python contracts/visual_stimulus/generate_schemas.py --check",
+    "python -m mypy --platform win32 src/cephvr/visual_stimulus",
+    "python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+    "python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+    "python tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "execution": "All python commands use repository .venv/Scripts/python.exe. Native access used for loopback and Windows pipe/process checks.",
+  "live_runs": [
+    {
+      "directory": "sparse-60s",
+      "harness": "native_sparse.py",
+      "source": "HEAD before repair",
+      "outcome": "PrepareTrial failure: immutable buffer; auto shutdown, settings unchanged"
+    },
+    {
+      "directory": "grating-60s",
+      "harness": "native_grating.py",
+      "outcome": "Invalid angular test fixture at5s; Stopped lifecycle evidence rejected; shutdown and non-destructive recovery"
+    },
+    {
+      "directory": "sparse-fixed-60s",
+      "harness": "native_sparse.py",
+      "outcome": "Preflight refused pending recovery prompt; no candidate applied"
+    },
+    {
+      "directory": "sparse-fixed-run",
+      "harness": "native_sparse.py",
+      "outcome": "60s complete; restored;800 matching hashes; no holds; timing gaps retained"
+    },
+    {
+      "directory": "physical-grating-60s",
+      "harness": "native_physical_grating.py",
+      "outcome": "60s complete; restored; includes20s physical gratings"
+    },
+    {
+      "directory": "sparse-abort",
+      "harness": "native_sparse_abort.py",
+      "outcome": "5s Abort confirmed; harness Ended-only wait times out(exit1), finally restores exact original configuration;303 decoded frames,68 matching hashes; no helper remains"
+    }
+  ],
+  "limits": [
+    "No optical timing or physical size measurements",
+    "No camera, Tracking or SpikeGLX load",
+    "No thousands-of-pattern endurance",
+    "No isolated prefill instrumentation",
+    "Desktop capture returned non-target foreground content; no manual GUI visual acceptance claimed"
+  ]
+}

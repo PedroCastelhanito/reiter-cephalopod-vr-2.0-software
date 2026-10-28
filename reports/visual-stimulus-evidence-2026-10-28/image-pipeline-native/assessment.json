@@ -1,0 +1,189 @@
+{
+  "date": "2026-10-28",
+  "scope": "Four projectors,600-image saved Fold protocol; acquisition/tracking/synchronization disabled,review recording off,preview hidden. Original configuration restored.",
+  "setup": [
+    {
+      "attempt": 1,
+      "seconds": 214.2229168000631,
+      "result": {
+        "command_id": "b01fe480-a8c0-4711-907e-f9623299840b",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    },
+    {
+      "attempt": 2,
+      "seconds": 192.55279280012473,
+      "result": {
+        "command_id": "ec165d7e-9ea8-4843-a016-e5ac0f33cb92",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      }
+    }
+  ],
+  "playback_seconds": 90.8877567,
+  "cleanup_confirmed": true,
+  "configuration_restored": true,
+  "remaining_crop_folders": [],
+  "stages": {
+    "render": {
+      "draw": {
+        "count": 5032,
+        "total_ms": 4190.0153,
+        "max_ms": 12.3158
+      },
+      "swap:calibration_front": {
+        "count": 5032,
+        "total_ms": 20540.5861,
+        "max_ms": 85.9917
+      },
+      "finish:calibration_front": {
+        "count": 5032,
+        "total_ms": 702.0484,
+        "max_ms": 5.0772
+      },
+      "swap:calibration_left": {
+        "count": 5032,
+        "total_ms": 18593.2993,
+        "max_ms": 99.5488
+      },
+      "finish:calibration_left": {
+        "count": 5032,
+        "total_ms": 642.7497,
+        "max_ms": 29.376
+      },
+      "swap:calibration_right": {
+        "count": 5032,
+        "total_ms": 16895.3216,
+        "max_ms": 97.5737
+      },
+      "finish:calibration_right": {
+        "count": 5032,
+        "total_ms": 322.243,
+        "max_ms": 2.9363
+      },
+      "swap:calibration_bottom": {
+        "count": 5032,
+        "total_ms": 22797.0209,
+        "max_ms": 90.9736
+      },
+      "finish:calibration_bottom": {
+        "count": 5032,
+        "total_ms": 659.6487,
+        "max_ms": 14.4396
+      },
+      "result_release": {
+        "count": 224,
+        "total_ms": 3.9394,
+        "max_ms": 0.0525
+      }
+    },
+    "gpu": {
+      "activation": {
+        "count": 11265,
+        "total_ms": 126.4385,
+        "max_ms": 0.4413
+      },
+      "staging_write": {
+        "count": 9408,
+        "total_ms": 534.0184,
+        "max_ms": 0.3488
+      },
+      "texture_write": {
+        "count": 9408,
+        "total_ms": 283.2536,
+        "max_ms": 2.2925
+      },
+      "upload": {
+        "count": 2916,
+        "total_ms": 1317.8403,
+        "max_ms": 3.0626
+      },
+      "fence": {
+        "count": 447,
+        "total_ms": 112.0102,
+        "max_ms": 0.8427
+      },
+      "ready": {
+        "count": 447,
+        "total_ms": 61.4714,
+        "max_ms": 0.4828
+      }
+    },
+    "loader": {
+      "bundle_read": {
+        "count": 225,
+        "total_ms": 1256.1045,
+        "max_ms": 14.1993
+      },
+      "bundle_hash": {
+        "count": 225,
+        "total_ms": 17333.3988,
+        "max_ms": 95.5045
+      }
+    }
+  },
+  "presentation": [
+    "Presentation timing trial=e4fa83f1-f675-431a-8c2d-ac1fd97c5b3d output=calibration_front returned=5032 first_ns=1196633796821500 last_ns=1196724586065300 max_gap_ms=105.169000 gaps_over_25ms=252 gaps_over_50ms=224",
+    "Presentation timing trial=e4fa83f1-f675-431a-8c2d-ac1fd97c5b3d output=calibration_left returned=5032 first_ns=1196633799477400 last_ns=1196724586388600 max_gap_ms=103.749800 gaps_over_25ms=246 gaps_over_50ms=224",
+    "Presentation timing trial=e4fa83f1-f675-431a-8c2d-ac1fd97c5b3d output=calibration_right returned=5032 first_ns=1196633802514300 last_ns=1196724668265600 max_gap_ms=104.047900 gaps_over_25ms=244 gaps_over_50ms=225",
+    "Presentation timing trial=e4fa83f1-f675-431a-8c2d-ac1fd97c5b3d output=calibration_bottom returned=5032 first_ns=1196633804225100 last_ns=1196724669419800 max_gap_ms=104.170800 gaps_over_25ms=254 gaps_over_50ms=225"
+  ],
+  "hash_probe": {
+    "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-renderer.exe",
+    "results": [
+      {
+        "name": "managed_default",
+        "provider": "_sha256",
+        "hash_ms": [
+          75.5357,
+          75.6257,
+          75.6892,
+          75.4553,
+          76.2591,
+          76.256,
+          76.4971,
+          76.3795,
+          77.2488,
+          75.6458,
+          76.9524,
+          76.7906
+        ],
+        "max_observer_pause_ms": 78.6911,
+        "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+      },
+      {
+        "name": "explicit_openssl",
+        "provider": "_hashlib",
+        "hash_ms": [
+          15.4662,
+          14.7403,
+          15.6085,
+          14.972,
+          15.155,
+          15.2664,
+          15.1454,
+          15.1097,
+          15.0904,
+          15.4783,
+          15.4732,
+          15.2925
+        ],
+        "max_observer_pause_ms": 1.8229,
+        "digest": "7a9eabd26768041316624d9d63b3dd57305e4e342fbd2736b28713b2290acc15"
+      }
+    ]
+  },
+  "cache": {
+    "tested_renderer_validator": "32e95961a9724d32367407523b88a5b40407614487ecd826b46e239b125e9695",
+    "current_disk_validator": "8f4bbd4f94b29fdd142cd33335ee1d8949e0cc8dfd7547a95a0793dd2f1c5886",
+    "scope": "Offline content-key/fact verification for completed native run; later source edits require cache invalidation",
+    "hits": 600,
+    "count": 600
+  },
+  "limits": "Historical312.52s comparison is not a controlled baseline. Review-followup edits occurred on disk during the native run; tested validator32e959..., current8f4bbb... invalidates the index correctly. Content-key/fact verification600/600 is scoped to tested validator. No patched native playback, optical simultaneity,20-minute/full-hour or combined-load acceptance."
+}

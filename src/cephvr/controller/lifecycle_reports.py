@@ -311,7 +311,8 @@ class LifecycleReports:
         allow_interrupted: bool = False,
     ) -> pb.ReportReceipt | None:
         within_ready_gate = (
-            ingress_ns <= attempt.setup_deadline_ns
+            ingress_ns <= attempt.setup_cutoff(name)
+            and (not attempt.setup_interval_ns or name in attempt.setup_waits)
             or attempt.recovering_evidence == "setup_ready"
             and ingress_ns <= attempt.recovery_deadline_ns
         )

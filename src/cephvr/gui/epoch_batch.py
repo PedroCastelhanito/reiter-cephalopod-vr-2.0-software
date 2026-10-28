@@ -11,7 +11,7 @@ from cephvr.gui.rig_parameter_edits import (
 )
 from cephvr.gui.rig_parameter_edits import patch_setting as patch_setting
 from cephvr.gui.stimulus_columns import is_sparse_noise
-from cephvr.gui.stimulus_fades import retime_fades
+from cephvr.gui.stimulus_fades import retime_epoch_settings
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
     resolve_stimulus_file,
@@ -105,7 +105,7 @@ def apply_batch(
         if "Duration" in changes:
             old = node["duration"]
             if old["kind"] == "fixed":
-                retime_fades(
+                retime_epoch_settings(
                     node["settings"],
                     Time.model_validate(old["duration"]).ns(),
                     Time(seconds=changes["Duration"]).ns(),

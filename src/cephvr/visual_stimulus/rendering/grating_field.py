@@ -3,10 +3,8 @@
 from dataclasses import replace
 
 from cephvr.visual_stimulus.config.grating_field import (
-    SurfaceUnfolder,
     field_on_surface,
 )
-from cephvr.visual_stimulus.config.models.display_profile import Geometry
 from cephvr.visual_stimulus.config.models.program_model import (
     Constant,
     Grating,
@@ -18,21 +16,29 @@ from .types import InstanceSnapshot
 
 
 def shared_grating_snapshots(
-    snapshots: tuple[InstanceSnapshot, ...], geometry: Geometry
+    snapshots: tuple[InstanceSnapshot, ...],
 ) -> tuple[InstanceSnapshot, ...]:
     by_id = {s.instance_id: s for s in snapshots}
-    unfolder = SurfaceUnfolder(geometry)
+    references = {
+        s.settings.linked_to
+        for s in snapshots
+        if isinstance(s.settings, TextureSettings)
+        and s.settings.grating
+        and s.settings.linked_to is not None
+    }
+    if not references:
+        return snapshots
     result = []
     for snapshot in snapshots:
         target = snapshot.settings
         if (
             not isinstance(target, TextureSettings)
             or not target.grating
-            or target.linked_to is None
+            or (target.linked_to is None and snapshot.instance_id not in references)
         ):
             result.append(snapshot)
             continue
-        source = by_id[target.linked_to]
+        source = by_id[target.linked_to or snapshot.instance_id]
         settings = source.settings
         assert isinstance(settings, TextureSettings) and isinstance(
             settings.pattern, Grating
@@ -40,9 +46,7 @@ def shared_grating_snapshots(
         source_values = {
             k: float(v) for k, v in source.state if isinstance(v, (int, float))
         }
-        frequency, rotation, phase = field_on_surface(
-            settings, source_values, target, geometry, unfolder
-        )
+        frequency, rotation, phase = field_on_surface(settings, source_values, target)
         values = dict(snapshot.state)
         values.update(
             frequency=frequency,
@@ -68,7 +72,7 @@ def shared_grating_snapshots(
 
 
 def retain_shared_grating_phase(
-    instances: dict[str, InstanceState], geometry: Geometry, now_ns: int
+    instances: dict[str, InstanceState], now_ns: int
 ) -> None:
     """Resolve the exact boundary phase before unlink/reset transitions (V07)."""
     linked = {
@@ -92,9 +96,11 @@ def retain_shared_grating_phase(
         for key, live in instances.items()
         if live.active
     )
-    for snapshot in shared_grating_snapshots(snapshots, geometry):
+    for snapshot in shared_grating_snapshots(snapshots):
         if snapshot.instance_id in linked:
-            values = dict(snapshot.state)
+            values = {
+                k: float(v) for k, v in snapshot.state if isinstance(v, (int, float))
+            }
             for name in ("x", "y", "rotation", "phase_x", "phase_y"):
                 field = instances[snapshot.instance_id].values[name]
                 value = values[name]

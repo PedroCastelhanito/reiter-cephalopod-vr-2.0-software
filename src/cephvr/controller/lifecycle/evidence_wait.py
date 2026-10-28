@@ -42,7 +42,13 @@ class EvidenceWaiter:
             async with self.lifecycle.lock:
                 if self.lifecycle.attempt is not attempt or attempt.cancel_requested:
                     raise RuntimeError("attempt retired")
-                remaining = (deadline_ns - self.clock()) / 1e9
+                setup_wait = (
+                    self.lifecycle.session.phase == pb.SESSION_PHASE_SETTING_UP
+                    and any(name not in attempt.ready for name in attempt.setup_waits)
+                    and not attempt.recovering_evidence
+                )
+                cutoff = attempt.setup_cutoff() if setup_wait else deadline_ns
+                remaining = (cutoff - self.clock()) / 1e9
                 if predicate():
                     return
                 if self.lifecycle.session.phase == pb.SESSION_PHASE_SETTING_UP:
@@ -65,12 +71,14 @@ class EvidenceWaiter:
                                 f"{outcome.failure.message}"
                             )
                 if remaining <= 0:
+                    if setup_wait:
+                        attempt.setup_timed_out = True
                     break
                 attempt.changed.clear()
             try:
                 await asyncio.wait_for(attempt.changed.wait(), remaining)
             except TimeoutError:
-                break
+                continue
         raise TimeoutError("required lifecycle evidence missing by deadline")
 
     async def wait_lifecycle_with_recovery(
@@ -100,6 +108,8 @@ class EvidenceWaiter:
             return False
         except TimeoutError as exc:
             initial_error = exc
+        if kind == "setup_ready" and attempt.setup_waits:
+            initial_deadline_ns = attempt.setup_cutoff()
         recovery_deadline_ns = initial_deadline_ns + self.limits.current.recovery_ns
         if closure_only:
             if (

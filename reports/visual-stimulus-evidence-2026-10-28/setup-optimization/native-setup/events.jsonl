@@ -1,0 +1,1 @@
+{"host_ns": 1177494769455400, "kind": "state", "value": {"phase": "SESSION_PHASE_SETTING_UP", "cleanup": false, "operations": [{"command": "InitializeDisplay", "progress": "Idle output confirmed", "complete": true}, {"command": "Setup", "progress": "Waiting for backends\u2026", "complete": false}]}}

@@ -219,3 +219,63 @@ def test_supervisor_issued_cleanup_fence_requires_exact_command() -> None:
     assert cleanup_command_fenced(report, context, supervisor_command=command)
     command.command_id = str(uuid4())
     assert not cleanup_command_fenced(report, context, supervisor_command=command)
+
+
+@pytest.mark.windows
+def test_temporary_bundle_live_owner_close_and_crash_recovery(tmp_path):
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    from cephvr.shared.temporary_bundle import (
+        TemporaryBundle,
+        recover_temporary_bundles,
+    )
+
+    root = tmp_path / "runtime"
+    bundle = TemporaryBundle(tmp_path, root=root)
+    data = bundle.add(b"pixel-data")
+    assert data.read() == b"pixel-data"
+    assert recover_temporary_bundles(root) == ()
+    assert bundle.directory.exists()
+    bundle.close()
+    assert not bundle.directory.exists()
+    code = """import os,sys,json
+from pathlib import Path
+from cephvr.shared.temporary_bundle import TemporaryBundle
+b=TemporaryBundle(Path(sys.argv[1]),root=Path(sys.argv[2]))
+b.add(b'crash-pixels')
+print(json.dumps(str(b.directory)),flush=True)
+os._exit(7)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(tmp_path), str(root)],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 7, result.stderr
+    directory = Path(json.loads(result.stdout))
+    assert [p.name for p in directory.iterdir()] == ["owner.json"]
+    assert recover_temporary_bundles(root) == ()
+    assert not directory.exists()
+
+
+@pytest.mark.windows
+def test_temporary_bundle_never_removes_unowned_content(tmp_path):
+    from cephvr.shared.temporary_bundle import (
+        TemporaryBundle,
+        recover_temporary_bundles,
+    )
+
+    root = tmp_path / "runtime"
+    bundle = TemporaryBundle(tmp_path, root=root)
+    unknown = bundle.directory / "user-file"
+    unknown.write_bytes(b"preserve")
+    with pytest.raises(OSError, match="still contains files"):
+        bundle.close()
+    assert recover_temporary_bundles(root)
+    assert unknown.read_bytes() == b"preserve"
+    unknown.unlink()
+    assert recover_temporary_bundles(root) == ()

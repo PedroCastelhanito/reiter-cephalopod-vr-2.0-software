@@ -145,12 +145,16 @@ class SceneOutputBuilder:
         trial_id = artifact.identity.trial_id
         resource_content = resources.prepared_content
         generation = artifact.identity.resource_generation
+        # Prepared samples require their crop coordinates to select the fetch shader.
         scoped_gpu_resources = {
-            f"{generation}:{resource.fingerprint.resource_id}": gpu_resources[
-                f"{generation}:{resource.fingerprint.resource_id}"
-            ]
+            resource_key: gpu_resources[resource_key]
             for resource in artifact.manifest.resources
-            if f"{generation}:{resource.fingerprint.resource_id}" in gpu_resources
+            for suffix in ("", ":crops")
+            if (
+                resource_key
+                := f"{generation}:{resource.fingerprint.resource_id}{suffix}"
+            )
+            in gpu_resources
         }
         from cephvr.visual_stimulus.resources.physical_field import validate_field_uses
 

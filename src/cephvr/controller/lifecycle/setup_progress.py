@@ -28,8 +28,16 @@ def retain_setup_progress(
         or attempt.interrupted
         or name in attempt.ready
         or operation.context.command_id in attempt.scope_results
-        or ingress_ns > attempt.setup_deadline_ns
+        or (attempt.setup_interval_ns and name not in attempt.setup_waits)
+        or attempt.setup_timed_out
+        or attempt.recovering_evidence
+        or ingress_ns > attempt.setup_cutoff(name)
     ):
         return rejected_receipt("EVIDENCE", "unexpected Setup progress")
     attempt.setup_progress[name] = operation.progress
+    wait = attempt.setup_waits.get(name)
+    if wait is not None and wait.advance(
+        operation.progress_sequence, operation.progress, ingress_ns
+    ):
+        attempt.changed.set()
     return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)

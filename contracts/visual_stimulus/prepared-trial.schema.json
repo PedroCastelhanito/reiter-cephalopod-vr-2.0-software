@@ -3675,6 +3675,148 @@
       "title": "Pose",
       "type": "object"
     },
+    "PreparedImageBundle": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "format": {
+          "const": "fold-samples-rgba32f-v1",
+          "default": "fold-samples-rgba32f-v1",
+          "title": "Format",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "byte_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Byte Count",
+          "type": "integer"
+        },
+        "crops": {
+          "items": {
+            "$ref": "#/$defs/PreparedImageCrop"
+          },
+          "title": "Crops",
+          "type": "array"
+        }
+      },
+      "required": [
+        "asset_id",
+        "sha256",
+        "byte_count",
+        "crops"
+      ],
+      "title": "PreparedImageBundle",
+      "type": "object"
+    },
+    "PreparedImageCrop": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "mapping_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Mapping Id",
+          "type": "string"
+        },
+        "x": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "X",
+          "type": "integer"
+        },
+        "y": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Y",
+          "type": "integer"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        },
+        "offset": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "target": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            }
+          ],
+          "title": "Target",
+          "type": "array"
+        },
+        "corners": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Corners",
+          "type": "array"
+        },
+        "fold": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Fold",
+          "type": "array"
+        }
+      },
+      "required": [
+        "output_id",
+        "mapping_id",
+        "x",
+        "y",
+        "width",
+        "height",
+        "offset",
+        "target",
+        "corners",
+        "fold"
+      ],
+      "title": "PreparedImageCrop",
+      "type": "object"
+    },
     "Program": {
       "additionalProperties": false,
       "properties": {
@@ -4666,12 +4808,21 @@
           "$ref": "#/$defs/SparseNoiseAppearance"
         },
         "pattern_count": {
+          "default": 1,
           "exclusiveMinimum": 0,
           "title": "Pattern Count",
           "type": "integer"
         },
         "pattern_duration": {
-          "$ref": "#/$defs/Time"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Time"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -4686,9 +4837,7 @@
         "assignments",
         "feedback",
         "kind",
-        "appearance",
-        "pattern_count",
-        "pattern_duration"
+        "appearance"
       ],
       "title": "SparseNoiseSettings",
       "type": "object"
@@ -5985,6 +6134,14 @@
         "$ref": "#/$defs/PhotometricProfile"
       },
       "title": "Photometric Calibration",
+      "type": "array"
+    },
+    "image_bundles": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PreparedImageBundle"
+      },
+      "title": "Image Bundles",
       "type": "array"
     }
   },

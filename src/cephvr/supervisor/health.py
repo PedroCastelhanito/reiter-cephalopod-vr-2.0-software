@@ -273,6 +273,11 @@ class HealthMonitor:
         return False
 
     def observe_backend_exit(self, state: wire.LaunchState, now_ns: int) -> None:
+        if state.plan.child.role == "visual_stimulus_renderer":
+            from cephvr.shared.temporary_bundle import recover_temporary_bundles
+
+            for error in recover_temporary_bundles():
+                self.warn(error)
         if self.shutdown.shutdown_request or self.shutdown.interruption:
             return
         backend = (state.plan.child.role, state.plan.child.generation)

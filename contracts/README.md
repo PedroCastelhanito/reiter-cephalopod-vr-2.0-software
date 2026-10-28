@@ -124,9 +124,9 @@ warning acknowledgement and incident handling remain separate from that claim.
 ## Message size
 
 Every gRPC client and server uses one maximum message size, `[rpc] max_message_bytes`
-in experiment_config.toml (default 16 MiB), read at process startup. The controller
+in experiment_config.toml (default 64 MiB), read at process startup. The controller
 event queue and the central-metadata writer each budget at least four maximum
-messages (defaults 64 MiB). Prepared artifacts stay with their producing backend;
+messages (defaults 256 MiB). Prepared artifacts stay with their producing backend;
 control messages carry digest/size references (for Visual Stimulus, PreparedHandle plus a compact
 planned-occurrence summary). Setup rejects a configuration or Ready report exceeding
 the limit, naming the largest items. Before committing UpdateConfiguration, size its
@@ -174,6 +174,17 @@ supplies Continue. Runtime incident prompts follow the
   carry that exact work context. Full application shutdown also works with no
   allocated session. Backend shutdown without a session still targets the exact
   process generation. Role-specific requirements are checked by the receiver.
+- Setup `OperationState.progress_sequence` increases for each meaningful work
+  update within the exact original command. A nonempty bounded `progress` message
+  and a new sequence renew only that backend's E06 inactivity allowance, using
+  receiving-authority ingress time. Duplicate/older sequences, unchanged messages,
+  late or retired work and heartbeats cannot renew it. Coordinators preserve the
+  worker sequence when mapping child to parent operations. Progress delivery is
+  confirmed before the producer relies on renewal; CPU/graphics resource checks
+  use the live cutoff. Publication gets the current allowance rather than the
+  remainder of a total Setup duration; Ready and operation completion remain
+  separately validated evidence. Advancing preparation descriptors retain their
+  existing independent report revisions and renew only on changed payloads.
 - `ScheduleTrial` admits a target only; `ReleaseTrial` must validate the same
   retained schedule before authorizing execution. Actual Started evidence is
   distinct from both acknowledgements. Stop, Finished and metadata-sync evidence

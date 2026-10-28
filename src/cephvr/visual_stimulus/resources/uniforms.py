@@ -28,8 +28,11 @@ def build_uniform_layouts(
     screen_images: dict[str, set[str]] = {}
     fold_images: dict[str, set[str]] = {}
     field_instances: set[str] = set()
+    grating_instances: set[str] = set()
     for node in _walk(program.sequence):
         for setting in epoch_settings(node) if node.kind == "epoch" else ():
+            if setting.kind == "texture" and setting.grating:
+                grating_instances.add(setting.instance_id)
             if (
                 setting.kind == "texture"
                 and setting.pattern.kind == "image_tile"
@@ -59,13 +62,7 @@ def build_uniform_layouts(
         }
     ):
         scalar_names = _SCALARS + (
-            ("grating_sharpness",)
-            if any(
-                s.instance_id == instance_id and s.kind == "texture" and s.grating
-                for node in _walk(program.sequence)
-                for s in (epoch_settings(node) if node.kind == "epoch" else ())
-            )
-            else ()
+            ("grating_sharpness",) if instance_id in grating_instances else ()
         )
         for name in scalar_names:
             binding = f"{instance_id}-{name}"
@@ -126,6 +123,17 @@ def build_uniform_layouts(
                         )
                     )
                 if mapping.surface_id in fold_images.get(instance_id, set()):
+                    layouts.append(
+                        UniformLayout(
+                            binding_id=f"{instance_id}-{mapping.mapping_id}-crop",
+                            instance_id=instance_id,
+                            output_id=mapping.output_id,
+                            shader_resource_id=_SHADER,
+                            name=f"image_crop_origin_{mapping.mapping_id}",
+                            scalar_type="float32",
+                            shape=(2,),
+                        )
+                    )
                     layouts.append(
                         UniformLayout(
                             binding_id=f"{instance_id}-{mapping.mapping_id}-fold",

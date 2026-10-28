@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from threading import RLock
 from typing import Protocol
 
+from cephvr.shared.deadlines import Deadline, resolve_deadline
+
 
 class PreparationBudget(Protocol):
     def check_cancelled_or_expired(self) -> None: ...
@@ -71,7 +73,7 @@ class BoundedBudget:
         cpu_limit: int,
         gpu_limit: int,
         cancelled: threading.Event | None = None,
-        deadline_ns: int | None = None,
+        deadline_ns: Deadline | None = None,
         clock_ns: Callable[[], int] = time.perf_counter_ns,
     ) -> None:
         if cpu_limit <= 0 or gpu_limit <= 0:
@@ -122,5 +124,7 @@ class BoundedBudget:
     def check_cancelled_or_expired(self) -> None:
         if self.cancelled is not None and self.cancelled.is_set():
             raise InterruptedError("Visual Stimulus preparation was cancelled")
-        if self.deadline_ns is not None and self.clock_ns() >= self.deadline_ns:
+        if self.deadline_ns is not None and self.clock_ns() >= resolve_deadline(
+            self.deadline_ns
+        ):
             raise TimeoutError("Visual Stimulus preparation deadline expired")

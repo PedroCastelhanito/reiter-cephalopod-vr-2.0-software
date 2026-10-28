@@ -10,7 +10,27 @@ Blocked and Deferred entries name their reason.
 
 ## In progress
 
-No active implementation chats.
+- [ ] `image-twenty-minute-test` [visual_stimulus] [acquisition] [controller] Owner: current image chat. Complete1200s600-image endurance and remaining physical/combined-load acceptance. Status: provider repair verified after restart; cold/warm Setup183.5/139.9s,600 cache hits,90.9s playback at~60Hz with zero holds and zero>50ms gaps (previous224–225/output). One31ms gap/output remains; cleanup/exact restoration pass.20min/full-hour and optical simultaneity remain unverified. Phase C remains measurement-gated. — [Evidence](reports/visual_stimulus.md#image-pipeline-audit--2026-10-28), [Rig checklist](reports/rig-verification.md#cropped-image-presentation)
+
+
+
+
+
+
+
+
+
+- [ ] `linked-grating-orientation` [gui] [visual_stimulus] Owner: linked Grating chat. Review requested all-eight-direction Grating previews using production Texture drift linked_rates, with bars normal to mapped motion and full coverage. Cardinal/diagonal GIFs rendered/checked; awaiting owner visual review before runtime/contract changes. Prior Right-only MOV mismatch open; no flip applied. - [Visual Stimulus report](reports/visual_stimulus.md#linked-grating-orientation-investigation--2026-10-28), [Rig check](reports/rig-verification.md#linked-grating-corner-phase)
+
+
+
+
+
+
+
+
+- [ ] `generated-stimulus-stale-assets` [gui] Owner: current sparse protocol chat. Remove unreferenced declarations after epoch edits, preserve shared assets, and repair the supplied sparse protocol. — [Runtime report](reports/runtime.md)
+
 
 Completed open-loop endurance, bounded camera-codec lossless checks,
 restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
@@ -18,21 +38,43 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 ## Next
 
-- [ ] `sparse-noise-runtime-generator` [visual_stimulus] [gui] [supervisor] Owner chose runtime generation in a separate contained helper, 100 patterns ahead. Status: implemented and locally checked (uncommitted): `sparse_noise` layer, per-trial helper via the renderer's helper launcher, RGBA8 texture ring, inline GUI without Apply, V04 rev 36/V01 rev 37, policy v21. Legacy PNG path removed and evidence records pattern hashes/background holds (Oct28). Open: native Windows launch and rig timing. Done when the rig checks pass. — [Report](reports/visual_stimulus.md#sparse-noise-runtime-generation--2026-10-28), [Rig checklist](reports/rig-verification.md#sparse-noise-presentation)
+- [ ] `image-setup-source-rehash` [visual_stimulus] Skip the cold-inspection source re-hash while the same non-shareable protected handle is live (asset-lifetime requires rehash only after handle close); keep protection/manifest and per-load bundle digests. Source-review finding, unmeasured. Done when implemented with protection-loss coverage and Setup timing compared. — [Review](reports/visual_stimulus.md#image-pipeline-audit--2026-10-28)
 
-- [ ] `gui-suite-reconciliation` [gui] Reproduce the incomplete Oct27 serial offscreen suite in bounded isolated groups and identify each failure. Done when all cases have attributable results and runtime-changing repairs are separately authorized. Status: run progressed beyond79% with multiple failure markers, then exited1 without a summary; focused protocol checks are separate evidence. — [Assessment](reports/runtime.md#combined-tree-verification--2026-10-27), [Evidence](reports/runtime-evidence-2026-10-27/repo-reconciliation/context.md)
 
-- [ ] `stimulus-authoring-review-findings` [visual_stimulus] [gui] Remaining from the Oct27 review of bfe24b35 after owner-authorized fixes (uncommitted, locally verified). Open: confirm legacy bars should also require Save as; follower position forced to 0,0 on unlink (V07, unverified, not authorized); unwired Generate-window actions (owner decision); GL-only paths and the 4 GUI failures/2 aborting preview tests that fail at HEAD (see `gui-suite-reconciliation`). Done when each is fixed, rejected or deferred with owner approval. — [Report](reports/visual_stimulus.md#stimulus-authoring-review-follow-up--2026-10-27)
+- [ ] `historical-preview-artifact-links` [gui] Reconcile the two missing Oct17 preview PNG links (preview-frame-retro and multiple-preview-frames-cameras-retro) in reports/runtime.md; restore the artifacts or label unavailable evidence without inventing results. — [Runtime report](reports/runtime.md)
+
+- [ ] `image-crop-rig-acceptance` [visual_stimulus] [acquisition] Complete full-hour/combined-load and optical checks for prepared Fold batches; native600-image four-minute projector-only run and cleanup pass. — [Rig checklist](reports/rig-verification.md#cropped-image-presentation)
+
+- [ ] `setup-inactivity-fault-isolation` [controller] [shared] [visual_stimulus] Verify native per-backend stall isolation and bounded recovery; healthy600-image Setup/publication beyond180s and cleanup now pass. — [Rig checklist](reports/rig-verification.md#setup-inactivity)
+
+- [ ] `acquisition-setup-confirmation-deadline` [acquisition] [controller] Reconcile ConfirmConfiguration deadline equality with accepted per-backend Setup inactivity renewal. Native combined crop test rejected SETUP_DEADLINE; source shows coordinator requires original cutoff while controller sends renewed cutoff. On-wire attribution and focused repair/combined rig retest remain. — [Acquisition assessment](reports/acquisition.md#setup-confirmation-deadline--2026-10-28)
+
+
+- [ ] `image-validation-cpu-capacity` [visual_stimulus] After full restart for500ms MCU/1050ms stop defaults, reload/apply corrected600-image texture protocol and verify Setup/Cleanup. All600 ALDER imports hash-match originals; linear declarations applied and full source validation passes600/600 in130.6s under2GiB. Native600-image projector-only Setup/240s playback/Cleanup now pass; remaining combined-camera/MCU acceptance is tracked separately. — [Full-set evidence](reports/visual-stimulus-evidence-2026-10-28/image-cpu-capacity/full-alder/context.md), [Rig check](reports/rig-verification.md#image-cpu-capacity)
+
+- [ ] `mcu-setup-ping-latency` [controller] [acquisition] [visual_stimulus] Verify accepted500ms MCU ACK/1050ms Stopped allowance after full restart, and attribute residual native delays. Settings/records updated;59 configuration tests pass. Prior206ms miss/cleanup evidence retained; no hot-swap or new native retest. — [Assessment](reports/runtime.md#setup-watchdog-and-secondary-renderer-failure--2026-10-28), [Rig check](reports/rig-verification.md#mcu-validation-starvation)
+
+
+
+
+- [ ] `sparse-noise-gap-diagnosis` [visual_stimulus] Attribute the original167–299ms gaps when reproducible. Traced60s and clean180s show max34.269/33.466ms, complete hashes/recordings and no holds; old startup waits localize to swap/completion, later153ms to pre-swap work. No causal timing repair established; temporary hooks removed. Done when cause and focused repair have native evidence. — [Report](reports/visual_stimulus.md#native-rig-validation--2026-10-28)
+
+- [ ] `stimulus-invalid-geometry-cleanup` [visual_stimulus] [controller] Investigate rejected Stopped evidence after the Oct28 test fixture triggered a visual-angle ray/surface error. Observed native recovery reports `Stopped conditions missing`, renderer exits and application shuts down; no shader regression established. Done when this failure path has attributable, truthful cleanup coverage. — [Assessment](reports/visual_stimulus.md#native-rig-validation--2026-10-28)
+
+- [ ] `sparse-noise-runtime-generator` [visual_stimulus] [gui] [supervisor] Oct28 helper buffer defect repaired; four-output60s/180s and5s Abort validate hashes, no holds, decoding and cleanup; traced prefill744.964ms. Gap attribution is tracked separately. Open: native GUI, long sequences and combined-load/optical acceptance. Done when remaining rig checks pass. — [Current assessment](reports/visual_stimulus.md#native-rig-validation--2026-10-28), [Rig checklist](reports/rig-verification.md#sparse-noise-presentation)
+
+- [ ] `gui-suite-reconciliation` [gui] Reproduce the incomplete Oct27 serial offscreen suite in bounded isolated groups and identify each failure. Done when all cases have attributable results and runtime-changing repairs are separately authorized. Status: run progressed beyond79% with multiple failure markers, then exited1 without a summary; focused protocol checks are separate evidence. — [Assessment](reports/runtime.md#combined-tree-verification--2026-10-27), [Evidence](reports/runtime-evidence-2026-10-27/repo-reconciliation/context.md) Oct28 broader attempt interrupted; isolated type-switch failure expects a Looming option also absent in HEAD source — [evidence](reports/runtime-evidence-2026-10-28/epoch-timing/context.md). Oct28 authoring suite/isolated run also reproduces 300px property-form width inequality (188/200px), without AuthoringWindow; baseline unverified. — [Authoring assessment](reports/visual_stimulus.md#stimulus-authoring-review-follow-up--2026-10-27)
+
+- [ ] `stimulus-authoring-review-findings` [visual_stimulus] [gui] Remaining: follower position forced to 0,0 on unlink (V07, unverified, not authorized), GL-only paths and GUI failures/aborting previews (see gui-suite-reconciliation). Oct28 accepted legacy-bar protection verified and dead Generate actions removed;131 authoring tests pass, one isolated narrow-layout failure remains. Done when remaining findings are fixed, rejected or explicitly deferred. — [Report](reports/visual_stimulus.md#stimulus-authoring-review-follow-up--2026-10-27)
 
 - [ ] `preview-interaction-transitions` [gui] [acquisition] Verify restored native title-bar theme/DPI/drag/Snap and live camera FPS after restart; isolated native/icon and pixel-equality checks pass; measured8-bit preparation bottleneck fixed (Behavior35.49→6.11ms), independent reader preparation/shared native owner now passes181 local and2 native cases; final live FPS and original regression onset unverified. Oct26 fresh171-second dummy run verifies two Video off/on cycles, both camera closure/reopen, square frame fill and manual divider restoration. — [Evidence](reports/runtime.md#live-preview-retest--2026-10-26) Oct27 native idle sources30/60fps and previews approximately20fps pass; both Show toggles recover. Full-load/DPI and original onset remain open. Oct27 toggle/layout/completion-driven placement passes8 local cases; verify native transition smoothness after normal relaunch. — [Transition assessment](reports/runtime.md#preview-transition-placement--2026-10-27)
 
 - [ ] `dashboard-embedded-previews` [gui] Confirm the G01rev298/G02rev118 default side navigation and in-Dashboard Monitor view with centered single projector rows, 1px larger fonts and compact Preview toolbar natively (rig checklist): Configure|Monitor switching, per-stream Video toggles with frame reflow and native viewer re-placement, Advanced projector toggles. Status: Oct22 native Configure/Monitor and Amber/Retro layout inspected, two lifetime crashes repaired, all899 GUI nodes have passing broad/serial evidence; G02rev114 clarifies Dashboard tab offset and stale HUD fixture is fixed. Oct26 bounded native run verifies settled Video/card/splitter and Combined/Per-projector/projector toggles; compact plots/FPS clipping fixed and137-second native retest passes Retro/Amber at1442x972; DPI/Snap/full-load follow acceptance pending. — [Runtime](reports/runtime.md), [G01](docs/architecture/gui.md#g01), [Rig checklist](reports/rig-verification.md)
 
-- [ ] `grating-profile-policy-reconciliation` [visual_stimulus] Reconcile the already-accepted V04 cephvr_grating_json_v1 profile with E14 fixed assets.image_profiles declarations and matching versions/digest. Source review observes the inventory omission; existing profile tests pass and runtime impact is not established. Done when policy/loader/schema consistency is verified without selecting a new behavior. — [Assessment](reports/visual_stimulus.md#protocol-media-families--2026-10-27)
 
 - [ ] `pre-ready-camera-cleanup-rig` [acquisition] [visual_stimulus] After normal relaunch, verify missing-media Setup failure releases camera ownership without health escalation and corrected protocol permits fresh Setup. Local repair:986 acquisition tests pass; native failure/retry unverified. - [Assessment](reports/acquisition.md#pre-ready-camera-cleanup---2026-10-27), [Protocol](reports/runtime-evidence-2026-10-27/pre-ready-cleanup/fold-program-repaired.json)
 
-- [ ] `projector-shell-retry` [visual_stimulus] [controller] Oct27 display-cleanup fixture omission is corrected; all31 owning tests and the final620-case local Visual Stimulus suite pass. Confirm managed projector preparation after restart and investigate interruption IDENTITY warning if it recurs. Native client-geometry regression and166 rendering/platform checks pass; live retry unverified. - [Evidence](reports/visual_stimulus.md#projector-shell-icons---2026-10-27)
+- [ ] `projector-shell-retry` [gui] [visual_stimulus] [controller] After full relaunch verify normal named projector entries, calibration recreation and disappearance after application shutdown. Oct28 hiding workaround removed under G01rev373;205 local rendering/calibration/platform cases and static checks pass. Live lingering-entry reproduction/repair acceptance remains unverified; investigate prior interruption IDENTITY warning if it recurs. — [Rig checks](reports/rig-verification.md#projector-window-visibility), [Evidence](reports/visual_stimulus.md#projector-shell-icons---2026-10-27)
 
 - [ ] `image-resize-source-rig` [gui] [visual_stimulus] Verify Resize/Source/Fold on actual valid areas after normal relaunch, including Bottom orientation, crop/padding, Fold Front-reference physical scale and preview agreement. Local backend/GUI/native shader checks pass; physical projection and full-load timing remain unverified. — [Rig checks](reports/rig-verification.md#image-resize-source)
 
@@ -61,7 +103,6 @@ restoration and synthetic cleanup are recorded in [LOG](LOG.md) and
 
 - [ ] `gui-relaunch-event-unavailable` [gui] [launcher] [supervisor] Verify GUI-only relaunch and unavailable-event diagnostics; capture the historical exit cause if it recurs. E08rev181 lifecycle/exception/fault logging has local and isolated native coverage. Oct26 fresh managed launches and final normal exit provide integrated diagnostic logs and exact closure receipts. Dedicated GUI-only relaunch/unavailable-event variants and the historical cause remain unresolved; forced kills may leave unfinished logs. — [Assessment](reports/runtime.md#startup-splash-preview), [Lifecycle evidence](reports/runtime-evidence-2026-10-26/lifecycle-followup/context.json)
 
-- [ ] `mcu-setup-ping-latency` [controller] [acquisition] Diagnose intermittent pre-Start MCU PING admission latency under unchanged200ms policy. Oct22 first final-validation Setup fails at200.495ms with native timeout/query/read calls delayed and near-zero thread CPU; normal Cancel/cleanup/exact restoration pass, one fresh retry completes full protocol. Preserve serial-call evidence and avoid blind retries or deadline relaxation. — [Evidence](reports/runtime.md#rig-checks-oct22)
 
 - [ ] `idle-shutdown-ordering` [controller] [supervisor] [acquisition] [visual_stimulus] [launcher] Capture the historical controller-loss/MCU Close ordering failure if it recurs. Oct27 normal ShutdownApplication from guarded Configuration succeeds and exact generation process absence is confirmed;25 current shutdown regressions pass. This closes the outstanding idle-exit retest, not the historical WinError5/MCU failure cause or every live-resource shutdown variant. Retain incident evidence. - [Assessment](reports/runtime.md#rig-checks-oct22), [Idle shutdown](reports/runtime-evidence-2026-10-27/rate-scaling/final-shutdown.json), [Exit proof](reports/runtime-evidence-2026-10-27/rate-scaling/final-exit.json)
 

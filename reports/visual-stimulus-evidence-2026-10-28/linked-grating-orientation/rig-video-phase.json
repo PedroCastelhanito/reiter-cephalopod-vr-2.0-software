@@ -1,0 +1,44 @@
+{
+  "source": "C:\\Users\\ReiterU_PC\\Downloads\\IMG_1435.MOV",
+  "fps": 29.89051094890511,
+  "frames": 273,
+  "method": "Fixed approximate manual quads; no camera stabilization or optical calibration",
+  "screens": {
+    "Front": {
+      "carrier_cycles_per_pixel": [
+        0.02710843373493976,
+        0.031496062992125984
+      ],
+      "local_normal_degrees": -43.93967207570767,
+      "phase_cycles_per_second": 4.004405764855098,
+      "residual_cycles_rms": 0.4575290052263989
+    },
+    "Left": {
+      "carrier_cycles_per_pixel": [
+        0.03614457831325301,
+        0.04330708661417323
+      ],
+      "local_normal_degrees": -53.104132398923,
+      "phase_cycles_per_second": 4.306256745197382,
+      "residual_cycles_rms": 0.28813558761470937
+    },
+    "Right": {
+      "carrier_cycles_per_pixel": [
+        0.04216867469879518,
+        0.031496062992125984
+      ],
+      "local_normal_degrees": -39.705712685416835,
+      "phase_cycles_per_second": 4.27914439678337,
+      "residual_cycles_rms": 2.4747949909654543
+    },
+    "Bottom": {
+      "carrier_cycles_per_pixel": [
+        0.03614457831325301,
+        -0.031496062992125984
+      ],
+      "local_normal_degrees": 41.21920704444088,
+      "phase_cycles_per_second": 4.1020519327228335,
+      "residual_cycles_rms": 0.22571786985647982
+    }
+  }
+}

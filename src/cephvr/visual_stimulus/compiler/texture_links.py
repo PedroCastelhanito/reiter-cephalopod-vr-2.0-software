@@ -39,7 +39,6 @@ def validate_link_geometry(
                     source,
                     dict(x=0.0, y=0.0, rotation=0.0, frequency=1.0),
                     target,
-                    geometry,
                 )
                 continue
             linked_rates(source, target, geometry, source_rotation=0, target_rotation=0)

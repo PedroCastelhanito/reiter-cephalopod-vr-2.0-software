@@ -54,6 +54,7 @@ class ProgramTimeline(QWidget):
         self.screens: tuple[str, ...] = ()
         self.paths: tuple[tuple[int, ...], ...] = ()
         self.nodes: tuple[Node, ...] = ()
+        self.epoch_numbers: dict[str, int] = {}
         self.selection: tuple[tuple[int, ...], ...] = ()
         self.anchor = 0
         self.hits: list[tuple[QRectF, int, str, int]] = []
@@ -92,6 +93,7 @@ class ProgramTimeline(QWidget):
         self.program, self.scope = program, scope
         view = self.views.get(program, scope)
         self.nodes, self.paths, self.type_keys = view.nodes, view.paths, view.keys
+        self.epoch_numbers = view.epoch_numbers
         self.counts, self.durations = view.counts, view.durations
         self.batch_runs = view.batch_runs
         self.batch_offset = (
@@ -354,14 +356,14 @@ class ProgramTimeline(QWidget):
                 painter.drawRoundedRect(rect, 0 if retro else 6, 0 if retro else 6)
             painter.setPen(QColor(colors.window if inverse else colors.text))
             name = (
-                f"Epoch {i + 1}"
+                f"Epoch {self.epoch_numbers[node.epoch_id]}"
                 if isinstance(node, Epoch)
                 else node_name(node).replace("_", " ")
             )
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
             lines: tuple[tuple[int, str], ...] = (
-                ((5, node_name(node).replace("_", " ")), (31, f"{name} · {summary}"))
+                ((5, name), (31, f"{name} · {summary}"))
                 if plain
                 else ((5, name), (29, summary))
             )

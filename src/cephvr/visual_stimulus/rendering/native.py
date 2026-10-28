@@ -15,6 +15,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from cephvr.shared.deadlines import Deadline
 from cephvr.visual_stimulus.config.calibration_placement import CalibrationPlacement
 from cephvr.visual_stimulus.config.models.artifact_models import (
     ComponentProvenance,
@@ -28,7 +29,6 @@ from cephvr.visual_stimulus.rendering.native_display import (
     activate_window,
     attach_window_context,
     configure_window,
-    hide_output_shell_entry,
     idle_device_color,
     resolve_output_monitors,
     verify_framebuffer,
@@ -209,7 +209,6 @@ class ModernGLPort:
                         f"could not create output {output.output_id}"
                     )
                 self._orphan_windows[output.output_id] = window
-                hide_output_shell_entry(glfw, window)
                 glfw.make_context_current(window)
                 context = attach_window_context(self._moderngl)
                 # Register ownership immediately after context creation so any
@@ -412,7 +411,23 @@ class ModernGLPort:
         else:
             self.preview.update_layout(self._review_layout, artifact.display.geometry)
 
-    def install_image_residency(self, residency: Any, deadline_ns: int) -> None:
+    def prepare_image_bundle(
+        self, bundle: Any, schedule: Any, budget: Any, progress: Any
+    ) -> Any:
+        from cephvr.visual_stimulus.rendering.image_bake import FoldBaker
+
+        self._assert_owner()
+        self.announce("visual_stimulus:image-baker", None)
+        self._image_baker = FoldBaker(self._outputs)
+        return bundle.prepare(
+            schedule,
+            self._image_baker.bake,
+            budget,
+            progress,
+            finish_batch=self._image_baker.close,
+        )
+
+    def install_image_residency(self, residency: Any, deadline_ns: Deadline) -> None:
         """Install prepared source scheduling on this existing GL owner."""
         from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
 
@@ -507,7 +522,11 @@ class ModernGLPort:
         render = getattr(self.scene_renderer, "render_group", None)
         if render is None:
             raise NativeRenderingError("scene pipeline lacks render_group")
+        started = self.clock_ns()
         result = render(scene, state, self._outputs, self._resources)
+        residency = getattr(self, "_image_residency", None)
+        if residency is not None:
+            residency.timings.record("draw", self.clock_ns() - started)
         if not isinstance(result, RenderPassResult):
             raise NativeRenderingError(
                 "scene pipeline must return GPU outputs and exact evidence consumed by the shaders"
@@ -579,10 +598,18 @@ class ModernGLPort:
                 context.activate()
                 entry = self.clock_ns()
                 self._glfw.swap_buffers(context.window)
+                residency = getattr(self, "_image_residency", None)
+                swapped = self.clock_ns()
+                if residency is not None:
+                    residency.timings.record(f"swap:{output_id}", swapped - entry)
                 if context.swap_interval > 0:
                     # Drain the queued flip so the return time tracks the paced
                     # vblank instead of driver queue depth (still not optical proof).
                     context.context.finish()
+                    if residency is not None:
+                        residency.timings.record(
+                            f"finish:{output_id}", self.clock_ns() - swapped
+                        )
             except Exception as exc:
                 error = f"VISUAL_STIMULUS_SWAP:{str(exc)[:512]}"
             returned = self.clock_ns()
@@ -870,6 +897,14 @@ class ModernGLPort:
             else:
                 self._calibration_owner = None
                 self._released.append("visual_stimulus:gpu:display-calibration:arena")
+        baker = getattr(self, "_image_baker", None)
+        if baker is not None:
+            try:
+                baker.close()
+                del self._image_baker
+                self._released.append("visual_stimulus:image-baker")
+            except Exception as exc:
+                outstanding.append(f"image-baker:{exc}")
         residency = getattr(self, "_image_residency", None)
         if residency is not None:
             image_errors = residency.release_gpu(deadline_ns=deadline_ns)
