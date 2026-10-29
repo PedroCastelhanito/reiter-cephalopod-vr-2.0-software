@@ -1,5 +1,65 @@
 # Controller and supervisor status
 
+## Asset selection without imports — 2026-10-29
+
+Owner requests no automatic `import-*` copies. [G01rev390](../docs/architecture/gui.md#g01)
+replaces external-file importing with direct root-relative references within Protocol
+Assets. The shared resolver rejects external paths before opening/parsing/copying,
+with common-root guidance; media pickers, pasted paths and variation folders share
+it. Removed the copy helper and import memo entirely. Existing imported files and
+saved references are preserved; no asset migration or deletion was requested.
+ARCH-002 review: removed unnecessary filesystem mutation/state/dependencies in the
+focused helper; existing callers and owning authoring tests retained.
+
+Five focused authoring/dashboard tests pass: external rejection without mutation
+for image/video/GLB/recipe, direct shared-root references, old-import preservation,
+memo invalidation, variation-folder rejection/reselection, epoch-local edits and
+in-root texture/demo selection. Full authoring module: 64 passed, two sparse-preview
+count failures (101/4000 repetitions expect 100; current motion_epochs returns all).
+That behavior was untouched here; no baseline comparison claimed. Track with
+`gui-suite-reconciliation`. Ruff/format, two-source Win32 mypy and boundary checks
+pass (802 modules/zero violations; existing size warnings, neither changed helper
+oversized). Native GUI restart untested. [Evidence](runtime-evidence-2026-10-29/asset-selection-no-copy/context.md).
+
+Follow-up screenshot: selected `cephvr-assets/media` no longer exists locally
+(root now contains Alsu, Olivier, Pedro and config-files). Picker previously used
+the empty-selection warning for this condition. It now names the invalid path and
+asks for an existing folder; the empty-selection warning stays distinct. The owning
+dashboard test checks both messages, no folder/dialog creation on rejection and
+successful selection after correcting the root. One focused test, Ruff/format,
+Win32 mypy and 802-module boundaries pass. ARCH-002 cohesion review keeps this
+small correction in the existing picker despite its module's size warning; no new
+responsibility/dependency or extraction needed. No configuration or asset relocation.
+
+## Bottom output and Monitor duration — 2026-10-29
+
+`bottom-output-and-monitor-duration` implements the owner's corrections under
+[G01rev389](../docs/architecture/gui.md#g01). Monitor's canonical motion expansion
+now includes every occurrence up to the existing configured Setup limit; session
+totals use the same complete duration and retain trial/gap ordering. The epoch
+editor's animated preview alone retains its 100-occurrence prefix. A 125-occurrence,
+two-trial regression checks the timeline beyond occurrence 100 and full session time.
+Bottom output/preview changes are assessed in the
+[Visual Stimulus report](visual_stimulus.md#bottom-output-mirror-correction--2026-10-29).
+
+Validation: 73 focused GUI cases and five renderer preview cases pass (four use an
+offscreen native OpenGL context); Ruff, formatting, four-source Win32 mypy and
+802-module boundaries pass with zero violations. Full timeline module: 116 pass,
+three arena instrument cases fail on missing maps. A broader calibration check also
+finds a physical-versus-usable-plane assertion failure. All four failures reproduce
+with the relevant HEAD helpers restored in memory, without changing the worktree;
+this is a helper comparison in the current tree, not a clean-checkout baseline.
+They remain under `gui-suite-reconciliation`. Initial test fixture enum values,
+Bottom winding/sign expectations and import ordering were corrected during this work.
+
+ARCH-002 review reuses the bounded canonical iterator, existing mapping and preview
+owners; no new dependency, process or runtime state. Existing size advisories concern
+unchanged owner modules; edited production helpers are below 500 lines and cohesive.
+No device session or physical-direction verification was performed. Full-plan GUI
+latency at the configured maximum is unmeasured. Commands, source scope, comparison
+method and retained results:
+[dated evidence](runtime-evidence-2026-10-29/bottom-output-monitor/context.md).
+
 ## Setup inactivity timeout — 2026-10-28
 
 `setup-inactivity-timeout` implements owner-accepted

@@ -1,0 +1,9 @@
+{
+  "src/cephvr/gui/calibration_profile.py": "b028bec31d6cf9f6e0fcd07e60c71df08c5e3dc03e3d5edfea4b4ac2e19d8e05",
+  "src/cephvr/gui/preview_motion_data.py": "d985850a0538beb48e010401e53f0a083135c9dd143eb2089f41da1207ee6c9f",
+  "src/cephvr/gui/trial_preview_rig.py": "00da2c31d239924405e3108df34cf6ad04cc313410bae37c8f7270cb9757dbdf",
+  "src/cephvr/visual_stimulus/rendering/preview_rig.py": "223fa4f48cefcba91ab3e828d1deb135d77de244598ba8d1fb0fa8467da4dcab",
+  "tests/gui/test_dashboard.py": "e30c9a69fb51cd4c329b9dd7b2e7663dbd0330b50659a3506d4c3ed7da69b1d9",
+  "tests/gui/test_preview_timeline.py": "0c260ad3b09d22a54a060e36c78d75a68e42184fcc9db741ee1546caf851f8bf",
+  "tests/visual_stimulus/test_rendering.py": "fe6409ac9ee8d6a8982a7e2e584645d4e5d0d326ef4d07b51039a3dc34a51bcb"
+}

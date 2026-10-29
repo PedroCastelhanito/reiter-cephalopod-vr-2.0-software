@@ -8,6 +8,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+from cephvr.visual_stimulus.rendering.native_display import DisplayAssetUnavailableError
 from cephvr.visual_stimulus.rendering.types import DisplayInitialization
 from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
@@ -40,6 +41,13 @@ def begin_display_preparation(
             result.set_result(
                 preparation.prepare_display(request, announce, deadline_ns)
             )
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            IsADirectoryError,
+            PermissionError,
+        ) as exc:
+            result.set_exception(DisplayAssetUnavailableError(str(exc)))
         except BaseException as exc:
             result.set_exception(exc)
 

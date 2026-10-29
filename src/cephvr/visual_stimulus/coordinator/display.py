@@ -1,7 +1,10 @@
 """Exact display evidence and recoverable startup rejection (V19/E08)."""
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
+from cephvr.visual_stimulus.rendering.native_display import (
+    DisplayAssetUnavailableError,
+    DisplayUnavailableError,
+)
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
 from .ports import PeerPort
@@ -16,15 +19,13 @@ def recovered_startup_rejection(
         link.method == "InitializeDisplay"
         and state.setup is None
         and link.parent.work.WhichOneof("work") is None
-        and result.failure.code == DisplayUnavailableError.code
+        and result.failure.code
+        in {DisplayUnavailableError.code, DisplayAssetUnavailableError.code}
         and display is not None
         and display.command_id == link.parent.command_id
         and display.complete
         and not display.HasField("applied_revision")
-        and any(
-            issue.failure.code == DisplayUnavailableError.code
-            for issue in display.issues
-        )
+        and any(issue.failure.code == result.failure.code for issue in display.issues)
         and bool(display.resources)
         and all(item.released for item in display.resources)
     )

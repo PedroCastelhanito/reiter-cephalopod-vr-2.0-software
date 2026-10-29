@@ -127,7 +127,7 @@ class NativePreparation:
         self.video_session: VideoSession | None = None
         self.image_residency: ImageResidency | None = None
         self._image_bundle: ImageBundle | None = None
-        self._image_bundle_parent: Path | None = None
+        self._image_bundle_root: Path | None = None
         self._bundle_announce: Callable[[str, str | None], None] | None = None
         self._prepared_heap = PreparedHeap()
         self._progress = SetupProgress(None, clock_ns)
@@ -302,7 +302,7 @@ class NativePreparation:
         *,
         announce_batch: Callable[[tuple[tuple[str, str | None], ...]], None]
         | None = None,
-        progress: Callable[[str], None] | None = None,
+        progress: Callable[..., None] | None = None,
     ) -> tuple[PreparedTrial, ...]:
         if self._bundles:
             raise RuntimeError(
@@ -360,7 +360,7 @@ class NativePreparation:
         if not configuration.HasField("asset_root") or not configuration.asset_root:
             raise ValueError("Visual Stimulus Setup requires the adopted asset_root")
         assets_root = Path(configuration.asset_root)
-        self._image_bundle_parent = assets_root.resolve(strict=True).parent
+        self._image_bundle_root = assets_root.resolve(strict=True)
         saving = (
             request.settings.HasField("save_visual_stimulus_data")
             and request.settings.save_visual_stimulus_data
@@ -730,14 +730,24 @@ class NativePreparation:
                 source.output_crops
                 for source in self.image_residency.schedule.sources.values()
             ):
-                from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
-
-                assert (
-                    self._image_bundle_parent is not None and self._budget is not None
+                from cephvr.visual_stimulus.resources.image_bundle import (
+                    ImageBundle,
+                    bundle_identities,
                 )
+
+                assert self._image_bundle_root is not None and self._budget is not None
                 assert self._bundle_announce is not None
+                names, geometry = bundle_identities(
+                    self.image_residency.schedule,
+                    artifacts,
+                    lambda trial: self.resources_for(trial).asset_set.by_id(),
+                )
                 self._image_bundle = ImageBundle(
-                    self._image_bundle_parent, self._bundle_announce
+                    self._image_bundle_root,
+                    self._bundle_announce,
+                    names=names,
+                    geometry=geometry,
+                    on_replaced=self._progress.stale_bundles,
                 )
                 image_bundle = self._image_bundle
                 prepare_bundle = getattr(self.port, "prepare_image_bundle", None)

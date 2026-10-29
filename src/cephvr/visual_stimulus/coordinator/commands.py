@@ -448,6 +448,10 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
     elif method not in {"Shutdown"}:
         if state.setup is None:
             raise ValueError("Visual Stimulus session is not prepared")
+        if isinstance(request, wire.StaleImageBundleDeletion):
+            from .image_bundles import validate_deletion
+
+            validate_deletion(state, request)
         work = command.work
         session = (
             work.trial.session if work.WhichOneof("work") == "trial" else work.session

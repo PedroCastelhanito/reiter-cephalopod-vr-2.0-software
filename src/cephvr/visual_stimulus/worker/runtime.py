@@ -218,8 +218,8 @@ class VisualStimulusWorkerRuntime:
                 complete=True,
                 succeeded=False,
                 failure=pb.Failure(
-                    code=DisplayUnavailableError.code
-                    if unavailable
+                    code=exc.code
+                    if unavailable and isinstance(exc, DisplayUnavailableError)
                     else "CALIBRATION_ADJUSTMENT_REJECTED"
                     if rejected_adjustment
                     else "VISUAL_STIMULUS_OPERATION",

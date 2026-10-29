@@ -1,5 +1,6 @@
 """Prepare exact Fold samples on the GL owner, before calibration/compositing."""
 
+import hashlib
 import struct
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -8,6 +9,15 @@ from cephvr.visual_stimulus.resources.image_source import ImageSource, PixelBuff
 
 from .evidence import clip_vertex_components
 from .shaders import _LAYER_FRAGMENT, _LAYER_VERTEX
+
+_BAKE_FRAGMENT = _LAYER_FRAGMENT.replace(
+    "mark_alpha(sample_value.a, sample_value.rgb);", "color = sample_value; return;", 1
+)
+# Persistent bundle keys bind the exact bake shaders (V04).
+BAKE_ALGORITHM = (
+    "fold-bake-v1:"
+    + hashlib.sha256((_LAYER_VERTEX + _BAKE_FRAGMENT).encode()).hexdigest()
+)
 
 
 class FoldBaker:
@@ -20,6 +30,14 @@ class FoldBaker:
         self.texture: Any = None
         self.target: Any = None
         self.fbo: Any = None
+
+    def device_identity(self) -> dict[str, str]:
+        """GPU name and driver of the baking context, for bundle keys."""
+        info = next(iter(self.outputs.values())).context.info
+        return {
+            name: str(info.get(name, ""))
+            for name in ("GL_VENDOR", "GL_RENDERER", "GL_VERSION")
+        }
 
     def close(self) -> None:
         while self.owned:
@@ -51,13 +69,10 @@ class FoldBaker:
             self.output.activate()
             ctx = self.output.context
             if self.program is None:
-                fragment = _LAYER_FRAGMENT.replace(
-                    "mark_alpha(sample_value.a, sample_value.rgb);",
-                    "color = sample_value; return;",
-                    1,
-                )
                 self.program = self._own(
-                    ctx.program(vertex_shader=_LAYER_VERTEX, fragment_shader=fragment)
+                    ctx.program(
+                        vertex_shader=_LAYER_VERTEX, fragment_shader=_BAKE_FRAGMENT
+                    )
                 )
                 vbo = self._own(ctx.buffer(struct.pack("8f", 0, 0, 1, 0, 0, 1, 1, 1)))
                 self.vao = self._own(

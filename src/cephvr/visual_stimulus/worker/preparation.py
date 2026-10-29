@@ -7,6 +7,7 @@ import threading
 from collections.abc import Callable
 from concurrent.futures import Future
 from dataclasses import dataclass, field
+from typing import Any
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.deadlines import SetupInactivity, remaining_seconds
@@ -91,7 +92,8 @@ def begin(
                         "graphics preparation stopped making progress"
                     ) from None
 
-    def progress(message: str) -> None:
+    def progress(message: str, stale: tuple[Any, ...] = ()) -> None:
+        """`stale`: replaced Fold bundle entries for the operator's keep/delete choice."""
         with progress_lock:
             now = clock()
             if now > cutoff():
@@ -111,6 +113,13 @@ def begin(
                         work=request.command.target.work,
                         progress=message,
                         progress_sequence=sequence,
+                        stale_image_bundles=[
+                            pb.StaleImageBundle(
+                                bundle_id=entry.directory.name,
+                                sources=sorted(entry.sources)[:16],
+                            )
+                            for entry in stale
+                        ],
                     ),
                 ),
                 now + interval,

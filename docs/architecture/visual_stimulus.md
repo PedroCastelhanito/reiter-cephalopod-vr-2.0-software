@@ -303,7 +303,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 50
+**Status:** Accepted · **Revision:** 51
 
 - Asset admission uses E14's operator ceilings: CPU defaults to 2 GiB to admit
   bounded validation/conversion of the supplied 3840×2000 images; GPU retains the
@@ -532,6 +532,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   bakes and never blocks Setup; an old bundle is deleted only after the new one is
   confirmed complete and only on the operator's answer. Unanswered questions keep
   the old bundle and are dismissed at Start. Several bundles for one image may coexist.
+  "Same image" means the same relative source file name in the asset folder; each
+  bundle records the names it was baked for. The question arises only when no bundle
+  matches the current key and the image is baked; reuse never asks about the others.
   Bundles are published atomically (manifest last), read-only afterward, and a
   failed or cancelled bake leaves no valid-looking entry. A key or digest
   mismatch is a rebake, never partial reuse. Bundles are never removed by Stop,
@@ -1106,7 +1109,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v19"></a>
 ### V19 — Uniform Idle background
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 8
 
 - E05's Idle presentation uses a configurable uniform background color/brightness,
   black included, with V15 blackout zones remaining black, before the first trial, between trials, during finalization and
@@ -1130,6 +1133,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   outputs uninitialized and expose an actionable issue to GUI/headless clients
   without blocking configuration editing. Never guess output assignments, brightness
   or calibration mode.
+- Missing, non-directory or inaccessible startup Assets/calibration paths are
+  configuration rejections after verified sessionless cleanup within the original
+  deadline. Keep GUI/controller available, identify the path and require correction
+  followed by explicit Setup; never create a replacement folder or substitute files.
 - A live OpenGL context on a different adapter from the discovered SYS-002 render
   board is an unavailable output-placement rejection at sessionless startup. Keep
   the GUI/controller available only after exact resource cleanup and delivery of

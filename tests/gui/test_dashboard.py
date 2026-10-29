@@ -10298,6 +10298,18 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
     editor.set_program(blank_program())
     editor.add_stimulus("Video")
     identity = editor.program.sequence[0].settings[0].asset_id
+    before = editor.program
+    parameters.asset_root = ""
+    parameters.choose_media(identity)
+    assert "Choose the Protocol Assets folder first" in parameters.message.text()
+    assert parameters.file_dialog is None
+    missing = tmp_path / "moved-media"
+    parameters.asset_root = str(missing)
+    parameters.choose_media(identity)
+    assert str(missing) in parameters.message.text()
+    assert "does not exist or is not a directory" in parameters.message.text()
+    assert parameters.file_dialog is None and not missing.exists()
+    assert editor.program == before
     parameters.asset_root = str(tmp_path)
     media = tmp_path / "clip.mp4"
     media.write_bytes(b"authoring-path-fixture")
@@ -12046,7 +12058,7 @@ def test_front_attached_screens_share_plot_and_prepared_corners(
     vertices, _ = face_mapping(
         measured, "Bottom", MonitorBinding("", 0, 0, 720, 1280, 60, 8)
     )
-    assert (vertices[1]["xy"][0] - vertices[0]["xy"][0]) * 196 == pytest.approx(
+    assert (vertices[0]["xy"][0] - vertices[1]["xy"][0]) * 196 == pytest.approx(
         round(94 / 196 * 720) * 196 / 720
     )
     assert (vertices[2]["xy"][1] - vertices[0]["xy"][1]) * 148 == pytest.approx(
@@ -12777,7 +12789,10 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path, ver
         if face != "bottom"
     )
     assert meshes["bottom"].vertices[0].uv == (0, 1)
-    assert all(mesh.orientation == "preserving" for mesh in meshes.values())
+    assert all(
+        mesh.orientation == ("mirrored" if face == "bottom" else "preserving")
+        for face, mesh in meshes.items()
+    )
 
     bars, bar_meshes = diagnostic_display_profile(
         calibration, assignments, monitors, view="reference_bars"
@@ -16745,7 +16760,7 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(
         assert (bounds[3] - bounds[1]) * 720 == pytest.approx(round(80 / 0.9 * extra_y))
         bottom_left, bottom_right, top_left = submitted["vertices"][:3]
         assert (bottom_right["xy"][0] - bottom_left["xy"][0]) * 1024 == pytest.approx(
-            round(90 / 0.8 * extra_x) * 0.8
+            round(90 / 0.8 * extra_x) * 0.8 * (-1 if face == "Bottom" else 1)
         )
         assert (top_left["xy"][1] - bottom_left["xy"][1]) * 648 == pytest.approx(
             round(80 / 0.9 * extra_y) * 0.9
@@ -24593,7 +24608,11 @@ def test_epoch_display_numbers_follow_deletion_and_restore(app, removed, nested)
 @pytest.mark.parametrize(
     "dx,dy", [(10.0, 0.0), (-10.0, 0.0), (0.0, 10.0), (0.0, -10.0)]
 )
-def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(dx, dy):
+@pytest.mark.parametrize("flip_x", [False, True])
+@pytest.mark.parametrize("flip_y", [False, True])
+def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(
+    dx, dy, flip_x, flip_y
+):
     from PyQt6.QtCore import QPointF
     from PyQt6.QtGui import QPolygonF, QTransform
 
@@ -24616,8 +24635,8 @@ def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(dx, dy)
         valid_height_px=940,
         offset_x_px=-10,
         offset_y_px=7,
-        flip_x=False,
-        flip_y=True,
+        flip_x=flip_x,
+        flip_y=flip_y,
     )
     numeric = {f"screens.Bottom.{k}": v for k, v in values.items()}
     corners = screen_corners(
@@ -24635,7 +24654,7 @@ def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(dx, dy)
     vertices, mirrored = face_mapping(
         {"values": numeric}, "Bottom", MonitorBinding("bottom", 0, 0, 720, 1280, 60, 8)
     )
-    assert mirrored
+    assert mirrored == (flip_x == flip_y)
     correction = PreviewCorrection.from_draft(
         "Bottom", {k: str(v) for k, v in values.items()}, (720, 1280)
     )
@@ -24651,9 +24670,13 @@ def test_bottom_portrait_mapping_preserves_rig_motion_and_measured_pitch(dx, dy)
     )
     start = transform.map(QPointF(0.5, 0.5))
     end = transform.map(QPointF(0.5 + dx / depth, 0.5 + dy / cross_span))
-    # Raw image top faces the head; raw +X faces subject-left through the mirror.
-    assert (end.y() - start.y()) * 1280 * (44 / 320) == pytest.approx(-dx)
-    assert (end.x() - start.x()) * 720 * (24 / 180) == pytest.approx(-dy)
+    # The Bottom mirror requires the opposite raw output-X drift.
+    assert (end.y() - start.y()) * 1280 * (44 / 320) == pytest.approx(
+        -dx if flip_y else dx
+    )
+    assert (end.x() - start.x()) * 720 * (24 / 180) == pytest.approx(
+        -dy if flip_x else dy
+    )
 
 
 def test_owned_dialogs_follow_style_changes_and_new_dialogs(window, app):

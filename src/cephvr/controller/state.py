@@ -382,6 +382,8 @@ class Attempt:
     required: dict[str, BackendPort]
     setup_operations: dict[str, str]
     visual_stimulus_setup_dispatched: bool = False
+    # V04 apply-to-all-remaining answer for stale Fold bundles: "", keep or delete.
+    stale_bundle_choice: str = ""
     ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     # Exact delayed Setup receipts stay separate from execution readiness.
     retired_setup_ready: dict[str, pb.ReadyReport] = field(default_factory=dict)

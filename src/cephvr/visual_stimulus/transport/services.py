@@ -124,6 +124,13 @@ class ConfigurationService(rpc.VisualStimulusConfigurationServiceServicer):
     ) -> pb.CommandAdmission:
         return await self.boundary.command("CloseDisplayCalibration", request, context)
 
+    async def DeleteStaleImageBundles(
+        self,
+        request: wire.StaleImageBundleDeletion,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("DeleteStaleImageBundles", request, context)
+
 
 class WorkerService(visual_stimulus_rpc.VisualStimulusWorkerServiceServicer):
     async def ConfirmRecipePublication(

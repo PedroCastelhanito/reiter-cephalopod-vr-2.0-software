@@ -53,6 +53,11 @@ views. Do not open arbitrary screens, invent black output, skip a required proje
 or silently switch calibration mode. Uninitialized means CephVR has no confirmed
 control of the output image; it does not mean the projector is dark.
 
+Missing, non-directory or inaccessible saved Assets/calibration paths follow the
+same verified sessionless cleanup/rejection path. Report the failed path with
+`DISPLAY_ASSET_UNAVAILABLE` and advise correcting Protocol Assets/calibration,
+applying configuration and running Setup. Do not create a replacement directory.
+
 A failure after partial resource creation invokes normal idempotent release of that
 attempt's windows, contexts and related resources. Keep per-output evidence truthful
 while cleanup is pending; there is no atomic multi-projector presentation guarantee.

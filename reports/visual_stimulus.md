@@ -1,5 +1,65 @@
 # Visual Stimulus status
 
+## Missing startup assets — 2026-10-29
+
+Owner-observed startup shutdown after moving Assets: the saved root no longer
+exists. CPU display preparation retained FileNotFoundError, but only unavailable
+output errors entered the existing verified rejection path; other errors escalated
+to renderer/supervisor failure. [V19](../docs/architecture/visual_stimulus.md#v19)
+now explicitly includes inaccessible Assets/calibration paths. Preparation converts
+FileNotFoundError, NotADirectoryError, IsADirectoryError and PermissionError to a
+typed display-asset rejection. Existing exact cleanup/deadline/cancellation/report
+guarantees remain required; Setup validation still applies. No directory creation,
+saved-path rewrite, dependency or extra state. ARCH-002 review retained the existing
+focused preparation/cleanup operations and owning lifecycle test module.
+
+Local validation: lifecycle, coordinator and authenticated controller communication
+suites pass (183 tests, one excluded by E15 markers). Ruff and Win32 mypy pass;
+802-module boundary check has zero violations (existing size warnings; no touched
+module exceeds 500 lines). Sandbox suites stalled and were interrupted; loopback
+suites passed outside sandbox. Initial integration run found a coordinator code
+mismatch, corrected before the passing run. Formatting corrected after its check.
+Commands/provenance: [evidence](visual-stimulus-evidence-2026-10-29/startup-missing-assets/context.md).
+Native restart with moved assets remains in the [rig checklist](rig-verification.md);
+no GUI restart, live device operation or saved-configuration rewrite was performed.
+
+## Bottom output mirror correction — 2026-10-29
+
+The owner reports physically reversed Bottom left/right while linked-motion preview
+is correct. [G01rev389](../docs/architecture/gui.md#g01), within
+[V15](../docs/architecture/visual_stimulus.md#v15), adds a fixed native output-X
+reflection after Bottom's portrait rotation. Saved X/Y inversions compose with it;
+offsets, pixel pitch, valid bounds and output-local markers/masks retain their owners.
+Both normal GUI-generated profiles and full-grid diagnostics use the correction.
+Planning and native rig previews undo that fixed reflection when placing the output
+on the physical plane, preserving linked-motion preview direction. Imported mappings
+retain their own definition; fresh GUI preparation regenerates owned mappings.
+
+Local coordinate coverage checks all four directions and saved-flip combinations;
+crop/pitch/export/preview checks pass. Four offscreen native OpenGL tests confirm
+cropped preview quadrants on all faces and no source/composite writes. ARCH-002 keeps
+the correction in existing helpers with no dependency or ownership change. Monitor
+full-duration behavior and complete validation/known baseline failures are in the
+[runtime assessment](runtime.md#bottom-output-and-monitor-duration--2026-10-29) and
+[dated evidence](runtime-evidence-2026-10-29/bottom-output-monitor/context.md).
+Physical optical agreement after restart/fresh Setup remains in the
+[single rig checklist](rig-verification.md); no experiment was launched.
+
+**Rebake attribution (Oct29, read-only):** owner reports no saved configuration
+change despite stale-bundle prompts. A retained old/new pair for
+`import-dfeziwys/0007_1_metamer7.png` has identical source identity, GPU/driver,
+bake algorithm and Front/Left/Right crops. Only geometry digest and Bottom Fold
+sampling differ: the Bottom horizontal coefficient reverses sign, with the origin
+shifted by the same span. This matches the generated mapping correction above;
+the software change can invalidate a Fold bundle without a saved-settings edit.
+Both stored keys recompute correctly from their manifests. The pasted 0242 old
+bundle is no longer present, so it was not directly compared. No false miss with
+identical complete inputs was established, and another unchanged Setup has not
+been run. Retained metadata and comparison:
+[evidence](visual-stimulus-evidence-2026-10-29/bundle-rebake-attribution/assessment.json).
+Read-only controller snapshot established the current Assets folder; no control
+lease, device command or bundle deletion was issued. Temporary client removed.
+
 ## Setup inactivity timeout — 2026-10-28
 
 [E06](../docs/architecture/system-contracts.md#e06)/
@@ -36,6 +96,41 @@ Maximum swap time falls from99.549ms to15.044ms; upload remains3.118ms, draw10.5
 release0.032ms. Front finish has a27.562ms maximum; no per-frame correlation was retained
 to attribute the isolated31ms gap. This confirms removal of the recurring hash/GIL stalls
 within this workload, not elimination of every timing miss or proof of optical frame lock.
+
+**Persistent Fold bundles (stages 1-2 implemented, locally tested; not rig-run):** under
+[V04](../docs/architecture/visual_stimulus.md#v04) rev51 and the
+[asset-lifetime contract](../contracts/visual_stimulus/asset-lifetime.md#disposable-fold-samples),
+Setup now keeps one bundle per unique image in `<asset folder>/cephvr-bundles/<stem>.<key prefix>/`
+(`fold-samples.rgba32f`, then `bundle.json`; published by folder rename, files read-only).
+The key binds the image content key (protected source SHA-256 and interpretation), display
+geometry plus each used projector's geometric calibration, the fold crops, the bake shader
+digest and the GL vendor/renderer/version (driver). Matching manifests are reused without
+decode or bake (byte count and crops checked; every load still verifies the digest). A miss
+bakes and records older bundles naming the same relative file, or unreadable ones in that
+image's folder name, as replaced stale entries. Stop, failure and cleanup only close readers.
+Code: `resources/image_bundle_store.py`, `resources/image_bundle.py`, `rendering/image_bake.py`;
+tests in `tests/visual_stimulus/test_resources.py` cover bake/reuse/damage, stale after
+calibration and GPU changes, unanswered keep, failed bake, unreadable entries, unwritable
+folders and the identity helper. Policy35: `fold_storage`/`bundle_cleanup`.
+
+Stage 2 keep/delete question: each replaced entry (never one reused, i.e. open, in this
+Setup) rides the renderer's Setup progress as `OperationState.stale_image_bundles` (at most
+64 per report; extra entries wait for the next emitted report). The coordinator bounds the
+entries and remembers their IDs for this Setup. The controller (`lifecycle/stale_bundles.py`)
+publishes one non-blocking prompt per entry (`keep`, `delete`, `keep_all`, `delete_all`) in
+the existing prompt table and GUI dialog. Delete choices send the coordinator's local
+`DeleteStaleImageBundles` command, accepted only for recorded IDs before the first trial and
+read back from the retained result; failures become a Visual Stimulus warning. Apply-to-all
+also answers later entries in that attempt. Start, or retiring the attempt, closes unanswered
+questions and keeps those bundles. Tests: renderer progress batching and in-use exclusion
+(`test_resources.py`), bounds, deletion and retained outcome (`test_coordinator.py`), prompt
+choices, delete-all, dismissal and failure warning (`tests/controller/test_setup.py`).
+GUI labels were checked offscreen only; the GUI test package was not run (it hangs on an
+unrelated editor dialog). Limits: entries left unsent when Setup ends are never asked about,
+so those bundles are kept; a bundle reused for a renamed image still lists its old file name
+and may be offered for that name later (a wrong delete only causes a rebake); crash-left
+hidden `.partial-` folders are ignored, not removed; no native Setup/bake, prompt-to-delete
+run or cache-hit timing yet.
 
 The exact managed bootstrap now selects `_hashlib` by default: twelve41.3MB hashes take
 14.69–15.16ms with observer maximum1.670ms, versus prior75–77ms/78.691ms. Explicit

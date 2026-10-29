@@ -487,6 +487,10 @@ is recorded under Camera no-wiring anchoring below.
   GUI restart. Pitch, offsets, masks and tearing remain unverified. Compare pulse-only and all-output
   VSync for Left/Front tearing and record actual cadence/optical behavior; do not infer
   simultaneous scanout from requested intervals. — [Assessment](visual_stimulus.md)
+  Oct29 owner reports reversed physical Bottom left/right with correct linked preview:
+  G01rev389 adds fixed native output-X mirror correction and compensates both rig
+  previews. Restart/fresh Setup and verify both lateral directions with saved flips
+  retained; local coordinate/pixel checks do not establish physical agreement.
 
 - [ ] Verify the promoted shared Inputs/Outputs and per-screen Synchronization
   editors at native narrow/tall/DPI sizes, including save/reopen and observer/session
@@ -628,6 +632,13 @@ V20 revision9 adds Free run (no VSync) alongside selected-output/all-output VSyn
 Verify all three modes' requested/effective driver swap behavior and optical timing
 on the rig, including retained pulse/pacer targets in Free run and no MCU input.
 Local tests do not establish flicker suppression or simultaneous scanout.
+
+- [ ] `startup-missing-assets` [visual_stimulus] Restart with a saved missing Assets
+  folder or missing calibration file; confirm GUI remains editable with the path
+  and correction instructions, no initialized/Ready claim, and no supervisor exit.
+  Select the correct Assets root, apply configuration and run explicit Setup.
+  Local lifecycle/authenticated checks pass; native acceptance pending.
+  [Assessment](visual_stimulus.md#missing-startup-assets--2026-10-29).
 
 - [ ] Extend SYS-002's verified AMD GUI/RTX5060Ti renderer startup to repeated
   launcher generations and the existing simultaneous OF/camera/stimulus recording

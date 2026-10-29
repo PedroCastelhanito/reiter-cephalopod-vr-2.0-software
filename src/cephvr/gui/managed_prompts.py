@@ -189,7 +189,15 @@ class ManagedPrompts:
         for choice in prompt.permitted_choices:
             label = {
                 "recover": "Start recovery",
-                "delete": "Cancel and delete files",
+                # V04 stale Fold bundle questions also offer apply-to-all choices.
+                "delete": (
+                    "Delete old bundle"
+                    if "keep_all" in prompt.permitted_choices
+                    else "Cancel and delete files"
+                ),
+                "keep": "Keep old bundle",
+                "keep_all": "Keep all remaining",
+                "delete_all": "Delete all remaining",
             }.get(choice, choice)
             button = QPushButton(label, self.prompt_dialog)
             button.setAutoDefault(False)

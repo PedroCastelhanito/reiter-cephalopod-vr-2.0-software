@@ -100,7 +100,9 @@ after verifying its manifest digest against the recomputed key and the prepared
 trial; every load still verifies its byte range digest. A mismatch, missing or
 unreadable entry means validate-and-rebake, never partial reuse. Publish atomically
 with the manifest last, mark files read-only and leave no valid-looking entry after a
-failed or cancelled bake. For a stale bundle, ask the operator once per stale bundle
+failed or cancelled bake. A stale bundle records one of the image's relative source
+file names under a different key; it is offered only when no bundle matches and the
+image is rebaked. For a stale bundle, ask the operator once per stale bundle
 (with apply-to-all-remaining) whether to keep or delete it while the replacement
 bakes; delete only after the replacement is confirmed complete, only on that answer,
 and after closing its readers. Unanswered means keep; the question is dismissed at

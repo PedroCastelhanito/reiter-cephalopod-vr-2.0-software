@@ -46,6 +46,16 @@ class DisplayGpuUnavailableError(DisplayUnavailableError):
     )
 
 
+class DisplayAssetUnavailableError(DisplayUnavailableError):
+    """Saved display inputs are inaccessible; configuration remains editable."""
+
+    code = "DISPLAY_ASSET_UNAVAILABLE"
+    remedy = (
+        "Select the correct Protocol Assets folder and restore any missing "
+        "calibration files, apply the configuration, then run Setup."
+    )
+
+
 def resolve_output_monitors(
     display: DisplayProfile,
     glfw: Any,

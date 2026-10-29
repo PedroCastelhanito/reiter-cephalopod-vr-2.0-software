@@ -1,0 +1,26 @@
+Command: .venv/Scripts/python.exe -m pytest tests/gui/test_preview_timeline.py -q --tb=short -m 'not windows and not rig' --basetemp=.tmp-monitor-final-suite
+Exit: 1
+Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
+.........................................................FF.....F....... [ 60%]
+...............................................                          [100%]
+================================== FAILURES ===================================
+________ test_arena_map_and_body_frame_dial_follow_planned_continuity _________
+tests\gui\test_preview_timeline.py:780: in test_arena_map_and_body_frame_dial_follow_planned_continuity
+    assert timeline.map_samples[0].pose is None
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+__________ test_projector_card_instruments_wrap_to_the_column_width ___________
+tests\gui\test_preview_timeline.py:830: in test_projector_card_instruments_wrap_to_the_column_width
+    card = timeline.maps[0].parentWidget().parentWidget()
+           ^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+_________________ test_feedback_arena_pose_waits_until_reset __________________
+tests\gui\test_preview_timeline.py:1097: in test_feedback_arena_pose_waits_until_reset
+    assert timeline.map_samples[0].message == "Waiting for tracking"
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+=========================== short test summary info ===========================
+FAILED tests/gui/test_preview_timeline.py::test_arena_map_and_body_frame_dial_follow_planned_continuity
+FAILED tests/gui/test_preview_timeline.py::test_projector_card_instruments_wrap_to_the_column_width
+FAILED tests/gui/test_preview_timeline.py::test_feedback_arena_pose_waits_until_reset
+3 failed, 116 passed in 3.09s

@@ -268,6 +268,15 @@ class GrpcBackendPort:
             self.visual_stimulus.SetStimulusPreview, request, deadline_ns
         )
 
+    async def delete_stale_image_bundles(
+        self, request: svc.StaleImageBundleDeletion, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.DeleteStaleImageBundles, request, deadline_ns
+        )
+
     async def initialize_display(
         self,
         request: svc.VisualStimulusDisplayInitializationRequest,

@@ -70,6 +70,9 @@ class BackendPort(Protocol):
     async def set_stimulus_preview(
         self, request: svc.StimulusPreviewRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
+    async def delete_stale_image_bundles(
+        self, request: svc.StaleImageBundleDeletion, *, deadline_ns: int
+    ) -> pb.CommandAdmission: ...
     async def initialize_display(
         self,
         request: svc.VisualStimulusDisplayInitializationRequest,

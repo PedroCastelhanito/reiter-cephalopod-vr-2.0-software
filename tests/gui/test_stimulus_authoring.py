@@ -460,7 +460,9 @@ def test_stimulus_geometry_is_validated_only_when_inputs_change(window, monkeypa
     assert window.stimulus_geometry() is changed
 
 
-def test_external_file_is_imported_once_per_unchanged_source(tmp_path, monkeypatch):
+def test_asset_selection_references_existing_files_without_copying(
+    tmp_path, monkeypatch
+):
     from cephvr.gui import stimulus_asset_paths
     from cephvr.gui.stimulus_asset_paths import AssetPathResolver
     from cephvr.gui.stimulus_files import resolve_stimulus_file
@@ -469,17 +471,22 @@ def test_external_file_is_imported_once_per_unchanged_source(tmp_path, monkeypat
     root.mkdir()
     source = tmp_path / "external.png"
     source.write_bytes(b"one")
+    for name in ("external.png", "external.mp4", "external.glb", "external.json"):
+        outside = tmp_path / name
+        if outside != source:
+            outside.write_bytes(b"external")
+        with pytest.raises(ValueError, match="inside Protocol Assets"):
+            resolve_stimulus_file(
+                str(root), str(outside), texture=name.endswith(".json")
+            )
+    assert list(root.iterdir()) == []
+    assert source.read_bytes() == b"one"
+    # One common root supports different experimenters without source copies.
+    root = tmp_path
     first = resolve_stimulus_file(str(root), str(source), texture=False)
+    assert first.path == "external.png"
     assert resolve_stimulus_file(str(root), str(source), texture=False) == first
-    assert len(list(root.glob("import-*"))) == 1
-    source.write_bytes(b"changed contents")  # New size and mtime: a new import.
-    changed = resolve_stimulus_file(str(root), str(source), texture=False)
-    assert changed.path != first.path and len(list(root.glob("import-*"))) == 2
-    assert (root / changed.path).read_bytes() == b"changed contents"
-    (root / changed.path).unlink()  # A vanished copy is imported again.
-    assert (
-        root / resolve_stimulus_file(str(root), str(source), texture=False).path
-    ).is_file()
+    assert not list(root.glob("import-*"))
 
     calls = []
     real = stimulus_asset_paths.resolve_stimulus_file
@@ -497,9 +504,16 @@ def test_external_file_is_imported_once_per_unchanged_source(tmp_path, monkeypat
     source.write_bytes(b"third")
     resolver.resolve(str(root), str(source), texture=False, grating=False)
     assert len(calls) == 2
+    previous = root / "import-existing" / "saved.png"
+    previous.parent.mkdir()
+    previous.write_bytes(b"saved")
+    assert resolve_stimulus_file(str(root), str(previous), texture=False).path == (
+        "import-existing/saved.png"
+    )
+    assert previous.read_bytes() == b"saved"
 
 
-def test_variation_folder_reload_reuses_imported_copies(app, tmp_path):
+def test_variation_folder_references_in_root_files_without_copying(app, tmp_path):
     from cephvr.gui.protocol_document import blank_program
     from cephvr.gui.variation_assets import VariationAssets
 
@@ -511,13 +525,17 @@ def test_variation_folder_reload_reuses_imported_copies(app, tmp_path):
         (subset / f"{index}.png").write_bytes(b"image %d" % index)
     picker = VariationAssets()
     picker.editor.setText(str(subset))
+    with pytest.raises(ValueError, match="inside Protocol Assets"):
+        picker.load(blank_program(), str(root), ("image",))
+    assert list(root.iterdir()) == []
+    assert not picker.loaded and picker.loaded_key is None
+    root = tmp_path
     first = picker.load(blank_program(), str(root), ("image",))
-    imports = sorted(p.name for p in root.glob("import-*"))
-    assert len(imports) == 5
-    # Another media kind misses the loaded key but must not copy the files again.
+    assert [a.logical_path for a in first] == [f"external/{i}.png" for i in range(5)]
+    # Another media kind retains the same file references.
     second = picker.load(blank_program(), str(root), ("texture",))
     assert [a.logical_path for a in second] == [a.logical_path for a in first]
-    assert sorted(p.name for p in root.glob("import-*")) == imports
+    assert not list(root.glob("import-*"))
     picker.deleteLater()
 
 

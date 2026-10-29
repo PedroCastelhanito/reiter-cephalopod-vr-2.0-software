@@ -127,6 +127,8 @@ def face_mapping(
 
     ox, oy = pixel_offsets(values, face, monitor.width, monitor.height)
     flip_x, flip_y = flipped("flip_x"), flipped("flip_y")
+    # The folded Bottom optical path reverses native output X.
+    flip_x ^= face == "Bottom"
     vertices = affine_vertices(
         -sx if flip_x else sx,
         -sy if flip_y else sy,
@@ -295,7 +297,10 @@ def diagnostic_display_profile(
             vertices, mirrored = face_mapping(calibration, face, monitor)
             bounds = face_valid_area(calibration, face, monitor)
             vertices = affine_vertices(
-                -1 if original_values.get(f"screens.{face}.flip_x") else 1,
+                -1
+                if bool(original_values.get(f"screens.{face}.flip_x"))
+                != (face == "Bottom")
+                else 1,
                 -1 if original_values.get(f"screens.{face}.flip_y") else 1,
                 (bounds[0] + bounds[2]) / 2,
                 (bounds[1] + bounds[3]) / 2,

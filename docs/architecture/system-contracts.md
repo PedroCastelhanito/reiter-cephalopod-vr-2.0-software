@@ -634,10 +634,10 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 221
+**Status:** Accepted · **Revision:** 222
 
-- Visual Stimulus policy version34 declares V04's source-folder validation index, reusable Fold
-  texture/staging slots, deduplicated16-image batches, temporary bundles, fixed
+- Visual Stimulus policy version35 declares V04's source-folder validation index, reusable Fold
+  texture/staging slots, deduplicated16-image batches, persistent per-image bundles, fixed
   two-epoch lookahead and paced image
   upload batch and retains its linear fallback for untagged
   PNG/TIFF images, retains V22 selectable landmark/every-frame modes and the accepted file-owned projection limits

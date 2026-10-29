@@ -14768,3 +14768,114 @@ Verification documentation: new evidence links/rig anchor and scoped whitespace 
 ### 2026-10-29 - persistent-image-bundles: owner decision recorded [visual_stimulus] [controller] [gui] [shared]
 
 Owner revised V04 after reviewing the hash-fix pipeline: keep Fold bundles after a run, one per unique image, in a visible `cephvr-bundles` folder in the asset folder; reuse when the key matches, rebake when it does not or is missing, and ask once per stale bundle (apply-to-all option) whether to keep or delete the old one, shown during the bake and applied only after the replacement succeeds; unanswered keeps. Key includes source hash, interpretation, calibration/geometry, fit/placement, algorithm and baking GPU/driver. Recorded as V04 revision 50 and in the asset-lifetime contract (replacing the temporary-bundle and no-reuse rules); register updated. GUI folder listing is non-recursive and extension-filtered, so the subfolder is not picked up. Documentation only: no code, policy or rig change; E14 policy still says temporary bundles until implementation (`persistent-image-bundles`). Cache-hit Setup time, atomic publish and prompt behaviour are unmeasured/unimplemented.
+
+### 2026-10-29 - persistent-image-bundles: stage 1 implementation [visual_stimulus] [controller] [gui] [shared]
+
+Owner authorized implementation and answered two critical points: "same image" means the same relative file name; the stale question arises only when no bundle matches the current key and the image is rebaked (no stored keep answer). Recorded as V04 rev51 and in asset-lifetime. Implemented persistent per-image bundles (new `image_bundle_store.py`; `ImageBundle` reuse/bake/atomic publish/stale recording; baker GPU/driver identity and shader digest; Setup passes the asset folder, file names and calibration/geometry digests). Policy 35 (`fold_storage`, `bundle_cleanup`, pinned digest), E14 rev222 wording. Stage 2 (operator keep/delete question across renderer/coordinator/controller/GUI) not started; nothing is deleted yet, matching the unanswered-keeps rule. Checks: Visual Stimulus 842 passed; full suite excluding `tests/gui`/`tests/generate_stimulus` 3236 passed, 9 skipped; Windows image/Fold subset 18 passed; ruff, format, Win32 mypy, boundary check (0 violations) pass; GL identity read on the local RTX 5060 Ti context. GUI packages not verified: a stimulus-editor unsaved-changes dialog blocks one test and the run timed out with other failures in untouched GUI code (`full_width_rgb` already known). A `git stash` comparison failed on a long evidence path and was recovered without loss. No native Setup, rig run or cache-hit timing.
+
+### 2026-10-29 - persistent-image-bundles: stage 2 keep/delete question [visual_stimulus] [controller] [gui]
+
+Implemented V04rev51's operator question. Contracts: `OperationState.stale_image_bundles` (`StaleImageBundle`) and `VisualStimulusConfigurationService.DeleteStaleImageBundles(StaleImageBundleDeletion)`; bindings regenerated. The renderer attaches replaced, never in-use, bundles to Setup progress (64 per report). The coordinator bounds and records the IDs, and runs the deletion itself only for recorded IDs before the first trial, retaining the outcome. The controller `StaleBundlePrompts` adds one non-blocking prompt per bundle (keep/delete/keep_all/delete_all) to the existing prompt table, deletes after the answer, and dismisses unanswered prompts at Start or attempt retirement. GUI prompt labels added. Also fixed bundle folder names for dot-leading file stems (they would have been hidden and never reused). Checks: non-GUI suite 3241 passed, 9 skipped; Windows image/Fold subset 18 passed; new tests in test_resources, test_coordinator, controller test_setup; ruff, format, Win32 mypy (visual_stimulus, controller, managed_prompts), boundary check (802 modules, 0 violations) and diff check pass; GUI labels checked offscreen. Not run: GUI test package (pre-existing hang), authenticated end-to-end RPC for the new command, native rig Setup/prompt/deletion.
+
+
+### 2026-10-29 - bottom-output-and-monitor-duration [gui] [visual_stimulus]
+
+Owner requested physical Bottom left/right correction while retaining linked preview,
+and editor-only epoch limits. G01rev389/register now bind fixed native output-X
+reflection composed with saved flips; both rig previews undo it. GUI-generated normal
+and full-grid mappings share correction; imported mappings retain their definition.
+Monitor uses the existing bounded canonical full iterator/configured Setup limit;
+session totals include every trial occurrence and existing gaps; editor preview stays100.
+ARCH-002 review: existing focused helpers/tests, no dependency/process/state addition.
+73 focused GUI and5 renderer preview cases pass (4 offscreen native OpenGL);
+Ruff/format,4-source Win32 mypy,802-module boundaries/zero violations pass.
+Full timeline module116 pass/3 arena-map failures; those and a broader physical-versus-
+usable-plane assertion reproduce with relevant HEAD helpers restored in memory in the
+current tree. No clean-checkout baseline claimed. Initial fixture enum, winding/sign
+expectation and import failures corrected. Reports/evidence and existing rig checklist
+updated. No experiment/restart/physical-direction validation; task retains native
+acceptance. Full-limit GUI latency unmeasured. Concurrent bundle work preserved.
+Evidence: reports/runtime-evidence-2026-10-29/bottom-output-monitor/context.md.
+
+
+### 2026-10-29 - persistent-image-bundles: rebake attribution [visual_stimulus] [gui]
+
+Owner challenged stale-bundle prompts with unchanged saved configuration. Read-only
+code review of source/key/crop identities and authenticated controller snapshot
+located current Assets at C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/media.
+Compared a retained old/new0007_1_metamer7 pair: source/GPU/driver/shader and wall
+crops identical; only geometry digest and Bottom Fold horizontal sampling differ,
+matching G01rev389's software output correction. Both canonical keys recompute.
+Pasted0242 old bundle absent, so attribution uses a representative retained pair;
+no identical-input cache bug established, no next-Setup reuse or pixel integrity pass.
+Earlier Desktop path searches were historical/unhelpful. Sandbox async/import reads
+stalled and were interrupted; elevated loopback read succeeded. Initial cleanup
+called nonexistent revoke; exact investigation credential then removed through
+remove_client. No takeover/control/device commands, configuration edit, source change
+or bundle deletion. Current report/TODO updated with limits; raw manifests and
+assessment retained under visual-stimulus-evidence-2026-10-29/bundle-rebake-attribution.
+
+### 2026-10-29 - repo-disposable-cleanup [repo]
+
+Owner requested repository test/cache/temp cleanup. Removed 63 confirmed disposable
+cache/fixture directories containing 1,269 files (52,334,911 bytes / 49.91 MiB):
+root mypy/pytest/Ruff caches, Python bytecode caches in project source/tests, and
+.tmp-bottom-affine, .tmp-bottom-affine-2, .tmp-bottom-mapping-broad,
+.tmp-bottom-monitor-2 and .tmp-bottom-monitor-final test fixture folders.
+Validated every resolved deletion target is inside this repository, contains no
+tracked files or reparse points, and is absent after removal. Git porcelain status
+including untracked files was identical before/after deletion. Preserved actual
+tests, all existing edits, .venv, SDK, generated runtime bindings/native binaries,
+configuration, cephvr-data, emergency reports and retained evidence under GOV-001.
+Git diff --check passed (existing reports/runtime.md line-ending warning only).
+No runtime tests required or run for deletion of disposable artifacts. Task complete.
+
+### 2026-10-29 - startup-missing-assets [visual_stimulus]
+
+Owner reported application shutdown after moving the saved Assets root. Traced
+FileNotFoundError through CPU startup display preparation to renderer escalation;
+reused V19's verified sessionless rejection/cleanup path for missing, non-directory
+and inaccessible Assets/calibration inputs. Added typed error/remedy and matched
+coordinator/worker operation codes without relaxing exact cleanup, cancellation,
+original deadlines or Setup validation. V19rev8/register/startup contract/report
+updated; native acceptance remains in TODO and the single rig checklist.
+ARCH-002: existing focused modules/owning tests, no dependency or new state.
+30 focused cases pass. Initial authenticated integration found coordinator code
+mismatch; corrected, then 183 lifecycle/coordinator/communication tests passed,
+one E15 deselection. Sandbox suites stalled and were interrupted; loopback checks
+passed outside sandbox. Ruff/format and four-source Win32 mypy pass; boundaries
+802 modules/zero violations with existing size warnings, no touched oversized
+module. Format failure corrected; diff whitespace check passes with existing
+line-ending warnings. No saved-path changes, native GUI restart or devices touched.
+Evidence: reports/visual-stimulus-evidence-2026-10-29/startup-missing-assets/context.md.
+
+### 2026-10-29 - asset-selection-no-copy [gui]
+
+Owner rejects automatic import folders. G01rev390 replaces auto-copying with direct
+Protocol Assets-relative selection; outside files reject before opening/parsing with
+common-parent guidance. Removed import helper/cache/copy dependencies; variation
+folder tooltip and owning authoring tests updated. Existing imports and saved
+references preserved; no data migration/deletion or saved-path changes.
+ARCH-002 reviewed all resolver callers: picker/paste/presets/variation use the shared
+helper; no new abstraction/state/dependency. Five focused authoring/dashboard tests
+pass; full authoring64 pass/two sparse-preview count failures for101/4000 (untouched
+behavior, baseline unverified), retained under gui-suite-reconciliation. Ruff/format,
+two-source Win32 mypy pass; boundaries802 modules/zero violations, existing size
+warnings; changed helpers not oversized. Initial format check corrected; whitespace
+check passes with existing line-ending warnings. No native GUI restart. Requested
+code change complete; validation evidence/report updated, existing unrelated work
+preserved. Evidence: reports/runtime-evidence-2026-10-29/asset-selection-no-copy/context.md.
+
+### 2026-10-29 - asset-root-picker-message [gui]
+
+Owner screenshot shows Assets selected while picker asks to choose it. Verified
+the displayed cephvr-assets/media folder no longer exists after reorganization;
+existing root has Alsu/config-files/Olivier/Pedro. Picker conflated empty selection
+with missing/non-directory selection. Kept G01/E07 root validation, changed invalid
+path warning to name the selected path and request Browse; empty root retains a
+distinct message. Extended owning dashboard test: empty/missing reject without
+dialog/file creation or program mutation, corrected root opens picker and works.
+One focused test passes, Ruff/format and Win32 mypy pass; boundaries802 modules/zero
+violations. ARCH-002 existing picker cohesion retained despite size warning; no
+new responsibility/dependency/state. Report/evidence updated; task complete.
+No saved configuration changes, file movement or native GUI restart.

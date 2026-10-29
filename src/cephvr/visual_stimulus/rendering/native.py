@@ -414,7 +414,10 @@ class ModernGLPort:
     def prepare_image_bundle(
         self, bundle: Any, schedule: Any, budget: Any, progress: Any
     ) -> Any:
-        from cephvr.visual_stimulus.rendering.image_bake import FoldBaker
+        from cephvr.visual_stimulus.rendering.image_bake import (
+            BAKE_ALGORITHM,
+            FoldBaker,
+        )
 
         self._assert_owner()
         self.announce("visual_stimulus:image-baker", None)
@@ -424,6 +427,8 @@ class ModernGLPort:
             self._image_baker.bake,
             budget,
             progress,
+            device=self._image_baker.device_identity(),
+            algorithm=BAKE_ALGORITHM,
             finish_batch=self._image_baker.close,
         )
 

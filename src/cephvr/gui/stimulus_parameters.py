@@ -445,7 +445,12 @@ class StimulusParameters(QWidget):
         if not self.isEnabled():
             return
         if not self.asset_root or not Path(self.asset_root).is_dir():
-            self.message.warn("Choose the asset root folder first")
+            self.message.warn(
+                f"Protocol Assets folder does not exist or is not a directory: "
+                f"{self.asset_root}. Choose an existing folder using Browse."
+                if self.asset_root
+                else "Choose the Protocol Assets folder first"
+            )
             self.message.show()
             return
         if self.file_dialog is not None:

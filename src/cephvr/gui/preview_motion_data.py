@@ -3,8 +3,9 @@
 from collections import Counter
 from dataclasses import dataclass, replace
 from math import hypot
+from pathlib import Path
 
-from cephvr.visual_stimulus.compiler.expansion import expand_program_prefix
+from cephvr.visual_stimulus.compiler.expansion import iter_expanded_program
 from cephvr.visual_stimulus.config.models.program_model import (
     Constant,
     Fixed,
@@ -15,6 +16,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Settings,
     TextureSettings,
 )
+from cephvr.visual_stimulus.configuration import load_file_policies
 from cephvr.visual_stimulus.rendering.motion import evaluate_function
 
 
@@ -46,8 +48,12 @@ def motion_epochs(program: Program, seed: str) -> tuple[MotionEpoch, ...]:
             pending.extend(node.body)
     epochs = []
     elapsed_ns = 0
-    for occurrence in expand_program_prefix(
-        program, seed_decimal=seed or "0", max_expanded_epochs=100
+    for occurrence in iter_expanded_program(
+        program,
+        seed_decimal=seed or "0",
+        max_expanded_epochs=load_file_policies(
+            Path(__file__).resolve().parents[3]
+        ).limits.max_expanded_epochs,
     ):
         source = occurrence.source
         if not isinstance(source.duration, Fixed):

@@ -72,3 +72,5 @@ class State:
     recipe_results: dict[str, pb.OutputResult] = field(default_factory=dict)
     cleanup: pb.CleanupReport | None = None
     incident_revisions: dict[str, int] = field(default_factory=dict)
+    # Stale Fold bundle IDs relayed during this Setup, until deleted (V04).
+    stale_bundles: set[str] = field(default_factory=set)

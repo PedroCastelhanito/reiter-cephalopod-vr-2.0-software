@@ -201,7 +201,7 @@ class Reports:
         if link.setup_inactivity is not None and received > link.deadline_ns:
             raise ValueError("Setup report after inactivity cutoff")
         if not report.operation.complete and report.operation.progress:
-            from .setup_progress import relay_setup_progress
+            from .setup_progress import relay_setup_progress, stale_bundle_ids
 
             await relay_setup_progress(
                 link,
@@ -211,6 +211,8 @@ class Reports:
                 backend=self.identity.backend,
                 controller=self.controller,
             )
+            # Only IDs relayed for this Setup may later be deleted (V04).
+            self.state.stale_bundles.update(stale_bundle_ids(report.operation))
         if report.HasField("prepared_artifact"):
             setup = self.state.setup
             if setup is None or link.method != "SetupSession" or self.state.interrupted:

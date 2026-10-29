@@ -1,7 +1,11 @@
 """Bounded operator feedback for CPU and graphics Setup stages."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from typing import Any
+
+# StaleImageBundle contract bound per progress report; the rest wait for the next.
+STALE_BUNDLES_PER_REPORT = 64
 
 
 @dataclass(slots=True)
@@ -21,7 +25,7 @@ class PreparationMetrics:
 class SetupProgress:
     def __init__(
         self,
-        emit: Callable[[str], None] | None,
+        emit: Callable[..., None] | None,
         clock_ns: Callable[[], int],
         cadence_ns: int = 1_000_000_000,
     ) -> None:
@@ -30,6 +34,11 @@ class SetupProgress:
         self.stage = ""
         self.message = ""
         self.last_ns = 0
+        self.stale: list[Any] = []
+
+    def stale_bundles(self, entries: Iterable[Any]) -> None:
+        """Queue replaced bundles for the next emitted report; unsent ones stay kept."""
+        self.stale.extend(entries)
 
     def update(
         self, stage: str, completed: int | None = None, total: int | None = None
@@ -44,5 +53,10 @@ class SetupProgress:
             and now - self.last_ns < self.cadence_ns
         ):
             return
-        self.emit(message)
+        if self.stale:
+            sent = self.stale[:STALE_BUNDLES_PER_REPORT]
+            self.emit(message, tuple(sent))
+            del self.stale[: len(sent)]
+        else:
+            self.emit(message)
         self.stage, self.message, self.last_ns = stage, message, now

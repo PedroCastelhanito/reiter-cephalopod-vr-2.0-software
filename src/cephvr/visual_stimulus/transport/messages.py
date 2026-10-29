@@ -37,6 +37,7 @@ def backend_command(request: Message) -> wire.BackendCommand:
             wire.StopTrialRequest,
             wire.InterruptSessionRequest,
             wire.IncidentScopeRequest,
+            wire.StaleImageBundleDeletion,
         ),
     ):
         return request.command

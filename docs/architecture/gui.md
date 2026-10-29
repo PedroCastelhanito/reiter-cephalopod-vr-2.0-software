@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 388
+**Status:** Accepted · **Revision:** 390
 
 - Protocol remembers one shared set of latest validated parameters per stimulus
   type across projectors and normal application restarts through the GUI snapshot.
@@ -602,7 +602,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   value step), and an unchecked Share random values across projectors option. Independent target draws are the default; sharing explicitly reuses one list.
   Asset offers Random from folder for image/video/image-tile layers. Browse or paste
   a subset folder; retain compatible direct children (no recursion) as a bounded
-  candidate snapshot. Import external files through the existing Assets-root mechanism.
+  candidate snapshot. Select files within Protocol Assets without copying them;
+  external selections require choosing a common Assets root or manually moving files.
   Preserve layer placement/scale and other parameters. Save the folder and candidate
   identities for reopening; later directory additions do not silently change a saved
   rule. Reject missing/empty/incompatible selections atomically. V08 owns seeded
@@ -653,9 +654,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   independently of projector enablement. Reopen the snapshot after changing settings;
   provide Play/Pause, scrubbing, previous/next epoch and playback speed. Reuse V07
   boundary state/retention and canonical expansion with an explicit example seed.
-  Animated trial and motion previews use only the first100 expanded epoch occurrences,
-  stopping expansion at that prefix without rejecting longer trials or changing the
-  authored program and managed Setup limits;
+  The epoch editor's animated trial preview uses only the first100 expanded epoch
+  occurrences, stopping expansion at that prefix without rejecting longer trials.
+  Dashboard Monitor timelines, motion planning and trial/session time totals include
+  all trial occurrences and session trials/gaps, bounded by managed Setup's configured
+  expanded-plan limit rather than the editor preview cap;
   bind linked textures through the runtime motion resolver using the snapshot geometry
   at each boundary, with the same pivot validation and reproducible backward seeking;
   reject unresolved random durations. This preview sends no device commands, applies
@@ -727,10 +730,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Setup retains the final seed/order. Invalid mutations preserve the last valid program.
 - CephVR1 texture designs resolve an existing exported PNG plus declared tile dimensions
   into canonical V03; missing/invalid companions fail without synthesizing appearance.
-  File selection accepts supported media/texture recipes from any location. Copy
-  external selections into unique folders under Assets, preserving recipe-relative
-  image inputs and originals; keep existing in-root selections in place. Saved
-  references remain E07 root-relative and replacement remains epoch-local.
+  File selection references supported media/texture recipes directly within Protocol
+  Assets. Reject external selections with guidance to choose a common Assets root
+  or manually move files; never create automatic import folders. Preserve existing
+  saved references, including earlier imports, without deletion or automatic relinking.
+  References remain E07 root-relative and replacement remains epoch-local.
   Omit texture-design controls;
   expose speed/direction/angular speed, opacity, playback, retain-state and feedback.
   Physical-screen direction authoring uses the shared rig frame: Right0°, Front90°, Left180°,
@@ -1104,14 +1108,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   The Bottom projector is below Right with the same physical orientation and a
   folded mirror path. GUI-owned
   mappings rotate surface coordinates 90° before the saved output-axis inversions:
-  (u, v) maps to (1-v, u). Output-axis inversions follow the operator's physically
-  verified calibration; preview placement must not require an additional Y inversion.
+  (u, v) maps to (1-v, u), then Bottom's folded mirror path adds an output-X
+  reflection. Saved output-axis inversions compose with this fixed correction;
+  preview placement must not require an additional saved Y inversion.
   Raw pixel widths/heights, offsets, reference bars and masks
   stay output-local; Bottom surface extents/pitches and render-target axes swap.
-  Planning and native rig previews undo only the Bottom portrait quarter-turn
-  when placing its raster onto the physical plane, without an extra surface-X
-  reflection, so linked translation agrees with the walls. Physical projector
-  calibration and saved output-axis inversions remain unchanged. Imported warps retain
+  Planning and native rig previews undo the Bottom portrait quarter-turn and fixed
+  mirror correction when placing its raster onto the physical plane, so linked
+  translation agrees with the walls. Saved calibration values remain unchanged. Imported warps retain
   their declared mapping; regenerated GUI profiles adopt this correction at fresh Setup.
   Numeric version 6/full version 9 retain pixel valid-area dimensions and migrate
   older Scale bounds to crop sizes using retained native measurements; reject a

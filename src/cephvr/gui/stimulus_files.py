@@ -1,20 +1,15 @@
-"""Resolve selected media, importing external files into the protocol asset root."""
+"""Reference selected media directly within the protocol asset root."""
 
-import shutil
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from cephvr.gui.program_editing import NodePath, data_node
-from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.config.models.schema_common import (
     DEFAULT_DOCUMENT_BYTES,
     portable_path,
 )
-from cephvr.visual_stimulus.resources.recipe_dependencies import image_dependency
 from cephvr.visual_stimulus.resources.texture_recipe import (
-    TextureRecipe,
     parse_texture_recipe,
 )
 
@@ -47,6 +42,11 @@ def resolve_stimulus_file(
     if not base.is_dir():
         raise ValueError("Choose an existing Assets folder first")
     selected = Path(path).resolve()
+    if not selected.is_relative_to(base):
+        raise ValueError(
+            "Select a file inside Protocol Assets, or choose a common parent "
+            "as the Assets folder. Files are not copied automatically."
+        )
     width = height = None
     recipe = None
     if selected.suffix.lower() == ".json":
@@ -75,69 +75,12 @@ def resolve_stimulus_file(
                 "Select a supported image, video, GLB arena or texture JSON recipe"
             )
         profile = PROFILES[suffix]
-    if not selected.is_relative_to(base):
-        selected = _import_file(base, selected, recipe)
     return StimulusFile(
         portable_path(selected.relative_to(base).as_posix()),
         profile,
         width,
         height,
     )
-
-
-# Imports made this session, keyed by (root, source, size, mtime) so that re-selecting
-# an unchanged external file reuses its copy instead of copying again.
-_IMPORTS: dict[tuple[Any, ...], Path] = {}
-
-
-def _stamp(path: Path) -> tuple[str, int, int]:
-    stat = path.stat()
-    return str(path), stat.st_size, stat.st_mtime_ns
-
-
-def _import_file(base: Path, selected: Path, recipe: TextureRecipe | None) -> Path:
-    """Keep each import isolated; preserve recipe-relative image dependencies."""
-    name = portable_path(selected.name)
-    dependency = None
-    if recipe is not None:
-        dependency = image_dependency(
-            selected.parent,
-            Asset(
-                asset_id="import",
-                logical_path=name,
-                profile="cephvr1_texture_json_v1",
-                color_override=None,
-            ),
-            recipe,
-        )
-    source_dependency = (
-        selected.parent / dependency.logical_path if dependency is not None else None
-    )
-    key = (
-        str(base),
-        _stamp(selected),
-        _stamp(source_dependency) if source_dependency is not None else None,
-    )
-    cached = _IMPORTS.get(key)
-    if (
-        cached is not None
-        and cached.is_file()
-        and (dependency is None or (cached.parent / dependency.logical_path).is_file())
-    ):
-        return cached
-    destination = Path(tempfile.mkdtemp(prefix="import-", dir=base))
-    try:
-        shutil.copyfile(selected, destination / name)
-        if dependency is not None:
-            assert source_dependency is not None
-            target = destination / dependency.logical_path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source_dependency, target)
-        _IMPORTS[key] = destination / name
-        return destination / name
-    except BaseException:
-        shutil.rmtree(destination)
-        raise
 
 
 def select_epoch_asset(

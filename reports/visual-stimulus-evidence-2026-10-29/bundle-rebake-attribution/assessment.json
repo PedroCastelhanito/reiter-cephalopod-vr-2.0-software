@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-29",
+  "method": "Read-only comparison of retained bundle manifests and canonical key recomputation; no sample-byte validation or new Setup.",
+  "source_directory": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\media\\cephvr-bundles",
+  "old": "0007_1_metamer7.11c5095a6ef91d058c40",
+  "new": "0007_1_metamer7.f0432b85b00c74096f22",
+  "changed_key_fields": [
+    "crops",
+    "geometry"
+  ],
+  "crop_changes": {
+    "calibration_bottom": {
+      "fold": {
+        "old": [
+          1775.3333333333333,
+          1752.5000000000005,
+          0.0,
+          -1057.5000000000002,
+          -730.6666666666665,
+          0.0
+        ],
+        "new": [
+          1044.6666666666667,
+          1752.5000000000005,
+          0.0,
+          -1057.5000000000002,
+          730.6666666666665,
+          0.0
+        ]
+      }
+    }
+  },
+  "unchanged": [
+    "source",
+    "device",
+    "algorithm",
+    "Front crop",
+    "Left crop",
+    "Right crop"
+  ],
+  "limits": "Representative old/new pair; the originally pasted 0242 old bundle is no longer present. Does not establish next-Setup reuse or physical correctness."
+}

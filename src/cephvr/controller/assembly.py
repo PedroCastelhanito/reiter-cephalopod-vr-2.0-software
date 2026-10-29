@@ -45,6 +45,7 @@ from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle.session_reset import SessionReset
 from cephvr.controller.lifecycle.setup_admission import SetupAdmission
 from cephvr.controller.lifecycle.setup_execution import SetupExecution
+from cephvr.controller.lifecycle.stale_bundles import StaleBundlePrompts
 from cephvr.controller.lifecycle.start import StartActivation
 from cephvr.controller.lifecycle.trials import TrialExecution
 from cephvr.controller.lifecycle_reports import LifecycleReports, ReportHooks
@@ -399,6 +400,16 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
 
     camera.bind_recovery(device_views.report_projection, warn_controller)
 
+    stale_bundles = StaleBundlePrompts(
+        lifecycle=i.lifecycle,
+        incidents=i.incident_state,
+        control=i.control,
+        limit_state=i.limit_state,
+        publisher=publisher,
+        spawn=i.spawn,
+        generation=i.generation,
+        clock=i.clock,
+    )
     lifecycle_reports = LifecycleReports(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
@@ -413,6 +424,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
             source_producers=source_producers,
             clock=i.clock,
             warn=warn_controller,
+            stale_bundles=stale_bundles.offer,
         ),
     )
     cleanup.bind_report(lifecycle_reports.receive)
@@ -559,6 +571,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         output_planner=i.output_planner,
         generation=i.generation,
         spawn=i.spawn,
+        dismiss_prompts=stale_bundles.dismiss,
     )
     handoffs = PreparationHandoffs(
         lifecycle=i.lifecycle,

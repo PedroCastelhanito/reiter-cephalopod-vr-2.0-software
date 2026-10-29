@@ -1325,9 +1325,13 @@ async def test_setup_progress_maps_worker_command_without_completing_it(renewabl
             work=child.target.work,
             progress="Decoding textures: 50/500",
             progress_sequence=1,
+            stale_image_bundles=[
+                pb.StaleImageBundle(bundle_id="a.0123", sources=["images/a.png"])
+            ],
         ),
     )
     await reports.operation(report)
+    assert state.stale_bundles == {"a.0123"}
     method, forwarded, deadline = controller.reports[-1]
     assert method == "ReportLifecycle"
     assert deadline == (1_000_000_100 if renewable else 1234)
@@ -1335,6 +1339,9 @@ async def test_setup_progress_maps_worker_command_without_completing_it(renewabl
     assert forwarded.operation.operation.context.command_id == parent.command_id
     assert forwarded.operation.operation.work == parent.work
     assert forwarded.operation.operation.progress == report.operation.progress
+    assert forwarded.operation.operation.stale_image_bundles == (
+        report.operation.stale_image_bundles
+    )
     assert not forwarded.operation.operation.complete
     assert not state.prepared and not supervisor.reports
     if renewable:
@@ -1352,6 +1359,124 @@ async def test_setup_progress_maps_worker_command_without_completing_it(renewabl
     report.source.worker.generation = "foreign"
     with pytest.raises(ValueError, match="retained command"):
         await reports.operation(report)
+
+
+def test_stale_image_bundles_are_bounded_and_only_reported_ids_are_deleted(tmp_path):
+    from cephvr.visual_stimulus.coordinator.image_bundles import (
+        delete_stale_bundles,
+        validate_deletion,
+    )
+    from cephvr.visual_stimulus.coordinator.setup_progress import stale_bundle_ids
+
+    def offered(*ids, sources=("a.png",)):
+        return pb.OperationState(
+            stale_image_bundles=[
+                pb.StaleImageBundle(bundle_id=i, sources=sources) for i in ids
+            ]
+        )
+
+    assert stale_bundle_ids(offered("a.0123", "b.0123")) == {"a.0123", "b.0123"}
+    for bad in (
+        offered("../a"),
+        offered(".a.partial-1"),
+        offered("a", "a"),
+        offered(*(f"a{n}" for n in range(65))),
+        offered("a", sources=("x",) * 17),
+    ):
+        with pytest.raises(ValueError, match="contract bounds"):
+            stale_bundle_ids(bad)
+
+    root = tmp_path / "cephvr-bundles"
+    for name in ("a.0123", "b.0123"):
+        (root / name).mkdir(parents=True)
+        (root / name / "bundle.json").write_text("{}", encoding="utf-8")
+    state = State(stale_bundles={"a.0123"})
+    state.setup = wire.SetupSessionRequest()
+    state.setup.plan.configuration.asset_root = str(tmp_path)
+
+    def deletion(*ids):
+        return wire.StaleImageBundleDeletion(
+            command=wire.BackendCommand(command_id=str(uuid4())), bundle_ids=ids
+        )
+
+    for request, message in (
+        (deletion(), "1-64 unique"),
+        (deletion("a.0123", "a.0123"), "1-64 unique"),
+        (deletion("b.0123"), "not reported stale"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            validate_deletion(state, request)
+    validate_deletion(state, deletion("a.0123"))
+    operation = delete_stale_bundles(state, deletion("a.0123"))
+    assert operation.complete and operation.succeeded
+    assert operation.command == "DeleteStaleImageBundles"
+    assert not (root / "a.0123").exists() and (root / "b.0123").exists()
+    assert state.stale_bundles == set()
+    state.stale_bundles = {"b.0123"}
+    (root / "b.0123" / "extra").write_text("x", encoding="utf-8")
+    operation = delete_stale_bundles(state, deletion("b.0123"))
+    assert not operation.succeeded and "unexpected files" in operation.failure.message
+    assert (root / "b.0123").exists() and state.stale_bundles == {"b.0123"}
+    state.active_trial = "trial"
+    with pytest.raises(ValueError, match="dismissed at Start"):
+        validate_deletion(state, deletion("b.0123"))
+
+
+@pytest.mark.asyncio
+async def test_stale_bundle_deletion_runs_in_coordinator_and_retains_outcome(tmp_path):
+    recipe, state, clock, _, worker, supervisor, ledger = await recipe_fixture(tmp_path)
+    identity = recipe.identity
+    runtime = VisualStimulusCoordinatorRuntime(
+        identity=identity,
+        worker=worker,
+        controller=Peer(),
+        supervisor=supervisor,
+        ledger=ledger,
+        clock=clock,
+    )
+    runtime.state = state
+    assets = tmp_path / "assets"
+    folder = assets / "cephvr-bundles" / "a.0123"
+    folder.mkdir(parents=True)
+    (folder / "bundle.json").write_text("{}", encoding="utf-8")
+    state.setup.plan.configuration.asset_root = str(assets)
+    state.stale_bundles = {"a.0123"}
+    work = pb.WorkContext(session=state.setup.plan.context)
+    request = wire.StaleImageBundleDeletion(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            work=work,
+        ),
+        bundle_ids=["a.0123"],
+    )
+    ledger.admit(
+        request.command.command_id,
+        request.SerializeToString(deterministic=True),
+        clock(),
+        work_key=work.session.session_id,
+    )
+    admission = await runtime.execute(
+        "DeleteStaleImageBundles", request, deadline_ns=clock() + 10**9
+    )
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+    assert not folder.exists() and not worker.commands
+    result = await runtime.query(
+        "GetRetainedResult",
+        wire.RetainedResultQuery(
+            query=wire.BackendQuery(target=identity.backend, work=work),
+            command_id=request.command.command_id,
+        ),
+    )
+    assert result.found and result.operation.complete
+    assert result.operation.succeeded
+    assert result.operation.command == "DeleteStaleImageBundles"
+    request.command.command_id = str(uuid4())
+    with pytest.raises(ValueError, match="not reported stale"):
+        await runtime.execute(
+            "DeleteStaleImageBundles", request, deadline_ns=clock() + 10**9
+        )
 
 
 async def test_optional_progress_handoff_is_bounded_and_delivery_failure_is_nonfatal():

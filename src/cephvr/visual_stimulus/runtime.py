@@ -67,6 +67,8 @@ class VisualStimulusCoordinatorRuntime:
         self.validate_command(method, request)
         if isinstance(request, wire.IncidentScopeRequest):
             return await self.apply_incident(request, deadline_ns)
+        if isinstance(request, wire.StaleImageBundleDeletion):
+            return await self.delete_stale_bundles(request)
         async with self.lock:
             forwarded, link = bind_command(
                 self.identity, self.state, method, request, deadline_ns
@@ -92,6 +94,7 @@ class VisualStimulusCoordinatorRuntime:
                 self.state.interrupted = False
                 self.state.cleanup = None
                 self.state.sealed = False
+                self.state.stale_bundles.clear()
                 self.cancelled.clear()
             elif method in {
                 "OpenDisplayCalibration",
@@ -235,6 +238,27 @@ class VisualStimulusCoordinatorRuntime:
 
     async def query(self, method: str, request: Message) -> Message:
         return project(self.identity, self.state, self.ledger, request)
+
+    async def delete_stale_bundles(
+        self, request: wire.StaleImageBundleDeletion
+    ) -> pb.CommandAdmission:
+        """Run locally; the controller reads the retained outcome (V04)."""
+        from cephvr.visual_stimulus.coordinator.image_bundles import (
+            delete_stale_bundles,
+            validate_deletion,
+        )
+
+        async with self.lock:
+            validate_deletion(self.state, request)
+            operation = await asyncio.to_thread(
+                delete_stale_bundles, self.state, request
+            )
+        self.ledger.complete_executor(
+            request.command.command_id, operation.SerializeToString(), self.clock()
+        )
+        return pb.CommandAdmission(
+            result=pb.COMMAND_RESULT_ACCEPTED, command_id=request.command.command_id
+        )
 
     async def apply_incident(
         self, request: wire.IncidentScopeRequest, deadline_ns: int

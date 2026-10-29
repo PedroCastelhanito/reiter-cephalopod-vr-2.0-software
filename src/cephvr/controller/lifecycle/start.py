@@ -64,6 +64,7 @@ class StartActivation:
         | None,
         generation: str,
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
+        dismiss_prompts: Callable[[Attempt], None] | None = None,
     ) -> None:
         self.lifecycle = lifecycle
         self.control = control
@@ -84,6 +85,8 @@ class StartActivation:
         self.output_planner = output_planner
         self.generation = generation
         self.spawn = spawn
+        # V04: unanswered stale-bundle questions close at Start (bundles kept).
+        self.dismiss_prompts = dismiss_prompts
 
     async def start_session(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
         command_id = command.operator.command_id
@@ -122,6 +125,8 @@ class StartActivation:
                     command_id, error="writer schema or output contract unavailable"
                 )
             self.lifecycle.session.phase = pb.SESSION_PHASE_STARTING
+            if self.dismiss_prompts is not None:
+                self.dismiss_prompts(attempt)
             self.control.operations[command_id] = pb.OperationState(
                 context=pb.OperationContext(command_id=command_id),
                 command="StartSession",

@@ -49,6 +49,8 @@ class ReportHooks:
     clock: Callable[[], int]
     # Appends a controller warning for evidence forwarding that stayed unconfirmed.
     warn: Callable[[str], None] | None = None
+    # V04: offers stale Fold bundles from accepted Visual Stimulus Setup progress.
+    stale_bundles: Callable[[Attempt, Any], None] | None = None
 
 
 class LifecycleReports:
@@ -201,6 +203,14 @@ class LifecycleReports:
                 attempt, payload, self.lifecycle.session.phase, ingress_ns
             )
             if receipt.result == pb.COMMAND_RESULT_ACCEPTED:
+                if (
+                    operation.stale_image_bundles
+                    and payload.source.backend_name == "visual_stimulus"
+                    and self.hooks.stale_bundles is not None
+                ):
+                    self.hooks.stale_bundles(
+                        attempt, operation.stale_image_bundles[:64]
+                    )
                 self.hooks.publish()
             return receipt
         if operation.work.WhichOneof("work") == "trial":

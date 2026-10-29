@@ -37,10 +37,10 @@ from cephvr.visual_stimulus.config.projection import projection_values
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 34
+_POLICY_VERSION = 35
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "4eab29eb5424f0195f98f6bb7467f6dbd6c0ec9919e1c32d88e01eea7c34a273"
+_POLICY_SHA256 = "6bd6e58e6f90483c02cb20d4fda95d6c39200727d597d6eb69bbeba6bab464bb"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port

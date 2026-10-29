@@ -18,7 +18,8 @@ class VariationAssets(PathField):
             placeholder="Select media subset folder",
         )
         self.setToolTip(
-            "Use compatible files directly in this folder; subfolders are excluded."
+            "Choose a folder within Protocol Assets. Use compatible files directly "
+            "in this folder; subfolders are excluded. Files are not copied."
         )
         self.asset_ids: tuple[str, ...] = ()
         self.grating_periods_mm: tuple[float, ...] = ()

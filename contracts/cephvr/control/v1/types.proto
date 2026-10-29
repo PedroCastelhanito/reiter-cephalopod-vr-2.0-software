@@ -686,6 +686,13 @@ message OperationState {
   Failure failure = 7;
   // Increasing completed-work update within one Setup command; duplicates do not renew.
   uint64 progress_sequence = 8;
+  // V04: Visual Stimulus Setup progress only, at most 64 per report. Each old Fold
+  // bundle's replacement is already published; deletion needs the operator's answer.
+  repeated StaleImageBundle stale_image_bundles = 9;
+}
+message StaleImageBundle {
+  string bundle_id = 1; // Folder name directly under the asset folder's cephvr-bundles.
+  repeated string sources = 2; // Relative source file names it was baked for; at most 16.
 }
 message SessionState {
   SessionPhase phase = 1;

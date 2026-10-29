@@ -90,6 +90,7 @@ service VisualStimulusConfigurationService {
   rpc OpenDisplayCalibration(VisualStimulusDisplayCalibrationOpenRequest) returns (CommandAdmission);
   rpc UpdateDisplayCalibration(VisualStimulusDisplayCalibrationUpdateRequest) returns (CommandAdmission);
   rpc CloseDisplayCalibration(VisualStimulusDisplayCalibrationCloseRequest) returns (CommandAdmission);
+  rpc DeleteStaleImageBundles(StaleImageBundleDeletion) returns (CommandAdmission);
 }
 message OpenDisplayCalibrationRequest {
   OperatorCommand command = 1;
@@ -877,6 +878,12 @@ message SetStimulusPreviewRequest {
   uint64 expected_configuration_revision = 2;
   bool visible = 3;
   PreviewWindowPlacement placement = 4;
+}
+// V04: operator-chosen deletion of stale Fold bundles reported in this Setup's
+// progress, before the first trial. The coordinator deletes; the result is retained.
+message StaleImageBundleDeletion {
+  BackendCommand command = 1; // Session work of the current Setup.
+  repeated string bundle_ids = 2; // Unique reported IDs; at most 64.
 }
 message StimulusPreviewRequest {
   BackendCommand command = 1;

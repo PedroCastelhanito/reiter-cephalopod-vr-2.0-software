@@ -231,7 +231,7 @@ async def test_controller_port_queries_actual_acquisition_and_visual_stimulus_wi
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter"])
+@pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter", "assets"])
 async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
     tmp_path,
     startup_issue,
@@ -337,6 +337,11 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
     artifact = make_prepared_trial()
 
     class StartupPreparation(Preparation):
+        def prepare_display(self, request, announce, deadline_ns):
+            if startup_issue == "assets":
+                (tmp_path / "missing-assets").resolve(strict=True)
+            return super().prepare_display(request, announce, deadline_ns)
+
         def initialize_display(self, display, calibration):
             if missing_output:
                 from cephvr.visual_stimulus.rendering.native_display import (
@@ -402,7 +407,11 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
         assert display.HasField("applied_revision") is not missing_output
         assert display.source == identity.process
         if missing_output:
-            assert display.issues[0].failure.code == "DISPLAY_OUTPUT_UNAVAILABLE"
+            assert display.issues[0].failure.code == (
+                "DISPLAY_ASSET_UNAVAILABLE"
+                if startup_issue == "assets"
+                else "DISPLAY_OUTPUT_UNAVAILABLE"
+            )
             snapshot = await controller.snapshot()
             operation = next(
                 item
@@ -411,7 +420,11 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
             )
             assert operation.complete and not operation.succeeded
             assert (
-                "RTX 5060 Ti" if startup_issue == "adapter" else "Check power/cables"
+                "Protocol Assets"
+                if startup_issue == "assets"
+                else "RTX 5060 Ti"
+                if startup_issue == "adapter"
+                else "Check power/cables"
             ) in operation.failure.message
             assert display.resources and all(
                 item.released for item in display.resources

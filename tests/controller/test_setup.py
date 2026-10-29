@@ -770,3 +770,95 @@ def test_setup_inactivity_starts_at_each_dispatch_and_retry_does_not_reset_it(tm
     assert attempt.setup_cutoff("visual_stimulus") == 1_180
     runtime.preparation_context.setup_request(attempt, acquisition, "acquisition-setup")
     assert attempt.setup_cutoff("acquisition") == 1_100
+
+
+async def test_stale_image_bundle_prompts_keep_delete_all_and_dismiss_at_start():
+    from types import SimpleNamespace
+
+    from cephvr.controller.lifecycle.stale_bundles import CHOICES, StaleBundlePrompts
+    from cephvr.controller.state import ControlState, IncidentState, LifecycleState
+
+    requests: list[svc.StaleImageBundleDeletion] = []
+    outcome = {"succeeded": True}
+
+    class Backend:
+        context = pb.BackendContext(backend_name="visual_stimulus")
+
+        async def delete_stale_image_bundles(self, request, *, deadline_ns):
+            requests.append(request)
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+        async def get_retained_result(self, request, *, deadline_ns):
+            operation = pb.OperationState(
+                command="DeleteStaleImageBundles",
+                complete=True,
+                succeeded=outcome["succeeded"],
+            )
+            if not outcome["succeeded"]:
+                operation.failure.message = "bundle folder in use"
+            return svc.RetainedResult(found=True, operation=operation)
+
+    tasks: list[asyncio.Task] = []
+    incidents, control = IncidentState(), ControlState()
+    prompts = StaleBundlePrompts(
+        lifecycle=LifecycleState(),
+        incidents=incidents,
+        control=control,
+        limit_state=SimpleNamespace(current=SimpleNamespace(recovery_ns=10**10)),
+        publisher=SimpleNamespace(publish=lambda: None),
+        spawn=lambda coroutine: (
+            tasks.append(asyncio.create_task(coroutine)) or tasks[-1]
+        ),
+        generation="controller-generation",
+        clock=lambda: 0,
+    )
+
+    def make_attempt():
+        return SimpleNamespace(
+            context=pb.SessionContext(session_id="session"),
+            required={"visual_stimulus": Backend()},
+            stale_bundle_choice="",
+        )
+
+    def bundles(*ids):
+        return [pb.StaleImageBundle(bundle_id=i, sources=[f"{i}.png"]) for i in ids]
+
+    async def settle():
+        while tasks:
+            await tasks.pop(0)
+
+    def answer(bundle_id, choice):
+        prompt_id = next(p for p, b in prompts.bundles.items() if b == bundle_id)
+        incidents.prompts[prompt_id][1].set_result(choice)
+
+    attempt = make_attempt()
+    prompts.offer(attempt, bundles("a.1", "b.1", "c.1"))
+    assert [item[0].permitted_choices for item in incidents.prompts.values()] == [
+        list(CHOICES)
+    ] * 3
+    answer("a.1", "keep")
+    await asyncio.sleep(0)
+    assert len(incidents.prompts) == 2 and not requests
+    answer("b.1", "delete_all")
+    await settle()
+    # Delete-all removes the answered and the remaining unanswered bundles together.
+    assert [list(r.bundle_ids) for r in requests] == [["b.1", "c.1"]]
+    assert requests[0].command.work.session == attempt.context
+    assert not incidents.prompts and attempt.stale_bundle_choice == "delete"
+    prompts.offer(attempt, bundles("d.1"))
+    await settle()
+    assert list(requests[-1].bundle_ids) == ["d.1"] and not incidents.prompts
+
+    # A later attempt's unanswered questions close at Start; bundles are kept.
+    second = make_attempt()
+    prompts.offer(second, bundles("e.1", "f.1"))
+    prompts.dismiss(second)
+    await settle()
+    assert not incidents.prompts and len(requests) == 2 and not prompts.bundles
+
+    third = make_attempt()
+    prompts.offer(third, bundles("g.1"))
+    outcome["succeeded"] = False
+    answer("g.1", "delete")
+    await settle()
+    assert "bundle folder in use" in control.warnings[-1].message

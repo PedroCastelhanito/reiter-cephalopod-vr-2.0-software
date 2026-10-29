@@ -1,0 +1,5 @@
+Command: .venv/Scripts/python.exe -m pytest tests/visual_stimulus/test_rendering.py -q -k 'rig_preview_drag_reset_focus_and_camera_only_state or native_gpu_rig_crops_orients_and_never_writes_source' --basetemp=.tmp-bottom-native-final
+Exit: 0
+Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
+.....                                                                    [100%]
+5 passed, 363 deselected in 0.78s

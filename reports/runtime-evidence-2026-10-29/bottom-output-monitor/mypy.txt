@@ -1,0 +1,4 @@
+Command: .venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui/preview_motion_data.py src/cephvr/gui/calibration_profile.py src/cephvr/gui/trial_preview_rig.py src/cephvr/visual_stimulus/rendering/preview_rig.py
+Exit: 0
+Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
+Success: no issues found in 4 source files

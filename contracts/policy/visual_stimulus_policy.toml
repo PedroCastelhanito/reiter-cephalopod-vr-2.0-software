@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 34
+policy_version = 35
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_required_evidence_thread"
@@ -57,8 +57,8 @@ late_pattern = "previous_pattern_current_motion"
 loader_threads = 1
 lookahead_epochs = 2
 preparation_batch_images = 16
-fold_storage = "temporary_rgba32f_surface_samples_v1"
-bundle_cleanup = "delete_on_close_and_owned_directory_recovery"
+fold_storage = "persistent_per_image_rgba32f_surface_samples_v1"
+bundle_cleanup = "keep_until_operator_deletes_replaced_stale_bundle"
 upload_chunk_bytes = 1048576
 upload_chunks_per_turn = 4
 upload_turn_ns = 2000000

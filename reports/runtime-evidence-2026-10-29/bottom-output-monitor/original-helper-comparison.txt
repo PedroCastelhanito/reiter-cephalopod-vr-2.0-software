@@ -1,0 +1,33 @@
+Command: .venv/Scripts/python.exe -c "import importlib, subprocess; modules = [importlib.import_module('cephvr.gui.' + name) for name in ('preview_motion_data', 'calibration_profile')]; [exec(compile(subprocess.check_output(['git', 'show', 'HEAD:src/' + module.__name__.replace('.', '/') + '.py']), module.__file__, 'exec'), module.__dict__) for module in modules]; import pytest; raise SystemExit(pytest.main(['tests/gui/test_preview_timeline.py', 'tests/gui/test_dashboard.py', '-q', '--tb=short', '-k', 'arena_map_and_body_frame_dial_follow_planned_continuity or projector_card_instruments_wrap_to_the_column_width or feedback_arena_pose_waits_until_reset or front_attached_screens_share_plot_and_prepared_corners', '--basetemp=.tmp-original-helper-final']))"
+Exit: 1
+Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+________ test_arena_map_and_body_frame_dial_follow_planned_continuity _________
+tests\gui\test_preview_timeline.py:780: in test_arena_map_and_body_frame_dial_follow_planned_continuity
+    assert timeline.map_samples[0].pose is None
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+__________ test_projector_card_instruments_wrap_to_the_column_width ___________
+tests\gui\test_preview_timeline.py:830: in test_projector_card_instruments_wrap_to_the_column_width
+    card = timeline.maps[0].parentWidget().parentWidget()
+           ^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+_________________ test_feedback_arena_pose_waits_until_reset __________________
+tests\gui\test_preview_timeline.py:1097: in test_feedback_arena_pose_waits_until_reset
+    assert timeline.map_samples[0].message == "Waiting for tracking"
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+_________ test_front_attached_screens_share_plot_and_prepared_corners _________
+tests\gui\test_dashboard.py:12015: in test_front_attached_screens_share_plot_and_prepared_corners
+    assert view.screen_planes()["Bottom"] == bottom
+E   assert [(145.6666666...56.625, 20.0)] == [(147.0, -55.... -55.0, 20.0)]
+E     
+E     At index 0 diff: (145.66666666666666, -56.625, 20.0) != (147.0, -55.0, 20.0)
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/gui/test_preview_timeline.py::test_arena_map_and_body_frame_dial_follow_planned_continuity
+FAILED tests/gui/test_preview_timeline.py::test_projector_card_instruments_wrap_to_the_column_width
+FAILED tests/gui/test_preview_timeline.py::test_feedback_arena_pose_waits_until_reset
+FAILED tests/gui/test_dashboard.py::test_front_attached_screens_share_plot_and_prepared_corners
+4 failed, 1173 deselected in 1.68s

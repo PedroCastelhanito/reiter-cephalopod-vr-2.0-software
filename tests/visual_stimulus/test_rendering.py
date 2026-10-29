@@ -4220,7 +4220,7 @@ def test_native_gpu_rig_crops_orients_and_never_writes_source(face):
         for x, u in ((76, 0.25), (180, 0.75)):
             for y, v in ((76, 0.25), (180, 0.75)):
                 red, green, blue = pixels[(y * 256 + x) * 4 : (y * 256 + x) * 4 + 3]
-                raw_u, raw_v = (1 - v, u) if face == "bottom" else (u, v)
+                raw_u, raw_v = (v, u) if face == "bottom" else (u, v)
                 assert (red > 112, green > 112) == (raw_u > 0.5, raw_v > 0.5)
                 assert blue == 64
         viewer.azimuth, viewer.elevation = 25, 25

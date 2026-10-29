@@ -34,6 +34,54 @@ def constant(value):
     return Constant(kind="constant", value=value)
 
 
+def test_monitor_keeps_all_epochs_and_session_duration_beyond_editor_prefix(app):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_status import session_timeline
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.config.models.program_model import Group
+
+    program = blank_program()
+    epoch = program.sequence[0]
+    program = program.model_copy(
+        update={
+            "sequence": (
+                Group(
+                    kind="group",
+                    group_id="repeated",
+                    repetitions=125,
+                    order="as_listed",
+                    order_unit="child_blocks",
+                    conditions=None,
+                    body=(epoch,),
+                ),
+            )
+        }
+    )
+    seconds = epoch.duration.duration.ns() / 1e9
+    timeline = StimulusTimeline()
+    timeline.set_program(program, "0", "Long trial")
+    assert len(timeline.epochs) == 125
+    assert timeline.epochs[-1].end == 125 * seconds
+    timeline.set_elapsed(124 * seconds)
+    assert timeline.epochs[124].start == 124 * seconds
+    assert len(PreviewPlan(program).epochs) == 100
+    state = pb.Snapshot()
+    for number in (1, 2):
+        trial = state.configuration_values.current.trials.add(trial_number=number)
+        trial.stimulus.program.program_json = program.model_dump_json()
+    state.configuration_values.current.gaps.add(
+        after_trial_number=1, minimum_duration_ns=10_000_000_000
+    )
+    state.trial.context.trial_number = 2
+    assert session_timeline(state, 120 * seconds, 0) == (
+        245 * seconds + 10,
+        250 * seconds + 10,
+    )
+    timeline.close()
+    timeline.deleteLater()
+
+
 @pytest.mark.parametrize("style", ["standard", "retro_console", "amber_phosphor"])
 @pytest.mark.parametrize("scale", [0.75, 1, 2])
 def test_instrument_font_matches_preview_info(app, monkeypatch, style, scale):

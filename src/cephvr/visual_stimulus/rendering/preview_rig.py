@@ -89,7 +89,7 @@ def projected_screens(
 def screen_uv(face: str, tile: CompositeTile) -> tuple[tuple[float, float], ...]:
     # Undo Monitor presentation transforms without reflecting physical surface motion.
     if face == "bottom":
-        points = ((1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0))
+        points = ((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0))
     else:
         points = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
     result = []

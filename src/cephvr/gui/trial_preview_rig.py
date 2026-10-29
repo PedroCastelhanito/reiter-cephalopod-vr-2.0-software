@@ -93,8 +93,8 @@ class PreviewRig(TankDiagram):
                 ]
             )
             if face == "Bottom":
-                # Undo only the portrait turn; linked motion stays in physical surface axes.
-                source = QPolygonF([source[i] for i in (1, 2, 3, 0)])
+                # Undo the portrait turn and physical mirror's output-X correction.
+                source = QPolygonF([source[i] for i in (0, 3, 2, 1)])
             transform = QTransform()
             if QTransform.quadToQuad(source, polygon, transform):
                 painter.save()

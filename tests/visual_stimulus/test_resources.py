@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import json
+import os
+import stat
 import struct
 import threading
 import time
@@ -2728,6 +2730,29 @@ def test_setup_progress_throttles_counts_but_emits_stage_and_completion(cadence)
     ]
 
 
+def test_setup_progress_attaches_queued_stale_bundles_to_emitted_reports():
+    from cephvr.visual_stimulus.resources.progress import SetupProgress
+
+    now = [0]
+    reports = []
+    progress = SetupProgress(
+        lambda message, stale=(): reports.append((message, stale)),
+        lambda: now[0],
+        cadence_ns=10,
+    )
+    progress.update("Baking", 0, 100)
+    progress.stale_bundles(range(70))
+    progress.update("Baking", 1, 100)  # Throttled: entries wait for a report.
+    assert reports == [("Baking: 0/100", ())]
+    now[0] = 10
+    progress.update("Baking", 2, 100)
+    progress.update("Baking", 2, 100)
+    progress.update("Uploading", 0, 1)
+    progress.update("Uploading", 1, 1)
+    assert [len(stale) for _, stale in reports] == [0, 64, 6, 0]
+    assert reports[1][1] == tuple(range(64)) and reports[2][1] == tuple(range(64, 70))
+
+
 @pytest.mark.parametrize("reference", [False, True])
 def test_fold_preparation_requires_front_even_for_left_only(reference):
     from types import SimpleNamespace
@@ -3256,22 +3281,10 @@ def test_sparse_helper_streams_credited_patterns_over_pipes_and_stops_on_eof():
             helper.kill()
 
 
-@pytest.mark.windows
-@pytest.mark.parametrize("unique", [1, 17])
-def test_prepared_image_bundle_reads_ready_bytes_and_detects_damage(tmp_path, unique):
-    from cephvr.shared import temporary_bundle
-    from cephvr.visual_stimulus.resources.budget import BoundedBudget
-    from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
+def _bundle_schedule(keys, load):
     from cephvr.visual_stimulus.resources.image_crops import ImageCrop
     from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
     from cephvr.visual_stimulus.resources.image_source import ImageSource
-
-    calls = []
-
-    def load(check):
-        check()
-        calls.append("decode")
-        return bytes(64)
 
     crop = ImageCrop(
         "out",
@@ -3286,69 +3299,255 @@ def test_prepared_image_bundle_reads_ready_bytes_and_detects_damage(tmp_path, un
         "map",
     )
     source = ImageSource("key", 2, 2, 64, 16, load, output_crops=(crop,))
-    keys = ["key" if n == 0 else f"key{n}" for n in range(unique)]
     sources = {key: replace(source, key=key) for key in keys}
     aliases = {(trial, key): key for trial in ("trial", "other") for key in keys}
     rows = tuple((("layer", key),) for key in keys) * 3
-    schedule = ImageSchedule(
+    return ImageSchedule(
         sources,
         aliases,
         {"trial": "gen", "other": "gen2"},
         {"trial": rows, "other": rows},
-        {(trial, "layer"): "key" for trial in ("trial", "other")},
+        {(trial, "layer"): keys[0] for trial in ("trial", "other")},
         {(trial, key): n for trial in ("trial", "other") for n, key in enumerate(keys)},
     )
-    # Native owner test uses the isolated fixture runtime registry.
-    from unittest.mock import patch
 
-    with patch.object(
-        temporary_bundle, "default_runtime_root", lambda: tmp_path / "runtime"
-    ):
-        bundle = ImageBundle(tmp_path, lambda *args: None)
+
+def _prepare_bundles(
+    root,
+    keys,
+    *,
+    geometry="g1",
+    device="gpu-1",
+    fail_at=None,
+    names=None,
+    on_replaced=None,
+):
+    from cephvr.visual_stimulus.resources.budget import BoundedBudget
+    from cephvr.visual_stimulus.resources.image_bundle import ImageBundle
+
+    calls = []
+
+    def load(check):
+        check()
+        calls.append("decode")
+        return bytes(64)
+
+    def bake(source, pixels, check):
+        if source.key == fail_at:
+            raise RuntimeError("bake failed")
+        return bytes([97 + keys.index(source.key)]) * 16
+
+    bundle = ImageBundle(
+        root,
+        lambda *args: None,
+        names=names or {key: (f"images/{key}.png",) for key in keys},
+        geometry={key: geometry for key in keys},
+        on_replaced=on_replaced,
+    )
+    progress, batches = [], []
+    budget = BoundedBudget(cpu_limit=1024, gpu_limit=1024)
     try:
-        progress = []
-        batches = []
-        budget = BoundedBudget(cpu_limit=1024, gpu_limit=1024)
         result = bundle.prepare(
-            schedule,
-            lambda source, pixels, check: bytes([97 + keys.index(source.key)]) * 16,
+            _bundle_schedule(keys, load),
+            bake,
             budget,
             lambda done, total: progress.append((done, total)),
+            device={"GL_RENDERER": device},
+            algorithm="fold-bake-test",
             finish_batch=lambda: batches.append(len(calls)),
         )
+    except BaseException:
+        bundle.close()
+        raise
+    return bundle, result, calls, progress, batches, budget
+
+
+def _bundle_folder(root, name):
+    from cephvr.visual_stimulus.resources.image_bundle_store import BundleStore
+
+    return next(
+        entry.directory
+        for entry in BundleStore(root).entries()
+        if entry.sources == {name}
+    )
+
+
+@pytest.mark.parametrize("unique", [1, 17])
+def test_persistent_image_bundles_bake_reuse_and_detect_damage(tmp_path, unique):
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        PreparedImageBundle,
+    )
+    from cephvr.visual_stimulus.resources.image_bundle_store import BUNDLE_FOLDER
+
+    keys = ["key" if n == 0 else f"key{n}" for n in range(unique)]
+    bundle, result, calls, progress, batches, budget = _prepare_bundles(tmp_path, keys)
+    try:
         assert calls == ["decode"] * unique
         assert batches == ([1] if unique == 1 else [16, 17])
-        assert len(bundle.storage.files) == len(batches) + 1
-        assert budget.usage.cpu_bytes == 16
-        assert budget.usage.gpu_bytes == 0
+        assert budget.usage.cpu_bytes == 16 and budget.usage.gpu_bytes == 0
         assert progress == [(n, unique) for n in range(unique + 1)]
         assert bundle.reused_references == unique * 5
-        assert f"batch {len(batches)}/{len(batches)}" in bundle.progress_stage(
-            unique, unique
-        )
+        assert bundle.reused_bundles == 0 and bundle.replaced == []
         for n in reversed(range(unique)):
             assert result.sources[keys[n]].load(lambda: None) == bytes([97 + n]) * 16
-        from cephvr.visual_stimulus.config.models.artifact_models import (
-            PreparedImageBundle,
-        )
-
         prepared = PreparedImageBundle(asset_id="asset", **bundle.manifest["key"])
         assert prepared.crops[0].width == 1
-        assert result.sources["key"].load(lambda: None) == b"a" * 16
-        first_buffer = result.sources["key"].load(lambda: None)
-        assert result.sources["key"].load(lambda: None).obj is first_buffer.obj
-        assert first_buffer == b"a" * 16
-        assert calls == ["decode"] * unique
+        first = result.sources["key"].load(lambda: None)
+        assert result.sources["key"].load(lambda: None).obj is first.obj
         assert result.sources["key"].cpu_bytes == 0
-        file = bundle.storage.files[0]
-        file.seek(0)
-        file.write(b"b")
-        file.flush()
+    finally:
+        bundle.close()
+    # One visible read-only folder per unique image survives Setup cleanup.
+    folders = list((tmp_path / BUNDLE_FOLDER).iterdir())
+    assert len(folders) == unique
+    assert not any(folder.name.startswith(".") for folder in folders)
+    samples = _bundle_folder(tmp_path, "images/key.png") / "fold-samples.rgba32f"
+    assert not os.access(samples, os.W_OK)
+
+    bundle, result, calls, progress, batches, _ = _prepare_bundles(tmp_path, keys)
+    try:
+        assert calls == [] and batches == []
+        assert bundle.reused_bundles == unique and bundle.replaced == []
+        assert progress[-1] == (unique, unique)
+        assert result.sources["key"].load(lambda: None) == b"a" * 16
+    finally:
+        bundle.close()
+    os.chmod(samples, stat.S_IREAD | stat.S_IWRITE)
+    samples.write_bytes(b"b" * 16)
+    bundle, result, *_ = _prepare_bundles(tmp_path, keys)
+    try:
         with pytest.raises(ValueError, match="content changed"):
             result.sources["key"].load(lambda: None)
     finally:
         bundle.close()
-    assert not bundle.storage.directory.exists()
+
+
+def test_persistent_image_bundle_rebakes_stale_and_never_deletes(tmp_path):
+    from cephvr.visual_stimulus.resources.image_bundle_store import (
+        BUNDLE_FOLDER,
+        BundleStore,
+    )
+
+    keys = ["key", "key1"]
+    names = {"images/key.png", "images/key1.png"}
+    bundle, *_ = _prepare_bundles(tmp_path, keys)
+    bundle.close()
+    # A calibration change, then a GPU/driver change, each rebakes every image.
+    for kwargs, stale_count in (({"geometry": "g2"}, 2), ({"device": "gpu-2"}, 4)):
+        bundle, result, calls, *_ = _prepare_bundles(tmp_path, keys, **kwargs)
+        try:
+            assert calls == ["decode", "decode"]
+            assert bundle.reused_bundles == 0
+            assert len(bundle.replaced) == stale_count
+            assert all(entry.sources & names for entry in bundle.replaced)
+            assert result.sources["key1"].load(lambda: None) == b"b" * 16
+        finally:
+            bundle.close()
+    # Unanswered questions keep every bundle; several coexist per image, and a
+    # matching bundle is reused without offering the others.
+    assert len(list((tmp_path / BUNDLE_FOLDER).iterdir())) == 6
+    bundle, _, calls, *_ = _prepare_bundles(tmp_path, keys, geometry="g2")
+    bundle.close()
+    assert calls == [] and bundle.replaced == []
+
+    store = BundleStore(tmp_path)
+    stale = BundleStore.stale(store.entries(), ["images/key.png"])
+    assert len(stale) == 3
+    store.delete(stale[0])
+    assert not stale[0].directory.exists()
+    assert len(store.entries()) == 5
+
+
+def test_persistent_image_bundle_never_offers_a_bundle_in_use(tmp_path):
+    # a.png's old content now lives in b.png: its bundle is reused for b.png, so
+    # rebaking a.png must not offer that open bundle for deletion.
+    bundle, *_ = _prepare_bundles(tmp_path, ["old"], names={"old": ("images/a.png",)})
+    bundle.close()
+    offered = []
+    bundle, _, calls, *_ = _prepare_bundles(
+        tmp_path,
+        ["old", "new"],
+        names={"old": ("images/b.png",), "new": ("images/a.png",)},
+        on_replaced=offered.append,
+    )
+    bundle.close()
+    assert calls == ["decode"] and bundle.reused_bundles == 1
+    assert offered == [] and bundle.replaced == []
+    bundle, *_ = _prepare_bundles(
+        tmp_path,
+        ["new"],
+        names={"new": ("images/a.png",)},
+        geometry="g2",
+        on_replaced=offered.append,
+    )
+    bundle.close()
+    assert [len(batch) for batch in offered] == [2]
+
+
+def test_persistent_image_bundle_failed_bake_leaves_no_entry(tmp_path):
+    from cephvr.visual_stimulus.resources.image_bundle_store import (
+        BUNDLE_FOLDER,
+        BundleStore,
+    )
+
+    with pytest.raises(RuntimeError, match="bake failed"):
+        _prepare_bundles(tmp_path, ["key", "key1"], fail_at="key1")
+    folders = list((tmp_path / BUNDLE_FOLDER).iterdir())
+    assert len(folders) == 1 and not folders[0].name.startswith(".")
+    assert [entry.sources for entry in BundleStore(tmp_path).entries()] == [
+        frozenset({"images/key.png"})
+    ]
+    # An unreadable entry for the image is offered as stale, never reused.
+    manifest = folders[0] / "bundle.json"
+    os.chmod(manifest, stat.S_IREAD | stat.S_IWRITE)
+    manifest.write_text("{", encoding="utf-8")
+    bundle, _, calls, *_ = _prepare_bundles(tmp_path, ["key"])
+    bundle.close()
+    assert calls == ["decode"]
+    assert [entry.directory for entry in bundle.replaced] == folders
+
+
+def test_persistent_image_bundle_reports_unwritable_asset_folder(tmp_path):
+    (tmp_path / "cephvr-bundles").write_text("not a folder", encoding="utf-8")
+    with pytest.raises(OSError, match="not writable for Fold bundles"):
+        _prepare_bundles(tmp_path, ["key"])
+
+
+def test_bundle_identities_bind_names_and_used_projector_calibration():
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.image_bundle import bundle_identities
+
+    def model(**values):
+        return SimpleNamespace(**values, model_dump=lambda mode: dict(values))
+
+    sources = _bundle_schedule(["key"], lambda check: bytes(64)).sources
+    schedule = SimpleNamespace(
+        sources=sources, aliases={("trial", "a"): "key", ("other", "b"): "key"}
+    )
+    assets = {
+        "trial": {"a": SimpleNamespace(logical_path="images/a.png")},
+        "other": {"b": SimpleNamespace(logical_path="copies/b.png")},
+    }
+
+    def identities(used_offset, unused_offset):
+        artifacts = tuple(
+            SimpleNamespace(
+                identity=SimpleNamespace(trial_id=trial),
+                display=SimpleNamespace(geometry=model(surfaces=["s"])),
+                geometric_calibration=(
+                    model(mapping_id="map", offset=used_offset),
+                    model(mapping_id="unused", offset=unused_offset),
+                ),
+            )
+            for trial in ("trial", "other")
+        )
+        return bundle_identities(schedule, artifacts, assets.__getitem__)
+
+    names, geometry = identities(0, 0)
+    assert names == {"key": ("copies/b.png", "images/a.png")}
+    assert identities(0, 1)[1] == geometry
+    assert identities(1, 0)[1] != geometry
 
 
 def test_image_validation_index_reuses_only_matching_content_and_validator(
