@@ -1592,6 +1592,19 @@ the new capture lifetime or boundary correspondence.
 Method and provenance are specified in the
 [camera-clock contract](../contracts/acquisition/camera-clock.md#no-wiring-anchor-scope).
 
+<a id="session-compiler-timing"></a>
+- [ ] [analysis] [acquisition] Measure each externally triggered camera's
+  exposure-start-to-host-receipt latency window (current exposure/readout/USB load)
+  so the [AN01](../docs/architecture/analysis.md#an01) compiler can pick A09's
+  frame/pulse offset (`--camera-latency-ms MIN MAX`). On SP0005-124641 the Trial-state
+  anchor is +/-14.9 ms and candidates sit at -15, 18 and 51 ms; the window must
+  separate them by the 2 ms margin. Confirm the chosen offset with an independent
+  absolute anchor before treating compiled camera OneBox times as scientific.
+  [Analysis report](analysis.md).
+- [ ] [analysis] [visual_stimulus] [spikeglx] Confirm compiled photodiode matches against
+  optical evidence (detector response, rising/falling delay, start-up queue frames) and
+  validate the OneBox-to-probe SY map with an independent shared-signal check.
+
 
 ## Always-saved scientific evidence
 

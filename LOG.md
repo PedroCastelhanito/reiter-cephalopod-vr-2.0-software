@@ -14879,3 +14879,53 @@ One focused test passes, Ruff/format and Win32 mypy pass; boundaries802 modules/
 violations. ARCH-002 existing picker cohesion retained despite size warning; no
 new responsibility/dependency/state. Report/evidence updated; task complete.
 No saved configuration changes, file movement or native GUI restart.
+
+### 2026-10-30 - session-compiler [analysis] [acquisition] [visual_stimulus] [tracking] [spikeglx]
+
+Owner asked to rebuild the CephVR1.0 HDF5 session compiler for CephVR2.0 after an
+audit. Audit found that 1.0 cannot read 2.0 sessions at all: its trial regex finds
+nothing, it expects CSVs, and it relies on wall-clock fits, hard-coded OneBox
+channels and first-pulse/first-tag assumptions. Owner decisions recorded:
+ARCH-001rev27 authorizes the compiler only; AN01 (new docs/architecture/analysis.md)
+fixes owner, inputs, compact stimulus tables, the no-fallback timing rule, the
+probe SY map and `<session>/<session>.h5` output; A09rev19 allows an inferred
+per-generation camera offset only with a latency window and a 2 ms margin.
+GOV-001rev30/AGENTS add reports/analysis.md and the [analysis] tag.
+Implemented src/cephvr/analysis/session_compiler (14 modules, all under 260 lines; no runtime
+imports), CLI, marimo notebook, `analysis` extra and tests/analysis. The real-data
+probe changed the design in three places: smoothing plus hysteresis for the
+photodiode ripple, a queue-aware photodiode seed, and the ON/OFF dispatch span for
+interrupted trials.
+Checks: 4 tests, ruff/format, win32 mypy (scratch mypy 2.3.1), boundaries 801/0,
+diff and marimo checks pass; `python -m build` not run (build/grpc_tools absent);
+env ruff 0.15.18 and numpy 1.26.4 differ from the pins. All six F:\cephvr-data
+sessions compile read-only through junctions: counts match their LOGs, windows are
+found, photodiode matches 98.8-99.96 %, SY maps fit at <=0.05 ms RMS from SP0004 on
+(SP0003 has no shared SY). Camera OneBox times stay unresolved until a measured
+latency window exists (rig checklist). Evidence:
+reports/analysis-evidence-2026-10-30/real-sessions/summary.json; report: reports/analysis.md.
+
+### 2026-10-30 - session-compiler-inspection [analysis] [acquisition] [visual_stimulus] [spikeglx]
+
+Owner asked for a CephVR1.0-style notebook that shows each pre-processing step.
+Added the marimo `session_compiler/inspection.py`, which runs the compiler's own steps on
+one session: inputs/integrity, pulse map, edge detection (thresholds,
+raw/smoothed trace, interval plots), Trial-state windows, host anchor, camera
+offset candidates, photodiode residuals and probe SY. Its controls set the new
+`Settings` (smoothing, Schmitt fractions, window/photodiode tolerances, camera
+latency window/margin); the notebook saves them as JSON (CLI `--settings`) or
+compiles directly, and each HDF5 stores them under `metadata/settings` (AN01rev2).
+sync.py is split into open/read/detect/windows/probe steps; plotly was added to the
+`analysis` extra.
+Correction to the earlier session-compiler entry: rig sessions show no missed
+triggers. The MCU runs at about 29.978 Hz and camera intervals quantize at
+33.33/33.42 ms; dividing cumulative time by the median interval drifted into false
+gaps. Steps now come from rounded per-frame intervals, a quantized-interval fixture
+covers it (the old method mis-stepped 290 frames), and SP0005-124641's single
+generation fits pulses at 0.048 ms RMS. Discovery, probe lookup and provenance now
+use pruned os.walk after a Kilosort tree exceeded MAX_PATH.
+Checks: 4 tests, ruff/format, win32 mypy, boundaries 801/0, diff, and marimo check
+on both notebooks pass. The notebook runs headless on SP0005-124641 (35 cells, no
+errors, values match the compiler) and was viewed via `marimo run`. All six sessions
+recompile with the same photodiode/SY results; camera times remain unresolved without
+a measured latency window. Evidence summary refreshed.

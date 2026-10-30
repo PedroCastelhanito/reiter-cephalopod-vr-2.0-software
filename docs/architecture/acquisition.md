@@ -612,7 +612,7 @@ deferral (E15) remains.
 <a id="a09"></a>
 ### A09 — Source-frame identity
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 19
 
 - A camera frame belongs to a trial only if its host-monotonic receipt timestamp
   (A05) satisfies `trial_start <= receipt < trial_stop`, using the normal scheduled
@@ -645,6 +645,12 @@ deferral (E15) remains.
   or treat Setup's first pulse as the first pulse in the later-started SpikeGLX file.
   Missing/ambiguous correspondence and gated pulses without saved images remain
   explicit; never shift the gate, renumber or fabricate frames to make counts agree.
+  Offline, [AN01](analysis.md#an01) may infer one integer frame-to-pulse offset per
+  capture generation by fitting native camera timestamps to gated pulse edges, using
+  the host-to-OneBox anchor only to choose among candidate offsets. Accept the offset
+  only when the best candidate beats the runner-up by a strict recorded margin; label
+  those rows inferred correspondence, never measured identity, and leave ambiguous
+  generations unresolved.
   This analysis gate does not replace E11's online host-receipt boundary. Existing
   wiring/rates remain; ExposureActive wiring and coded trigger phases are not selected.
 - With a reliable camera hardware frame counter, retain native counters alongside

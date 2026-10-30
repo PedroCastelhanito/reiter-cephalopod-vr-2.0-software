@@ -46,6 +46,12 @@ acquisition = [
     "pypylon==26.3.1",
     "numpy==2.4.4",
 ]
+analysis = [
+    "h5py==3.16.0",
+    "marimo==0.24.0",
+    "numpy==2.4.4",
+    "plotly==7.0.0",
+]
 dev = [
     "swig==4.3.0; sys_platform == 'win32'",
     "build==1.6.1",
@@ -110,6 +116,8 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC", "RUF006", "RUF100"]
 [tool.ruff.lint.per-file-ignores]
 # Test helpers poll with bounded sleeps and read fixtures directly.
 "tests/**" = ["ASYNC"]
+# Marimo cells display their last bare expression.
+"src/cephvr/analysis/session_compiler/{notebook,inspection}.py" = ["B018"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -123,6 +131,7 @@ strict = true
 exclude = [
     '(^|/)[^/]*_pb2(_grpc)?\.pyi?$',
     '(^|/)pylon_wait_binding\.py$',
+    '(^|/)session_compiler/(notebook|inspection)\.py$',  # marimo cells are untyped by design.
 ]
 
 [[tool.mypy.overrides]]
@@ -130,7 +139,7 @@ module = ["grpc", "grpc.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*", "av", "av.*", "tifffile", "tifffile.*", "imagecodecs", "imagecodecs.*"]
+module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*", "av", "av.*", "tifffile", "tifffile.*", "imagecodecs", "imagecodecs.*", "h5py", "h5py.*", "marimo", "marimo.*", "plotly", "plotly.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

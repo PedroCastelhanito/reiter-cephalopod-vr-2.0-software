@@ -69,7 +69,8 @@ socket permission; do not weaken their assertions to bypass an environment restr
 - The owner has selected Tracking implementation next, followed by GUI and finally
   SpikeGLX integration. Existing controller, supervisor, acquisition host and Visual
   Stimulus work and required shared helpers remain authorized. Firmware/flashing is
-  deferred; analysis software and offline replay/export are deferred much later.
+  deferred; of analysis software only the offline session compiler (AN01) is
+  authorized, and offline replay/export stays deferred much later.
   Follow GOV-001 and ARCH-001. Declarative contracts remain authoritative inputs,
   not proof of implemented or rig-validated behavior.
 
@@ -147,7 +148,8 @@ socket permission; do not weaken their assertions to bypass an environment restr
 
 - Follow [GOV-001](architecture.md#gov-001)'s reporting convention: maintain one
   current report per backend area in `reports/runtime.md` (controller/supervisor and
-  shared helpers), `reports/acquisition.md`, `reports/visual_stimulus.md` and `reports/tracking.md`.
+  shared helpers), `reports/acquisition.md`, `reports/visual_stimulus.md`, `reports/tracking.md`
+  and `reports/analysis.md`.
   Update these in place; do not create files or append sections per audit/review round.
 - Keep reports focused on current scope, unresolved findings, review evidence,
   validation results and limitations. Link governing decision IDs and contracts;
@@ -183,7 +185,7 @@ socket permission; do not weaken their assertions to bypass an environment restr
   Reuse an existing task before adding one. A TODO entry does not grant permission
   to implement a proposed decision or start a deferred stage.
 - Use the same tags in both files: `[controller]`, `[supervisor]`, `[acquisition]`,
-  `[visual_stimulus]`, `[tracking]`, `[gui]`, `[spikeglx]`, `[launcher]`, `[shared]`.
+  `[visual_stimulus]`, `[tracking]`, `[gui]`, `[spikeglx]`, `[launcher]`, `[analysis]`, `[shared]`.
   Tag every affected area; `[repo]` is for repository-wide tooling/documentation.
   Report edits use the backend tags of their subject, not a separate report tag.
 - Update TODO whenever work starts, its status changes, a follow-up is discovered,

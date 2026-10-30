@@ -1,0 +1,710 @@
+{
+ "date": "2026-10-30",
+ "source_revision": "79c0006b + uncommitted session-compiler working tree (after camera step fix and walk pruning)",
+ "method": "python -m cephvr.analysis.session_compiler <scratch session folders> --overwrite (directory junctions to F:\\cephvr-data protocol-data and spikeglx-data runs; read-only); default Settings",
+ "environment": "conda env CephVR: Python 3.11.15, numpy 1.26.4, h5py 3.16.0 (pinned extra uses numpy 2.4.4: not exercised)",
+ "scope": "parsing, integrity and pulse matching on recorded files; not rig validation of wiring, optical or camera timing",
+ "sessions": {
+  "SP0003-123824": {
+   "size_mb": 442,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.7062,
+     901.6821
+    ],
+    [
+     902.6435,
+     3902.6015
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "no_shared_sync"
+    }
+   },
+   "warnings": [
+    "SP0003-123824_g1_t0.imec0.ap.bin: no shared SY with OneBox; probe time unresolved",
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)",
+    "Trial 2 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 50313,
+      "level_changes": 50378
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 0,
+       "median_latency_ms": 42.839
+      },
+      {
+       "pulse_offset": 1,
+       "median_latency_ms": 9.487
+      },
+      {
+       "pulse_offset": 2,
+       "median_latency_ms": -23.871
+      },
+      {
+       "pulse_offset": 3,
+       "median_latency_ms": -57.232
+      }
+     ],
+     "counts_match": {
+      "0003_123845_behavioral_cam_frames.jsonl": 1,
+      "0003_123845_behavioral_cam.mp4": -1,
+      "0003_123845_stimulus_LOG.json": -1,
+      "0003_123845_stimulus_frames.jsonl": 1,
+      "0003_123845_stimulus.mp4": -1
+     }
+    },
+    "0002": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 167895,
+      "level_changes": 167985
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 26978,
+       "median_latency_ms": 109.565
+      },
+      {
+       "pulse_offset": 26979,
+       "median_latency_ms": 76.211
+      },
+      {
+       "pulse_offset": 26980,
+       "median_latency_ms": 42.848
+      },
+      {
+       "pulse_offset": 26981,
+       "median_latency_ms": 9.495
+      },
+      {
+       "pulse_offset": 26982,
+       "median_latency_ms": -23.857
+      }
+     ],
+     "counts_match": {
+      "0003_125346_behavioral_cam_frames.jsonl": 1,
+      "0003_125346_behavioral_cam.mp4": -1,
+      "0003_125346_stimulus_LOG.json": -1,
+      "0003_125346_stimulus_frames.jsonl": 1,
+      "0003_125346_stimulus.mp4": -1
+     }
+    }
+   }
+  },
+  "SP0003-145623": {
+   "size_mb": 131,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.7252,
+     601.719
+    ],
+    [
+     602.7184,
+     1202.6997
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "no_shared_sync"
+    }
+   },
+   "warnings": [
+    "SP0003-145623_g4_t0.imec0.ap.bin: no shared SY with OneBox; probe time unresolved",
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)",
+    "Trial 2 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 33162,
+      "level_changes": 33573
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 0,
+       "median_latency_ms": 35.73
+      },
+      {
+       "pulse_offset": 1,
+       "median_latency_ms": 2.401
+      },
+      {
+       "pulse_offset": 2,
+       "median_latency_ms": -30.944
+      }
+     ],
+     "counts_match": {
+      "0003_145745_behavioral_cam_frames.jsonl": 1,
+      "0003_145745_behavioral_cam.mp4": -1,
+      "0003_145745_stimulus_LOG.json": -1,
+      "0003_145745_stimulus_frames.jsonl": 1,
+      "0003_145745_stimulus.mp4": -1
+     }
+    },
+    "0002": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 33564,
+      "level_changes": 33576
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 17985,
+       "median_latency_ms": 109.237
+      },
+      {
+       "pulse_offset": 17986,
+       "median_latency_ms": 75.873
+      },
+      {
+       "pulse_offset": 17987,
+       "median_latency_ms": 42.503
+      },
+      {
+       "pulse_offset": 17988,
+       "median_latency_ms": 9.162
+      },
+      {
+       "pulse_offset": 17989,
+       "median_latency_ms": -24.207
+      }
+     ],
+     "counts_match": {
+      "0003_150746_behavioral_cam_frames.jsonl": 1,
+      "0003_150746_behavioral_cam.mp4": -1,
+      "0003_150746_stimulus_LOG.json": -1,
+      "0003_150746_stimulus_frames.jsonl": 1,
+      "0003_150746_stimulus.mp4": -1
+     }
+    }
+   }
+  },
+  "SP0004-113309": {
+   "size_mb": 17,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.7155,
+     131.4108
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "fitted",
+     "slope": 0.9999816763088634,
+     "intercept_s": 3.48569473282154e-05,
+     "residual_ms": 0.013324987084923133,
+     "max_residual_ms": 0.030295438307348377,
+     "n_pairs": 133,
+     "n_obx_edges": 133,
+     "n_imec_edges": 133
+    }
+   },
+   "warnings": [
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "interrupted",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 7217,
+      "level_changes": 7227
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 0,
+       "median_latency_ms": 50.506
+      },
+      {
+       "pulse_offset": 1,
+       "median_latency_ms": 17.152
+      },
+      {
+       "pulse_offset": 2,
+       "median_latency_ms": -16.183
+      }
+     ],
+     "counts_match": {
+      "0004_113321_behavioral_cam_frames.jsonl": 1,
+      "0004_113321_behavioral_cam.mp4": -1,
+      "0004_113321_stimulus_LOG.json": -1,
+      "0004_113321_stimulus_frames.jsonl": 1,
+      "0004_113321_stimulus.mp4": -1
+     }
+    }
+   }
+  },
+  "SP0005-111148": {
+   "size_mb": 219,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.7566,
+     901.7419
+    ],
+    [
+     902.5029,
+     1802.4741
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "fitted",
+     "slope": 0.9999942277792584,
+     "intercept_s": 5.113550686011368e-05,
+     "residual_ms": 0.022071708790913865,
+     "max_residual_ms": 0.07293472074110241,
+     "n_pairs": 1804,
+     "n_obx_edges": 1804,
+     "n_imec_edges": 1804
+    }
+   },
+   "warnings": [
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)",
+    "Trial 2 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53948,
+      "level_changes": 53977
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 48,
+       "median_latency_ms": 118.343
+      },
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 84.968
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": 51.622
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": 18.255
+      },
+      {
+       "pulse_offset": 52,
+       "median_latency_ms": -15.099
+      },
+      {
+       "pulse_offset": 53,
+       "median_latency_ms": -48.453
+      }
+     ],
+     "counts_match": {
+      "0005_111248_behavioral_cam_frames.jsonl": 1,
+      "0005_111248_behavioral_cam.mp4": -1,
+      "0005_111248_stimulus_LOG.json": -1,
+      "0005_111248_stimulus_frames.jsonl": 1,
+      "0005_111248_stimulus.mp4": -1
+     }
+    },
+    "0002": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53988,
+      "level_changes": 54002
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 48,
+       "median_latency_ms": 118.343
+      },
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 84.968
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": 51.622
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": 18.255
+      },
+      {
+       "pulse_offset": 52,
+       "median_latency_ms": -15.099
+      },
+      {
+       "pulse_offset": 53,
+       "median_latency_ms": -48.453
+      }
+     ],
+     "counts_match": {
+      "0005_112749_behavioral_cam_frames.jsonl": 1,
+      "0005_112749_behavioral_cam.mp4": -1,
+      "0005_112749_stimulus_LOG.json": -1,
+      "0005_112749_stimulus_frames.jsonl": 1,
+      "0005_112749_stimulus.mp4": -1
+     }
+    }
+   }
+  },
+  "SP0005-120519": {
+   "size_mb": 219,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.6737,
+     901.6595
+    ],
+    [
+     902.3994,
+     1802.3941
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "fitted",
+     "slope": 0.9999952705007519,
+     "intercept_s": -8.6777710597304e-05,
+     "residual_ms": 0.047575437437813776,
+     "max_residual_ms": 0.14504719297292468,
+     "n_pairs": 1804,
+     "n_obx_edges": 1804,
+     "n_imec_edges": 1804
+    }
+   },
+   "warnings": [
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)",
+    "Trial 2 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53960,
+      "level_changes": 53994
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 46,
+       "median_latency_ms": 118.042
+      },
+      {
+       "pulse_offset": 47,
+       "median_latency_ms": 84.691
+      },
+      {
+       "pulse_offset": 48,
+       "median_latency_ms": 51.338
+      },
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 17.973
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": -15.377
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": -48.732
+      }
+     ],
+     "counts_match": {
+      "0005_120804_behavioral_cam_frames.jsonl": 1,
+      "0005_120804_behavioral_cam.mp4": -1,
+      "0005_120804_stimulus_LOG.json": -1,
+      "0005_120804_stimulus_frames.jsonl": 1,
+      "0005_120804_stimulus.mp4": -1
+     }
+    },
+    "0002": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53990,
+      "level_changes": 54002
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 46,
+       "median_latency_ms": 118.042
+      },
+      {
+       "pulse_offset": 47,
+       "median_latency_ms": 84.691
+      },
+      {
+       "pulse_offset": 48,
+       "median_latency_ms": 51.338
+      },
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 17.973
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": -15.377
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": -48.732
+      }
+     ],
+     "counts_match": {
+      "0005_122305_behavioral_cam_frames.jsonl": 1,
+      "0005_122305_behavioral_cam.mp4": -1,
+      "0005_122305_stimulus_LOG.json": -1,
+      "0005_122305_stimulus_frames.jsonl": 1,
+      "0005_122305_stimulus.mp4": -1
+     }
+    }
+   }
+  },
+  "SP0005-124641": {
+   "size_mb": 219,
+   "has_onebox": true,
+   "settings": {
+    "smooth_s": 0.001,
+    "low_fraction": 0.25,
+    "high_fraction": 0.75,
+    "window_tolerance_s": 0.1,
+    "photodiode_tolerance": 0.4,
+    "camera_latency_s": null,
+    "camera_min_margin_s": 0.002,
+    "probe_sync": true
+   },
+   "trial_state_windows_obx_s": [
+    [
+     1.7547,
+     901.7569
+    ],
+    [
+     902.5094,
+     1802.4939
+    ]
+   ],
+   "probes": {
+    "imec0": {
+     "status": "fitted",
+     "slope": 0.9999957419451233,
+     "intercept_s": 3.357253762040918e-05,
+     "residual_ms": 0.017193315473837775,
+     "max_residual_ms": 0.051994770274177426,
+     "n_pairs": 1804,
+     "n_obx_edges": 1804,
+     "n_imec_edges": 1804
+    }
+   },
+   "warnings": [
+    "Trial 1 behavioral camera: OneBox time unresolved (no_latency_window)",
+    "Trial 2 behavioral camera: OneBox time unresolved (no_latency_window)"
+   ],
+   "trials": {
+    "0001": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53953,
+      "level_changes": 53981
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 118.006
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": 84.638
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": 51.29
+      },
+      {
+       "pulse_offset": 52,
+       "median_latency_ms": 17.929
+      },
+      {
+       "pulse_offset": 53,
+       "median_latency_ms": -15.434
+      },
+      {
+       "pulse_offset": 54,
+       "median_latency_ms": -48.789
+      }
+     ],
+     "counts_match": {
+      "0005_130320_behavioral_cam_frames.jsonl": 1,
+      "0005_130320_behavioral_cam.mp4": -1,
+      "0005_130320_stimulus_LOG.json": -1,
+      "0005_130320_stimulus_frames.jsonl": 1,
+      "0005_130320_stimulus.mp4": -1
+     }
+    },
+    "0002": {
+     "outcome": "completed",
+     "photodiode": {
+      "output_id": "calibration_right",
+      "status": "matched",
+      "matched": 53973,
+      "level_changes": 54001
+     },
+     "camera": {
+      "status": "no_latency_window",
+      "pulse_offset": null
+     },
+     "camera_candidates_ms": [
+      {
+       "pulse_offset": 49,
+       "median_latency_ms": 118.006
+      },
+      {
+       "pulse_offset": 50,
+       "median_latency_ms": 84.638
+      },
+      {
+       "pulse_offset": 51,
+       "median_latency_ms": 51.29
+      },
+      {
+       "pulse_offset": 52,
+       "median_latency_ms": 17.929
+      },
+      {
+       "pulse_offset": 53,
+       "median_latency_ms": -15.434
+      },
+      {
+       "pulse_offset": 54,
+       "median_latency_ms": -48.789
+      }
+     ],
+     "counts_match": {
+      "0005_131821_behavioral_cam_frames.jsonl": 1,
+      "0005_131821_behavioral_cam.mp4": -1,
+      "0005_131821_stimulus_LOG.json": -1,
+      "0005_131821_stimulus_frames.jsonl": 1,
+      "0005_131821_stimulus.mp4": -1
+     }
+    }
+   }
+  }
+ }
+}

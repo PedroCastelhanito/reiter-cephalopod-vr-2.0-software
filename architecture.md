@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-10-29
+Last updated: 2026-10-30
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -22,8 +22,8 @@ Accepted design does not imply implemented or rig-validated behavior.
   [ARCH-001](#arch-001) selects GUI as the current implementation stage, following
   Tracking implementation/review. The owner has authorized bounded SpikeGLX
   controller connection, GUI diagnostics and paired saving-only session control
-  within the GUI stage. Firmware is deferred;
-  analysis software is much later. The [acquisition review](reports/acquisition.md)
+  within the GUI stage. Firmware is deferred; of analysis software only the
+  offline session compiler ([AN01](docs/architecture/analysis.md#an01)) is authorized. The [acquisition review](reports/acquisition.md)
   records source review and pending rig verification; the [controller/supervisor review](reports/runtime.md)
   retains dated local results and pending E15 rig acceptance. Current Visual Stimulus and tracking
   status is recorded in [Visual Stimulus](reports/visual_stimulus.md) and [tracking](reports/tracking.md).
@@ -52,6 +52,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [Visual Stimulus](docs/architecture/visual_stimulus.md) | Runtime topology/rendering stack, stimulus scope/program model/storage, recording policy and interfaces |
 | [Tracking](docs/architecture/tracking.md) | Complete initial water/fin pipeline declarations and Visual Stimulus result delivery; runtime outstanding |
 | [Synchronization](docs/architecture/synchronization.md) | Controller-owned SpikeGLX session control, pulse inventory and external post hoc alignment |
+| [Analysis](docs/architecture/analysis.md) | Offline session compiler: recorded outputs and SpikeGLX pulses into one HDF5 per session |
 
 ## Decision register
 
@@ -61,8 +62,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-002](#sys-002) | GPU workload placement | Accepted | 3 |
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
-| [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 29 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 26 |
+| [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 30 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 27 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
 | <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 390 |
 | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 171 |
@@ -78,6 +79,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 23 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 18 |
 | <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 26 |
+| <a id="an01"></a>[AN01](docs/architecture/analysis.md#an01) | Offline session compiler | Accepted | 2 |
 | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 32 |
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 222 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
@@ -89,7 +91,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
 | <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 68 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 51 |
-| <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 18 |
+| <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 19 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 76 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 55 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 37 |
@@ -250,7 +252,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="gov-001"></a>
 ### GOV-001 — Decision workflow and document format
 
-**Status:** Accepted · **Revision:** 29
+**Status:** Accepted · **Revision:** 30
 
 - All backend architecture and implementation contracts have been reviewed against
   the owner's intended behavior. Runtime implementation requires explicit owner
@@ -301,7 +303,7 @@ Accepted design does not imply implemented or rig-validated behavior.
   behavior/ownership tradeoff. Before saving, remove duplication and check dependent
   configs/contracts. Development reports link to current decisions: maintain one
   current report per backend area (`reports/runtime.md`, `acquisition.md`, `visual_stimulus.md`,
-  `tracking.md`), updated in place with scope, unresolved findings and dated validation
+  `tracking.md`, `analysis.md`), updated in place with scope, unresolved findings and dated validation
   evidence/limits. Keep outstanding rig checks and execution instructions only in
   `reports/rig-verification.md`. Retain current Markdown summaries, emergency/recovery
   reports and experiment output. Recorded retention intent: delete ordinary
@@ -335,7 +337,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 26
+**Status:** Undecided · **Revision:** 27
 
 - The owner has authorized GUI implementation following Tracking implementation
   and review. GUI is the current stage, beginning with reference review and operator
@@ -355,8 +357,10 @@ Accepted design does not imply implemented or rig-validated behavior.
   authorized one manual upload to COM8, performed on 2026-10-05. Explicit
   Configuration-only GUI compilation/upload of selected Uno firmware is now authorized
   under A11, with controller-owned Microcontroller device integration; automatic
-  flashing remains deferred. Other firmware work stays deferred. Analysis software,
-  including V13 offline replay/export, is deferred much later; the experiment
+  flashing remains deferred. Other firmware work stays deferred.
+- The owner authorized (2026-10-30) the offline session compiler under
+  [AN01](docs/architecture/analysis.md#an01). Other analysis software, including V13
+  offline replay/export and sparse-noise regeneration, stays deferred; the experiment
   backend must continue recording the inputs that analysis requires.
 - Code organization follows [ARCH-002](#arch-002). Local implementation/communication
   checks follow E15; Windows-native, scientific and full-workload acceptance remains
